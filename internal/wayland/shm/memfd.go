@@ -23,7 +23,7 @@ func CreateMemfd(name string) (int, error) {
 }
 
 // MmapFile memory-maps a file descriptor for read/write access.
-func MmapFile(fd int, size int) ([]byte, error) {
+func MmapFile(fd, size int) ([]byte, error) {
 	if size <= 0 {
 		return nil, fmt.Errorf("invalid size: %d", size)
 	}
