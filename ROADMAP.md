@@ -97,7 +97,7 @@ PHASE 2: DRM/KMS Buffer Infrastructure in Rust (Weeks 6-9)
      - Implement a simple slab allocator for sub-allocating from large
        GPU buffer objects.
 
-2.3  DMA-BUF INTEGRATION WITH WAYLAND (Go side)
+2.3  ✅ DMA-BUF INTEGRATION WITH WAYLAND (Go side)
      - Implement the zwp_linux_dmabuf_v1 Wayland protocol extension in
        your Go Wayland client.
      - Instead of wl_shm buffers, attach DMA-BUF backed wl_buffers to
