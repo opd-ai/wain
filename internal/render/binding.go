@@ -124,11 +124,10 @@ func (g GpuGeneration) String() string {
 func DetectGPU(path string) GpuGeneration {
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
-	
+
 	result := C.render_detect_gpu(cpath)
 	if result < 0 {
 		return GpuUnknown
 	}
 	return GpuGeneration(result)
 }
-

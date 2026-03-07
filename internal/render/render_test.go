@@ -116,4 +116,3 @@ func TestGpuGenerationString(t *testing.T) {
 		})
 	}
 }
-
