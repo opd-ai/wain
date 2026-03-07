@@ -122,6 +122,21 @@ func (r *Registry) BindXdgWmBase(global *Global) (uint32, uint32, error) {
 	return objectID, global.Version, nil
 }
 
+// BindDmabuf is a helper that binds to the zwp_linux_dmabuf_v1 interface.
+// Returns the object ID for creating a Dmabuf wrapper.
+func (r *Registry) BindDmabuf(global *Global) (uint32, error) {
+	if global.Interface != "zwp_linux_dmabuf_v1" {
+		return 0, fmt.Errorf("registry: not zwp_linux_dmabuf_v1: %s", global.Interface)
+	}
+
+	objectID, err := r.Bind(global.Name, global.Interface, global.Version)
+	if err != nil {
+		return 0, err
+	}
+
+	return objectID, nil
+}
+
 // addGlobal is called internally when a global event is received.
 func (r *Registry) addGlobal(name uint32, iface string, version uint32) {
 	r.globals[name] = &Global{

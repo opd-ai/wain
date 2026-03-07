@@ -162,6 +162,15 @@ widget-demo: rust
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/widget-demo github.com/opd-ai/wain/cmd/widget-demo
 
+dmabuf-demo: rust
+	mkdir -p bin
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o bin/dmabuf-demo github.com/opd-ai/wain/cmd/dmabuf-demo
+
 gen-atlas:
 	mkdir -p bin
 	go build -o $(GEN_ATLAS_BIN) $(GEN_ATLAS_PKG)
