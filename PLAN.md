@@ -71,7 +71,7 @@
   ```
 - **Status**: COMPLETE - x11-demo binary created (181 lines), demonstrates full X11 stack including connection setup, window creation (CreateWindow), window mapping (MapWindow), software rasterizer, and UI widgets. Makefile targets added for both wayland-demo and x11-demo. All tests pass.
 
-### Step 3: Refactor layoutRow/layoutColumn (High Impact)
+### Step 3: Refactor layoutRow/layoutColumn (High Impact) ✅
 - **Deliverable**: Extract shared helper functions from `internal/ui/layout/layout.go`
 - **Dependencies**: Steps 1-2 complete (demos provide integration test coverage)
 - **Rationale**: Both functions are CC=17, 107 lines with identical complexity patterns; AUDIT-2026-03-07.md identifies this as MEDIUM severity
@@ -86,6 +86,7 @@
   jq '[.functions[] | select(.name == "layoutRow" or .name == "layoutColumn")] | .[] | {name, cc: .complexity.cyclomatic, lines: .lines.total}' /tmp/check.json
   # Expected: cc ≤ 10, lines ≤ 50 for both
   ```
+- **Status**: COMPLETE - layoutRow and layoutColumn refactored to CC=3, 26 lines each (82% CC reduction from CC=17, 76% line reduction from 107 lines). Helper functions extracted: computeFlexMeasurements (CC=4, 26 lines), distributeFlex (CC=5, 19 lines), computeJustifyOffset (CC=5, 28 lines), computeCrossAlign (CC=2, 13 lines). All tests pass.
 
 ### Step 4: Refactor EncodeMessage (High Impact)
 - **Deliverable**: Extract type-specific encoding helpers from `internal/wayland/wire/wire.go:333`
