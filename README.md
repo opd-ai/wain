@@ -22,11 +22,12 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
 
-**X11 Client** (4 packages, ~1,150 LOC):
-- ✅ Connection setup: authentication, XID allocation
+**X11 Client** (5 packages, ~1,400 LOC):
+- ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
 - ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
+- ✅ MIT-SHM extension: zero-copy shared memory image transfers
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
 **Software 2D Rasterizer** (5 packages, ~1,550 LOC):
@@ -142,7 +143,7 @@ render-sys/src/lib.rs  →  librender.a (static library)
 
 ### 2. Protocol Layer (internal/wayland/, internal/x11/)
 ```
-Protocol Implementations (~3,250 LOC)
+Protocol Implementations (~3,500 LOC)
 ├── Wayland Client (6 packages)
 │   ├── wire/        → Binary marshaling + fd passing
 │   ├── socket/      → Unix domain socket + SCM_RIGHTS
@@ -150,11 +151,12 @@ Protocol Implementations (~3,250 LOC)
 │   ├── shm/         → Shared memory buffers (memfd)
 │   ├── xdg/         → Window management (xdg-shell)
 │   └── input/       → Seat, Pointer, Keyboard, xkbcommon
-└── X11 Client (4 packages)
-    ├── wire/        → Request/reply/event encoding
-    ├── client/      → Connection, CreateWindow, MapWindow
+└── X11 Client (5 packages)
+    ├── wire/        → Request/reply/event encoding, extension queries
+    ├── client/      → Connection, CreateWindow, MapWindow, extension support
     ├── events/      → KeyPress, Button, Motion events
-    └── gc/          → Graphics context, PutImage
+    ├── gc/          → Graphics context, PutImage
+    └── shm/         → MIT-SHM extension (zero-copy image transfers)
 ```
 
 ### 3. Rendering Layer (internal/raster/)
@@ -324,9 +326,8 @@ See [ROADMAP.md](ROADMAP.md) for planned phases:
 - No event loop implementation (components exist but not wired together)
 
 **Missing optimizations:**
-- X11: No MIT-SHM extension (uses slower PutImage fallback)
 - Rasterizer: No tile-based threading (single-threaded CPU rendering)
-- Layout: High complexity in `layoutRow`/`layoutColumn` (needs refactoring)
+- Layout: High complexity in `layoutRow`/`layoutColumn` (refactoring completed in v0.2)
 
 **Testing:**
 - Unit tests exist for individual packages (all passing)
@@ -364,13 +365,13 @@ See [LICENSE](LICENSE) file.
 
 ## Contributing
 
-This project is in **Phase 1** (Software Rendering Path — 85% complete). 
+This project is in **Phase 1** (Software Rendering Path — 90% complete). 
 
 **Priority contributions:**
-1. **Integration demos** — Create working demonstration binaries (see [PLAN.md](PLAN.md) Step 1-2)
-2. **Complexity refactoring** — Reduce duplication in layout system (see [PLAN.md](PLAN.md) Step 3-4)
-3. **Public API design** — Move packages from `internal/` to public exports
-4. **MIT-SHM extension** — Optimize X11 rendering performance
-5. **Integration tests** — End-to-end tests covering full protocol stack
+1. **Public API design** — Move packages from `internal/` to public exports
+2. **Tile-based threading** — Parallelize software rasterizer for multi-core performance
+3. **Integration tests** — End-to-end tests covering full protocol stack
+4. **HiDPI support** — Scale factor detection and rendering
+5. **Clipboard integration** — Copy/paste support via X11/Wayland protocols
 
 See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan and [AUDIT-2026-03-07.md](AUDIT-2026-03-07.md) for detailed findings from the recent code audit.

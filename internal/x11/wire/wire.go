@@ -76,6 +76,7 @@ const (
 	OpcodeDeleteProperty    = 19
 	OpcodeCreateGC          = 55
 	OpcodePutImage          = 72
+	OpcodeQueryExtension    = 98
 )
 
 // Window attribute mask bits for CreateWindow and ChangeWindowAttributes.

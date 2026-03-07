@@ -30,6 +30,7 @@ package client
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
@@ -296,4 +297,75 @@ func (c *Connection) RootVisual() uint32 {
 // RootDepth returns the root depth.
 func (c *Connection) RootDepth() uint8 {
 	return c.rootDepth
+}
+
+// SendRequestAndReply sends a request and waits for a reply.
+// This is used for requests that expect a response from the server.
+func (c *Connection) SendRequestAndReply(req []byte) ([]byte, error) {
+	if err := c.sendRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Read reply header (32 bytes)
+	reply := make([]byte, wire.ReplyHeaderSize)
+	if _, err := c.conn.Read(reply); err != nil {
+		return nil, fmt.Errorf("client: failed to read reply: %w", err)
+	}
+
+	// Check if it's a reply (type 1) or error (type 0)
+	if reply[0] == 0 {
+		// Error response
+		errCode := reply[1]
+		return nil, fmt.Errorf("client: X11 error code %d", errCode)
+	}
+
+	// Parse additional data length (in 4-byte units)
+	dataLen := binary.LittleEndian.Uint32(reply[4:8])
+	if dataLen > 0 {
+		// Read additional data beyond the 32-byte header
+		additionalData := make([]byte, dataLen*4)
+		if _, err := c.conn.Read(additionalData); err != nil {
+			return nil, fmt.Errorf("client: failed to read reply data: %w", err)
+		}
+		// Append additional data to reply
+		reply = append(reply, additionalData...)
+	}
+
+	return reply, nil
+}
+
+// ExtensionOpcode queries an X11 extension by name and returns its base opcode.
+// Returns an error if the extension is not supported by the server.
+func (c *Connection) ExtensionOpcode(name string) (uint8, error) {
+	var buf bytes.Buffer
+
+	// Calculate message length: header(4) + nameLen(2) + pad(2) + name + padding
+	nameLen := len(name)
+	namePad := wire.Pad(nameLen)
+	msgLen := uint16(2 + (nameLen+namePad)/4)
+
+	// Encode QueryExtension request
+	wire.EncodeRequestHeader(&buf, wire.OpcodeQueryExtension, 0, msgLen)
+	wire.EncodeUint16(&buf, uint16(nameLen))
+	wire.EncodePadding(&buf, 2)
+	buf.WriteString(name)
+	wire.EncodePadding(&buf, namePad)
+
+	reply, err := c.SendRequestAndReply(buf.Bytes())
+	if err != nil {
+		return 0, err
+	}
+
+	// Parse reply: type(1) + pad(1) + sequence(2) + length(4) + present(1) + major-opcode(1) + ...
+	if len(reply) < 32 {
+		return 0, fmt.Errorf("client: invalid QueryExtension reply")
+	}
+
+	present := reply[8]
+	if present == 0 {
+		return 0, fmt.Errorf("client: extension %q not present", name)
+	}
+
+	majorOpcode := reply[9]
+	return majorOpcode, nil
 }
