@@ -385,7 +385,6 @@ func TestAutoLayoutNested(t *testing.T) {
 	AutoLayout(parent.Children(), 0, 0, 400, 400, FlowColumn, DefaultStyle())
 
 	// Grandchild should be positioned inside the child's resolved bounds.
-	_, _, _, _ = grandchild.ResolvedBounds()
 	gx, gy, _, _ := grandchild.ResolvedBounds()
 	cx, cy, _, _ := child.ResolvedBounds()
 	pad := DefaultStyle().Padding()
