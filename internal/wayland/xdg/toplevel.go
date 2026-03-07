@@ -218,6 +218,8 @@ func (t *Toplevel) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleConfigureEvent processes xdg_toplevel configure events containing width, height, and state array.
+// Parses the state bitmask to detect maximized, fullscreen, resizing, and activated states.
 func (t *Toplevel) handleConfigureEvent(args []wire.Argument) error {
 	if len(args) != 3 {
 		return fmt.Errorf("configure event: expected 3 arguments, got %d", len(args))

@@ -318,6 +318,8 @@ func computeCrossAlign(align Align, childSize, contentSize, padding int) (int, i
 	return position, size
 }
 
+// layoutRow computes the layout for horizontally arranged children using flexbox-like behavior.
+// It distributes available width among children based on their flex-grow/shrink properties and gaps.
 func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
 	totalGaps := c.Gap * (len(c.children) - 1)
 	if totalGaps < 0 {
@@ -347,6 +349,8 @@ func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
 	return items
 }
 
+// layoutColumn computes the layout for vertically arranged children using flexbox-like behavior.
+// It distributes available height among children based on their flex-grow/shrink properties and gaps.
 func (c *Container) layoutColumn(contentWidth, contentHeight int) []LayoutItem {
 	totalGaps := c.Gap * (len(c.children) - 1)
 	if totalGaps < 0 {

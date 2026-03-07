@@ -116,6 +116,9 @@ func (km *Keymap) KeycodeToKeysym(keycode uint32, modifiers ModifierState) Keysy
 	return km.keycodeToAlphanumeric(keycode, shifted)
 }
 
+// keycodeToAlphanumeric maps Linux keycodes to alphanumeric keysyms for common QWERTY keys.
+// Handles digits (2-11), QWERTY rows (16-25, 30-38, 44-50), space (57), and common punctuation.
+// Returns KeysymInvalid for unmapped keycodes.
 func (km *Keymap) keycodeToAlphanumeric(keycode uint32, shifted bool) Keysym {
 	// Keycode 2 = '1', 3 = '2', ..., 10 = '9', 11 = '0'
 	if keycode >= 2 && keycode <= 11 {

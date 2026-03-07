@@ -92,6 +92,8 @@ func (k *Keyboard) HandleModifiers(serial, modsDepressed, modsLatched, modsLocke
 func (k *Keyboard) HandleRepeatInfo(rate, delay int32) {
 }
 
+// decodeModifiers converts Wayland modifier bitmasks (depressed, latched, locked) into a ModifierState.
+// Combines all three masks and extracts individual modifier flags (Shift, Ctrl, Alt, etc.).
 func (k *Keyboard) decodeModifiers(depressed, latched, locked uint32) ModifierState {
 	mask := depressed | latched | locked
 	return ModifierState{
