@@ -114,16 +114,16 @@ type application struct {
 	inputText   string
 	scrollItems []string
 
-	buffer         *core.Buffer
-	clickButton    *widgets.Button
-	resetButton    *widgets.Button
-	quitButton     *widgets.Button
-	textInput      *widgets.TextInput
-	scrollList     *widgets.ScrollContainer
-	statusLabel    string
-	lastMouseX     int
-	lastMouseY     int
-	needsRedraw    bool
+	buffer      *core.Buffer
+	clickButton *widgets.Button
+	resetButton *widgets.Button
+	quitButton  *widgets.Button
+	textInput   *widgets.TextInput
+	scrollList  *widgets.ScrollContainer
+	statusLabel string
+	lastMouseX  int
+	lastMouseY  int
+	needsRedraw bool
 }
 
 // createWidgets initializes all UI widgets.
@@ -164,11 +164,11 @@ func (app *application) createWidgets() {
 // render draws all widgets to the framebuffer.
 func (app *application) render() {
 	// Clear background
-	app.buffer.FillRect(0, 0, windowWidth, windowHeight, 
+	app.buffer.FillRect(0, 0, windowWidth, windowHeight,
 		core.Color{R: 250, G: 250, B: 250, A: 255})
 
 	// Title
-	renderText(app.buffer, "Interactive Widget Demo", 20, 20, 
+	renderText(app.buffer, "Interactive Widget Demo", 20, 20,
 		core.Color{R: 50, G: 50, B: 50, A: 255})
 
 	// Buttons row
@@ -178,22 +178,22 @@ func (app *application) render() {
 
 	// Status label
 	statusText := fmt.Sprintf("Status: %s", app.statusLabel)
-	renderText(app.buffer, statusText, 50, 120, 
+	renderText(app.buffer, statusText, 50, 120,
 		core.Color{R: 70, G: 70, B: 70, A: 255})
 
 	// Text input
-	renderText(app.buffer, "Text Input:", 50, 160, 
+	renderText(app.buffer, "Text Input:", 50, 160,
 		core.Color{R: 70, G: 70, B: 70, A: 255})
 	app.textInput.Draw(app.buffer, 50, 185)
 
 	// Scroll container
-	renderText(app.buffer, "Scrollable List:", 50, 240, 
+	renderText(app.buffer, "Scrollable List:", 50, 240,
 		core.Color{R: 70, G: 70, B: 70, A: 255})
 	app.scrollList.Draw(app.buffer, 50, 265)
 
 	// Mouse position indicator
 	mouseText := fmt.Sprintf("Mouse: (%d, %d)", app.lastMouseX, app.lastMouseY)
-	renderText(app.buffer, mouseText, 500, windowHeight-30, 
+	renderText(app.buffer, mouseText, 500, windowHeight-30,
 		core.Color{R: 120, G: 120, B: 120, A: 255})
 
 	app.needsRedraw = false
@@ -316,12 +316,12 @@ func runX11(app *application) error {
 	// Simulate some interactions for demonstration
 	fmt.Println()
 	fmt.Println("Simulating interactions:")
-	
+
 	// Simulate button clicks
 	fmt.Print("  → Mouse move to button... ")
 	app.handleMouseMove(125, 80)
 	fmt.Println("✓")
-	
+
 	fmt.Print("  → Click button... ")
 	app.handleMouseClick(125, 80, 1)
 	app.render()
