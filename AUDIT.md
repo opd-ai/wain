@@ -45,7 +45,7 @@ The project demonstrates strong implementation quality with:
 
 - [x] **README claims 7 X11 packages, actual count is 7** — README.md:26 — FIXED: Updated README LOC to ~5,596 (verified with `wc -l internal/x11/*/*.go`). Also added dri3 and present packages to the enumerated list in the Architecture section (lines 159-173).
 
-- [ ] **Missing demo binaries referenced in README** — README.md:57,200 — README references `wayland-demo`, `x11-demo`, `widget-demo`, and `x11-dmabuf-demo` as demonstration binaries, but only 5 of 8 cmd/ directories have built binaries in bin/. Missing: `dmabuf-demo`, `gen-atlas`, `widget-demo`. **Evidence:** `ls bin/` shows only demo, wain, wayland-demo, x11-demo, x11-dmabuf-demo; `ls cmd/` shows 8 directories.
+- [x] **Missing demo binaries referenced in README** — README.md:57,200 — FIXED: Built all missing demo binaries. All 8 binaries now present in bin/ directory: demo, dmabuf-demo, gen-atlas, wain, wayland-demo, widget-demo, x11-demo, x11-dmabuf-demo. All binaries are statically linked ELF executables. Tests pass.
 
 - [x] **README claims ~1,550 LOC for rasterizer, actual is ~5,282** — README.md:43,176 — FIXED: Updated README to state "~5,282 LOC" (verified with `wc -l internal/raster/*/*.go`).
 
