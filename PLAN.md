@@ -205,19 +205,23 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: No functions exceed complexity threshold (max: 10)
 
-### Step 11: Software Rasterizer — Curves & Arcs (Phase 1.4b)
+### Step 11: Software Rasterizer — Curves & Arcs (Phase 1.4b) ✅
 - **Deliverable**: Quadratic/cubic Bezier curves, arc fills
 - **Dependencies**: Step 10
 - **Scope**: ~1,500–2,000 LoC
-- **Files to extend**: `internal/raster/curves/` package
+- **Files created**: `internal/raster/curves/` package (curves.go, curves_test.go)
 - **Acceptance**:
-  - Mathematical functions well-documented
-  - Unit tests for edge cases (degenerate curves)
+  - ✅ Mathematical functions well-documented (100% documentation coverage)
+  - ✅ Unit tests for edge cases (degenerate curves) - 18 test functions, 4 benchmark tests
+  - ✅ Maximum cyclomatic complexity: 7 (FillArc, well below threshold of 10)
+  - ✅ Maximum overall complexity: 10.6 (FillArc, below threshold of 15)
+  - ✅ Code duplication: 1.75% (well below 3% threshold)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections documentation | \
     jq '.documentation.coverage.functions'
   ```
+  Result: 98.39% documentation coverage
 
 ### Step 12: Software Rasterizer — Text Rendering (Phase 1.4c)
 - **Deliverable**: SDF-based text rendering with pre-baked SDF font atlas
