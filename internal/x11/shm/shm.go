@@ -59,6 +59,9 @@ var (
 
 	// ErrInvalidSegment is returned when a SHM segment ID is invalid.
 	ErrInvalidSegment = errors.New("shm: invalid segment ID")
+
+	// ErrSegmentTooLarge is returned when a segment size exceeds safe limits.
+	ErrSegmentTooLarge = errors.New("shm: segment size exceeds maximum safe size")
 )
 
 const (
@@ -261,8 +264,30 @@ func (seg *Segment) DestroySegment() error {
 
 // GetBuffer returns the shared memory buffer as a byte slice.
 // The caller can write pixel data directly to this buffer.
-func (seg *Segment) GetBuffer() []byte {
-	return (*[1 << 30]byte)(unsafe.Pointer(seg.Addr))[:seg.Size:seg.Size]
+// Returns an error if the segment is too large or has been destroyed.
+func (seg *Segment) GetBuffer() ([]byte, error) {
+	// Validate segment hasn't been destroyed
+	if seg.Addr == 0 {
+		return nil, ErrInvalidSegment
+	}
+
+	// Validate size doesn't exceed safe limits
+	// Use 1GB as maximum to prevent overflow in slice operations
+	const maxSafeSize = 1 << 30
+	if seg.Size < 0 || seg.Size > maxSafeSize {
+		return nil, ErrSegmentTooLarge
+	}
+
+	// Convert shared memory address to byte slice.
+	// This is safe because:
+	// 1. seg.Addr comes from syscall.SHMAT which keeps the memory mapped
+	// 2. The segment remains valid until DestroySegment is called
+	// 3. Size validation above prevents overflow
+	//
+	// Note: This triggers a go vet warning about unsafe.Pointer conversion from uintptr.
+	// This is a false positive - the pattern is safe for syscall-allocated shared memory
+	// where the uintptr represents a fixed memory-mapped address that doesn't move.
+	return unsafe.Slice((*byte)(unsafe.Pointer(seg.Addr)), seg.Size), nil
 }
 
 // PutImage transfers pixel data to a drawable using shared memory.

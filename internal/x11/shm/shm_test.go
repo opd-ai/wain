@@ -33,23 +33,46 @@ func TestExtensionConstants(t *testing.T) {
 	}
 }
 
-// TestSegmentGetBuffer verifies that GetBuffer returns the correct slice.
+// TestSegmentGetBuffer verifies GetBuffer validation.
 func TestSegmentGetBuffer(t *testing.T) {
-	// Create a mock segment with known size
-	seg := &Segment{
-		Addr: 0x1000, // Mock address (won't actually access memory)
-		Size: 1024,
+	tests := []struct {
+		name    string
+		seg     *Segment
+		wantErr error
+	}{
+		{
+			name: "destroyed segment",
+			seg: &Segment{
+				Addr: 0,
+				Size: 1024,
+			},
+			wantErr: ErrInvalidSegment,
+		},
+		{
+			name: "negative size",
+			seg: &Segment{
+				Addr: 0x1000,
+				Size: -1,
+			},
+			wantErr: ErrSegmentTooLarge,
+		},
+		{
+			name: "size exceeds maximum",
+			seg: &Segment{
+				Addr: 0x1000,
+				Size: (1 << 30) + 1,
+			},
+			wantErr: ErrSegmentTooLarge,
+		},
 	}
 
-	// Note: We can't actually call GetBuffer here because it would access
-	// arbitrary memory at address 0x1000. This test just verifies the
-	// Segment structure is correct.
-	if seg.Size != 1024 {
-		t.Errorf("segment size = %d, want 1024", seg.Size)
-	}
-
-	if seg.Addr != 0x1000 {
-		t.Errorf("segment addr = %x, want 0x1000", seg.Addr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.seg.GetBuffer()
+			if err != tt.wantErr {
+				t.Errorf("GetBuffer() error = %v, want %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 
