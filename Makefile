@@ -8,6 +8,7 @@
 #   make demo         – build the Phase 1 demonstration binary
 #   make wayland-demo – build the Wayland demonstration binary
 #   make x11-demo     – build the X11 demonstration binary
+#   make widget-demo  – build the interactive widget demonstration binary
 #   make gen-atlas    – build the SDF font atlas generator tool
 #   make test         – run both Rust and Go test suites
 #   make check-static – assert the final binary is fully statically linked
@@ -54,7 +55,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas demo wayland-demo x11-demo
+.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas demo wayland-demo x11-demo widget-demo
 
 all: build
 
@@ -151,6 +152,15 @@ x11-demo: rust
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/x11-demo github.com/opd-ai/wain/cmd/x11-demo
+
+widget-demo: rust
+	mkdir -p bin
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o bin/widget-demo github.com/opd-ai/wain/cmd/widget-demo
 
 gen-atlas:
 	mkdir -p bin
