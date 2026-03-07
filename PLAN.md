@@ -66,19 +66,22 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: 100% documentation coverage
 
-### Step 3: Core Wayland Objects (Phase 1.1c)
+### Step 3: Core Wayland Objects (Phase 1.1c) ✅
 - **Deliverable**: Implementation of `wl_display`, `wl_registry`, `wl_compositor`, `wl_surface`
 - **Dependencies**: Steps 1, 2
 - **Scope**: ~2,000–3,000 LoC
-- **Files to create**: `internal/wayland/client/` package
+- **Files created**: `internal/wayland/client/` package
 - **Acceptance**:
-  - Package cohesion score > 0.5
-  - No circular dependencies
+  - ✅ Package cohesion score > 0.5 (actual: 1.7)
+  - ✅ No circular dependencies (0 circular deps)
+  - ✅ All public APIs documented (100% doc coverage)
+  - ✅ All tests passing
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections packages | \
     jq '.packages[] | select(.name == "client") | .cohesion_score'
   ```
+  Result: cohesion_score = 1.7
 
 ### Step 4: Wayland SHM Support (Phase 1.1d)
 - **Deliverable**: `wl_shm`, `wl_shm_pool`, `wl_buffer` + `memfd_create` syscall wrapper

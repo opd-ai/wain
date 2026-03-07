@@ -168,6 +168,20 @@ func parseFDs(oob []byte) ([]int, error) {
 	return fds, nil
 }
 
+// Send sends data without any file descriptors.
+// This is a convenience wrapper around SendMsg.
+func (c *Conn) Send(data []byte) error {
+	_, err := c.SendMsg(data, nil)
+	return err
+}
+
+// SendWithFDs sends data with file descriptors.
+// This is a convenience wrapper around SendMsg.
+func (c *Conn) SendWithFDs(data []byte, fds []int) error {
+	_, err := c.SendMsg(data, fds)
+	return err
+}
+
 // SendFD sends a single file descriptor alongside a data message.
 // This is a convenience wrapper around SendMsg for the common case of sending one FD.
 func (c *Conn) SendFD(data []byte, fd int) (int, error) {

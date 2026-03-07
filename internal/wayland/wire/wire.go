@@ -296,3 +296,130 @@ func EncodeArray(w io.Writer, data []byte) error {
 
 	return nil
 }
+
+// Size returns the wire format size of an argument in bytes.
+func (a *Argument) Size() uint16 {
+	switch a.Type {
+	case ArgTypeInt32, ArgTypeUint32, ArgTypeFixed, ArgTypeObject, ArgTypeNewID:
+		return 4
+	case ArgTypeString:
+		s, ok := a.Value.(string)
+		if !ok {
+			return 0
+		}
+		if len(s) == 0 {
+			return 4 // Just the length field (0)
+		}
+		length := uint32(len(s) + 1) // Include null terminator
+		padding := (4 - (length % 4)) % 4
+		return uint16(4 + length + padding) // length prefix + data + padding
+	case ArgTypeArray:
+		data, ok := a.Value.([]byte)
+		if !ok {
+			return 0
+		}
+		length := uint32(len(data))
+		padding := (4 - (length % 4)) % 4
+		return uint16(4 + length + padding) // length prefix + data + padding
+	case ArgTypeFD:
+		return 0 // FDs are passed out-of-band
+	default:
+		return 0
+	}
+}
+
+// EncodeMessage encodes a complete message to wire format.
+// Returns the encoded data and any file descriptors to be passed via SCM_RIGHTS.
+func EncodeMessage(msg *Message) ([]byte, []int, error) {
+	// Allocate a buffer for the message.
+	buf := make([]byte, 0, msg.Header.Size)
+	w := &byteWriter{buf: buf}
+
+	// Encode the header.
+	if err := EncodeHeader(w, msg.Header); err != nil {
+		return nil, nil, err
+	}
+
+	// Encode arguments and collect file descriptors.
+	var fds []int
+	for i := range msg.Args {
+		arg := &msg.Args[i]
+		switch arg.Type {
+		case ArgTypeInt32:
+			v, ok := arg.Value.(int32)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: int32 value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeInt32(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeUint32:
+			v, ok := arg.Value.(uint32)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: uint32 value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeUint32(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeFixed:
+			v, ok := arg.Value.(float64)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: fixed value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeFixed(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeString:
+			v, ok := arg.Value.(string)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: string value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeString(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeObject, ArgTypeNewID:
+			v, ok := arg.Value.(uint32)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: object/new_id value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeUint32(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeArray:
+			v, ok := arg.Value.([]byte)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: array value has wrong type", ErrInvalidArgument)
+			}
+			if err := EncodeArray(w, v); err != nil {
+				return nil, nil, err
+			}
+
+		case ArgTypeFD:
+			v, ok := arg.Value.(int)
+			if !ok {
+				return nil, nil, fmt.Errorf("%w: fd value has wrong type", ErrInvalidArgument)
+			}
+			fds = append(fds, v)
+
+		default:
+			return nil, nil, fmt.Errorf("%w: unknown argument type %d", ErrInvalidArgument, arg.Type)
+		}
+	}
+
+	return w.buf, fds, nil
+}
+
+// byteWriter is an io.Writer that appends to a byte slice.
+type byteWriter struct {
+	buf []byte
+}
+
+func (w *byteWriter) Write(p []byte) (int, error) {
+	w.buf = append(w.buf, p...)
+	return len(p), nil
+}
