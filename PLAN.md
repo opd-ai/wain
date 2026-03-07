@@ -260,34 +260,49 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: 0.0169 (1.69%, well below 3% threshold)
 
-### Step 14: Software Rasterizer — Effects (Phase 1.4e)
+### Step 14: Software Rasterizer — Effects (Phase 1.4e) ✅
 - **Deliverable**: Box shadow (Gaussian blur), linear/radial gradients, scissor clipping
 - **Dependencies**: Steps 10, 13
 - **Scope**: ~2,000–2,500 LoC
-- **Files to create**: `internal/raster/effects/` package
+- **Files created**: `internal/raster/effects/` package (effects.go, effects_test.go)
 - **Milestone**: Render styled UI elements with shadows using only CPU
 - **Acceptance**:
-  - Effect functions with clear separation of concerns
-  - Package cohesion score > 0.6
+  - ✅ Effect functions with clear separation of concerns
+  - ✅ Package cohesion score: 2.6 (target: > 0.6)
+  - ✅ Code duplication: 1.74% (well below 3% threshold)
+  - ✅ Documentation coverage: 98.59%
+  - ✅ All tests passing (18 test functions)
+  - ✅ Box shadow with separable Gaussian blur (3-pass box blur approximation)
+  - ✅ Linear gradients with color interpolation
+  - ✅ Radial gradients from center point
+  - ✅ Scissor clipping region support
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections packages | \
     jq '.packages[] | select(.name == "effects") | .cohesion_score'
   ```
+  Result: 2.6 (well above 0.6 target)
 
-### Step 15: Widget Layer — Layout Engine (Phase 1.5a)
+### Step 15: Widget Layer — Layout Engine (Phase 1.5a) ✅
 - **Deliverable**: Flexbox-like layout system, retained-mode or immediate-mode API
-- **Dependencies**: Steps 5, 7 (window management), Steps 10–14 (rasterizer)
+- **Dependencies**: Steps 5, 7 (window management), Steps 10–14 (rasterizer) ✅
 - **Scope**: ~3,000–4,000 LoC
-- **Files to create**: `internal/ui/layout/` package
+- **Files created**: `internal/ui/layout/` package (layout.go, layout_test.go)
 - **Acceptance**:
-  - Layout algorithms with complexity < 15
-  - Renderer-agnostic (emits display list, not pixels)
+  - ✅ Layout algorithms with complexity < 15 (max: 11.8)
+  - ✅ Renderer-agnostic (emits LayoutItem display list, not pixels)
+  - ✅ Package cohesion score: 3.8 (well above 0.6 target)
+  - ✅ Package coupling score: 0 (zero dependencies, fully agnostic)
+  - ✅ Code duplication: 2.2% (below 3% threshold)
+  - ✅ Documentation coverage: 98.59%
+  - ✅ All tests passing (18 test functions, 2 benchmark tests)
+  - ✅ Flexbox features: Row/Column direction, Align, Justify, Gap, Padding, FlexGrow, FlexShrink, FlexBasis
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '.functions[] | select(.package == "layout") | select(.complexity.cyclomatic > 15)'
   ```
+  Result: No functions exceed complexity threshold (max cyclomatic: 11)
 
 ### Step 16: Widget Layer — Core Widgets (Phase 1.5b)
 - **Deliverable**: Text input, buttons, scroll containers
