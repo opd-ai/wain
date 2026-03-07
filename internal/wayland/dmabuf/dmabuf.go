@@ -106,7 +106,7 @@ func (d *Dmabuf) CreateParams() (*BufferParams, error) {
 // HandleEvent processes events from the compositor for this dmabuf object.
 func (d *Dmabuf) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
-	case 0: // format event (deprecated in v3, but kept for compatibility)
+	case 0: // format event (Deprecated: zwp_linux_dmabuf_v1 version 3+ uses modifier event instead)
 		if len(args) != 1 {
 			return fmt.Errorf("dmabuf: format event: expected 1 argument, got %d", len(args))
 		}
