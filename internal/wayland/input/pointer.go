@@ -10,22 +10,22 @@ import (
 type ButtonState uint32
 
 const (
-// ButtonStateReleased indicates the button is released.
-ButtonStateReleased ButtonState = 0
+	// ButtonStateReleased indicates the button is released.
+	ButtonStateReleased ButtonState = 0
 
-// ButtonStatePressed indicates the button is pressed.
-ButtonStatePressed ButtonState = 1
+	// ButtonStatePressed indicates the button is pressed.
+	ButtonStatePressed ButtonState = 1
 )
 
 // Axis represents a pointer scroll axis.
 type Axis uint32
 
 const (
-// AxisVerticalScroll is the vertical scroll axis.
-AxisVerticalScroll Axis = 0
+	// AxisVerticalScroll is the vertical scroll axis.
+	AxisVerticalScroll Axis = 0
 
-// AxisHorizontalScroll is the horizontal scroll axis.
-AxisHorizontalScroll Axis = 1
+	// AxisHorizontalScroll is the horizontal scroll axis.
+	AxisHorizontalScroll Axis = 1
 )
 
 // Pointer represents the wl_pointer interface.
@@ -36,24 +36,24 @@ AxisHorizontalScroll Axis = 1
 // The pointer has a location and a focus surface. Enter and leave events are
 // generated whenever the pointer location crosses the boundary of a surface.
 type Pointer struct {
-objectBase
+	objectBase
 }
 
 const (
-pointerOpcodeSetCursor uint16 = 0
-pointerOpcodeRelease   uint16 = 1
+	pointerOpcodeSetCursor uint16 = 0
+	pointerOpcodeRelease   uint16 = 1
 )
 
 const (
-pointerEventEnter        uint16 = 0
-pointerEventLeave        uint16 = 1
-pointerEventMotion       uint16 = 2
-pointerEventButton       uint16 = 3
-pointerEventAxis         uint16 = 4
-pointerEventFrame        uint16 = 5
-pointerEventAxisSource   uint16 = 6
-pointerEventAxisStop     uint16 = 7
-pointerEventAxisDiscrete uint16 = 8
+	pointerEventEnter        uint16 = 0
+	pointerEventLeave        uint16 = 1
+	pointerEventMotion       uint16 = 2
+	pointerEventButton       uint16 = 3
+	pointerEventAxis         uint16 = 4
+	pointerEventFrame        uint16 = 5
+	pointerEventAxisSource   uint16 = 6
+	pointerEventAxisStop     uint16 = 7
+	pointerEventAxisDiscrete uint16 = 8
 )
 
 // SetCursor sets the cursor image for this pointer.
@@ -67,21 +67,21 @@ pointerEventAxisDiscrete uint16 = 8
 //   - hotspotX: X coordinate of the cursor hotspot
 //   - hotspotY: Y coordinate of the cursor hotspot
 func (p *Pointer) SetCursor(serial, surfaceID uint32, hotspotX, hotspotY int32) error {
-args := []wire.Argument{
-{Type: wire.ArgTypeUint32, Value: serial},
-{Type: wire.ArgTypeObject, Value: surfaceID},
-{Type: wire.ArgTypeInt32, Value: hotspotX},
-{Type: wire.ArgTypeInt32, Value: hotspotY},
-}
-if err := p.conn.SendRequest(p.id, pointerOpcodeSetCursor, args); err != nil {
-return fmt.Errorf("SetCursor: %w", err)
-}
-return nil
+	args := []wire.Argument{
+		{Type: wire.ArgTypeUint32, Value: serial},
+		{Type: wire.ArgTypeObject, Value: surfaceID},
+		{Type: wire.ArgTypeInt32, Value: hotspotX},
+		{Type: wire.ArgTypeInt32, Value: hotspotY},
+	}
+	if err := p.conn.SendRequest(p.id, pointerOpcodeSetCursor, args); err != nil {
+		return fmt.Errorf("SetCursor: %w", err)
+	}
+	return nil
 }
 
 // Release destroys the pointer object.
 func (p *Pointer) Release() error {
-return p.conn.SendRequest(p.id, pointerOpcodeRelease, nil)
+	return p.conn.SendRequest(p.id, pointerOpcodeRelease, nil)
 }
 
 // HandleEnter processes an enter event from the compositor.

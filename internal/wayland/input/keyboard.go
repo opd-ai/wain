@@ -4,11 +4,11 @@ package input
 type KeyState uint32
 
 const (
-// KeyStateReleased indicates the key is released.
-KeyStateReleased KeyState = 0
+	// KeyStateReleased indicates the key is released.
+	KeyStateReleased KeyState = 0
 
-// KeyStatePressed indicates the key is pressed.
-KeyStatePressed KeyState = 1
+	// KeyStatePressed indicates the key is pressed.
+	KeyStatePressed KeyState = 1
 )
 
 // Keyboard represents the wl_keyboard interface.
@@ -16,47 +16,47 @@ KeyStatePressed KeyState = 1
 // The wl_keyboard interface represents one or more keyboards associated with
 // a seat. It provides events for key presses, releases, and modifier state.
 type Keyboard struct {
-objectBase
-keymap    *Keymap
-modifiers ModifierState
+	objectBase
+	keymap    *Keymap
+	modifiers ModifierState
 }
 
 const (
-keyboardOpcodeRelease uint16 = 0
+	keyboardOpcodeRelease uint16 = 0
 )
 
 const (
-keyboardEventKeymap     uint16 = 0
-keyboardEventEnter      uint16 = 1
-keyboardEventLeave      uint16 = 2
-keyboardEventKey        uint16 = 3
-keyboardEventModifiers  uint16 = 4
-keyboardEventRepeatInfo uint16 = 5
+	keyboardEventKeymap     uint16 = 0
+	keyboardEventEnter      uint16 = 1
+	keyboardEventLeave      uint16 = 2
+	keyboardEventKey        uint16 = 3
+	keyboardEventModifiers  uint16 = 4
+	keyboardEventRepeatInfo uint16 = 5
 )
 
 // ModifierState represents the state of keyboard modifiers.
 type ModifierState struct {
-Shift    bool
-CapsLock bool
-Ctrl     bool
-Alt      bool
-NumLock  bool
-Meta     bool
+	Shift    bool
+	CapsLock bool
+	Ctrl     bool
+	Alt      bool
+	NumLock  bool
+	Meta     bool
 }
 
 // Release destroys the keyboard object.
 func (k *Keyboard) Release() error {
-return k.conn.SendRequest(k.id, keyboardOpcodeRelease, nil)
+	return k.conn.SendRequest(k.id, keyboardOpcodeRelease, nil)
 }
 
 // HandleKeymap processes a keymap event from the compositor.
 //
 // This event provides a file descriptor containing the keymap in XKB format.
 // The format parameter indicates the keymap format (1 = XKB v1).
-func (k *Keyboard) HandleKeymap(format, fd uint32, size uint32) {
-if format == 1 {
-k.keymap = NewKeymap(int(fd), int(size))
-}
+func (k *Keyboard) HandleKeymap(format, fd, size uint32) {
+	if format == 1 {
+		k.keymap = NewKeymap(int(fd), int(size))
+	}
 }
 
 // HandleEnter processes an enter event from the compositor.
@@ -83,7 +83,7 @@ func (k *Keyboard) HandleKey(serial, time, key, state uint32) {
 // This event is sent when the modifier state changes. The parameters are
 // XKB modifier indices.
 func (k *Keyboard) HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group uint32) {
-k.modifiers = k.decodeModifiers(modsDepressed, modsLatched, modsLocked)
+	k.modifiers = k.decodeModifiers(modsDepressed, modsLatched, modsLocked)
 }
 
 // HandleRepeatInfo processes a repeat info event from the compositor.
@@ -93,18 +93,18 @@ func (k *Keyboard) HandleRepeatInfo(rate, delay int32) {
 }
 
 func (k *Keyboard) decodeModifiers(depressed, latched, locked uint32) ModifierState {
-mask := depressed | latched | locked
-return ModifierState{
-Shift:    (mask & 0x01) != 0,
-CapsLock: (mask & 0x02) != 0,
-Ctrl:     (mask & 0x04) != 0,
-Alt:      (mask & 0x08) != 0,
-NumLock:  (mask & 0x10) != 0,
-Meta:     (mask & 0x40) != 0,
-}
+	mask := depressed | latched | locked
+	return ModifierState{
+		Shift:    (mask & 0x01) != 0,
+		CapsLock: (mask & 0x02) != 0,
+		Ctrl:     (mask & 0x04) != 0,
+		Alt:      (mask & 0x08) != 0,
+		NumLock:  (mask & 0x10) != 0,
+		Meta:     (mask & 0x40) != 0,
+	}
 }
 
 // Modifiers returns the current modifier state.
 func (k *Keyboard) Modifiers() ModifierState {
-return k.modifiers
+	return k.modifiers
 }
