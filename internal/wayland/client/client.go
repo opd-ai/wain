@@ -196,3 +196,23 @@ func (c *Connection) Flush() error {
 	// Included for API completeness and future buffering support.
 	return nil
 }
+
+// AllocID allocates a new unique object ID.
+// Exported for use by extension packages (SHM, XDG, etc.).
+func (c *Connection) AllocID() uint32 {
+	return c.allocID()
+}
+
+// RegisterObject adds an object to the connection's object registry.
+// Exported for use by extension packages (SHM, XDG, etc.).
+func (c *Connection) RegisterObject(obj interface{}) {
+	if o, ok := obj.(Object); ok {
+		c.registerObject(o)
+	}
+}
+
+// SendRequest sends a request message to the compositor.
+// Exported for use by extension packages (SHM, XDG, etc.).
+func (c *Connection) SendRequest(objectID uint32, opcode uint16, args []wire.Argument) error {
+	return c.sendRequest(objectID, opcode, args)
+}

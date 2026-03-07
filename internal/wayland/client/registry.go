@@ -107,6 +107,21 @@ func (r *Registry) BindCompositor(global *Global) (*Compositor, error) {
 	return compositor, nil
 }
 
+// BindXdgWmBase is a helper that binds to the xdg_wm_base interface.
+// Returns the object ID and version for creating an XDG WmBase wrapper.
+func (r *Registry) BindXdgWmBase(global *Global) (uint32, uint32, error) {
+	if global.Interface != "xdg_wm_base" {
+		return 0, 0, fmt.Errorf("registry: not xdg_wm_base: %s", global.Interface)
+	}
+
+	objectID, err := r.Bind(global.Name, global.Interface, global.Version)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return objectID, global.Version, nil
+}
+
 // addGlobal is called internally when a global event is received.
 func (r *Registry) addGlobal(name uint32, iface string, version uint32) {
 	r.globals[name] = &Global{
