@@ -139,6 +139,16 @@ func EncodeRequestHeader(w io.Writer, opcode, data uint8, length uint16) error {
 	return nil
 }
 
+// EncodeUint64 writes a uint64 in little-endian format.
+func EncodeUint64(w io.Writer, v uint64) error {
+	var buf [8]byte
+	binary.LittleEndian.PutUint64(buf[:], v)
+	if _, err := w.Write(buf[:]); err != nil {
+		return fmt.Errorf("wire: failed to write uint64: %w", err)
+	}
+	return nil
+}
+
 // EncodeUint32 writes a uint32 in little-endian format.
 func EncodeUint32(w io.Writer, v uint32) error {
 	var buf [4]byte
@@ -155,6 +165,14 @@ func EncodeUint16(w io.Writer, v uint16) error {
 	binary.LittleEndian.PutUint16(buf[:], v)
 	if _, err := w.Write(buf[:]); err != nil {
 		return fmt.Errorf("wire: failed to write uint16: %w", err)
+	}
+	return nil
+}
+
+// EncodeUint8 writes a uint8.
+func EncodeUint8(w io.Writer, v uint8) error {
+	if _, err := w.Write([]byte{v}); err != nil {
+		return fmt.Errorf("wire: failed to write uint8: %w", err)
 	}
 	return nil
 }

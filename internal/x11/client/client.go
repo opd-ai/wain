@@ -35,6 +35,8 @@ import (
 	"fmt"
 	"net"
 	"sync/atomic"
+	"syscall"
+	"unsafe"
 
 	"github.com/opd-ai/wain/internal/x11/wire"
 )
@@ -368,4 +370,115 @@ func (c *Connection) ExtensionOpcode(name string) (uint8, error) {
 
 	majorOpcode := reply[9]
 	return majorOpcode, nil
+}
+
+// SendRequestWithFDs sends a request with attached file descriptors.
+// This is used by extensions like DRI3 that need to pass DMA-BUF fds to the X server.
+//
+// The fds are sent via SCM_RIGHTS control messages over the Unix socket.
+// The X server will duplicate the file descriptors, so the caller retains ownership
+// and is responsible for closing them.
+func (c *Connection) SendRequestWithFDs(req []byte, fds []int) error {
+	if c.closed {
+		return ErrClosed
+	}
+
+	// Convert net.Conn to *net.UnixConn for SendMsg support
+	unixConn, ok := c.conn.(*net.UnixConn)
+	if !ok {
+		return fmt.Errorf("client: connection is not a Unix socket")
+	}
+
+	// Build control message with file descriptors
+	var oob []byte
+	if len(fds) > 0 {
+		// SCM_RIGHTS control message size: 16 bytes header + 4*len(fds) bytes data
+		rights := make([]byte, syscall.CmsgSpace(4*len(fds)))
+		header := (*syscall.Cmsghdr)(unsafe.Pointer(&rights[0]))
+		header.Level = syscall.SOL_SOCKET
+		header.Type = syscall.SCM_RIGHTS
+		header.SetLen(syscall.CmsgLen(4 * len(fds)))
+		
+		// Copy file descriptors into control message
+		data := rights[syscall.CmsgSpace(0):]
+		for i, fd := range fds {
+			binary.LittleEndian.PutUint32(data[i*4:], uint32(fd))
+		}
+		oob = rights
+	}
+
+	// Send request with file descriptors
+	if _, _, err := unixConn.WriteMsgUnix(req, oob, nil); err != nil {
+		return fmt.Errorf("client: failed to send request with fds: %w", err)
+	}
+
+	c.sequence.Add(1)
+	return nil
+}
+
+// SendRequestAndReplyWithFDs sends a request with optional file descriptors
+// and waits for a reply that may also contain file descriptors.
+//
+// This is used by extensions like DRI3 where both requests and replies can
+// carry file descriptors (e.g., DRI3Open returns a render node fd).
+func (c *Connection) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
+	if err := c.SendRequestWithFDs(req, fds); err != nil {
+		return nil, nil, err
+	}
+
+	// Convert net.Conn to *net.UnixConn for RecvMsg support
+	unixConn, ok := c.conn.(*net.UnixConn)
+	if !ok {
+		return nil, nil, fmt.Errorf("client: connection is not a Unix socket")
+	}
+
+	// Read reply header with potential file descriptors
+	reply := make([]byte, wire.ReplyHeaderSize)
+	oob := make([]byte, syscall.CmsgSpace(4*16)) // Space for up to 16 fds
+	
+	n, oobn, _, _, err := unixConn.ReadMsgUnix(reply, oob)
+	if err != nil {
+		return nil, nil, fmt.Errorf("client: failed to read reply: %w", err)
+	}
+	if n < wire.ReplyHeaderSize {
+		return nil, nil, fmt.Errorf("client: incomplete reply (got %d bytes)", n)
+	}
+
+	// Check if it's a reply (type 1) or error (type 0)
+	if reply[0] == 0 {
+		errCode := reply[1]
+		return nil, nil, fmt.Errorf("client: X11 error code %d", errCode)
+	}
+
+	// Parse additional data length (in 4-byte units)
+	dataLen := binary.LittleEndian.Uint32(reply[4:8])
+	if dataLen > 0 {
+		additionalData := make([]byte, dataLen*4)
+		if _, err := c.conn.Read(additionalData); err != nil {
+			return nil, nil, fmt.Errorf("client: failed to read reply data: %w", err)
+		}
+		reply = append(reply, additionalData...)
+	}
+
+	// Extract file descriptors from control message
+	var receivedFDs []int
+	if oobn > 0 {
+		messages, err := syscall.ParseSocketControlMessage(oob[:oobn])
+		if err != nil {
+			return nil, nil, fmt.Errorf("client: failed to parse control message: %w", err)
+		}
+		
+		for _, msg := range messages {
+			if msg.Header.Level == syscall.SOL_SOCKET && msg.Header.Type == syscall.SCM_RIGHTS {
+				// Extract file descriptors
+				fds, err := syscall.ParseUnixRights(&msg)
+				if err != nil {
+					return nil, nil, fmt.Errorf("client: failed to parse SCM_RIGHTS: %w", err)
+				}
+				receivedFDs = append(receivedFDs, fds...)
+			}
+		}
+	}
+
+	return reply, receivedFDs, nil
 }
