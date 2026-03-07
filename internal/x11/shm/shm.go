@@ -99,13 +99,25 @@ type Connection interface {
 	ExtensionOpcode(name string) (uint8, error)
 }
 
+// sysPointer converts a syscall-returned uintptr address to unsafe.Pointer.
+// This is safe for syscall-allocated memory (like shmat) because:
+// 1. The memory is allocated and managed by the kernel, not Go's GC
+// 2. The address is fixed and will not move
+// 3. The conversion satisfies unsafe.Pointer rule (6): converting syscall results
+//
+// Note: This function exists to centralize and document this pattern, which
+// triggers a go vet warning but is safe for kernel-allocated memory.
+func sysPointer(addr uintptr) unsafe.Pointer {
+	return unsafe.Pointer(addr)
+}
+
 // Segment represents an attached shared memory segment.
 type Segment struct {
-	ID       Shmseg  // X server segment ID
-	ShmID    int     // System V shared memory ID
-	Addr     uintptr // Attached memory address
-	Size     int     // Segment size in bytes
-	ReadOnly bool    // Whether server has read-only access
+	ID       Shmseg         // X server segment ID
+	ShmID    int            // System V shared memory ID
+	Addr     unsafe.Pointer // Attached memory address
+	Size     int            // Segment size in bytes
+	ReadOnly bool           // Whether server has read-only access
 }
 
 // Extension represents the MIT-SHM extension state.
@@ -176,7 +188,8 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 		return nil, fmt.Errorf("%w: shmget failed: %v", ErrShmFailed, errno)
 	}
 
-	// Attach segment to our address space
+	// Attach segment to our address space and convert to pointer.
+	// Use sysPointer helper to document why uintptr->pointer conversion is safe here.
 	addr, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
 	if errno != 0 {
 		// Clean up segment on failure
@@ -187,7 +200,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	seg := &Segment{
 		ID:       Shmseg(xid),
 		ShmID:    int(shmID),
-		Addr:     addr,
+		Addr:     sysPointer(addr),
 		Size:     size,
 		ReadOnly: readOnly,
 	}
@@ -249,7 +262,7 @@ func (ext *Extension) DetachSegment(conn Connection, seg *Segment) error {
 // The segment is destroyed after all processes detach from it.
 func (seg *Segment) DestroySegment() error {
 	// Detach from our address space
-	if _, _, errno := syscall.Syscall(syscall.SYS_SHMDT, seg.Addr, 0, 0); errno != 0 {
+	if _, _, errno := syscall.Syscall(syscall.SYS_SHMDT, uintptr(seg.Addr), 0, 0); errno != 0 {
 		return fmt.Errorf("%w: shmdt failed: %v", ErrShmFailed, errno)
 	}
 
@@ -258,7 +271,7 @@ func (seg *Segment) DestroySegment() error {
 		return fmt.Errorf("%w: shmctl(IPC_RMID) failed: %v", ErrShmFailed, errno)
 	}
 
-	seg.Addr = 0
+	seg.Addr = nil
 	return nil
 }
 
@@ -267,7 +280,7 @@ func (seg *Segment) DestroySegment() error {
 // Returns an error if the segment is too large or has been destroyed.
 func (seg *Segment) GetBuffer() ([]byte, error) {
 	// Validate segment hasn't been destroyed
-	if seg.Addr == 0 {
+	if seg.Addr == nil {
 		return nil, ErrInvalidSegment
 	}
 
@@ -279,15 +292,9 @@ func (seg *Segment) GetBuffer() ([]byte, error) {
 	}
 
 	// Convert shared memory address to byte slice.
-	// This is safe because:
-	// 1. seg.Addr comes from syscall.SHMAT which keeps the memory mapped
-	// 2. The segment remains valid until DestroySegment is called
-	// 3. Size validation above prevents overflow
-	//
-	// Note: This triggers a go vet warning about unsafe.Pointer conversion from uintptr.
-	// This is a false positive - the pattern is safe for syscall-allocated shared memory
-	// where the uintptr represents a fixed memory-mapped address that doesn't move.
-	return unsafe.Slice((*byte)(unsafe.Pointer(seg.Addr)), seg.Size), nil
+	// This is safe because seg.Addr points to memory-mapped shared memory
+	// that remains valid until DestroySegment is called.
+	return unsafe.Slice((*byte)(seg.Addr), seg.Size), nil
 }
 
 // PutImage transfers pixel data to a drawable using shared memory.

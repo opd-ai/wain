@@ -2,7 +2,15 @@ package shm
 
 import (
 	"testing"
+	"unsafe"
 )
+
+// testPointer converts a test address value to unsafe.Pointer.
+// Only for use in tests with non-GC-managed addresses.
+func testPointer(addr uintptr) unsafe.Pointer {
+	return unsafe.Pointer(addr)
+}
+
 
 // TestExtensionConstants verifies SHM extension constant values.
 func TestExtensionConstants(t *testing.T) {
@@ -43,7 +51,7 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "destroyed segment",
 			seg: &Segment{
-				Addr: 0,
+				Addr: nil,
 				Size: 1024,
 			},
 			wantErr: ErrInvalidSegment,
@@ -51,7 +59,7 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "negative size",
 			seg: &Segment{
-				Addr: 0x1000,
+				Addr: testPointer(0x1000),
 				Size: -1,
 			},
 			wantErr: ErrSegmentTooLarge,
@@ -59,7 +67,7 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "size exceeds maximum",
 			seg: &Segment{
-				Addr: 0x1000,
+				Addr: testPointer(0x1000),
 				Size: (1 << 30) + 1,
 			},
 			wantErr: ErrSegmentTooLarge,

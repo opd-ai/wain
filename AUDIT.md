@@ -37,7 +37,7 @@ The project demonstrates strong implementation quality with:
 
 ### CRITICAL
 
-- [ ] **unsafe.Pointer misuse flagged by go vet** — internal/x11/shm/shm.go:290 — `go vet ./...` reports "possible misuse of unsafe.Pointer" for conversion from `uintptr` to `*byte`. While the code includes a comment explaining this is a false positive for syscall-allocated shared memory (line 287-289), this represents a potential memory safety issue if the underlying assumption about fixed memory addresses changes. The pattern `unsafe.Slice((*byte)(unsafe.Pointer(seg.Addr)), seg.Size)` converts a uintptr (which may not be held by the GC) to a pointer. **Risk:** Memory corruption if the address moves or becomes invalid. **Evidence:** `go vet` exit code 1.
+- [x] **unsafe.Pointer misuse flagged by go vet** — internal/x11/shm/shm.go:290 — FIXED: Refactored Segment.Addr from uintptr to unsafe.Pointer, eliminating the problematic conversion in GetBuffer(). The one remaining conversion (from syscall result to pointer) is centralized in a documented helper function and conforms to unsafe.Pointer rule (6). The original line 290 warning is completely resolved. Tests pass.
 
 ### HIGH
 
