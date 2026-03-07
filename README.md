@@ -4,17 +4,49 @@
 
 ## Status
 
-**Phase 0** (Foundation & Toolchain Setup) — Build toolchain validation  
+**Phase 1** (Software Rendering Path) — 85% Complete  
 See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 
 ## Current Functionality
 
-Phase 0 implements the core build infrastructure:
+### Foundation (Phase 0) — ✅ Complete
 - ✅ Go → Rust static library linking (CGO + musl)
 - ✅ C ABI boundary validation (`render_add`, `render_version`)
 - ✅ Fully static binary output (no dynamic dependencies)
 
-**Not yet implemented:** GPU rendering, Mesa/Vulkan integration, X11/Wayland protocol support, or UI toolkit APIs are planned for future phases (see [ROADMAP.md](ROADMAP.md)).
+### Protocol Layer (Phase 1.1-1.2) — ✅ Complete
+**Wayland Client** (6 packages, ~2,100 LOC):
+- ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
+- ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
+- ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
+- ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
+- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
+
+**X11 Client** (4 packages, ~1,150 LOC):
+- ✅ Connection setup: authentication, XID allocation
+- ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
+- ✅ Graphics context: CreateGC, PutImage, CreatePixmap
+- ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
+
+### Rendering Layer (Phase 1.4) — ✅ Complete
+**Software 2D Rasterizer** (5 packages, ~1,550 LOC):
+- ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
+- ✅ Curves: quadratic/cubic Bezier, arc fills
+- ✅ Text: SDF-based rendering with embedded glyph atlas
+- ✅ Effects: box shadow (Gaussian blur), linear/radial gradients
+- ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
+
+### UI Framework (Phase 1.5) — ✅ Complete
+**Widget Layer** (3 packages, ~700 LOC):
+- ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
+- ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
+- ✅ Sizing: percentage-based dimensions with auto-layout
+
+### Integration Status — ⚠️ In Progress
+- ❌ No demonstration binaries (components exist but not wired together)
+- ❌ All packages marked `internal/` (no public API surface yet)
+
+**Not yet implemented:** GPU rendering (Phase 2+), DRM/KMS buffer infrastructure, Intel/AMD GPU command submission, shader compiler pipeline. The project currently uses CPU-based software rendering only.
 
 ## Prerequisites
 
@@ -98,23 +130,59 @@ This demonstrates the Go → Rust static library linkage is working correctly.
 
 ## Architecture
 
+The project consists of four main layers (bottom-up):
+
+### 1. Rust Rendering Library (render-sys/)
+```
+render-sys/src/lib.rs  →  librender.a (static library)
+```
+- **Current scope:** C ABI test functions (`render_add`, `render_version`)
+- **Future scope:** GPU command submission (Phase 2+)
+- **Build:** Compiled with musl target for static linking
+
+### 2. Protocol Layer (internal/wayland/, internal/x11/)
+```
+Protocol Implementations (~3,250 LOC)
+├── Wayland Client (6 packages)
+│   ├── wire/        → Binary marshaling + fd passing
+│   ├── socket/      → Unix domain socket + SCM_RIGHTS
+│   ├── client/      → Display, Registry, Compositor, Surface
+│   ├── shm/         → Shared memory buffers (memfd)
+│   ├── xdg/         → Window management (xdg-shell)
+│   └── input/       → Seat, Pointer, Keyboard, xkbcommon
+└── X11 Client (4 packages)
+    ├── wire/        → Request/reply/event encoding
+    ├── client/      → Connection, CreateWindow, MapWindow
+    ├── events/      → KeyPress, Button, Motion events
+    └── gc/          → Graphics context, PutImage
+```
+
+### 3. Rendering Layer (internal/raster/)
+```
+Software 2D Rasterizer (~1,550 LOC)
+├── core/        → Rectangles, rounded rects, lines
+├── curves/      → Quadratic/cubic Bezier, arc fills
+├── composite/   → Alpha blending, image filtering
+├── effects/     → Box shadow, gradients
+└── text/        → SDF-based text rendering
+```
+
+### 4. UI Framework (internal/ui/)
+```
+Widget Layer (~700 LOC)
+├── layout/      → Flexbox-like Row/Column layout
+├── pctwidget/   → Percentage-based sizing
+└── widgets/     → Button, TextInput, ScrollContainer
+```
+
+### 5. Application Layer (cmd/)
 ```
 ┌─────────────┐
-│ cmd/wain    │  Go binary (main package)
-│ (main.go)   │
-└──────┬──────┘
-       │ imports
-       ▼
-┌─────────────────┐
-│ internal/render │  Go CGO bindings
-│ (render.go)     │
-└──────┬──────────┘
-       │ CGO → C ABI
-       ▼
-┌─────────────────┐
-│ render-sys      │  Rust static library (.a)
-│ (lib.rs)        │  Compiled with: staticlib, musl target
-└─────────────────┘
+│ cmd/wain    │  Demo binary (Phase 0 validation only)
+│ (main.go)   │  Calls render.Add, render.Version
+└─────────────┘
+
+Future: cmd/wayland-demo, cmd/x11-demo, cmd/widget-demo
 ```
 
 **Key constraint:** The final binary must be fully static (no libc dependency) to support deployment without system dependencies. This is enforced via:
@@ -161,8 +229,15 @@ From [ROADMAP.md](ROADMAP.md):
 
 ```
 wain/
-├── cmd/wain/              # Go binary entry point
-├── internal/render/       # Go CGO bindings to Rust
+├── cmd/
+│   ├── wain/              # Phase 0 validation binary
+│   └── gen-atlas/         # SDF font atlas generator (internal tool)
+├── internal/
+│   ├── render/            # Go CGO bindings to Rust
+│   ├── wayland/           # Wayland protocol client (6 packages)
+│   ├── x11/               # X11 protocol client (4 packages)
+│   ├── raster/            # Software 2D rasterizer (5 packages)
+│   └── ui/                # Widget layer + layout (3 packages)
 ├── render-sys/            # Rust static library (C ABI exports)
 ├── Makefile               # Build automation (enforces static linking)
 ├── ROADMAP.md             # 8-phase implementation plan
@@ -171,22 +246,69 @@ wain/
 
 ### Code Conventions
 
-- **Error handling:** Not yet applicable (Phase 0 has no error-prone operations)
+- **Error handling:** Not yet standardized (Phase 1 focus was implementation breadth)
 - **Testing:** Table-driven tests for Go; unit tests for Rust
-- **Documentation:** All exported functions must have godoc comments
+- **Documentation:** All exported functions should have godoc comments (96.9% current coverage)
 - **Naming:** Follow Go conventions; avoid package/file stuttering
+- **Complexity targets:** Cyclomatic ≤10, function length ≤50 lines (some Phase 1 functions exceed this)
+
+### Completing Phase 1
+
+The protocol and rendering implementations are complete but not integrated. To finish Phase 1:
+
+1. **Create demonstration binaries:**
+   - `cmd/wayland-demo/` — Open a Wayland window, render solid color
+   - `cmd/x11-demo/` — Open an X11 window, render solid color
+   - `cmd/widget-demo/` — Interactive UI with buttons, text input, scrolling
+
+2. **Refactor complexity hotspots:**
+   - `layoutRow`/`layoutColumn` (internal/ui/layout/) — Reduce 40-line duplication
+   - `EncodeMessage` (internal/wayland/wire/) — Extract helper functions
+
+3. **Create public API surface:**
+   - Move protocol clients from `internal/` to public packages
+   - Add platform abstraction layer to hide Wayland/X11 differences
+
+4. **Add integration tests:**
+   - End-to-end tests covering protocol → rasterizer → display
+
+See [PLAN.md](PLAN.md) for detailed implementation steps.
 
 ### Adding New Functionality
 
 See [ROADMAP.md](ROADMAP.md) for planned phases:
-- **Phase 1:** DRM/KMS device enumeration
-- **Phase 2:** Intel GPU initialization (i915)
-- **Phase 3:** Vulkan context & minimal triangle
-- **Phase 4:** X11 window protocol
-- **Phase 5:** Basic UI primitives
-- **Phase 6:** Text rendering
-- **Phase 7:** Input handling
-- **Phase 8:** AMD GPU support
+- **Phase 1:** Software rendering path (85% complete — needs integration demos)
+- **Phase 2:** DRM/KMS buffer infrastructure
+- **Phase 3:** Intel GPU command submission
+- **Phase 4:** Shader compiler pipeline (GLSL/WGSL → Intel EU binary)
+- **Phase 5:** GPU rendering backend integration
+- **Phase 6:** AMD GPU support (RDNA ISA backend)
+- **Phase 7:** Hardening & fallback (auto-detection, error recovery)
+- **Phase 8:** Polish (HiDPI, clipboard, window decorations, accessibility)
+
+## Known Limitations
+
+### Phase 1 (Current)
+
+**Integration gaps:**
+- No demonstration binaries showing protocol → rasterizer → display pipeline
+- All packages marked `internal/` — no public API for external users
+- No platform abstraction layer (users must choose Wayland or X11 explicitly)
+- No event loop implementation (components exist but not wired together)
+
+**Missing optimizations:**
+- X11: No MIT-SHM extension (uses slower PutImage fallback)
+- Rasterizer: No tile-based threading (single-threaded CPU rendering)
+- Layout: High complexity in `layoutRow`/`layoutColumn` (needs refactoring)
+
+**Testing:**
+- Unit tests exist for individual packages (all passing)
+- No end-to-end integration tests
+- No automated screenshot comparison tests
+
+### Phase 2+ (Future)
+
+See [ROADMAP.md](ROADMAP.md) for planned GPU rendering features.
 
 ## Troubleshooting
 
@@ -215,4 +337,13 @@ See [LICENSE](LICENSE) file.
 
 ## Contributing
 
-This project is in Phase 0 (foundation). Contributions are welcome once Phase 0 is complete and CI is established. See [ROADMAP.md](ROADMAP.md) for planned work.
+This project is in **Phase 1** (Software Rendering Path — 85% complete). 
+
+**Priority contributions:**
+1. **Integration demos** — Create working demonstration binaries (see [PLAN.md](PLAN.md) Step 1-2)
+2. **Complexity refactoring** — Reduce duplication in layout system (see [PLAN.md](PLAN.md) Step 3-4)
+3. **Public API design** — Move packages from `internal/` to public exports
+4. **MIT-SHM extension** — Optimize X11 rendering performance
+5. **Integration tests** — End-to-end tests covering full protocol stack
+
+See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan and [AUDIT-2026-03-07.md](AUDIT-2026-03-07.md) for detailed findings from the recent code audit.
