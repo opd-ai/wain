@@ -168,7 +168,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	}
 
 	// Create System V shared memory segment
-	shmID, _, errno := syscall.Syscall(syscall.SYS_SHMGET, uintptr(ipcPrivate), uintptr(size), 0600)
+	shmID, _, errno := syscall.Syscall(syscall.SYS_SHMGET, uintptr(ipcPrivate), uintptr(size), 0o600)
 	if errno != 0 {
 		return nil, fmt.Errorf("%w: shmget failed: %v", ErrShmFailed, errno)
 	}
@@ -287,8 +287,8 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 	wire.EncodeUint16(&buf, height)
 	wire.EncodeInt16(&buf, srcX)
 	wire.EncodeInt16(&buf, srcY)
-	wire.EncodeUint16(&buf, width)   // src-width (use full width)
-	wire.EncodeUint16(&buf, height)  // src-height (use full height)
+	wire.EncodeUint16(&buf, width)  // src-width (use full width)
+	wire.EncodeUint16(&buf, height) // src-height (use full height)
 	wire.EncodeInt16(&buf, dstX)
 	wire.EncodeInt16(&buf, dstY)
 	buf.WriteByte(depth)
