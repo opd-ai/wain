@@ -43,12 +43,12 @@ func (m *mockConnection) ExtensionOpcode(name string) (uint8, error) {
 // TestQueryExtension validates Present extension query structure.
 func TestQueryExtension(t *testing.T) {
 	tests := []struct {
-		name       string
-		mockReply  []byte
-		wantMajor  uint32
-		wantMinor  uint32
-		wantErr    bool
-		wantAsync  bool
+		name      string
+		mockReply []byte
+		wantMajor uint32
+		wantMinor uint32
+		wantErr   bool
+		wantAsync bool
 	}{
 		{
 			name: "Present 1.2 supported",
@@ -157,7 +157,6 @@ func TestPresentPixmap(t *testing.T) {
 		targetMSC, 0, 0, // targetMSC, divisor, remainder
 		PresentOptionNone,
 	)
-
 	if err != nil {
 		t.Fatalf("PresentPixmap() error = %v", err)
 	}
@@ -236,7 +235,6 @@ func TestSelectInput(t *testing.T) {
 	eventMask := uint32(PresentEventMaskCompleteNotify | PresentEventMaskIdleNotify)
 
 	err := ext.SelectInput(conn, eid, window, eventMask)
-
 	if err != nil {
 		t.Fatalf("SelectInput() error = %v", err)
 	}
@@ -286,7 +284,6 @@ func TestNotifyMSC(t *testing.T) {
 	targetMSC := uint64(5000)
 
 	err := ext.NotifyMSC(conn, window, serial, targetMSC, 0, 0)
-
 	if err != nil {
 		t.Fatalf("NotifyMSC() error = %v", err)
 	}
@@ -428,10 +425,10 @@ func TestParseCompleteNotify(t *testing.T) {
 // TestParseIdleNotify validates IdleNotify event parsing.
 func TestParseIdleNotify(t *testing.T) {
 	tests := []struct {
-		name        string
-		eventData   []byte
-		wantPixmap  XID
-		wantErr     bool
+		name       string
+		eventData  []byte
+		wantPixmap XID
+		wantErr    bool
 	}{
 		{
 			name:       "Valid idle event",
@@ -476,47 +473,47 @@ func TestParseIdleNotify(t *testing.T) {
 // makeCompleteNotifyEvent constructs a test CompleteNotify event.
 func makeCompleteNotifyEvent(kind CompleteKind, mode CompleteMode, serial uint32, ust, msc uint64) []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 40))
-	
+
 	// Event header
-	buf.WriteByte(35)  // type (generic event)
-	buf.WriteByte(0)   // extension
-	buf.WriteByte(0)   // sequence low
-	buf.WriteByte(0)   // sequence high
+	buf.WriteByte(35)             // type (generic event)
+	buf.WriteByte(0)              // extension
+	buf.WriteByte(0)              // sequence low
+	buf.WriteByte(0)              // sequence high
 	buf.Write([]byte{0, 0, 0, 0}) // length
-	
+
 	// Event body
 	buf.WriteByte(byte(kind))
 	buf.WriteByte(byte(mode))
-	buf.WriteByte(0)   // pad
-	buf.WriteByte(0)   // pad
+	buf.WriteByte(0) // pad
+	buf.WriteByte(0) // pad
 	binary.Write(buf, binary.LittleEndian, serial)
 	binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
 	binary.Write(buf, binary.LittleEndian, uint32(0x500001)) // pixmap
 	binary.Write(buf, binary.LittleEndian, ust)
 	binary.Write(buf, binary.LittleEndian, msc)
-	
+
 	return buf.Bytes()
 }
 
 // makeIdleNotifyEvent constructs a test IdleNotify event.
 func makeIdleNotifyEvent(pixmap XID) []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 32))
-	
+
 	// Event header
-	buf.WriteByte(35)  // type (generic event)
-	buf.WriteByte(0)   // extension
-	buf.WriteByte(0)   // sequence low
-	buf.WriteByte(0)   // sequence high
+	buf.WriteByte(35)             // type (generic event)
+	buf.WriteByte(0)              // extension
+	buf.WriteByte(0)              // sequence low
+	buf.WriteByte(0)              // sequence high
 	buf.Write([]byte{0, 0, 0, 0}) // length
-	
+
 	// Event body
 	binary.Write(buf, binary.LittleEndian, uint32(0x600001)) // event ID
 	binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
 	binary.Write(buf, binary.LittleEndian, uint32(0))        // serial
 	binary.Write(buf, binary.LittleEndian, uint32(pixmap))   // pixmap
 	binary.Write(buf, binary.LittleEndian, uint32(0))        // idle_fence
-	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0})               // pad
-	
+	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0})                // pad
+
 	return buf.Bytes()
 }
 

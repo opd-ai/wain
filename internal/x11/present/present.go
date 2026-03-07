@@ -79,11 +79,11 @@ const (
 
 // Present request opcodes (relative to extension base opcode).
 const (
-	PresentQueryVersion   = 0
-	PresentPixmap         = 1
-	PresentNotifyMSC      = 2
-	PresentSelectInput    = 3
-	PresentQueryCapables  = 4 // Present 1.2+
+	PresentQueryVersion  = 0
+	PresentPixmap        = 1
+	PresentNotifyMSC     = 2
+	PresentSelectInput   = 3
+	PresentQueryCapables = 4 // Present 1.2+
 )
 
 // Present event codes (relative to extension base event).
@@ -96,10 +96,10 @@ const (
 
 // PresentOption flags for PresentPixmap request.
 const (
-	PresentOptionNone  = 0
-	PresentOptionAsync = 1 << 0 // Present 1.2+: request async flip if possible
-	PresentOptionCopy  = 1 << 1 // Present 1.2+: request copy instead of flip
-	PresentOptionUST   = 1 << 2 // Present 1.2+: target_msc is in UST (microseconds)
+	PresentOptionNone       = 0
+	PresentOptionAsync      = 1 << 0 // Present 1.2+: request async flip if possible
+	PresentOptionCopy       = 1 << 1 // Present 1.2+: request copy instead of flip
+	PresentOptionUST        = 1 << 2 // Present 1.2+: target_msc is in UST (microseconds)
 	PresentOptionSuboptimal = 1 << 3 // Present 1.2+: presentation may be suboptimal
 )
 
@@ -107,7 +107,7 @@ const (
 type CompleteKind uint8
 
 const (
-	CompleteKindPixmap CompleteKind = 0 // Presented via pixmap (flip or copy)
+	CompleteKindPixmap    CompleteKind = 0 // Presented via pixmap (flip or copy)
 	CompleteKindNotifyMSC CompleteKind = 1 // NotifyMSC event delivered
 )
 
@@ -325,11 +325,11 @@ func (e *Extension) NotifyMSC(conn Connection, window XID,
 
 // CompleteNotifyEvent represents a PresentCompleteNotify event.
 type CompleteNotifyEvent struct {
-	Kind     CompleteKind // How presentation completed
-	Mode     CompleteMode // Method used (flip/copy/skip)
-	Serial   uint32       // Client-provided serial from PresentPixmap
-	UST      uint64       // Presentation timestamp (microseconds)
-	MSC      uint64       // Media stream counter value
+	Kind   CompleteKind // How presentation completed
+	Mode   CompleteMode // Method used (flip/copy/skip)
+	Serial uint32       // Client-provided serial from PresentPixmap
+	UST    uint64       // Presentation timestamp (microseconds)
+	MSC    uint64       // Media stream counter value
 }
 
 // IdleNotifyEvent represents a PresentIdleNotify event.
@@ -355,7 +355,7 @@ func ParseCompleteNotify(data []byte) (*CompleteNotifyEvent, error) {
 		Serial: binary.LittleEndian.Uint32(data[12:16]),
 		// window: data[16:20] (not extracted)
 		// pixmap: data[20:24] (not extracted)
-		UST:    binary.LittleEndian.Uint64(data[24:32]),
+		UST: binary.LittleEndian.Uint64(data[24:32]),
 	}
 
 	// MSC is in next 8 bytes if present
