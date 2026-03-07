@@ -114,21 +114,21 @@ func NewAtlas() (*Atlas, error) {
 		y := int(binary.LittleEndian.Uint32(atlasData[offset+8 : offset+12]))
 		w := int(binary.LittleEndian.Uint32(atlasData[offset+12 : offset+16]))
 		h := int(binary.LittleEndian.Uint32(atlasData[offset+16 : offset+20]))
-		
+
 		// Fixed-point values (divide by 64 to get float)
 		ox := float64(int32(binary.LittleEndian.Uint32(atlasData[offset+20:offset+24]))) / 64.0
 		oy := float64(int32(binary.LittleEndian.Uint32(atlasData[offset+24:offset+28]))) / 64.0
 		adv := float64(binary.LittleEndian.Uint32(atlasData[offset+28:offset+32])) / 64.0
 
 		glyphs[r] = &Glyph{
-			Rune:     r,
-			X:        x,
-			Y:        y,
-			Width:    w,
-			Height:   h,
-			OffsetX:  ox,
-			OffsetY:  oy,
-			Advance:  adv,
+			Rune:    r,
+			X:       x,
+			Y:       y,
+			Width:   w,
+			Height:  h,
+			OffsetX: ox,
+			OffsetY: oy,
+			Advance: adv,
 		}
 		offset += 36
 	}

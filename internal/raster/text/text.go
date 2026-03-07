@@ -21,7 +21,7 @@ import (
 //
 // SDF rendering provides smooth antialiasing at any scale. The size parameter
 // controls the final rendered height.
-func DrawText(buf *core.Buffer, text string, x, y float64, size float64, color core.Color, atlas *Atlas) {
+func DrawText(buf *core.Buffer, text string, x, y, size float64, color core.Color, atlas *Atlas) {
 	if atlas == nil || buf == nil {
 		return
 	}
