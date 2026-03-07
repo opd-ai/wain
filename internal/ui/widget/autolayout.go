@@ -27,7 +27,13 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 		style = DefaultStyle()
 	}
 	pad := style.Padding()
+	if pad < 0 {
+		pad = 0
+	}
 	gap := style.Gap()
+	if gap < 0 {
+		gap = 0
+	}
 
 	// Content area after padding.
 	cx := parentX + pad
