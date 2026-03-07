@@ -60,6 +60,10 @@ pub struct GemCreate {
 pub const XE_GEM_CREATE_FLAG_DEFER_BACKING: u32 = 1 << 0;
 pub const XE_GEM_CREATE_FLAG_SCANOUT: u32 = 1 << 1;
 
+/// Memory placement regions for Xe GEM buffers.
+pub const XE_GEM_CREATE_PLACEMENT_SYSTEM: u32 = 1 << 0;
+pub const XE_GEM_CREATE_PLACEMENT_VRAM0: u32 = 1 << 1;
+
 /// CPU caching modes for Xe GEM buffers.
 pub const XE_GEM_CPU_CACHING_WB: u32 = 0;   // Write-back
 pub const XE_GEM_CPU_CACHING_WC: u32 = 1;   // Write-combining

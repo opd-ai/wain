@@ -7,6 +7,8 @@
 pub mod drm;
 pub mod i915;
 pub mod xe;
+pub mod allocator;
+pub mod slab;
 
 /// Add two 32-bit integers and return the result.
 ///

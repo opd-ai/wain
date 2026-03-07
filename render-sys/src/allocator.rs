@@ -1,0 +1,210 @@
+/// GPU buffer allocator with tiling support.
+///
+/// This module provides a buffer allocator that can create GPU-visible buffers
+/// with appropriate tiling formats for optimal rendering performance.
+
+use std::io;
+use std::os::unix::io::RawFd;
+use crate::drm::DrmDevice;
+use crate::i915;
+use crate::xe;
+
+/// Tiling format for GPU buffers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TilingFormat {
+    /// Linear (no tiling) - simple row-major layout.
+    None,
+    /// X-tiled - optimized for textures and render targets on Intel GPUs.
+    X,
+    /// Y-tiled - optimized for depth/stencil buffers on Intel GPUs.
+    Y,
+}
+
+/// GPU driver backend type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DriverType {
+    /// Intel i915 driver (Gen9-Gen12).
+    I915,
+    /// Intel Xe driver (Gen12+).
+    Xe,
+}
+
+/// GPU buffer handle.
+#[derive(Debug)]
+pub struct Buffer {
+    pub handle: u32,
+    pub size: u64,
+    pub width: u32,
+    pub height: u32,
+    pub stride: u32,
+    pub tiling: TilingFormat,
+    driver: DriverType,
+}
+
+/// Buffer allocator for GPU-visible memory.
+pub struct BufferAllocator {
+    device: DrmDevice,
+    driver: DriverType,
+}
+
+impl BufferAllocator {
+    /// Create a new buffer allocator for the given DRM device.
+    pub fn new(device: DrmDevice, driver: DriverType) -> Self {
+        Self { device, driver }
+    }
+
+    /// Allocate a GPU buffer with the specified dimensions and tiling format.
+    ///
+    /// Returns a Buffer handle that can be used for rendering or exported as DMA-BUF.
+    pub fn allocate(
+        &self,
+        width: u32,
+        height: u32,
+        bpp: u32,
+        tiling: TilingFormat,
+    ) -> io::Result<Buffer> {
+        match self.driver {
+            DriverType::I915 => self.allocate_i915(width, height, bpp, tiling),
+            DriverType::Xe => self.allocate_xe(width, height, bpp, tiling),
+        }
+    }
+
+    /// Allocate buffer using i915 driver.
+    fn allocate_i915(
+        &self,
+        width: u32,
+        height: u32,
+        bpp: u32,
+        tiling: TilingFormat,
+    ) -> io::Result<Buffer> {
+        // Calculate stride based on tiling format
+        let stride = match tiling {
+            TilingFormat::None => width * (bpp / 8),
+            TilingFormat::X => {
+                // X-tiled: 512-byte tiles, align stride to 512
+                let bytes_per_row = width * (bpp / 8);
+                ((bytes_per_row + 511) / 512) * 512
+            }
+            TilingFormat::Y => {
+                // Y-tiled: 128-byte tiles, align stride to 128
+                let bytes_per_row = width * (bpp / 8);
+                ((bytes_per_row + 127) / 128) * 128
+            }
+        };
+
+        let size = (stride * height) as u64;
+
+        // Allocate GEM buffer
+        let mut gem_create = i915::GemCreate::new(size);
+        self.device.i915_gem_create(&mut gem_create)?;
+
+        let handle = gem_create.handle;
+
+        // Set tiling mode if not linear
+        if tiling != TilingFormat::None {
+            let tiling_mode = match tiling {
+                TilingFormat::X => i915::I915_TILING_X,
+                TilingFormat::Y => i915::I915_TILING_Y,
+                _ => unreachable!(),
+            };
+            self.device.i915_gem_set_tiling(handle, tiling_mode, stride)?;
+        }
+
+        Ok(Buffer {
+            handle,
+            size,
+            width,
+            height,
+            stride,
+            tiling,
+            driver: DriverType::I915,
+        })
+    }
+
+    /// Allocate buffer using Xe driver.
+    fn allocate_xe(
+        &self,
+        width: u32,
+        height: u32,
+        bpp: u32,
+        tiling: TilingFormat,
+    ) -> io::Result<Buffer> {
+        // Xe doesn't use explicit tiling modes like i915 - tiling is handled
+        // by the GPU hardware based on buffer flags and usage patterns.
+        let stride = width * (bpp / 8);
+        let size = (stride * height) as u64;
+
+        // Use system memory placement (can be promoted to VRAM by GPU)
+        let placement = xe::XE_GEM_CREATE_PLACEMENT_SYSTEM;
+        let mut gem_create = xe::GemCreate::new(size, placement);
+
+        // Use write-combining for better performance on GPU access
+        gem_create.cpu_caching = xe::XE_GEM_CPU_CACHING_WC;
+
+        self.device.xe_gem_create(&mut gem_create)?;
+
+        Ok(Buffer {
+            handle: gem_create.handle,
+            size,
+            width,
+            height,
+            stride,
+            tiling,
+            driver: DriverType::Xe,
+        })
+    }
+
+    /// Deallocate a GPU buffer.
+    pub fn deallocate(&self, buffer: Buffer) -> io::Result<()> {
+        self.device.gem_close(buffer.handle)
+    }
+
+    /// Export a buffer as a DMA-BUF file descriptor.
+    ///
+    /// The returned file descriptor can be shared with Wayland compositors
+    /// or X11 servers for zero-copy buffer sharing.
+    pub fn export_dmabuf(&self, buffer: &Buffer) -> io::Result<RawFd> {
+        self.device.prime_handle_to_fd(buffer.handle)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tiling_format_equality() {
+        assert_eq!(TilingFormat::None, TilingFormat::None);
+        assert_ne!(TilingFormat::None, TilingFormat::X);
+        assert_ne!(TilingFormat::X, TilingFormat::Y);
+    }
+
+    #[test]
+    fn buffer_stride_calculation() {
+        // Linear: exact width * bpp
+        let width: u32 = 1920;
+        let bpp: u32 = 32;
+        let stride = width * (bpp / 8);
+        assert_eq!(stride, 7680);
+
+        // X-tiled: align to 512 bytes
+        let bytes_per_row: u32 = width * (bpp / 8);
+        assert_eq!(bytes_per_row, 7680);
+        let x_stride: u32 = ((bytes_per_row + 511) / 512) * 512;
+        // Manual calculation: (7680 + 511) = 8191, 8191 / 512 = 16, 16 * 512 = 8192
+        println!("bytes_per_row={}, x_stride={}", bytes_per_row, x_stride);
+        assert_eq!(x_stride, 8192, "X-tiled stride should be 8192");
+
+        // Y-tiled: align to 128 bytes
+        let y_stride: u32 = ((bytes_per_row + 127) / 128) * 128;
+        // Manual calculation: (7680 + 127) = 7807, 7807 / 128 = 60, 60 * 128 = 7680
+        println!("y_stride={}", y_stride);
+        assert_eq!(y_stride, 7680, "Y-tiled stride should be 7680");
+    }
+
+    #[test]
+    fn driver_type_equality() {
+        assert_eq!(DriverType::I915, DriverType::I915);
+        assert_ne!(DriverType::I915, DriverType::Xe);
+    }
+}

@@ -252,9 +252,10 @@ impl DrmDevice {
     }
 
     /// Set tiling mode for a GEM buffer (i915-specific).
-    pub fn i915_gem_set_tiling(&self, req: &mut GemSetTiling) -> io::Result<()> {
+    pub fn i915_gem_set_tiling(&self, handle: u32, tiling_mode: u32, stride: u32) -> io::Result<()> {
+        let mut req = GemSetTiling::new(handle, tiling_mode, stride);
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_SET_TILING as _, req as *mut GemSetTiling)
+            nix::libc::ioctl(self.fd(), I915_GEM_SET_TILING as _, &mut req as *mut GemSetTiling)
         };
         Ok(())
     }
