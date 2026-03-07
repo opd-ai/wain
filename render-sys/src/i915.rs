@@ -226,19 +226,19 @@ const DRM_IOCTL_BASE: u8 = b'd';
 const DRM_COMMAND_BASE: u64 = 0x40;
 
 // i915 ioctl numbers
-const I915_GEM_CREATE: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x1b, std::mem::size_of::<GemCreate>()) as u64;
-const I915_GEM_MMAP_OFFSET: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x24, std::mem::size_of::<GemMmapOffset>()) as u64;
-const I915_GEM_SET_TILING: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x21, std::mem::size_of::<GemSetTiling>()) as u64;
-const I915_GEM_WAIT: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2c, std::mem::size_of::<GemWait>()) as u64;
-const I915_GEM_CONTEXT_CREATE: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2d, std::mem::size_of::<ContextCreate>()) as u64;
-const I915_GETPARAM: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x06, std::mem::size_of::<GetParam>()) as u64;
-const I915_GEM_EXECBUFFER2: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x29, std::mem::size_of::<ExecBuffer2>()) as u64;
+const I915_GEM_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x1b, std::mem::size_of::<GemCreate>());
+const I915_GEM_MMAP_OFFSET: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x24, std::mem::size_of::<GemMmapOffset>());
+const I915_GEM_SET_TILING: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x21, std::mem::size_of::<GemSetTiling>());
+const I915_GEM_WAIT: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2c, std::mem::size_of::<GemWait>());
+const I915_GEM_CONTEXT_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2d, std::mem::size_of::<ContextCreate>());
+const I915_GETPARAM: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x06, std::mem::size_of::<GetParam>());
+const I915_GEM_EXECBUFFER2: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x29, std::mem::size_of::<ExecBuffer2>());
 
 impl DrmDevice {
     /// Allocate a GEM buffer (i915-specific).
     pub fn i915_gem_create(&self, req: &mut GemCreate) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_CREATE as i32, req as *mut GemCreate)
+            nix::libc::ioctl(self.fd(), I915_GEM_CREATE as _, req as *mut GemCreate)
         };
         Ok(())
     }
@@ -246,7 +246,7 @@ impl DrmDevice {
     /// Get mmap offset for a GEM buffer (i915-specific).
     pub fn i915_gem_mmap_offset(&self, req: &mut GemMmapOffset) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_MMAP_OFFSET as i32, req as *mut GemMmapOffset)
+            nix::libc::ioctl(self.fd(), I915_GEM_MMAP_OFFSET as _, req as *mut GemMmapOffset)
         };
         Ok(())
     }
@@ -254,7 +254,7 @@ impl DrmDevice {
     /// Set tiling mode for a GEM buffer (i915-specific).
     pub fn i915_gem_set_tiling(&self, req: &mut GemSetTiling) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_SET_TILING as i32, req as *mut GemSetTiling)
+            nix::libc::ioctl(self.fd(), I915_GEM_SET_TILING as _, req as *mut GemSetTiling)
         };
         Ok(())
     }
@@ -262,7 +262,7 @@ impl DrmDevice {
     /// Wait for a GEM buffer to become idle (i915-specific).
     pub fn i915_gem_wait(&self, req: &mut GemWait) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_WAIT as i32, req as *mut GemWait)
+            nix::libc::ioctl(self.fd(), I915_GEM_WAIT as _, req as *mut GemWait)
         };
         Ok(())
     }
@@ -270,7 +270,7 @@ impl DrmDevice {
     /// Create a GPU execution context (i915-specific).
     pub fn i915_context_create(&self, req: &mut ContextCreate) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_CREATE as i32, req as *mut ContextCreate)
+            nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_CREATE as _, req as *mut ContextCreate)
         };
         Ok(())
     }
@@ -278,7 +278,7 @@ impl DrmDevice {
     /// Query device parameters (i915-specific).
     pub fn i915_getparam(&self, req: &mut GetParam) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GETPARAM as i32, req as *mut GetParam)
+            nix::libc::ioctl(self.fd(), I915_GETPARAM as _, req as *mut GetParam)
         };
         Ok(())
     }
@@ -286,7 +286,7 @@ impl DrmDevice {
     /// Submit command buffer for execution (i915-specific).
     pub fn i915_execbuffer2(&self, req: &mut ExecBuffer2) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_EXECBUFFER2 as i32, req as *mut ExecBuffer2)
+            nix::libc::ioctl(self.fd(), I915_GEM_EXECBUFFER2 as _, req as *mut ExecBuffer2)
         };
         Ok(())
     }

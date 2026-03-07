@@ -60,13 +60,13 @@ impl CreateDumb {
 }
 
 const DRM_IOCTL_BASE: u8 = b'd';
-const DRM_IOCTL_MODE_CREATE_DUMB: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, 0xB2, std::mem::size_of::<CreateDumb>()) as u64;
+const DRM_IOCTL_MODE_CREATE_DUMB: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, 0xB2, std::mem::size_of::<CreateDumb>());
 
 impl DrmDevice {
     /// Allocate a dumb buffer.
     pub fn create_dumb(&self, req: &mut CreateDumb) -> io::Result<()> {
         unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_MODE_CREATE_DUMB as i32, req as *mut CreateDumb)
+            nix::libc::ioctl(self.fd(), DRM_IOCTL_MODE_CREATE_DUMB as _, req as *mut CreateDumb)
         };
         Ok(())
     }
@@ -80,14 +80,14 @@ pub struct GemClose {
     pub pad: u32,
 }
 
-const DRM_IOCTL_GEM_CLOSE: u64 = nix::request_code_write!(DRM_IOCTL_BASE, 0x09, std::mem::size_of::<GemClose>()) as u64;
+const DRM_IOCTL_GEM_CLOSE: nix::libc::Ioctl = nix::request_code_write!(DRM_IOCTL_BASE, 0x09, std::mem::size_of::<GemClose>());
 
 impl DrmDevice {
     /// Close (free) a GEM buffer object.
     pub fn gem_close(&self, handle: u32) -> io::Result<()> {
         let mut req = GemClose { handle, pad: 0 };
         unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_GEM_CLOSE as i32, &mut req as *mut GemClose)
+            nix::libc::ioctl(self.fd(), DRM_IOCTL_GEM_CLOSE as _, &mut req as *mut GemClose)
         };
         Ok(())
     }
@@ -104,7 +104,7 @@ pub struct PrimeHandleToFd {
     pub fd: i32,       // returned: DMA-BUF file descriptor
 }
 
-const DRM_IOCTL_PRIME_HANDLE_TO_FD: u64 = nix::request_code_readwrite!(DRM_IOCTL_BASE, 0x2D, std::mem::size_of::<PrimeHandleToFd>()) as u64;
+const DRM_IOCTL_PRIME_HANDLE_TO_FD: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, 0x2D, std::mem::size_of::<PrimeHandleToFd>());
 const DRM_CLOEXEC: u32 = 0x80000000;
 const DRM_RDWR: u32 = 0x00000002;
 
@@ -117,7 +117,7 @@ impl DrmDevice {
             fd: -1,
         };
         unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_PRIME_HANDLE_TO_FD as i32, &mut req as *mut PrimeHandleToFd)
+            nix::libc::ioctl(self.fd(), DRM_IOCTL_PRIME_HANDLE_TO_FD as _, &mut req as *mut PrimeHandleToFd)
         };
         if req.fd < 0 {
             return Err(io::Error::last_os_error());
