@@ -5,6 +5,8 @@
 #
 # Targets:
 #   make build        – check deps, build Rust (musl), build Go (static)
+#   make demo         – build the Phase 1 demonstration binary
+#   make gen-atlas    – build the SDF font atlas generator tool
 #   make test         – run both Rust and Go test suites
 #   make check-static – assert the final binary is fully statically linked
 #   make clean        – remove build artifacts
@@ -45,10 +47,12 @@ RUST_MUSL_TARGET := $(HOST_ARCH)-unknown-linux-musl
 RUST_DIR  := render-sys
 RUST_LIB  := $(RUST_DIR)/target/$(RUST_MUSL_TARGET)/release/librender.a
 
-GO_BIN    := bin/wain
-GO_PKG    := github.com/opd-ai/wain/cmd/wain
+GO_BIN       := bin/wain
+GO_PKG       := github.com/opd-ai/wain/cmd/wain
+GEN_ATLAS_BIN := bin/gen-atlas
+GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go clean check-static check-deps
+.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas
 
 all: build
 
@@ -127,6 +131,10 @@ demo: rust
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/demo github.com/opd-ai/wain/cmd/demo
+
+gen-atlas:
+	mkdir -p bin
+	go build -o $(GEN_ATLAS_BIN) $(GEN_ATLAS_PKG)
 
 ## ── Tests ────────────────────────────────────────────────────────────────────
 

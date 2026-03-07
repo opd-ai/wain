@@ -252,6 +252,33 @@ wain/
 - **Naming:** Follow Go conventions; avoid package/file stuttering
 - **Complexity targets:** Cyclomatic ≤10, function length ≤50 lines (some Phase 1 functions exceed this)
 
+### Font Atlas Generation
+
+The text rasterizer (internal/raster/text/) uses SDF (Signed Distance Field) font rendering with a pre-baked atlas embedded in the binary. The `gen-atlas` tool generates this atlas.
+
+**Building the tool:**
+```bash
+make gen-atlas
+# Output: ./bin/gen-atlas
+```
+
+**Running the generator:**
+```bash
+./bin/gen-atlas > atlas.bin
+# Generates: 256x256 SDF atlas covering ASCII printable chars (0x20-0x7E)
+```
+
+**Atlas format:**
+- 256×256 grayscale bitmap (65,536 bytes)
+- 16×16 glyph grid, each cell is 16×16 pixels
+- Contains 95 printable ASCII characters plus 1 replacement glyph (□)
+- Binary format: raw uint8 array + metadata (rune, position, metrics)
+
+The generated atlas is embedded in the text rendering package. You only need to regenerate it if you:
+- Change the supported character set (currently ASCII 0x20-0x7E)
+- Modify glyph size or atlas dimensions
+- Switch to a different font or rendering algorithm
+
 ### Completing Phase 1
 
 The protocol and rendering implementations are complete but not integrated. To finish Phase 1:
