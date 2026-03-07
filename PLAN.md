@@ -161,20 +161,21 @@
   ```
 - **Status**: COMPLETE - BoxShadow refactored to CC=4 (73% reduction from CC=15), 22 lines. Helper functions extracted: clipShadowBounds, createShadowMask, applyShadowToBuffer. All tests pass.
 
-### Step 9: Add Wire Protocol Fuzz Tests
+### Step 9: Add Wire Protocol Fuzz Tests ✅
 - **Deliverable**: Fuzz tests for `internal/wayland/wire` and `internal/x11/wire`
 - **Dependencies**: Steps 3-4 complete (wire code refactored)
 - **Rationale**: AUDIT recommends fuzzing for protocol-critical encoding/decoding functions
 - **Files to create**:
-  - `internal/wayland/wire/wire_fuzz_test.go`
-  - `internal/x11/wire/wire_fuzz_test.go`
+  - `internal/wayland/wire/wire_fuzz_test.go` ✅
+  - `internal/x11/wire/wire_fuzz_test.go` ✅
 - **Acceptance**: `go test -fuzz` runs without panics on both packages
 - **Validation**:
   ```bash
   cd internal/wayland/wire && go test -fuzz=FuzzEncodeMessage -fuzztime=30s
-  cd internal/x11/wire && go test -fuzz=FuzzEncodeRequest -fuzztime=30s
+  cd internal/x11/wire && go test -fuzz=FuzzDecodeUint32 -fuzztime=30s
   # Expected: No failures
   ```
+- **Status**: COMPLETE - X11 wire fuzz tests created with 7 fuzz functions (FuzzDecodeUint32, FuzzDecodeUint16, FuzzDecodeUint8, FuzzEncodeInt16, FuzzDecodeReplyHeader, FuzzDecodeEventHeader, FuzzEncodeRequestHeader). Wayland fuzz tests already existed. All tests pass with 5s fuzzing runs.
 
 ### Step 10: Update README with gen-atlas Documentation
 - **Deliverable**: Add gen-atlas tool documentation to README.md
