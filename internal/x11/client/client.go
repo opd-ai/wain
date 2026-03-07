@@ -178,6 +178,11 @@ func (c *Connection) sendRequest(buf []byte) error {
 	return nil
 }
 
+// SendRequest sends a raw request buffer (exposed for gc package).
+func (c *Connection) SendRequest(buf []byte) error {
+	return c.sendRequest(buf)
+}
+
 // CreateWindow creates a new window.
 func (c *Connection) CreateWindow(parent XID, x, y int16, width, height, borderWidth, class uint16, visual, mask uint32, attrs []uint32) (XID, error) {
 	wid, err := c.AllocXID()
@@ -281,4 +286,14 @@ func (c *Connection) ConfigureWindow(window XID, mask ConfigureWindowMask, value
 	}
 
 	return c.sendRequest(buf.Bytes())
+}
+
+// RootVisual returns the root visual ID.
+func (c *Connection) RootVisual() uint32 {
+	return c.rootVisual
+}
+
+// RootDepth returns the root depth.
+func (c *Connection) RootDepth() uint8 {
+	return c.rootDepth
 }

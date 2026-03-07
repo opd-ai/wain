@@ -18,6 +18,904 @@
   },
   "functions": [
     {
+      "name": "NewBuffer",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 24,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 15,
+        "code": 15,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 6,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 3.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 39,
+        "has_example": false,
+        "quality_score": 0.15600000000000003
+      }
+    },
+    {
+      "name": "Pixels",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 44,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 96,
+        "has_example": false,
+        "quality_score": 0.484
+      }
+    },
+    {
+      "name": "Width",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 49,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 42,
+        "has_example": false,
+        "quality_score": 0.268
+      }
+    },
+    {
+      "name": "Height",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 54,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 44,
+        "has_example": false,
+        "quality_score": 0.276
+      }
+    },
+    {
+      "name": "Stride",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 59,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 43,
+        "has_example": false,
+        "quality_score": 0.272
+      }
+    },
+    {
+      "name": "Format",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 64,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 33,
+        "has_example": false,
+        "quality_score": 0.232
+      }
+    },
+    {
+      "name": "WaitRelease",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 70,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 1,
+        "overall": 5.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 117,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "Destroy",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 81,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 10,
+        "code": 7,
+        "comments": 1,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 135,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "HandleEvent",
+      "package": "shm",
+      "file": "internal/wayland/shm/buffer.go",
+      "line": 95,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Buffer",
+      "lines": {
+        "total": 11,
+        "code": 10,
+        "comments": 1,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 2,
+        "overall": 7.5
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 66,
+        "has_example": false,
+        "quality_score": 0.264
+      }
+    },
+    {
+      "name": "Connect",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 68,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 61,
+        "code": 46,
+        "comments": 6,
+        "blank": 9
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 7,
+        "cognitive": 7,
+        "nesting_depth": 1,
+        "overall": 9.6
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 137,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "Close",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 133,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 45,
+        "has_example": false,
+        "quality_score": 0.18000000000000002
+      }
+    },
+    {
+      "name": "RootWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 142,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 40,
+        "has_example": false,
+        "quality_score": 0.26
+      }
+    },
+    {
+      "name": "AllocXID",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 147,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 14,
+        "code": 9,
+        "comments": 2,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.6
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 40,
+        "has_example": false,
+        "quality_score": 0.16000000000000003
+      }
+    },
+    {
+      "name": "sendRequest",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 165,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 13,
+        "code": 9,
+        "comments": 1,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 64,
+        "has_example": false,
+        "quality_score": 0.256
+      }
+    },
+    {
+      "name": "SendRequest",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 182,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 65,
+        "has_example": false,
+        "quality_score": 0.26
+      }
+    },
+    {
+      "name": "CreateWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 187,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 35,
+        "code": 24,
+        "comments": 4,
+        "blank": 7
+      },
+      "signature": {
+        "parameter_count": 5,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 3.1
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 1,
+        "overall": 5.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 35,
+        "has_example": false,
+        "quality_score": 0.13999999999999999
+      }
+    },
+    {
+      "name": "MapWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 226,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 7,
+        "code": 4,
+        "comments": 1,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 48,
+        "has_example": false,
+        "quality_score": 0.192
+      }
+    },
+    {
+      "name": "UnmapWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 237,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 7,
+        "code": 4,
+        "comments": 1,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 38,
+        "has_example": false,
+        "quality_score": 0.15200000000000002
+      }
+    },
+    {
+      "name": "DestroyWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 248,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 7,
+        "code": 4,
+        "comments": 1,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 57,
+        "has_example": false,
+        "quality_score": 0.22799999999999998
+      }
+    },
+    {
+      "name": "ConfigureWindow",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 272,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 16,
+        "code": 10,
+        "comments": 2,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 66,
+        "has_example": false,
+        "quality_score": 0.264
+      }
+    },
+    {
+      "name": "RootVisual",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 292,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 39,
+        "has_example": false,
+        "quality_score": 0.256
+      }
+    },
+    {
+      "name": "RootDepth",
+      "package": "client",
+      "file": "internal/x11/client/client.go",
+      "line": 297,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Connection",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 34,
+        "has_example": false,
+        "quality_score": 0.23600000000000002
+      }
+    },
+    {
+      "name": "Done",
+      "package": "client",
+      "file": "internal/wayland/client/display.go",
+      "line": 40,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Callback",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 97,
+        "has_example": false,
+        "quality_score": 0.488
+      }
+    },
+    {
+      "name": "Sync",
+      "package": "client",
+      "file": "internal/wayland/client/display.go",
+      "line": 47,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Display",
+      "lines": {
+        "total": 22,
+        "code": 17,
+        "comments": 0,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.6
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 224,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "GetRegistry",
+      "package": "client",
+      "file": "internal/wayland/client/display.go",
+      "line": 73,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Display",
+      "lines": {
+        "total": 22,
+        "code": 17,
+        "comments": 0,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.6
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 80,
+        "has_example": false,
+        "quality_score": 0.32000000000000006
+      }
+    },
+    {
       "name": "ID",
       "package": "client",
       "file": "internal/wayland/client/client.go",
@@ -449,6 +1347,181 @@
       }
     },
     {
+      "name": "CreateGC",
+      "package": "gc",
+      "file": "internal/x11/gc/gc.go",
+      "line": 112,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 26,
+        "code": 17,
+        "comments": 3,
+        "blank": 6
+      },
+      "signature": {
+        "parameter_count": 4,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.6
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 1,
+        "overall": 5.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 179,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "FreeGC",
+      "package": "gc",
+      "file": "internal/x11/gc/gc.go",
+      "line": 142,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 11,
+        "code": 7,
+        "comments": 1,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 63,
+        "has_example": false,
+        "quality_score": 0.252
+      }
+    },
+    {
+      "name": "CreatePixmap",
+      "package": "gc",
+      "file": "internal/x11/gc/gc.go",
+      "line": 157,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 19,
+        "code": 14,
+        "comments": 1,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 4,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.6
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 52,
+        "has_example": false,
+        "quality_score": 0.20800000000000002
+      }
+    },
+    {
+      "name": "FreePixmap",
+      "package": "gc",
+      "file": "internal/x11/gc/gc.go",
+      "line": 180,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 11,
+        "code": 7,
+        "comments": 1,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 57,
+        "has_example": false,
+        "quality_score": 0.22799999999999998
+      }
+    },
+    {
+      "name": "PutImage",
+      "package": "gc",
+      "file": "internal/x11/gc/gc.go",
+      "line": 198,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 46,
+        "code": 24,
+        "comments": 10,
+        "blank": 12
+      },
+      "signature": {
+        "parameter_count": 6,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 3.3
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 251,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
       "name": "main",
       "package": "main",
       "file": "cmd/wain/main.go",
@@ -484,231 +1557,15 @@
       }
     },
     {
-      "name": "NewBuffer",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 24,
+      "name": "Add",
+      "package": "render",
+      "file": "internal/render/binding.go",
+      "line": 65,
       "is_exported": true,
       "is_method": false,
       "lines": {
-        "total": 15,
-        "code": 15,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 6,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 3.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 39,
-        "has_example": false,
-        "quality_score": 0.15600000000000003
-      }
-    },
-    {
-      "name": "Pixels",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 44,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
         "total": 1,
         "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 96,
-        "has_example": false,
-        "quality_score": 0.484
-      }
-    },
-    {
-      "name": "Width",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 49,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 42,
-        "has_example": false,
-        "quality_score": 0.268
-      }
-    },
-    {
-      "name": "Height",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 54,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 44,
-        "has_example": false,
-        "quality_score": 0.276
-      }
-    },
-    {
-      "name": "Stride",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 59,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 43,
-        "has_example": false,
-        "quality_score": 0.272
-      }
-    },
-    {
-      "name": "Format",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 64,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 33,
-        "has_example": false,
-        "quality_score": 0.232
-      }
-    },
-    {
-      "name": "WaitRelease",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 70,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 6,
-        "code": 6,
         "comments": 0,
         "blank": 0
       },
@@ -716,94 +1573,57 @@
         "parameter_count": 1,
         "return_count": 1,
         "has_variadic": false,
-        "returns_error": true,
+        "returns_error": false,
         "interface_parameters": 0,
         "generic_parameters": null,
         "signature_complexity": 0.8
       },
       "complexity": {
-        "cyclomatic": 4,
-        "cognitive": 4,
-        "nesting_depth": 1,
-        "overall": 5.7
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
       },
       "documentation": {
         "has_comment": true,
-        "comment_length": 117,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "Destroy",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 81,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
-      "lines": {
-        "total": 10,
-        "code": 7,
-        "comments": 1,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 135,
+        "comment_length": 146,
         "has_example": false,
         "quality_score": 0.5
       }
     },
     {
-      "name": "HandleEvent",
-      "package": "shm",
-      "file": "internal/wayland/shm/buffer.go",
-      "line": 95,
+      "name": "Version",
+      "package": "render",
+      "file": "internal/render/binding.go",
+      "line": 70,
       "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Buffer",
+      "is_method": false,
       "lines": {
-        "total": 11,
-        "code": 10,
-        "comments": 1,
+        "total": 1,
+        "code": 1,
+        "comments": 0,
         "blank": 0
       },
       "signature": {
-        "parameter_count": 2,
+        "parameter_count": 0,
         "return_count": 1,
         "has_variadic": false,
-        "returns_error": true,
+        "returns_error": false,
         "interface_parameters": 0,
         "generic_parameters": null,
-        "signature_complexity": 1.3
+        "signature_complexity": 0.3
       },
       "complexity": {
-        "cyclomatic": 5,
-        "cognitive": 5,
-        "nesting_depth": 2,
-        "overall": 7.5
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
       },
       "documentation": {
         "has_comment": true,
-        "comment_length": 66,
+        "comment_length": 65,
         "has_example": false,
-        "quality_score": 0.264
+        "quality_score": 0.36
       }
     },
     {
@@ -1058,13 +1878,397 @@
       }
     },
     {
-      "name": "Done",
-      "package": "client",
-      "file": "internal/wayland/client/display.go",
-      "line": 40,
+      "name": "EncodeRequestHeader",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 129,
       "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Callback",
+      "is_method": false,
+      "lines": {
+        "total": 9,
+        "code": 8,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 50,
+        "has_example": false,
+        "quality_score": 0.2
+      }
+    },
+    {
+      "name": "EncodeUint32",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 142,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 54,
+        "has_example": false,
+        "quality_score": 0.21600000000000003
+      }
+    },
+    {
+      "name": "EncodeUint16",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 152,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 54,
+        "has_example": false,
+        "quality_score": 0.21600000000000003
+      }
+    },
+    {
+      "name": "EncodeInt16",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 162,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 53,
+        "has_example": false,
+        "quality_score": 0.21200000000000002
+      }
+    },
+    {
+      "name": "EncodePadding",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 172,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 8,
+        "code": 8,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 49,
+        "has_example": false,
+        "quality_score": 0.196
+      }
+    },
+    {
+      "name": "DecodeUint32",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 184,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 53,
+        "has_example": false,
+        "quality_score": 0.21200000000000002
+      }
+    },
+    {
+      "name": "DecodeUint16",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 193,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 53,
+        "has_example": false,
+        "quality_score": 0.21200000000000002
+      }
+    },
+    {
+      "name": "DecodeUint8",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 202,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 33,
+        "has_example": false,
+        "quality_score": 0.132
+      }
+    },
+    {
+      "name": "DecodeReplyHeader",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 227,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 17,
+        "code": 13,
+        "comments": 1,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 3,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.4
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 2,
+        "overall": 4.9
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 47,
+        "has_example": false,
+        "quality_score": 0.188
+      }
+    },
+    {
+      "name": "DecodeEventHeader",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 255,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 16,
+        "code": 12,
+        "comments": 1,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 3,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.4
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 2,
+        "overall": 4.9
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 58,
+        "has_example": false,
+        "quality_score": 0.23199999999999998
+      }
+    },
+    {
+      "name": "DecodeErrorHeader",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 285,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 15,
+        "code": 12,
+        "comments": 0,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 49,
+        "has_example": false,
+        "quality_score": 0.29600000000000004
+      }
+    },
+    {
+      "name": "Pad",
+      "package": "wire",
+      "file": "internal/x11/wire/wire.go",
+      "line": 304,
+      "is_exported": true,
+      "is_method": false,
       "lines": {
         "total": 1,
         "code": 1,
@@ -1072,13 +2276,13 @@
         "blank": 0
       },
       "signature": {
-        "parameter_count": 0,
+        "parameter_count": 1,
         "return_count": 1,
         "has_variadic": false,
         "returns_error": false,
         "interface_parameters": 0,
         "generic_parameters": null,
-        "signature_complexity": 0.3
+        "signature_complexity": 0.8
       },
       "complexity": {
         "cyclomatic": 1,
@@ -1088,81 +2292,9 @@
       },
       "documentation": {
         "has_comment": true,
-        "comment_length": 97,
+        "comment_length": 72,
         "has_example": false,
-        "quality_score": 0.488
-      }
-    },
-    {
-      "name": "Sync",
-      "package": "client",
-      "file": "internal/wayland/client/display.go",
-      "line": 47,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Display",
-      "lines": {
-        "total": 22,
-        "code": 17,
-        "comments": 0,
-        "blank": 5
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.6
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 224,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "GetRegistry",
-      "package": "client",
-      "file": "internal/wayland/client/display.go",
-      "line": 73,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Display",
-      "lines": {
-        "total": 22,
-        "code": 17,
-        "comments": 0,
-        "blank": 5
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.6
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 80,
-        "has_example": false,
-        "quality_score": 0.32000000000000006
+        "quality_score": 0.288
       }
     },
     {
@@ -1418,6 +2550,258 @@
       }
     },
     {
+      "name": "Globals",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 37,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 55,
+        "has_example": false,
+        "quality_score": 0.32000000000000006
+      }
+    },
+    {
+      "name": "FindGlobal",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 48,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 6,
+        "code": 6,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 2,
+        "overall": 4.9
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 108,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "Bind",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 65,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 17,
+        "code": 11,
+        "comments": 3,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 314,
+        "has_example": false,
+        "quality_score": 0.6000000000000001
+      }
+    },
+    {
+      "name": "BindCompositor",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 86,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 21,
+        "code": 17,
+        "comments": 0,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 70,
+        "has_example": false,
+        "quality_score": 0.27999999999999997
+      }
+    },
+    {
+      "name": "BindXdgWmBase",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 112,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 10,
+        "code": 8,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 3,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.4
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 137,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "addGlobal",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 126,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 0,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.5
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 64,
+        "has_example": false,
+        "quality_score": 0.256
+      }
+    },
+    {
+      "name": "removeGlobal",
+      "package": "client",
+      "file": "internal/wayland/client/registry.go",
+      "line": 135,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*Registry",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 0,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.5
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 74,
+        "has_example": false,
+        "quality_score": 0.296
+      }
+    },
+    {
       "name": "EncodeSetupRequest",
       "package": "wire",
       "file": "internal/x11/wire/setup.go",
@@ -1520,6 +2904,1189 @@
         "comment_length": 66,
         "has_example": false,
         "quality_score": 0.264
+      }
+    },
+    {
+      "name": "ID",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 41,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*objectBase",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    },
+    {
+      "name": "Interface",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 45,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*objectBase",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    },
+    {
+      "name": "NewWmBase",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 74,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 8,
+        "code": 8,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 63,
+        "has_example": false,
+        "quality_score": 0.252
+      }
+    },
+    {
+      "name": "GetXdgSurface",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 92,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*WmBase",
+      "lines": {
+        "total": 24,
+        "code": 19,
+        "comments": 0,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 284,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "Pong",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 126,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*WmBase",
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 251,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "HandleEvent",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 139,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*WmBase",
+      "lines": {
+        "total": 14,
+        "code": 13,
+        "comments": 1,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 2,
+        "overall": 6.2
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 73,
+        "has_example": false,
+        "quality_score": 0.292
+      }
+    },
+    {
+      "name": "GetToplevel",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 186,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Surface",
+      "lines": {
+        "total": 23,
+        "code": 18,
+        "comments": 0,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.6
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 204,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "SetWindowGeometry",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 220,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Surface",
+      "lines": {
+        "total": 12,
+        "code": 10,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 316,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "AckConfigure",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 243,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Surface",
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 300,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "HandleEvent",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 256,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Surface",
+      "lines": {
+        "total": 16,
+        "code": 16,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 2,
+        "overall": 7.5
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 74,
+        "has_example": false,
+        "quality_score": 0.296
+      }
+    },
+    {
+      "name": "Destroy",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/xdg.go",
+      "line": 276,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Surface",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 34,
+        "has_example": false,
+        "quality_score": 0.136
+      }
+    },
+    {
+      "name": "CreateMemfd",
+      "package": "shm",
+      "file": "internal/wayland/shm/memfd.go",
+      "line": 12,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 10,
+        "code": 8,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 156,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "MmapFile",
+      "package": "shm",
+      "file": "internal/wayland/shm/memfd.go",
+      "line": 26,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 10,
+        "code": 8,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 62,
+        "has_example": false,
+        "quality_score": 0.248
+      }
+    },
+    {
+      "name": "MunmapFile",
+      "package": "shm",
+      "file": "internal/wayland/shm/memfd.go",
+      "line": 40,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 58,
+        "has_example": false,
+        "quality_score": 0.23199999999999998
+      }
+    },
+    {
+      "name": "SetTitle",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 76,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 155,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "SetAppID",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 96,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 287,
+        "has_example": true,
+        "quality_score": 0.7000000000000001
+      }
+    },
+    {
+      "name": "SetMinSize",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 115,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 10,
+        "code": 8,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 236,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "SetMaxSize",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 135,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 10,
+        "code": 8,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 236,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "SetMaximized",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 152,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 176,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "UnsetMaximized",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 163,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 130,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "SetFullscreen",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 178,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 9,
+        "code": 7,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 278,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "UnsetFullscreen",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 191,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 56,
+        "has_example": false,
+        "quality_score": 0.22400000000000003
+      }
+    },
+    {
+      "name": "SetMinimized",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 200,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 50,
+        "has_example": false,
+        "quality_score": 0.2
+      }
+    },
+    {
+      "name": "HandleEvent",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 209,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 9,
+        "code": 8,
+        "comments": 1,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 75,
+        "has_example": false,
+        "quality_score": 0.30000000000000004
+      }
+    },
+    {
+      "name": "handleConfigureEvent",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 221,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 33,
+        "code": 26,
+        "comments": 1,
+        "blank": 6
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 1,
+        "overall": 7
+      },
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    },
+    {
+      "name": "Destroy",
+      "package": "xdg",
+      "file": "internal/wayland/xdg/toplevel.go",
+      "line": 260,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*Toplevel",
+      "lines": {
+        "total": 5,
+        "code": 4,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 100,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "ID",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 32,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*objectBase",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    },
+    {
+      "name": "Interface",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 36,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*objectBase",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    },
+    {
+      "name": "NewSHM",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 48,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 9,
+        "code": 9,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 57,
+        "has_example": false,
+        "quality_score": 0.22799999999999998
+      }
+    },
+    {
+      "name": "WaitForFormats",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 61,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SHM",
+      "lines": {
+        "total": 13,
+        "code": 13,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 7,
+        "cognitive": 7,
+        "nesting_depth": 3,
+        "overall": 10.6
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 77,
+        "has_example": false,
+        "quality_score": 0.30800000000000005
+      }
+    },
+    {
+      "name": "HasFormat",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 78,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SHM",
+      "lines": {
+        "total": 1,
+        "code": 1,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 67,
+        "has_example": false,
+        "quality_score": 0.268
+      }
+    },
+    {
+      "name": "HandleEvent",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 83,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SHM",
+      "lines": {
+        "total": 14,
+        "code": 14,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 2,
+        "overall": 6.2
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 70,
+        "has_example": false,
+        "quality_score": 0.27999999999999997
+      }
+    },
+    {
+      "name": "CreatePool",
+      "package": "shm",
+      "file": "internal/wayland/shm/shm.go",
+      "line": 101,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SHM",
+      "lines": {
+        "total": 20,
+        "code": 15,
+        "comments": 0,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.6
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 45,
+        "has_example": false,
+        "quality_score": 0.18000000000000002
       }
     },
     {
@@ -2095,1431 +4662,6 @@
       }
     },
     {
-      "name": "EncodeRequestHeader",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 129,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 9,
-        "code": 8,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 3,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 50,
-        "has_example": false,
-        "quality_score": 0.2
-      }
-    },
-    {
-      "name": "EncodeUint32",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 142,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 6,
-        "code": 6,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 54,
-        "has_example": false,
-        "quality_score": 0.21600000000000003
-      }
-    },
-    {
-      "name": "EncodeUint16",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 152,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 6,
-        "code": 6,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 54,
-        "has_example": false,
-        "quality_score": 0.21600000000000003
-      }
-    },
-    {
-      "name": "EncodeInt16",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 162,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 6,
-        "code": 6,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 53,
-        "has_example": false,
-        "quality_score": 0.21200000000000002
-      }
-    },
-    {
-      "name": "EncodePadding",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 172,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 8,
-        "code": 8,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 49,
-        "has_example": false,
-        "quality_score": 0.196
-      }
-    },
-    {
-      "name": "DecodeUint32",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 184,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 5,
-        "code": 5,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 53,
-        "has_example": false,
-        "quality_score": 0.21200000000000002
-      }
-    },
-    {
-      "name": "DecodeUint16",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 193,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 5,
-        "code": 5,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 53,
-        "has_example": false,
-        "quality_score": 0.21200000000000002
-      }
-    },
-    {
-      "name": "DecodeUint8",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 202,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 5,
-        "code": 5,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 33,
-        "has_example": false,
-        "quality_score": 0.132
-      }
-    },
-    {
-      "name": "DecodeReplyHeader",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 227,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 17,
-        "code": 13,
-        "comments": 1,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 3,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.4
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 2,
-        "overall": 4.9
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 47,
-        "has_example": false,
-        "quality_score": 0.188
-      }
-    },
-    {
-      "name": "DecodeEventHeader",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 255,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 16,
-        "code": 12,
-        "comments": 1,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 3,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.4
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 2,
-        "overall": 4.9
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 58,
-        "has_example": false,
-        "quality_score": 0.23199999999999998
-      }
-    },
-    {
-      "name": "DecodeErrorHeader",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 285,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 15,
-        "code": 12,
-        "comments": 0,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 49,
-        "has_example": false,
-        "quality_score": 0.29600000000000004
-      }
-    },
-    {
-      "name": "Pad",
-      "package": "wire",
-      "file": "internal/x11/wire/wire.go",
-      "line": 304,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 72,
-        "has_example": false,
-        "quality_score": 0.288
-      }
-    },
-    {
-      "name": "ID",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 32,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*objectBase",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": false,
-        "comment_length": 0,
-        "has_example": false,
-        "quality_score": 0
-      }
-    },
-    {
-      "name": "Interface",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 36,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*objectBase",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": false,
-        "comment_length": 0,
-        "has_example": false,
-        "quality_score": 0
-      }
-    },
-    {
-      "name": "NewSHM",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 48,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 9,
-        "code": 9,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 57,
-        "has_example": false,
-        "quality_score": 0.22799999999999998
-      }
-    },
-    {
-      "name": "WaitForFormats",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 61,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*SHM",
-      "lines": {
-        "total": 13,
-        "code": 13,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 7,
-        "cognitive": 7,
-        "nesting_depth": 3,
-        "overall": 10.6
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 77,
-        "has_example": false,
-        "quality_score": 0.30800000000000005
-      }
-    },
-    {
-      "name": "HasFormat",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 78,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*SHM",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 67,
-        "has_example": false,
-        "quality_score": 0.268
-      }
-    },
-    {
-      "name": "HandleEvent",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 83,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*SHM",
-      "lines": {
-        "total": 14,
-        "code": 14,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 4,
-        "cognitive": 4,
-        "nesting_depth": 2,
-        "overall": 6.2
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 70,
-        "has_example": false,
-        "quality_score": 0.27999999999999997
-      }
-    },
-    {
-      "name": "CreatePool",
-      "package": "shm",
-      "file": "internal/wayland/shm/shm.go",
-      "line": 101,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*SHM",
-      "lines": {
-        "total": 20,
-        "code": 15,
-        "comments": 0,
-        "blank": 5
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.6
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 45,
-        "has_example": false,
-        "quality_score": 0.18000000000000002
-      }
-    },
-    {
-      "name": "SetTitle",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 76,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 155,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "SetAppID",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 96,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 287,
-        "has_example": true,
-        "quality_score": 0.7000000000000001
-      }
-    },
-    {
-      "name": "SetMinSize",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 115,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 10,
-        "code": 8,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 236,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "SetMaxSize",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 135,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 10,
-        "code": 8,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 236,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "SetMaximized",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 152,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 176,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "UnsetMaximized",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 163,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 130,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "SetFullscreen",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 178,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 278,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "UnsetFullscreen",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 191,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 56,
-        "has_example": false,
-        "quality_score": 0.22400000000000003
-      }
-    },
-    {
-      "name": "SetMinimized",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 200,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 50,
-        "has_example": false,
-        "quality_score": 0.2
-      }
-    },
-    {
-      "name": "HandleEvent",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 209,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 9,
-        "code": 8,
-        "comments": 1,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 75,
-        "has_example": false,
-        "quality_score": 0.30000000000000004
-      }
-    },
-    {
-      "name": "handleConfigureEvent",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 221,
-      "is_exported": false,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 33,
-        "code": 26,
-        "comments": 1,
-        "blank": 6
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 5,
-        "cognitive": 5,
-        "nesting_depth": 1,
-        "overall": 7
-      },
-      "documentation": {
-        "has_comment": false,
-        "comment_length": 0,
-        "has_example": false,
-        "quality_score": 0
-      }
-    },
-    {
-      "name": "Destroy",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/toplevel.go",
-      "line": 260,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Toplevel",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 100,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "Globals",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 37,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 6,
-        "code": 6,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 55,
-        "has_example": false,
-        "quality_score": 0.32000000000000006
-      }
-    },
-    {
-      "name": "FindGlobal",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 48,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 6,
-        "code": 6,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 2,
-        "overall": 4.9
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 108,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "Bind",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 65,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 17,
-        "code": 11,
-        "comments": 3,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 3,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 2.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 314,
-        "has_example": false,
-        "quality_score": 0.6000000000000001
-      }
-    },
-    {
-      "name": "BindCompositor",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 86,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 21,
-        "code": 17,
-        "comments": 0,
-        "blank": 4
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 70,
-        "has_example": false,
-        "quality_score": 0.27999999999999997
-      }
-    },
-    {
-      "name": "BindXdgWmBase",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 112,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 10,
-        "code": 8,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 3,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.4
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 137,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "addGlobal",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 126,
-      "is_exported": false,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 5,
-        "code": 5,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 3,
-        "return_count": 0,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.5
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 64,
-        "has_example": false,
-        "quality_score": 0.256
-      }
-    },
-    {
-      "name": "removeGlobal",
-      "package": "client",
-      "file": "internal/wayland/client/registry.go",
-      "line": 135,
-      "is_exported": false,
-      "is_method": true,
-      "receiver_type": "*Registry",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 0,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.5
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 74,
-        "has_example": false,
-        "quality_score": 0.296
-      }
-    },
-    {
-      "name": "Add",
-      "package": "render",
-      "file": "internal/render/binding.go",
-      "line": 65,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 146,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "Version",
-      "package": "render",
-      "file": "internal/render/binding.go",
-      "line": 70,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 65,
-        "has_example": false,
-        "quality_score": 0.36
-      }
-    },
-    {
       "name": "DecodeHeader",
       "package": "wire",
       "file": "internal/wayland/wire/wire.go",
@@ -4045,865 +5187,6 @@
         "has_example": false,
         "quality_score": 0
       }
-    },
-    {
-      "name": "Connect",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 68,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 61,
-        "code": 46,
-        "comments": 6,
-        "blank": 9
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 7,
-        "cognitive": 7,
-        "nesting_depth": 1,
-        "overall": 9.6
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 137,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "Close",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 133,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 5,
-        "code": 5,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 45,
-        "has_example": false,
-        "quality_score": 0.18000000000000002
-      }
-    },
-    {
-      "name": "RootWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 142,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 40,
-        "has_example": false,
-        "quality_score": 0.26
-      }
-    },
-    {
-      "name": "AllocXID",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 147,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 14,
-        "code": 9,
-        "comments": 2,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.6
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 40,
-        "has_example": false,
-        "quality_score": 0.16000000000000003
-      }
-    },
-    {
-      "name": "sendRequest",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 165,
-      "is_exported": false,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 13,
-        "code": 9,
-        "comments": 1,
-        "blank": 3
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 64,
-        "has_example": false,
-        "quality_score": 0.256
-      }
-    },
-    {
-      "name": "CreateWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 182,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 35,
-        "code": 24,
-        "comments": 4,
-        "blank": 7
-      },
-      "signature": {
-        "parameter_count": 8,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 4.6
-      },
-      "complexity": {
-        "cyclomatic": 4,
-        "cognitive": 4,
-        "nesting_depth": 1,
-        "overall": 5.7
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 35,
-        "has_example": false,
-        "quality_score": 0.13999999999999999
-      }
-    },
-    {
-      "name": "MapWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 221,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 7,
-        "code": 4,
-        "comments": 1,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 48,
-        "has_example": false,
-        "quality_score": 0.192
-      }
-    },
-    {
-      "name": "UnmapWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 232,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 7,
-        "code": 4,
-        "comments": 1,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 38,
-        "has_example": false,
-        "quality_score": 0.15200000000000002
-      }
-    },
-    {
-      "name": "DestroyWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 243,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 7,
-        "code": 4,
-        "comments": 1,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 57,
-        "has_example": false,
-        "quality_score": 0.22799999999999998
-      }
-    },
-    {
-      "name": "ConfigureWindow",
-      "package": "client",
-      "file": "internal/x11/client/client.go",
-      "line": 267,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Connection",
-      "lines": {
-        "total": 16,
-        "code": 10,
-        "comments": 2,
-        "blank": 4
-      },
-      "signature": {
-        "parameter_count": 3,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 66,
-        "has_example": false,
-        "quality_score": 0.264
-      }
-    },
-    {
-      "name": "CreateMemfd",
-      "package": "shm",
-      "file": "internal/wayland/shm/memfd.go",
-      "line": 12,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 10,
-        "code": 8,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 156,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "MmapFile",
-      "package": "shm",
-      "file": "internal/wayland/shm/memfd.go",
-      "line": 26,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 10,
-        "code": 8,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 62,
-        "has_example": false,
-        "quality_score": 0.248
-      }
-    },
-    {
-      "name": "MunmapFile",
-      "package": "shm",
-      "file": "internal/wayland/shm/memfd.go",
-      "line": 40,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 3,
-        "cognitive": 3,
-        "nesting_depth": 1,
-        "overall": 4.4
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 58,
-        "has_example": false,
-        "quality_score": 0.23199999999999998
-      }
-    },
-    {
-      "name": "ID",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 41,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*objectBase",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": false,
-        "comment_length": 0,
-        "has_example": false,
-        "quality_score": 0
-      }
-    },
-    {
-      "name": "Interface",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 45,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*objectBase",
-      "lines": {
-        "total": 1,
-        "code": 1,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": false,
-        "comment_length": 0,
-        "has_example": false,
-        "quality_score": 0
-      }
-    },
-    {
-      "name": "NewWmBase",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 74,
-      "is_exported": true,
-      "is_method": false,
-      "lines": {
-        "total": 8,
-        "code": 8,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": false,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 1,
-        "cognitive": 1,
-        "nesting_depth": 0,
-        "overall": 1.3
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 63,
-        "has_example": false,
-        "quality_score": 0.252
-      }
-    },
-    {
-      "name": "GetXdgSurface",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 92,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*WmBase",
-      "lines": {
-        "total": 24,
-        "code": 19,
-        "comments": 0,
-        "blank": 5
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.1
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 284,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "Pong",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 126,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*WmBase",
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 251,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "HandleEvent",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 139,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*WmBase",
-      "lines": {
-        "total": 14,
-        "code": 13,
-        "comments": 1,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 4,
-        "cognitive": 4,
-        "nesting_depth": 2,
-        "overall": 6.2
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 73,
-        "has_example": false,
-        "quality_score": 0.292
-      }
-    },
-    {
-      "name": "GetToplevel",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 186,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Surface",
-      "lines": {
-        "total": 23,
-        "code": 18,
-        "comments": 0,
-        "blank": 5
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 2,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.6
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 204,
-        "has_example": false,
-        "quality_score": 0.4
-      }
-    },
-    {
-      "name": "SetWindowGeometry",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 220,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Surface",
-      "lines": {
-        "total": 12,
-        "code": 10,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 316,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "AckConfigure",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 243,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Surface",
-      "lines": {
-        "total": 9,
-        "code": 7,
-        "comments": 0,
-        "blank": 2
-      },
-      "signature": {
-        "parameter_count": 1,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.8
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 300,
-        "has_example": false,
-        "quality_score": 0.5
-      }
-    },
-    {
-      "name": "HandleEvent",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 256,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Surface",
-      "lines": {
-        "total": 16,
-        "code": 16,
-        "comments": 0,
-        "blank": 0
-      },
-      "signature": {
-        "parameter_count": 2,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 1.3
-      },
-      "complexity": {
-        "cyclomatic": 5,
-        "cognitive": 5,
-        "nesting_depth": 2,
-        "overall": 7.5
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 74,
-        "has_example": false,
-        "quality_score": 0.296
-      }
-    },
-    {
-      "name": "Destroy",
-      "package": "xdg",
-      "file": "internal/wayland/xdg/xdg.go",
-      "line": 276,
-      "is_exported": true,
-      "is_method": true,
-      "receiver_type": "*Surface",
-      "lines": {
-        "total": 5,
-        "code": 4,
-        "comments": 0,
-        "blank": 1
-      },
-      "signature": {
-        "parameter_count": 0,
-        "return_count": 1,
-        "has_variadic": false,
-        "returns_error": true,
-        "interface_parameters": 0,
-        "generic_parameters": null,
-        "signature_complexity": 0.3
-      },
-      "complexity": {
-        "cyclomatic": 2,
-        "cognitive": 2,
-        "nesting_depth": 1,
-        "overall": 3.1
-      },
-      "documentation": {
-        "has_comment": true,
-        "comment_length": 34,
-        "has_example": false,
-        "quality_score": 0.136
-      }
     }
   ],
   "structs": null,
@@ -4963,17 +5246,17 @@
   "documentation": {
     "coverage": {
       "packages": 100,
-      "functions": 97.61904761904762,
-      "types": 92.3076923076923,
-      "methods": 87.20930232558139,
-      "overall": 91.01796407185628
+      "functions": 97.87234042553192,
+      "types": 92.6829268292683,
+      "methods": 86.51685393258427,
+      "overall": 90.96045197740112
     },
     "quality": {
-      "average_length": 99.28181818181818,
+      "average_length": 97.53405994550408,
       "code_examples": 0,
-      "inline_comments": 736,
+      "inline_comments": 808,
       "block_comments": 0,
-      "quality_score": 56.40718562874252
+      "quality_score": 56.38418079096045
     },
     "todo_comments": [],
     "fixme_comments": [],
@@ -5023,11 +5306,30 @@
     "complexity_score": 0
   },
   "duplication": {
-    "clone_pairs": 2,
-    "duplicated_lines": 20,
-    "duplication_ratio": 0.005897965202005308,
+    "clone_pairs": 3,
+    "duplicated_lines": 26,
+    "duplication_ratio": 0.007121336620104081,
     "largest_clone_size": 8,
     "clones": [
+      {
+        "hash": "761fed31b5db1195",
+        "type": "renamed",
+        "instances": [
+          {
+            "file": "internal/x11/client/client.go",
+            "start_line": 202,
+            "end_line": 207,
+            "node_count": 52
+          },
+          {
+            "file": "internal/x11/gc/gc.go",
+            "start_line": 220,
+            "end_line": 225,
+            "node_count": 52
+          }
+        ],
+        "line_count": 6
+      },
       {
         "hash": "852905e27b27a7e9",
         "type": "renamed",
