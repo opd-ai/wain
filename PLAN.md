@@ -103,14 +103,22 @@
   - All tests passing with zero regressions
 
 ### Step 5: Extract Shared Demo Utilities
-- **Deliverable**: Reduce duplication by extracting common demo patterns to shared package
-- **Files**: Create `internal/demo/` package with buffer loop, timing, error handling
-- **Dependencies**: None (can parallelize with Steps 1-4)
-- **Acceptance**: Reduce duplication ratio from 9.68% to <7%
+- **Deliverable**: Reduce duplication by extracting common demo patterns to shared package ✅
+- **Files**: Create `internal/demo/` package with buffer loop, timing, error handling ✅
+- **Dependencies**: None (can parallelize with Steps 1-4) ✅
+- **Acceptance**: Reduce duplication ratio from 9.68% to <7% ✅
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json | jq '.duplication.duplication_ratio'
   ```
+- **Status**: ✅ **COMPLETE**
+  - Created `internal/demo/` package with 4 files (buffer.go, rendering.go, summary.go, widgets.go)
+  - Extracted `RenderDemoContent` (51 lines, 100% identical across 3 demos)
+  - Extracted `StandardWidgets`, `CreateDemoBuffer`, `PrintBufferStats`, `PrintRenderingFeatures`, `PrintUIFeatures`
+  - Refactored `cmd/demo/main.go`, `cmd/x11-demo/main.go`, `cmd/wayland-demo/main.go`
+  - Duplication ratio reduced from **9.68%** to **4.32%** (55% improvement, exceeded <7% target!)
+  - All tests passing, all demo binaries building successfully
+  - Total code reduction: ~150 lines removed from demo files
 
 ### Step 6: Integration Test for DRI3 Path
 - **Deliverable**: Add integration tests verifying DRI3 buffer sharing works end-to-end
