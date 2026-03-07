@@ -50,19 +50,21 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: No functions exceed complexity threshold
 
-### Step 2: Wayland FD Passing (Phase 1.1b)
+### Step 2: Wayland FD Passing (Phase 1.1b) ✅
 - **Deliverable**: SCM_RIGHTS fd passing implementation for shared memory buffers
 - **Dependencies**: Step 1 (wire protocol)
 - **Scope**: ~300–500 LoC
-- **Files to create**: `internal/wayland/socket/` package
+- **Files created**: `internal/wayland/socket/socket.go` (276 LoC), `internal/wayland/socket/socket_test.go` (529 LoC)
 - **Acceptance**:
-  - Single responsibility functions with complexity < 9
-  - Documented public API (doc coverage 100%)
+  - ✅ Single responsibility functions with complexity < 9 (max: 8)
+  - ✅ Documented public API (doc coverage 100%)
+  - ✅ All tests passing (11 test functions, comprehensive coverage)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections documentation | \
     jq '.documentation.coverage.functions'
   ```
+  Result: 100% documentation coverage
 
 ### Step 3: Core Wayland Objects (Phase 1.1c)
 - **Deliverable**: Implementation of `wl_display`, `wl_registry`, `wl_compositor`, `wl_surface`
