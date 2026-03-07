@@ -53,9 +53,9 @@ The project demonstrates strong implementation quality with:
 
 - [x] **README claims ~700 LOC for UI framework, actual is ~2,957** — README.md:51,186 — FIXED: Updated README to state "~2,957 LOC" (verified with `wc -l internal/ui/*/*.go`).
 
-- [ ] **Documentation coverage null for all 23 packages** — audit-baseline.json — go-stats-generator reports `"doc_coverage": null` for all packages despite 97.98% function documentation coverage. This suggests the tool is not calculating per-package documentation coverage correctly, making it impossible to identify packages needing attention. **Evidence:** `jq '.packages[] | select(.documentation_coverage < 70)'` shows all packages have null doc_coverage.
+- [x] **Documentation coverage null for all 23 packages** — audit-baseline.json — TOOL LIMITATION: Verified that go-stats-generator reports `"doc_coverage": null` for all 23 packages. This is a limitation of the analysis tool itself, not the codebase. Per-package documentation tracking would require tool updates. Overall documentation metrics are healthy: 89.87% overall, 97.98% functions, 84.87% methods.
 
-- [ ] **README claims 6 NOTE comments, actual count is 6** — README.md:266 — README documentation section does not mention NOTE comments, but the codebase contains 6 NOTE annotations. While not a problem per se, these should be tracked for completeness. All are informational and non-blocking. **Evidence:** audit-baseline.json shows 6 note_comments.
+- [x] **README claims 6 NOTE comments, actual count is 6** — README.md:266 — ACKNOWLEDGED: The codebase contains 6 NOTE annotations as reported. All are informational and non-blocking. No action needed - this is normal for production code to have explanatory notes. Counts match between baseline and reality.
 
 - [x] **README claims Phase 1 complete with ~4,000 LOC Wayland, actual varies significantly** — README.md:18 — FIXED: Updated all LOC claims to match actual counts with tests included. All counts now verified and consistent: Wayland ~6,970, X11 ~5,596, Protocol total ~12,566. Methodology is now clear (includes test files).
 
@@ -69,9 +69,9 @@ The project demonstrates strong implementation quality with:
 
 - [x] **Rust library contains 1 dead code warning** — render-sys/src/allocator.rs:41 — FIXED: Renamed `driver` field to `_driver` with documentation comment explaining it's reserved for Phase 3+ GPU command submission. Warning eliminated. All tests pass (24 Rust tests, 17 Go packages).
 
-- [ ] **No help/usage output from wain binary** — cmd/wain/main.go — Running `./bin/wain --help` or `-h` produces the same output as running without flags (render.Add test). The binary should recognize help flags and provide usage information. **Evidence:** `./bin/wain --help` outputs "render.Add(6, 7) = 13" instead of help text.
+- [x] **No help/usage output from wain binary** — cmd/wain/main.go — FIXED: Implemented --help/-h and --version/-v flags. The binary now recognizes help flags and provides usage information. Tests pass. All binaries work correctly.
 
-- [ ] **DEPRECATED annotation for zwp_linux_dmabuf_v1** — internal/wayland/dmabuf/dmabuf.go:109 — Code contains a DEPRECATED comment noting "zwp_linux_dmabuf_v1 version 3+ uses modifier event instead". This suggests the implementation may be using an older protocol version. Should verify if upgrade is needed or if comment is stale. **Evidence:** audit-baseline.json deprecated_comments shows 1 entry.
+- [x] **DEPRECATED annotation for zwp_linux_dmabuf_v1** — internal/wayland/dmabuf/dmabuf.go:109 — VERIFIED CORRECT: The code properly implements BOTH the legacy format event (opcode 0) AND the newer modifier event (opcode 1). This provides backwards compatibility with older compositors while supporting version 3+ protocol. The DEPRECATED comment is accurate documentation, not a bug. No changes needed.
 
 ## Metrics Snapshot
 
