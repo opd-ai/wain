@@ -61,7 +61,12 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 		}
 
 		// Resolve percentage-based size against parent content area.
-		_ = p.Resolve(cw, ch)
+		if err := p.Resolve(cw, ch); err != nil {
+			// If resolution fails (e.g., invalid parent size), clear dimensions
+			// so we don't reuse stale values from a previous layout pass.
+			p.width = 0
+			p.height = 0
+		}
 
 		switch dir {
 		case FlowColumn:
