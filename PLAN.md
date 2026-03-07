@@ -242,19 +242,23 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: All functions have complexity ≤ 13.2 (max: drawGlyph)
 
-### Step 13: Software Rasterizer — Compositing (Phase 1.4d)
+### Step 13: Software Rasterizer — Compositing (Phase 1.4d) ✅
 - **Deliverable**: Image blitting with bilinear filtering, alpha compositing (Porter-Duff SrcOver)
-- **Dependencies**: Step 10
+- **Dependencies**: Step 10 ✅
 - **Scope**: ~1,500–2,000 LoC
-- **Files to create**: `internal/raster/composite/` package
+- **Files created**: `internal/raster/composite/` package (composite.go, composite_test.go)
 - **Acceptance**:
-  - No code duplication in blending functions
-  - Functions optimized for hot path (no allocations)
+  - ✅ No code duplication in blending functions (1.69%, well below 3% threshold)
+  - ✅ Functions optimized for hot path (no allocations)
+  - ✅ All tests passing (18 test functions, 3 benchmark tests)
+  - ✅ Porter-Duff SrcOver alpha compositing implemented
+  - ✅ Bilinear filtering for smooth image scaling
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections duplication | \
     jq '.duplication.duplication_ratio < 0.03'
   ```
+  Result: 0.0169 (1.69%, well below 3% threshold)
 
 ### Step 14: Software Rasterizer — Effects (Phase 1.4e)
 - **Deliverable**: Box shadow (Gaussian blur), linear/radial gradients, scissor clipping
