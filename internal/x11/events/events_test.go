@@ -71,16 +71,16 @@ func TestParseKeyPressEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(12345),  // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(3),      // Child
-		int16(100),     // RootX
-		int16(200),     // RootY
-		int16(50),      // EventX
-		int16(75),      // EventY
-		uint16(1),      // State (Shift)
-		true,           // SameScreen
+		uint32(12345), // Time
+		uint32(1),     // Root
+		uint32(2),     // Event
+		uint32(3),     // Child
+		int16(100),    // RootX
+		int16(200),    // RootY
+		int16(50),     // EventX
+		int16(75),     // EventY
+		uint16(1),     // State (Shift)
+		true,          // SameScreen
 	)
 
 	evt, err := ParseKeyPressEvent(header, data)
@@ -152,16 +152,16 @@ func TestParseKeyReleaseEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(12346),  // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(0),      // Child (none)
-		int16(101),     // RootX
-		int16(201),     // RootY
-		int16(51),      // EventX
-		int16(76),      // EventY
-		uint16(0),      // State (no modifiers)
-		true,           // SameScreen
+		uint32(12346), // Time
+		uint32(1),     // Root
+		uint32(2),     // Event
+		uint32(0),     // Child (none)
+		int16(101),    // RootX
+		int16(201),    // RootY
+		int16(51),     // EventX
+		int16(76),     // EventY
+		uint16(0),     // State (no modifiers)
+		true,          // SameScreen
 	)
 
 	evt, err := ParseKeyReleaseEvent(header, data)
@@ -185,16 +185,16 @@ func TestParseButtonPressEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(12347),  // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(4),      // Child
-		int16(150),     // RootX
-		int16(250),     // RootY
-		int16(60),      // EventX
-		int16(80),      // EventY
-		uint16(4),      // State (Control)
-		true,           // SameScreen
+		uint32(12347), // Time
+		uint32(1),     // Root
+		uint32(2),     // Event
+		uint32(4),     // Child
+		int16(150),    // RootX
+		int16(250),    // RootY
+		int16(60),     // EventX
+		int16(80),     // EventY
+		uint16(4),     // State (Control)
+		true,          // SameScreen
 	)
 
 	evt, err := ParseButtonPressEvent(header, data)
@@ -227,16 +227,16 @@ func TestParseButtonReleaseEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(12348),  // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(0),      // Child
-		int16(160),     // RootX
-		int16(260),     // RootY
-		int16(65),      // EventX
-		int16(85),      // EventY
-		uint16(0x104),  // State (Control + Button1)
-		true,           // SameScreen
+		uint32(12348), // Time
+		uint32(1),     // Root
+		uint32(2),     // Event
+		uint32(0),     // Child
+		int16(160),    // RootX
+		int16(260),    // RootY
+		int16(65),     // EventX
+		int16(85),     // EventY
+		uint16(0x104), // State (Control + Button1)
+		true,          // SameScreen
 	)
 
 	evt, err := ParseButtonReleaseEvent(header, data)
@@ -260,16 +260,16 @@ func TestParseMotionNotifyEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(12349),  // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(5),      // Child
-		int16(170),     // RootX
-		int16(270),     // RootY
-		int16(70),      // EventX
-		int16(90),      // EventY
-		uint16(0x101),  // State (Shift + Button1)
-		true,           // SameScreen
+		uint32(12349), // Time
+		uint32(1),     // Root
+		uint32(2),     // Event
+		uint32(5),     // Child
+		int16(170),    // RootX
+		int16(270),    // RootY
+		int16(70),     // EventX
+		int16(90),     // EventY
+		uint16(0x101), // State (Shift + Button1)
+		true,          // SameScreen
 	)
 
 	evt, err := ParseMotionNotifyEvent(header, data)
@@ -299,12 +299,12 @@ func TestParseExposeEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(100),  // Window
-		uint16(10),   // X
-		uint16(20),   // Y
-		uint16(300),  // Width
-		uint16(200),  // Height
-		uint16(2),    // Count
+		uint32(100), // Window
+		uint16(10),  // X
+		uint16(20),  // Y
+		uint16(300), // Width
+		uint16(200), // Height
+		uint16(2),   // Count
 	)
 
 	evt, err := ParseExposeEvent(header, data)
@@ -340,15 +340,15 @@ func TestParseConfigureNotifyEvent(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(10),   // Event
-		uint32(11),   // Window
-		uint32(12),   // AboveSibling
-		int16(100),   // X
-		int16(150),   // Y
-		uint16(800),  // Width
-		uint16(600),  // Height
-		uint16(2),    // BorderWidth
-		true,         // OverrideRedirect
+		uint32(10),  // Event
+		uint32(11),  // Window
+		uint32(12),  // AboveSibling
+		int16(100),  // X
+		int16(150),  // Y
+		uint16(800), // Width
+		uint16(600), // Height
+		uint16(2),   // BorderWidth
+		true,        // OverrideRedirect
 	)
 
 	evt, err := ParseConfigureNotifyEvent(header, data)
@@ -421,16 +421,16 @@ func TestParseEventsWithNegativeCoordinates(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(1000),   // Time
-		uint32(1),      // Root
-		uint32(2),      // Event
-		uint32(0),      // Child
-		int16(-50),     // RootX (negative)
-		int16(-100),    // RootY (negative)
-		int16(-25),     // EventX (negative)
-		int16(-75),     // EventY (negative)
-		uint16(0),      // State
-		true,           // SameScreen
+		uint32(1000), // Time
+		uint32(1),    // Root
+		uint32(2),    // Event
+		uint32(0),    // Child
+		int16(-50),   // RootX (negative)
+		int16(-100),  // RootY (negative)
+		int16(-25),   // EventX (negative)
+		int16(-75),   // EventY (negative)
+		uint16(0),    // State
+		true,         // SameScreen
 	)
 
 	evt, err := ParseMotionNotifyEvent(header, data)
@@ -453,12 +453,12 @@ func TestParseExposeEventZeroCount(t *testing.T) {
 	}
 
 	data := makeEventData(
-		uint32(100),  // Window
-		uint16(0),    // X
-		uint16(0),    // Y
-		uint16(800),  // Width
-		uint16(600),  // Height
-		uint16(0),    // Count (no more expose events)
+		uint32(100), // Window
+		uint16(0),   // X
+		uint16(0),   // Y
+		uint16(800), // Width
+		uint16(600), // Height
+		uint16(0),   // Count (no more expose events)
 	)
 
 	evt, err := ParseExposeEvent(header, data)
@@ -490,8 +490,8 @@ func TestModifierMaskConstants(t *testing.T) {
 func TestButtonNumbers(t *testing.T) {
 	// Test common button codes
 	tests := []struct {
-		detail   uint8
-		name     string
+		detail uint8
+		name   string
 	}{
 		{1, "Left button"},
 		{2, "Middle button"},
