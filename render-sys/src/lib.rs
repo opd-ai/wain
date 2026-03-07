@@ -4,6 +4,9 @@
 /// Start with trivial arithmetic to confirm the ABI works before
 /// adding GPU/rendering functionality.
 
+pub mod drm;
+pub mod i915;
+
 /// Add two 32-bit integers and return the result.
 ///
 /// # Safety

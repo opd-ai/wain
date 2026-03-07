@@ -31,7 +31,7 @@ PHASE 1: Software Rendering Path (Weeks 2-6)
 Build the full UI pipeline with CPU rendering first. This becomes your
 fallback path and your test harness for everything above the GPU layer.
 
-1.1  WAYLAND CLIENT PROTOCOL (Pure Go)
+1.1  ✅ WAYLAND CLIENT PROTOCOL (Pure Go)
      - Implement the Wayland wire format: header parsing, argument
        marshaling/unmarshaling, fd passing via SCM_RIGHTS.
      - Implement wl_display, wl_registry, wl_compositor, wl_surface,
@@ -41,21 +41,21 @@ fallback path and your test harness for everything above the GPU layer.
      - Milestone: open a window and display a solid color on a Wayland
        compositor (weston or sway).
 
-1.2  X11 PROTOCOL (Pure Go)
+1.2  ✅ X11 PROTOCOL (Pure Go)
      - Implement X11 connection setup, authentication, and the core
        requests: CreateWindow, MapWindow, CreateGC, PutImage, CreatePixmap.
      - Use MIT-SHM extension for fast blitting if available, fall back to
        PutImage.
      - Milestone: open a window and display a solid color on X11.
 
-1.3  INPUT HANDLING
+1.3  ✅ INPUT HANDLING
      - Wayland: wl_seat, wl_pointer, wl_keyboard, wl_touch, xkbcommon
        keymap parsing (implement a minimal xkb parser in Go or carry a
        small lookup table for common layouts).
      - X11: handle KeyPress, KeyRelease, ButtonPress, ButtonRelease,
        MotionNotify, Expose, ConfigureNotify events.
 
-1.4  SOFTWARE RASTERIZER (Pure Go)
+1.4  ✅ SOFTWARE RASTERIZER (Pure Go)
      - Implement a tile-based 2D rasterizer operating on ARGB8888 buffers.
      - Required operations: filled rectangles, rounded rectangles, line
        segments, quadratic/cubic Bezier curves, arc fills, SDF-based text
@@ -66,7 +66,7 @@ fallback path and your test harness for everything above the GPU layer.
      - Milestone: render a window with styled buttons, text, and shadows
        using only CPU.
 
-1.5  BASIC WIDGET LAYER
+1.5  ✅ BASIC WIDGET LAYER
      - Build a minimal retained-mode or immediate-mode UI layer on top:
        layout (flexbox-like), text input, buttons, scroll containers.
      - This layer must be renderer-agnostic — it emits a display list of
@@ -78,7 +78,7 @@ fallback path and your test harness for everything above the GPU layer.
 PHASE 2: DRM/KMS Buffer Infrastructure in Rust (Weeks 6-9)
 --------------------------------------------------------------------------------
 
-2.1  KERNEL IOCTL WRAPPERS
+2.1  ✅ KERNEL IOCTL WRAPPERS
      - Wrap the DRM ioctls in safe Rust: DRM_IOCTL_MODE_CREATE_DUMB,
        DRM_IOCTL_GEM_CLOSE, DRM_IOCTL_PRIME_HANDLE_TO_FD, etc.
      - For Intel i915: wrap I915_GEM_CREATE, I915_GEM_MMAP_OFFSET,
