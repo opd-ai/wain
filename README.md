@@ -15,14 +15,14 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1-1.2) — ✅ Complete
-**Wayland Client** (6 packages, ~2,100 LOC):
+**Wayland Client** (7 packages, ~3,400 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
 - ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
 
-**X11 Client** (5 packages, ~1,400 LOC):
+**X11 Client** (5 packages, ~2,000 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -144,14 +144,15 @@ render-sys/src/lib.rs  →  librender.a (static library)
 
 ### 2. Protocol Layer (internal/wayland/, internal/x11/)
 ```
-Protocol Implementations (~3,500 LOC)
-├── Wayland Client (6 packages)
+Protocol Implementations (~5,300 LOC)
+├── Wayland Client (7 packages)
 │   ├── wire/        → Binary marshaling + fd passing
 │   ├── socket/      → Unix domain socket + SCM_RIGHTS
 │   ├── client/      → Display, Registry, Compositor, Surface
 │   ├── shm/         → Shared memory buffers (memfd)
 │   ├── xdg/         → Window management (xdg-shell)
-│   └── input/       → Seat, Pointer, Keyboard, xkbcommon
+│   ├── input/       → Seat, Pointer, Keyboard, xkbcommon
+│   └── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
 └── X11 Client (5 packages)
     ├── wire/        → Request/reply/event encoding, extension queries
     ├── client/      → Connection, CreateWindow, MapWindow, extension support

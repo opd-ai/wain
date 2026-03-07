@@ -48,11 +48,7 @@
 
 - [x] **Single deprecated annotation without replacement guidance** — `internal/wayland/dmabuf/dmabuf.go:109` — Deprecated comment "in v3, but kept for compatibility" lacked guidance on replacement API or migration path. **SOLUTION:** Updated comment to follow Go deprecation standard: "Deprecated: zwp_linux_dmabuf_v1 version 3+ uses modifier event instead". The modifier event (opcode 1) is the v3 replacement that includes both format and modifier information, superseding the old format-only event (opcode 0). Users now have clear migration guidance. **FIXED:** 2026-03-07
 
-- [ ] **README LOC claim vs. reality** — README claims "~2,100 LOC" for Wayland client (line 18) and "~1,400 LOC" for X11 client (line 25). Measured via `wc -l internal/wayland/*/*.go internal/x11/*/*.go` (excluding tests):
-  - Wayland: 1,368 LOC (wire: 430, socket: 290, client: 406, shm: 340, xdg: 550, input: 309, dmabuf: 345) = **2,302 LOC actual** (9% over estimate)
-  - X11: 1,273 LOC (wire: 658, client: 371, events: 332, gc: 245, shm: 327) = **1,933 LOC actual** (38% over estimate)
-  
-  Total protocol LOC: **4,235** vs. claimed **~3,500**. Estimates are within ±40% but should be updated for accuracy.
+- [x] **README LOC claim vs. reality** — README claimed "~2,100 LOC" for Wayland client (line 18) and "~1,400 LOC" for X11 client (line 25). Measured actual LOC (excluding tests): Wayland: 3,374 LOC (7 packages including dmabuf added in Phase 2), X11: 1,958 LOC (5 packages). Total protocol LOC: 5,332 vs. claimed ~3,500. **SOLUTION:** Updated README.md with accurate counts: (1) Line 18: "7 packages, ~3,400 LOC" for Wayland (was 6 packages, ~2,100 LOC), (2) Line 25: "5 packages, ~2,000 LOC" for X11 (was ~1,400 LOC), (3) Line 147: "~5,300 LOC" total (was ~3,500 LOC), (4) Added dmabuf package to architecture diagram. Counts now reflect actual codebase with <2% variance. **FIXED:** 2026-03-07
 
 ## Metrics Snapshot
 
