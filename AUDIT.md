@@ -67,7 +67,7 @@ The project demonstrates strong implementation quality with:
 
 ### LOW
 
-- [ ] **Rust library contains 1 dead code warning** — render-sys/src/allocator.rs:41 — Rust compilation warns "field `driver` is never read" in the `Buffer` struct. While this field may be intended for future use (Phase 3+ GPU work), it should either be used, prefixed with underscore (`_driver`), or marked with `#[allow(dead_code)]` to indicate intentional future use. **Evidence:** `make test` output shows warning during Rust compilation.
+- [x] **Rust library contains 1 dead code warning** — render-sys/src/allocator.rs:41 — FIXED: Renamed `driver` field to `_driver` with documentation comment explaining it's reserved for Phase 3+ GPU command submission. Warning eliminated. All tests pass (24 Rust tests, 17 Go packages).
 
 - [ ] **No help/usage output from wain binary** — cmd/wain/main.go — Running `./bin/wain --help` or `-h` produces the same output as running without flags (render.Add test). The binary should recognize help flags and provide usage information. **Evidence:** `./bin/wain --help` outputs "render.Add(6, 7) = 13" instead of help text.
 

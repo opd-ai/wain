@@ -38,7 +38,8 @@ pub struct Buffer {
     pub height: u32,
     pub stride: u32,
     pub tiling: TilingFormat,
-    driver: DriverType,
+    /// Driver type that allocated this buffer (reserved for Phase 3+ GPU command submission).
+    _driver: DriverType,
 }
 
 /// Buffer allocator for GPU-visible memory.
@@ -117,7 +118,7 @@ impl BufferAllocator {
             height,
             stride,
             tiling,
-            driver: DriverType::I915,
+            _driver: DriverType::I915,
         })
     }
 
@@ -150,7 +151,7 @@ impl BufferAllocator {
             height,
             stride,
             tiling,
-            driver: DriverType::Xe,
+            _driver: DriverType::Xe,
         })
     }
 
