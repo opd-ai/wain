@@ -43,10 +43,10 @@ func main() {
 }
 
 type demoContext struct {
-	conn      *client.Connection
+	conn       *client.Connection
 	compositor *client.Compositor
-	shmObj    *shm.SHM
-	wmBase    *xdg.WmBase
+	shmObj     *shm.SHM
+	wmBase     *xdg.WmBase
 }
 
 // runDemo demonstrates the Phase 1 feature stack on Wayland.
