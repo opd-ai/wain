@@ -176,7 +176,7 @@ func (c *Conn) SendFD(data []byte, fd int) (int, error) {
 
 // RecvFD receives a message and expects exactly one file descriptor.
 // Returns an error if no FD is received or if multiple FDs are received.
-func (c *Conn) RecvFD(data []byte) (n int, fd int, err error) {
+func (c *Conn) RecvFD(data []byte) (n, fd int, err error) {
 	n, fds, err := c.RecvMsg(data, 1)
 	if err != nil {
 		return 0, -1, err
