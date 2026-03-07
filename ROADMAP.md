@@ -89,7 +89,7 @@ PHASE 2: DRM/KMS Buffer Infrastructure in Rust (Weeks 6-9)
        DRM_IOCTL_XE_VM_BIND, DRM_IOCTL_XE_EXEC.
      - Detect at runtime whether i915 or Xe is active.
 
-2.2  BUFFER ALLOCATOR
+2.2  ✅ BUFFER ALLOCATOR
      - Allocate GPU-visible buffers with appropriate tiling formats
        (X-tiled or Y-tiled for render targets on Intel).
      - Export buffers as DMA-BUF fds for sharing with Wayland compositors

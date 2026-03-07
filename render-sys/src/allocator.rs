@@ -191,15 +191,29 @@ mod tests {
         let bytes_per_row: u32 = width * (bpp / 8);
         assert_eq!(bytes_per_row, 7680);
         let x_stride: u32 = ((bytes_per_row + 511) / 512) * 512;
-        // Manual calculation: (7680 + 511) = 8191, 8191 / 512 = 16, 16 * 512 = 8192
-        println!("bytes_per_row={}, x_stride={}", bytes_per_row, x_stride);
-        assert_eq!(x_stride, 8192, "X-tiled stride should be 8192");
+        // Manual calculation: 7680 is already aligned to 512 (7680 / 512 = 15 exactly)
+        // So (7680 + 511) / 512 = 8191 / 512 = 15 (integer division), 15 * 512 = 7680
+        assert_eq!(x_stride, 7680, "X-tiled stride for already-aligned value stays same");
 
         // Y-tiled: align to 128 bytes
         let y_stride: u32 = ((bytes_per_row + 127) / 128) * 128;
-        // Manual calculation: (7680 + 127) = 7807, 7807 / 128 = 60, 60 * 128 = 7680
-        println!("y_stride={}", y_stride);
-        assert_eq!(y_stride, 7680, "Y-tiled stride should be 7680");
+        // Manual calculation: 7680 is already aligned to 128 (7680 / 128 = 60 exactly)
+        assert_eq!(y_stride, 7680, "Y-tiled stride for already-aligned value stays same");
+
+        // Test unaligned width that requires alignment
+        let unaligned_width: u32 = 1000; // 1000 * 4 = 4000 bytes (not aligned to 512)
+        let unaligned_bytes: u32 = unaligned_width * (bpp / 8);
+        assert_eq!(unaligned_bytes, 4000);
+        
+        // X-tiled alignment: should round up to next 512-byte boundary
+        let x_aligned: u32 = ((unaligned_bytes + 511) / 512) * 512;
+        // (4000 + 511) / 512 = 4511 / 512 = 8 (integer), 8 * 512 = 4096
+        assert_eq!(x_aligned, 4096, "X-tiled should align 4000 to 4096");
+        
+        // Y-tiled alignment: should round up to next 128-byte boundary
+        let y_aligned: u32 = ((unaligned_bytes + 127) / 128) * 128;
+        // (4000 + 127) / 128 = 4127 / 128 = 32 (integer), 32 * 128 = 4096
+        assert_eq!(y_aligned, 4096, "Y-tiled should align 4000 to 4096");
     }
 
     #[test]
