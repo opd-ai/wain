@@ -119,6 +119,15 @@ go: rust
 
 build: go
 
+demo: rust
+	mkdir -p bin
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o bin/demo github.com/opd-ai/wain/cmd/demo
+
 ## ── Tests ────────────────────────────────────────────────────────────────────
 
 test-rust: check-deps
