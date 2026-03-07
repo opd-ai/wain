@@ -60,7 +60,7 @@
   ```
 - **Status**: COMPLETE - wayland-demo binary created (282 lines), demonstrates full Wayland stack including wl_registry, wl_compositor, wl_shm, xdg_wm_base, surface creation, shared memory buffers, and software rasterizer. All tests pass.
 
-### Step 2: Create X11 Demonstration Binary
+### Step 2: Create X11 Demonstration Binary ✅
 - **Deliverable**: `cmd/x11-demo/main.go` — Open an X11 window, display solid color using software rasterizer
 - **Dependencies**: None (all components exist)
 - **Rationale**: ROADMAP Phase 1.2 milestone: "open a window and display a solid color on X11"
@@ -69,6 +69,7 @@
   ```bash
   make x11-demo && ./bin/x11-demo  # Visual verification
   ```
+- **Status**: COMPLETE - x11-demo binary created (181 lines), demonstrates full X11 stack including connection setup, window creation (CreateWindow), window mapping (MapWindow), software rasterizer, and UI widgets. Makefile targets added for both wayland-demo and x11-demo. All tests pass.
 
 ### Step 3: Refactor layoutRow/layoutColumn (High Impact)
 - **Deliverable**: Extract shared helper functions from `internal/ui/layout/layout.go`
