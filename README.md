@@ -251,7 +251,7 @@ wain/
 
 - **Error handling:** Not yet standardized (Phase 1 focus was implementation breadth)
 - **Testing:** Table-driven tests for Go; unit tests for Rust
-- **Documentation:** All exported functions should have godoc comments (96.9% current coverage)
+- **Documentation:** All exported functions should have godoc comments (91.9% overall coverage: 98.8% functions, 100% methods as of Phase 1 completion)
 - **Naming:** Follow Go conventions; avoid package/file stuttering
 - **Complexity targets:** Cyclomatic ≤10, function length ≤50 lines (some Phase 1 functions exceed this)
 
@@ -301,7 +301,7 @@ Phase 1 (Software Rendering Path) is now complete with all components implemente
    - Fuzz tests for wire protocol encoding/decoding
 
 4. ✅ **Documentation improved:**
-   - Function documentation coverage: 98.8%
+   - Documentation coverage: 91.9% overall (98.8% functions, 100% methods)
    - gen-atlas tool documented in README
    - All Makefile targets documented
 
