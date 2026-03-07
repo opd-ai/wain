@@ -1,0 +1,10 @@
+[package]
+name = "render-sys"
+version = "0.1.0"
+edition = "2021"
+description = "Static Rust rendering library for the wain Go UI toolkit"
+license = "MIT"
+
+[lib]
+name = "render"
+crate-type = ["staticlib"]

@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test (fully static via musl)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # Install musl-tools before the Rust toolchain so the linker is present
+      # when Cargo's build.rs scripts run.  This step is required; the build
+      # will fail if musl-gcc is not available.
+      - name: Install musl toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+          musl-gcc --version
+
+      - name: Set up Rust with musl target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: render-sys/target
+          key: ${{ runner.os }}-cargo-musl-${{ hashFiles('render-sys/Cargo.toml', 'render-sys/src/**') }}
+          restore-keys: ${{ runner.os }}-cargo-musl-
+
+      - name: Run Rust tests
+        run: |
+          cargo test --manifest-path render-sys/Cargo.toml \
+            --target x86_64-unknown-linux-musl
+
+      - name: Build Rust static library (musl)
+        run: |
+          cargo build --release \
+            --manifest-path render-sys/Cargo.toml \
+            --target x86_64-unknown-linux-musl
+
+      - name: Build fully static Go binary
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
+        run: |
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+            go build \
+              -ldflags "-extldflags '-static'" \
+              -o bin/wain \
+              ./cmd/wain
+
+      - name: Run Go tests
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
+        run: |
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+            go test ./...
+
+      - name: Smoke-test binary
+        run: ./bin/wain
+
+      - name: Assert fully static binary
+        run: |
+          echo "=== ldd output ==="
+          ldd bin/wain 2>&1 || true
+          if ldd bin/wain 2>&1 | grep -q "not a dynamic executable"; then
+            echo "✓ Binary is fully statically linked."
+          else
+            echo "ERROR: binary is dynamically linked — musl build must produce a static binary."
+            exit 1
+          fi
