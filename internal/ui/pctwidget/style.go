@@ -33,14 +33,14 @@ type Style interface {
 // RetroStyle is the default [Style] implementation.
 // It combines pixel-art aesthetics with modern high-resolution colors.
 type RetroStyle struct {
-	BgColor       core.Color
-	FgColor       core.Color
-	AccentColor   core.Color
-	BorderColor   core.Color
-	BaseFontSize  float64
-	BasePadding   int
-	BaseGap       int
-	BaseBorderW   int
+	BgColor      core.Color
+	FgColor      core.Color
+	AccentColor  core.Color
+	BorderColor  core.Color
+	BaseFontSize float64
+	BasePadding  int
+	BaseGap      int
+	BaseBorderW  int
 }
 
 // Background implements [Style].
