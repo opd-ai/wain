@@ -7,7 +7,8 @@
 //   - Complete rendering pipeline
 //
 // Usage:
-//   ./bin/demo
+//
+//	./bin/demo
 package main
 
 import (
@@ -54,12 +55,12 @@ func runDemo() error {
 	root := conn.RootWindow()
 
 	const (
-		x            = 100
-		y            = 100
-		borderWidth  = 0
-		windowClass  = wire.WindowClassInputOutput
-		visual       = 0 // CopyFromParent
-		eventMask    = wire.EventMaskExposure | wire.EventMaskKeyPress | wire.EventMaskButtonPress
+		x           = 100
+		y           = 100
+		borderWidth = 0
+		windowClass = wire.WindowClassInputOutput
+		visual      = 0 // CopyFromParent
+		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress | wire.EventMaskButtonPress
 	)
 
 	mask := uint32(wire.CWEventMask)
