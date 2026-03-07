@@ -206,101 +206,132 @@ func (c *Container) Layout() []LayoutItem {
 	return c.layoutColumn(contentWidth, contentHeight)
 }
 
+// flexMeasurement holds computed flex layout metrics for a child item.
+type flexMeasurement struct {
+	basis  int
+	grow   float64
+	shrink float64
+}
+
+// computeFlexMeasurements extracts flex metrics for all children in the specified axis.
+// For rows, it measures widths; for columns, it measures heights.
+func computeFlexMeasurements(children []FlexItem, isRow bool) ([]flexMeasurement, int, float64, float64) {
+	measurements := make([]flexMeasurement, len(children))
+	var baseSize int
+	var totalGrow float64
+	var totalShrink float64
+
+	for i, item := range children {
+		basis := item.FlexBasis
+		if basis == 0 {
+			if isRow {
+				basis = item.Box.Width
+			} else {
+				basis = item.Box.Height
+			}
+		}
+
+		measurements[i] = flexMeasurement{
+			basis:  basis,
+			grow:   item.FlexGrow,
+			shrink: item.FlexShrink,
+		}
+		baseSize += basis
+		totalGrow += item.FlexGrow
+		totalShrink += item.FlexShrink
+	}
+
+	return measurements, baseSize, totalGrow, totalShrink
+}
+
+// distributeFlex computes final sizes by distributing remaining space according to flex rules.
+func distributeFlex(measurements []flexMeasurement, availableSpace, baseSize int, totalGrow, totalShrink float64) []int {
+	remaining := availableSpace - baseSize
+	sizes := make([]int, len(measurements))
+
+	for i, m := range measurements {
+		if remaining > 0 && totalGrow > 0 {
+			grow := int(float64(remaining) * (m.grow / totalGrow))
+			sizes[i] = m.basis + grow
+		} else if remaining < 0 && totalShrink > 0 {
+			shrink := int(float64(-remaining) * (m.shrink / totalShrink))
+			sizes[i] = m.basis - shrink
+			if sizes[i] < 0 {
+				sizes[i] = 0
+			}
+		} else {
+			sizes[i] = m.basis
+		}
+	}
+
+	return sizes
+}
+
+// computeJustifyOffset calculates the starting offset and gap adjustment for justification.
+// Returns the starting offset and the (possibly modified) gap.
+func computeJustifyOffset(justify Justify, sizes []int, contentSize, currentGap, padding int) (int, int) {
+	offset := padding
+	gap := currentGap
+	totalSize := 0
+	for _, s := range sizes {
+		totalSize += s
+	}
+	totalGaps := gap * (len(sizes) - 1)
+	if totalGaps < 0 {
+		totalGaps = 0
+	}
+	totalSize += totalGaps
+
+	switch justify {
+	case JustifyCenter:
+		offset += (contentSize - totalSize) / 2
+	case JustifyEnd:
+		offset += contentSize - totalSize
+	case JustifySpaceBetween:
+		if len(sizes) > 1 {
+			gap = (contentSize - (totalSize - totalGaps)) / (len(sizes) - 1)
+		}
+	case JustifySpaceAround:
+		space := (contentSize - (totalSize - totalGaps)) / len(sizes)
+		gap = space
+		offset += space / 2
+	}
+
+	return offset, gap
+}
+
+// computeCrossAlign calculates the cross-axis position and size for a child.
+// For rows, this computes Y and Height; for columns, X and Width.
+func computeCrossAlign(align Align, childSize, contentSize, padding int) (int, int) {
+	position := padding
+	size := childSize
+
+	switch align {
+	case AlignCenter:
+		position += (contentSize - childSize) / 2
+	case AlignEnd:
+		position += contentSize - childSize
+	case AlignStretch:
+		size = contentSize
+	}
+
+	return position, size
+}
+
 func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
 	totalGaps := c.Gap * (len(c.children) - 1)
 	if totalGaps < 0 {
 		totalGaps = 0
 	}
 
-	// Compute base sizes
-	var baseWidth int
-	var totalGrow float64
-	var totalShrink float64
-
-	for _, item := range c.children {
-		if item.FlexBasis > 0 {
-			baseWidth += item.FlexBasis
-		} else {
-			baseWidth += item.Box.Width
-		}
-		totalGrow += item.FlexGrow
-		totalShrink += item.FlexShrink
-	}
-
+	measurements, baseWidth, totalGrow, totalShrink := computeFlexMeasurements(c.children, true)
 	availableWidth := contentWidth - totalGaps
-	remaining := availableWidth - baseWidth
+	widths := distributeFlex(measurements, availableWidth, baseWidth, totalGrow, totalShrink)
+	x, gap := computeJustifyOffset(c.Justify, widths, contentWidth, c.Gap, c.Padding.Left)
 
-	// Compute final widths
-	widths := make([]int, len(c.children))
-	for i, item := range c.children {
-		basis := item.FlexBasis
-		if basis == 0 {
-			basis = item.Box.Width
-		}
-
-		if remaining > 0 && totalGrow > 0 {
-			grow := int(float64(remaining) * (item.FlexGrow / totalGrow))
-			widths[i] = basis + grow
-		} else if remaining < 0 && totalShrink > 0 {
-			shrink := int(float64(-remaining) * (item.FlexShrink / totalShrink))
-			widths[i] = basis - shrink
-			if widths[i] < 0 {
-				widths[i] = 0
-			}
-		} else {
-			widths[i] = basis
-		}
-	}
-
-	// Compute starting position based on justification
-	x := c.Padding.Left
-	switch c.Justify {
-	case JustifyCenter:
-		totalWidth := 0
-		for _, w := range widths {
-			totalWidth += w
-		}
-		totalWidth += totalGaps
-		x += (contentWidth - totalWidth) / 2
-	case JustifyEnd:
-		totalWidth := 0
-		for _, w := range widths {
-			totalWidth += w
-		}
-		totalWidth += totalGaps
-		x += contentWidth - totalWidth
-	case JustifySpaceBetween:
-		if len(c.children) > 1 {
-			totalWidth := 0
-			for _, w := range widths {
-				totalWidth += w
-			}
-			c.Gap = (contentWidth - totalWidth) / (len(c.children) - 1)
-		}
-	case JustifySpaceAround:
-		totalWidth := 0
-		for _, w := range widths {
-			totalWidth += w
-		}
-		space := (contentWidth - totalWidth) / len(c.children)
-		c.Gap = space
-		x += space / 2
-	}
-
-	// Position children
 	items := make([]LayoutItem, 0, len(c.children))
 	for i, item := range c.children {
-		height := item.Box.Height
-		y := c.Padding.Top
-
-		switch c.Align {
-		case AlignCenter:
-			y += (contentHeight - height) / 2
-		case AlignEnd:
-			y += contentHeight - height
-		case AlignStretch:
-			height = contentHeight
-		}
+		y, height := computeCrossAlign(c.Align, item.Box.Height, contentHeight, c.Padding.Top)
 
 		items = append(items, LayoutItem{
 			Box:    item.Box,
@@ -310,7 +341,7 @@ func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
 			Height: height,
 		})
 
-		x += widths[i] + c.Gap
+		x += widths[i] + gap
 	}
 
 	return items
@@ -322,95 +353,14 @@ func (c *Container) layoutColumn(contentWidth, contentHeight int) []LayoutItem {
 		totalGaps = 0
 	}
 
-	// Compute base sizes
-	var baseHeight int
-	var totalGrow float64
-	var totalShrink float64
-
-	for _, item := range c.children {
-		if item.FlexBasis > 0 {
-			baseHeight += item.FlexBasis
-		} else {
-			baseHeight += item.Box.Height
-		}
-		totalGrow += item.FlexGrow
-		totalShrink += item.FlexShrink
-	}
-
+	measurements, baseHeight, totalGrow, totalShrink := computeFlexMeasurements(c.children, false)
 	availableHeight := contentHeight - totalGaps
-	remaining := availableHeight - baseHeight
+	heights := distributeFlex(measurements, availableHeight, baseHeight, totalGrow, totalShrink)
+	y, gap := computeJustifyOffset(c.Justify, heights, contentHeight, c.Gap, c.Padding.Top)
 
-	// Compute final heights
-	heights := make([]int, len(c.children))
-	for i, item := range c.children {
-		basis := item.FlexBasis
-		if basis == 0 {
-			basis = item.Box.Height
-		}
-
-		if remaining > 0 && totalGrow > 0 {
-			grow := int(float64(remaining) * (item.FlexGrow / totalGrow))
-			heights[i] = basis + grow
-		} else if remaining < 0 && totalShrink > 0 {
-			shrink := int(float64(-remaining) * (item.FlexShrink / totalShrink))
-			heights[i] = basis - shrink
-			if heights[i] < 0 {
-				heights[i] = 0
-			}
-		} else {
-			heights[i] = basis
-		}
-	}
-
-	// Compute starting position based on justification
-	y := c.Padding.Top
-	switch c.Justify {
-	case JustifyCenter:
-		totalHeight := 0
-		for _, h := range heights {
-			totalHeight += h
-		}
-		totalHeight += totalGaps
-		y += (contentHeight - totalHeight) / 2
-	case JustifyEnd:
-		totalHeight := 0
-		for _, h := range heights {
-			totalHeight += h
-		}
-		totalHeight += totalGaps
-		y += contentHeight - totalHeight
-	case JustifySpaceBetween:
-		if len(c.children) > 1 {
-			totalHeight := 0
-			for _, h := range heights {
-				totalHeight += h
-			}
-			c.Gap = (contentHeight - totalHeight) / (len(c.children) - 1)
-		}
-	case JustifySpaceAround:
-		totalHeight := 0
-		for _, h := range heights {
-			totalHeight += h
-		}
-		space := (contentHeight - totalHeight) / len(c.children)
-		c.Gap = space
-		y += space / 2
-	}
-
-	// Position children
 	items := make([]LayoutItem, 0, len(c.children))
 	for i, item := range c.children {
-		width := item.Box.Width
-		x := c.Padding.Left
-
-		switch c.Align {
-		case AlignCenter:
-			x += (contentWidth - width) / 2
-		case AlignEnd:
-			x += contentWidth - width
-		case AlignStretch:
-			width = contentWidth
-		}
+		x, width := computeCrossAlign(c.Align, item.Box.Width, contentWidth, c.Padding.Left)
 
 		items = append(items, LayoutItem{
 			Box:    item.Box,
@@ -420,7 +370,7 @@ func (c *Container) layoutColumn(contentWidth, contentHeight int) []LayoutItem {
 			Height: heights[i],
 		})
 
-		y += heights[i] + c.Gap
+		y += heights[i] + gap
 	}
 
 	return items
