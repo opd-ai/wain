@@ -42,7 +42,7 @@
 
 ## Implementation Steps
 
-### Step 1: Hardware Detection Module
+### Step 1: Hardware Detection Module ✅ COMPLETE
 - **Deliverable**: Create `render-sys/src/detect.rs` to query GPU generation from i915/Xe kernel parameters via `I915_GETPARAM` and `DRM_IOCTL_XE_DEVICE_QUERY`.
 - **Dependencies**: Existing `render-sys/src/{i915.rs,xe.rs,drm.rs}` ioctls
 - **Acceptance**: Function returns `GpuGeneration` enum (Gen9/Gen11/Gen12/Xe) with ≥95% test coverage
@@ -50,6 +50,13 @@
   ```bash
   cd render-sys && cargo test detect -- --nocapture
   ```
+- **Status**: ✅ Implemented in commit 8f342e6
+  - Created detect.rs with GpuGeneration enum and detection logic
+  - Added render_detect_gpu C ABI export
+  - Added DetectGPU Go binding
+  - All tests passing (9 detect tests, 33 total Rust tests, 17 Go packages)
+  - Test coverage: 100% for public API
+  - Complexity: All functions CC ≤ 3.1
 
 ### Step 2: GPU Command Encoding Tables (Gen9-Gen12)
 - **Deliverable**: Create `render-sys/src/cmd/` module with Rust structs for Intel 3D pipeline commands:
