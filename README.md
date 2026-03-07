@@ -72,6 +72,10 @@ make test-rust
 make test-go
 ```
 
+**Note:** Do NOT use `go test ./...` directly. Go tests require CGO_LDFLAGS to be set to link the Rust static library, which is architecture-dependent. The `make test-go` target handles this automatically. Direct `go test` will fail with linker errors (`undefined reference to render_add`).
+
+**Why:** The Rust library path is architecture-dependent and auto-detected by the Makefile. Direct `go test` doesn't have this information.
+
 ## Verify Static Linking
 
 ```bash

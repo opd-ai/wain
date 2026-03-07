@@ -2,6 +2,8 @@
 PLAN: Statically-Compiled Go UI Toolkit with Hardware-Accelerated Rendering
 ================================================================================
 
+**Current Status:** Phase 0 complete. Phases 1-8 are planned.
+
 Target: A single static Go binary that speaks X11/Wayland natively and renders
 UI via GPU using a custom minimal Rust driver (Intel first, then AMD).
 
@@ -9,18 +11,18 @@ No assembly is used anywhere. All shaders are authored in GLSL/WGSL and
 compiled to GPU machine code by a Rust-native compiler pipeline.
 
 --------------------------------------------------------------------------------
-PHASE 0: Foundation & Toolchain Setup (Week 1-2)
+PHASE 0: Foundation & Toolchain Setup (Week 1-2) ✅ COMPLETE
 --------------------------------------------------------------------------------
 
-0.1  Set up a Go module with CGO_ENABLED=1 linking a static Rust .a archive.
+0.1  ✅ Set up a Go module with CGO_ENABLED=1 linking a static Rust .a archive.
      Confirm the final binary is fully static (ldd reports "not a dynamic
      executable"). Use `cargo build --release` producing a staticlib crate,
      link it via `#cgo LDFLAGS: path/to/librender.a`.
 
-0.2  Define the C ABI boundary between Go and Rust. Start with a trivial
+0.2  ✅ Define the C ABI boundary between Go and Rust. Start with a trivial
      function (e.g., add two ints) to validate the full build pipeline.
 
-0.3  Set up CI that cross-checks static linking on every commit.
+0.3  ✅ Set up CI that cross-checks static linking on every commit.
 
 --------------------------------------------------------------------------------
 PHASE 1: Software Rendering Path (Weeks 2-6)
