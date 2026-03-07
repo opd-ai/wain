@@ -9,11 +9,11 @@ import (
 
 func TestEncodeRequestHeader(t *testing.T) {
 	tests := []struct {
-		name    string
-		opcode  uint8
-		data    uint8
-		length  uint16
-		want    []byte
+		name   string
+		opcode uint8
+		data   uint8
+		length uint16
+		want   []byte
 	}{
 		{
 			name:   "CreateWindow",
@@ -42,7 +42,6 @@ func TestEncodeRequestHeader(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodeRequestHeader(&buf, tc.opcode, tc.data, tc.length)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -87,7 +86,6 @@ func TestEncodeUint32(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodeUint32(&buf, tc.value)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -127,7 +125,6 @@ func TestEncodeUint16(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodeUint16(&buf, tc.value)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -167,7 +164,6 @@ func TestEncodeInt16(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodeInt16(&buf, tc.value)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -320,8 +316,8 @@ func TestDecodeErrorHeader(t *testing.T) {
 				0x00, 0x03, 0x05, 0x00, // type=0, code=3 (BadWindow), sequence=5
 				0x01, 0x00, 0x00, 0x20, // bad_value=0x20000001
 				0x00, 0x00, // minor_opcode=0
-				0x01,       // major_opcode=1 (CreateWindow)
-				0,          // padding
+				0x01, // major_opcode=1 (CreateWindow)
+				0,    // padding
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			},
 			want: wire.ErrorHeader{
@@ -419,7 +415,6 @@ func TestEncodeSetupRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodeSetupRequest(&buf, tc.req)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -553,7 +548,6 @@ func TestEncodePadding(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			err := wire.EncodePadding(&buf, tc.n)
-
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

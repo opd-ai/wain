@@ -34,11 +34,11 @@ const (
 
 // SetupRequest represents the client's connection setup message.
 type SetupRequest struct {
-	ByteOrder           byte
+	ByteOrder            byte
 	ProtocolMajorVersion uint16
 	ProtocolMinorVersion uint16
-	AuthName            string
-	AuthData            []byte
+	AuthName             string
+	AuthData             []byte
 }
 
 // EncodeSetupRequest writes a setup request to w.
@@ -136,23 +136,23 @@ type Screen struct {
 
 // SetupReply represents the server's response to setup.
 type SetupReply struct {
-	Status              SetupStatus
+	Status               SetupStatus
 	ProtocolMajorVersion uint16
 	ProtocolMinorVersion uint16
-	ReleaseNumber       uint32
-	ResourceIDBase      uint32
-	ResourceIDMask      uint32
-	MotionBufferSize    uint32
-	MaxRequestLength    uint16
-	ImageByteOrder      uint8
-	BitmapBitOrder      uint8
-	BitmapScanlineUnit  uint8
-	BitmapScanlinePad   uint8
-	MinKeycode          uint8
-	MaxKeycode          uint8
-	Vendor              string
-	PixmapFormats       []PixmapFormat
-	Screens             []Screen
+	ReleaseNumber        uint32
+	ResourceIDBase       uint32
+	ResourceIDMask       uint32
+	MotionBufferSize     uint32
+	MaxRequestLength     uint16
+	ImageByteOrder       uint8
+	BitmapBitOrder       uint8
+	BitmapScanlineUnit   uint8
+	BitmapScanlinePad    uint8
+	MinKeycode           uint8
+	MaxKeycode           uint8
+	Vendor               string
+	PixmapFormats        []PixmapFormat
+	Screens              []Screen
 }
 
 // PixmapFormat represents a pixmap format.

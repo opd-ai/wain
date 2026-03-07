@@ -51,16 +51,16 @@ type XID uint32
 
 // Connection represents a connection to an X server.
 type Connection struct {
-	conn            net.Conn
-	sequence        atomic.Uint32
-	resourceIDBase  uint32
-	resourceIDMask  uint32
-	nextResourceID  uint32
-	rootWindow      XID
-	rootVisual      uint32
-	rootDepth       uint8
-	screens         []wire.Screen
-	closed          bool
+	conn           net.Conn
+	sequence       atomic.Uint32
+	resourceIDBase uint32
+	resourceIDMask uint32
+	nextResourceID uint32
+	rootWindow     XID
+	rootVisual     uint32
+	rootDepth      uint8
+	screens        []wire.Screen
+	closed         bool
 }
 
 // Connect establishes a connection to the X server on the specified display.
@@ -179,7 +179,7 @@ func (c *Connection) sendRequest(buf []byte) error {
 }
 
 // CreateWindow creates a new window.
-func (c *Connection) CreateWindow(parent XID, x, y int16, width, height uint16, borderWidth uint16, class uint16, visual uint32, mask uint32, attrs []uint32) (XID, error) {
+func (c *Connection) CreateWindow(parent XID, x, y int16, width, height, borderWidth, class uint16, visual, mask uint32, attrs []uint32) (XID, error) {
 	wid, err := c.AllocXID()
 	if err != nil {
 		return 0, err
