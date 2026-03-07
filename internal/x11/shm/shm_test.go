@@ -11,7 +11,6 @@ func testPointer(addr uintptr) unsafe.Pointer {
 	return unsafe.Pointer(addr)
 }
 
-
 // TestExtensionConstants verifies SHM extension constant values.
 func TestExtensionConstants(t *testing.T) {
 	tests := []struct {
