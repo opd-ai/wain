@@ -44,10 +44,12 @@ type objectBase struct {
 	conn  Conn
 }
 
+// ID returns the object's unique identifier.
 func (o *objectBase) ID() uint32 {
 	return o.id
 }
 
+// Interface returns the Wayland interface name.
 func (o *objectBase) Interface() string {
 	return o.iface
 }

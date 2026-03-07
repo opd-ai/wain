@@ -419,6 +419,7 @@ type byteWriter struct {
 	buf []byte
 }
 
+// Write appends data to the internal buffer. Implements io.Writer.
 func (w *byteWriter) Write(p []byte) (int, error) {
 	w.buf = append(w.buf, p...)
 	return len(p), nil

@@ -77,10 +77,12 @@ type baseObject struct {
 	conn  *Connection
 }
 
+// ID returns the object's unique identifier.
 func (o *baseObject) ID() uint32 {
 	return o.id
 }
 
+// Interface returns the Wayland interface name.
 func (o *baseObject) Interface() string {
 	return o.iface
 }
