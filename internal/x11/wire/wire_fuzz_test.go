@@ -198,7 +198,7 @@ func FuzzEncodeRequestHeader(f *testing.F) {
 	f.Add(uint8(8), uint8(0), uint16(2))
 	f.Add(uint8(72), uint8(2), uint16(100))
 
-	f.Fuzz(func(t *testing.T, opcode uint8, data uint8, length uint16) {
+	f.Fuzz(func(t *testing.T, opcode, data uint8, length uint16) {
 		var buf bytes.Buffer
 		if err := wire.EncodeRequestHeader(&buf, opcode, data, length); err != nil {
 			t.Errorf("failed to encode request header: %v", err)
