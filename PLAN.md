@@ -1,258 +1,216 @@
-# Implementation Plan: Phase 2.4 — DRI3/Present X11 Integration
+# Implementation Plan: Phase 3 — GPU Command Submission (Intel)
 
 ## Project Context
-- **What it does**: A statically-compiled Go UI toolkit with GPU rendering via Rust, supporting native X11/Wayland protocols
-- **Current milestone**: Phase 2.4 — DRI3 Integration with X11 (completes Phase 2: DRM/KMS Buffer Infrastructure)
-- **Estimated Scope**: Medium (8 items requiring implementation)
+- **What it does**: A statically-compiled Go UI toolkit with GPU rendering via Rust, targeting X11/Wayland with Intel/AMD GPU backends.
+- **Current milestone**: Phase 3 — GPU Command Submission (Intel GPUs: Gen9-Gen12, i915/Xe drivers)
+- **Estimated Scope**: **Large** — Phase 3 introduces GPU command emission, state encoding, and kernel submission infrastructure (~30,000 LOC estimated for Rust Intel driver + EU compiler).
 
-## Metrics Summary
-| Metric | Current | Target |
-|--------|---------|--------|
-| Complexity hotspots (CC > 9) | 0 | 0 |
-| Duplication ratio | 9.68% | < 7% |
-| Documentation coverage | 91.9% | > 90% |
-| Package coupling (max) | 4.5 (main) | < 4.0 |
+## Metrics Summary (from go-stats-generator)
 
-**Notable Package Metrics:**
-- `widgets` has highest cohesion (10.0) — well-designed widget abstraction
-- `main` package (demo apps) has high coupling (4.5) — expected for integration demos
-- `core` raster package has zero coupling — good isolation for rendering primitives
+| Metric | Current Value | Assessment |
+|--------|---------------|------------|
+| Total LOC | 5,071 | Go layer mature; Rust layer pending Phase 3 expansion |
+| Functions | 187 | Protocol + rasterizer layers complete |
+| Methods | 293 | Well-structured OO design |
+| Packages | 23 | Clean architectural boundaries |
+| **Complexity hotspots** | **7** functions CC > 9 | Within healthy bounds |
+| **Duplication ratio** | **4.1%** | Medium (threshold: 3-10%) |
+| **Doc coverage** | **89.9%** overall | Good (97.9% functions, 84.9% methods) |
 
-**Code Duplication Hotspots (11 violations):**
-- Demo apps share ~200+ duplicated lines (rendering loops, buffer management)
-- Raster core/curves share 29-line buffer initialization pattern
-- Largest clone: 83 lines between `cmd/demo/main.go` and `cmd/x11-demo/main.go`
+### Complexity Hotspots (CC > 9)
+| Function | File | CC | Lines |
+|----------|------|-----|-------|
+| `SendRequestAndReplyWithFDs` | internal/x11/client/client.go | 13 | 59 |
+| `AutoLayout` | internal/ui/pctwidget/autolayout.go | 11 | 64 |
+| `keycodeToAlphanumeric` | internal/wayland/input/keymap.go | 11 | 42 |
+| `DecodeSetupReply` | internal/x11/wire/setup.go | 11 | 127 |
+| `lineCoverage` | internal/raster/core/line.go | 10 | 42 |
+| `FillRoundedRect` | internal/raster/core/rect.go | 10 | 47 |
+| `LinearGradient` | internal/raster/effects/effects.go | 10 | 52 |
 
-## Current Phase 2 Progress
-| Subtask | Status | Implementation |
-|---------|--------|----------------|
-| 2.1 Kernel ioctl wrappers | ✅ Done | `render-sys/src/{drm,i915,xe}.rs` (961 LOC) |
-| 2.2 Buffer allocator | ✅ Done | `render-sys/src/{allocator,slab}.rs` (441 LOC) |
-| 2.3 DMA-BUF + Wayland | ✅ Done | `internal/wayland/dmabuf/` (566 LOC) |
-| 2.4 DRI3 + X11 | ❌ Missing | Target of this plan |
+### Duplication Clusters (violations, >10 lines)
+| Clone Size | Files | Priority |
+|------------|-------|----------|
+| 70 lines | cmd/demo/main.go ↔ cmd/x11-demo/main.go | Demo consolidation (defer) |
+| 36 lines | internal/x11/dri3/dri3.go ↔ internal/x11/present/present.go | Extension reply parsing |
+| 29 lines | internal/raster/core/buffer.go ↔ internal/raster/curves/curves.go | Scanline iteration |
+| 25 lines | cmd/dmabuf-demo/main.go ↔ cmd/x11-dmabuf-demo/main.go | Demo consolidation (defer) |
+
+*Note: Demo duplication is acceptable for clarity; core library duplication should be addressed opportunistically.*
+
+---
 
 ## Implementation Steps
 
-### Step 1: DRI3 Extension Query & Negotiation
-- **Deliverable**: Add DRI3 extension detection and version negotiation to X11 client ✅
-- **Files**: Created `internal/x11/dri3/dri3.go` ✅
-- **Dependencies**: Existing `internal/x11/client/` and `internal/x11/wire/` ✅
-- **Acceptance**: Extension query returns DRI3 version ≥ 1.2 ✅
+### Step 1: Hardware Detection Module
+- **Deliverable**: Create `render-sys/src/detect.rs` to query GPU generation from i915/Xe kernel parameters via `I915_GETPARAM` and `DRM_IOCTL_XE_DEVICE_QUERY`.
+- **Dependencies**: Existing `render-sys/src/{i915.rs,xe.rs,drm.rs}` ioctls
+- **Acceptance**: Function returns `GpuGeneration` enum (Gen9/Gen11/Gen12/Xe) with ≥95% test coverage
 - **Validation**: 
   ```bash
-  go-stats-generator analyze . --skip-tests --format json | jq '.packages[] | select(.name == "dri3")'
+  cd render-sys && cargo test detect -- --nocapture
   ```
-- **Status**: ✅ **COMPLETE**
-  - Created `internal/x11/dri3/dri3.go` with 308 LOC
-  - Implemented `QueryExtension`, `MajorVersion`, `MinorVersion`, `SupportsModifiers`
-  - Implemented `Open`, `PixmapFromBuffer`, `PixmapFromBuffers`
-  - Added FD-passing support to client (`SendRequestWithFDs`, `SendRequestAndReplyWithFDs`)
-  - Added missing wire encoders (`EncodeUint8`, `EncodeUint64`)
-  - Created comprehensive tests in `dri3_test.go` (all passing)
-  - Documentation coverage: 97.8% functions (overall 92.0%)
 
-### Step 2: Present Extension Implementation  
-- **Deliverable**: Implement Present extension for frame synchronization ✅
-- **Files**: Create `internal/x11/present/present.go` ✅
-- **Dependencies**: Step 1 (DRI3 queries Present support) ✅
-- **Acceptance**: PresentPixmap and PresentCompleteNotify implemented ✅
+### Step 2: GPU Command Encoding Tables (Gen9-Gen12)
+- **Deliverable**: Create `render-sys/src/cmd/` module with Rust structs for Intel 3D pipeline commands:
+  - `MI_BATCH_BUFFER_START`, `PIPELINE_SELECT`, `STATE_BASE_ADDRESS`
+  - `3DSTATE_VIEWPORT`, `3DSTATE_CLIP`, `3DSTATE_SF`, `3DSTATE_WM`, `3DSTATE_PS`
+  - `3DSTATE_VERTEX_BUFFERS`, `3DSTATE_VERTEX_ELEMENTS`, `3DPRIMITIVE`, `PIPE_CONTROL`
+- **Dependencies**: Step 1 (generation detection for command variants)
+- **Acceptance**: Each command struct serializes to correct binary per Intel PRM Vol. 2; unit tests verify dword layout
 - **Validation**:
   ```bash
-  go-stats-generator analyze . --skip-tests --format json | jq '.packages[] | select(.name == "present")'
+  cd render-sys && cargo test cmd:: -- --nocapture | grep -E "test.*ok"
   ```
-- **Status**: ✅ **COMPLETE**
-  - Created `internal/x11/present/present.go` with 371 LOC
-  - Implemented `QueryExtension`, `MajorVersion`, `MinorVersion`, `SupportsAsync`
-  - Implemented `PresentPixmap`, `SelectInput`, `NotifyMSC`
-  - Implemented event parsers: `ParseCompleteNotify`, `ParseIdleNotify`
-  - Added comprehensive tests in `present_test.go` (all passing)
-  - Documentation coverage: 97.8% functions (overall 91.8%)
-  - Zero complexity hotspots (max CC=7 in QueryExtension)
 
-### Step 3: DRI3PixmapFromBuffers Implementation
-- **Deliverable**: Share GPU buffers with X server via DMA-BUF fds ✅
-- **Files**: Extend `internal/x11/dri3/dri3.go` ✅
-- **Dependencies**: Steps 1-2; existing Rust buffer allocator ✅
-- **Acceptance**: Successfully create X pixmap from GPU buffer fd ✅
+### Step 3: Batch Buffer Builder
+- **Deliverable**: Create `render-sys/src/batch.rs` implementing `BatchBuilder` that:
+  - Allocates GEM buffer object for command stream
+  - Provides typed emit methods for each 3D command
+  - Handles relocation entries for buffer references
+  - Supports GPU address patching
+- **Dependencies**: Step 2 (command encoding), existing `allocator.rs`
+- **Acceptance**: `BatchBuilder::emit_*` methods accept command structs; `finalize()` returns submittable batch
 - **Validation**:
   ```bash
-  go-stats-generator analyze internal/x11/dri3 --skip-tests --format json | jq '.documentation.coverage.functions'
+  cd render-sys && cargo test batch:: -- --nocapture
   ```
-  Target: ≥ 95% function documentation
-- **Status**: ✅ **COMPLETE**
-  - `PixmapFromBuffers` implemented with full multi-plane and modifier support
-  - Validation tests added in `dri3_test.go` (all passing)
-  - Documentation coverage verified
-  - Both DRI3 1.0 (`PixmapFromBuffer`) and 1.2+ (`PixmapFromBuffers`) paths supported
 
-### Step 4: X11 DMA-BUF Demo Binary
-- **Deliverable**: Create `cmd/x11-dmabuf-demo/main.go` demonstrating GPU buffer sharing on X11 ✅
-- **Files**: New `cmd/x11-dmabuf-demo/` directory ✅
-- **Dependencies**: Steps 1-3 ✅
-- **Acceptance**: Demo opens window with GPU-allocated buffer displayed via DRI3 ✅
+### Step 4: Pipeline State Configuration
+- **Deliverable**: Create `render-sys/src/pipeline.rs` with pre-baked pipeline state configurations:
+  - (a) Solid color fill
+  - (b) Textured quad (bilinear sampling)
+  - (c) SDF text rendering
+  - (d) Box shadow (separable blur, two-pass)
+  - (e) Rounded rect clip
+  - (f) Linear/radial gradient
+- **Dependencies**: Step 2 (3DSTATE commands), Step 3 (batch emitter)
+- **Acceptance**: Each pipeline config is a unit-testable function returning encoded state; matches Go rasterizer output
 - **Validation**:
   ```bash
-  make build && ./bin/x11-dmabuf-demo 2>&1 | grep -q "Demo completed"
+  cd render-sys && cargo test pipeline:: -- --nocapture
   ```
-- **Status**: ✅ **COMPLETE**
-  - Created `cmd/x11-dmabuf-demo/main.go` with 311 LOC
-  - Demonstrates full DRI3/Present integration with X11
-  - Connection adapters implemented for interface compatibility
-  - Build target added to Makefile (`make x11-dmabuf-demo`)
-  - Binary successfully builds as statically-linked executable (5.4M)
-  - All tests passing with zero regressions
 
-### Step 5: Extract Shared Demo Utilities
-- **Deliverable**: Reduce duplication by extracting common demo patterns to shared package ✅
-- **Files**: Create `internal/demo/` package with buffer loop, timing, error handling ✅
-- **Dependencies**: None (can parallelize with Steps 1-4) ✅
-- **Acceptance**: Reduce duplication ratio from 9.68% to <7% ✅
+### Step 5: Surface State & Sampler State
+- **Deliverable**: Create `render-sys/src/surface.rs` to encode:
+  - `RENDER_SURFACE_STATE` for render targets and texture sources
+  - `SAMPLER_STATE` for bilinear/nearest filtering
+  - Binding table management in surface state heap
+- **Dependencies**: Step 1 (generation-specific layouts), Step 3 (batch builder)
+- **Acceptance**: Surface state entries match Intel PRM Vol. 5 layouts; binding table indices are validated
 - **Validation**:
   ```bash
-  go-stats-generator analyze . --skip-tests --format json | jq '.duplication.duplication_ratio'
+  cd render-sys && cargo test surface:: -- --nocapture
   ```
-- **Status**: ✅ **COMPLETE**
-  - Created `internal/demo/` package with 4 files (buffer.go, rendering.go, summary.go, widgets.go)
-  - Extracted `RenderDemoContent` (51 lines, 100% identical across 3 demos)
-  - Extracted `StandardWidgets`, `CreateDemoBuffer`, `PrintBufferStats`, `PrintRenderingFeatures`, `PrintUIFeatures`
-  - Refactored `cmd/demo/main.go`, `cmd/x11-demo/main.go`, `cmd/wayland-demo/main.go`
-  - Duplication ratio reduced from **9.68%** to **4.32%** (55% improvement, exceeded <7% target!)
-  - All tests passing, all demo binaries building successfully
-  - Total code reduction: ~150 lines removed from demo files
 
-### Step 6: Integration Test for DRI3 Path
-- **Deliverable**: Add integration tests verifying DRI3 buffer sharing works end-to-end ✅
-- **Files**: `internal/integration/dri3_test.go` ✅
-- **Dependencies**: Steps 1-4 ✅
-- **Acceptance**: Test passes on systems with DRI3-capable X server ✅
+### Step 6: Batch Submission (i915)
+- **Deliverable**: Extend `render-sys/src/i915.rs` with:
+  - `I915_GEM_EXECBUFFER2` wrapper
+  - Context creation via `I915_GEM_CONTEXT_CREATE`
+  - Synchronization via `I915_GEM_WAIT`
+- **Dependencies**: Step 3 (batch builder output), existing drm ioctls
+- **Acceptance**: Submitted batch completes without GPU hang; verified via sync wait return code
 - **Validation**:
   ```bash
-  make test-go 2>&1 | grep -E "(PASS|FAIL).*dri3"
+  cd render-sys && cargo test i915::submit -- --nocapture
   ```
-- **Status**: ✅ **COMPLETE**
-  - Created `internal/integration/dri3_test.go` with 370 LOC
-  - Implemented 4 integration tests:
-    * `TestDRI3BufferSharingIntegration` - End-to-end DRI3 buffer sharing
-    * `TestDRI3VersionNegotiation` - Extension version detection
-    * `TestPresentVersionNegotiation` - Present extension validation
-    * `TestDRI3WithRustAllocator` - Rust allocator integration
-  - Tests gracefully skip when X11/DRI3 unavailable (CI-friendly)
-  - All tests passing with zero regressions
-  - Duplication ratio: 4.2% (maintained from Step 5)
-  - Documentation coverage: 89.6% (maintained)
-  - Zero complexity hotspots (CC ≤ 9)
 
-### Step 7: Update Phase 2 Documentation
-- **Deliverable**: Update README.md and ROADMAP.md to reflect Phase 2 completion ✅
-- **Files**: `README.md`, `ROADMAP.md` ✅
-- **Dependencies**: Steps 1-6 ✅
-- **Acceptance**: Phase 2 marked complete; Phase 3 prerequisites documented ✅
-- **Validation**: Manual review ✅
-- **Status**: ✅ **COMPLETE**
-  - Updated ROADMAP.md to mark Phase 2 as complete (all 4 subtasks ✅)
-  - Updated README.md status from "Phase 1 Complete" to "Phase 2 Complete"
-  - Expanded Current Functionality section with Phase 2 components:
-    * Wayland dmabuf integration (8 packages, ~4,000 LOC)
-    * X11 DRI3/Present extensions (7 packages, ~2,500 LOC)
-    * Rust DRM/KMS infrastructure (~1,400 LOC)
-  - Updated milestone section to reflect Phase 2 achievements
-  - Added Phase 3 prerequisites to ROADMAP.md
-  - Updated Contributing section to focus on Phase 3 priorities
-
-### Step 8: Buffer Double/Triple Buffering Foundation
-- **Deliverable**: Implement frame buffer ring management for both X11 and Wayland ✅
-- **Files**: Create `internal/buffer/ring.go` with shared buffer management logic ✅
-- **Dependencies**: Steps 1-5 ✅
-- **Acceptance**: Buffer ring handles 2-3 frames with proper synchronization ✅
+### Step 7: Batch Submission (Xe)
+- **Deliverable**: Extend `render-sys/src/xe.rs` with:
+  - `DRM_IOCTL_XE_EXEC` wrapper
+  - VM creation/binding via `DRM_IOCTL_XE_VM_CREATE`, `DRM_IOCTL_XE_VM_BIND`
+  - Fence-based synchronization
+- **Dependencies**: Step 3 (batch builder), Step 6 (parallel to i915)
+- **Acceptance**: Same batch submits on Xe driver when available; graceful fallback when unavailable
 - **Validation**:
   ```bash
-  go-stats-generator analyze internal/buffer --skip-tests --format json | jq '.functions | map(select(.cyclomatic_complexity > 9)) | length'
+  cd render-sys && cargo test xe::submit -- --nocapture || echo "Xe not available"
   ```
-  Target: 0 (no complex functions) ✅
-- **Status**: ✅ **COMPLETE**
-  - Created `internal/buffer/ring.go` with 267 LOC
-  - Implemented state machine: available → rendering → displaying → released → available
-  - Support for 2+ buffer slots (double/triple/quad buffering)
-  - Context-aware acquisition with timeout/cancellation support
-  - Non-blocking release signaling (safe for event handlers)
-  - Thread-safe with proper mutex protection
-  - UserData field for associating platform-specific handles (wl_buffer, GPU buffer, XID)
-  - Created comprehensive test suite in `ring_test.go` (427 LOC, 18 tests + 2 benchmarks)
-  - All tests passing with zero regressions
-  - Complexity: 0 functions with CC > 10 (max CC = 7 in AcquireForWriting)
-  - Documentation coverage: 100% (all functions, types, methods documented)
-  - Designed for both Wayland (wl_buffer.release) and X11 (Present idle/complete events)
 
-## Dependency Graph
-```
-     ┌──────────────────────────────────────────────────┐
-     │                                                  │
-     v                                                  │
-[Step 1: DRI3 Query] ──> [Step 2: Present] ──> [Step 3: PixmapFromBuffers]
-                                                        │
-                                                        v
-[Step 5: Extract Utils] ─────────────────────> [Step 4: Demo Binary]
-                                                        │
-                                                        v
-                              [Step 6: Integration Test] ──> [Step 7: Docs]
-                                                        │
-                                                        v
-                                            [Step 8: Buffer Ring]
-```
+### Step 8: Go CGO Bindings for Submission
+- **Deliverable**: Extend `internal/render/render.go` with C ABI bindings:
+  - `render_detect_gpu() -> int` (returns generation enum)
+  - `render_submit_batch(buf *C.uint8_t, len C.size_t) -> int` (submits and waits)
+  - `render_create_context() -> uint64` (returns context handle)
+- **Dependencies**: Steps 6-7 (Rust submission), existing CGO infrastructure
+- **Acceptance**: Go code can call submission functions; static linking verified via `make check-static`
+- **Validation**:
+  ```bash
+  make test-go && make check-static
+  ```
 
-## Scope Classification Rationale
+### Step 9: First Triangle Demonstration
+- **Deliverable**: Create `cmd/gpu-triangle-demo/` that:
+  - Detects GPU, creates context
+  - Builds batch: clear render target (blue), draw single triangle (white)
+  - Submits batch, waits for completion
+  - Copies GPU buffer to X11/Wayland surface via existing DRI3/dmabuf path
+- **Dependencies**: All previous steps
+- **Acceptance**: Visible white triangle on blue background in window
+- **Validation**:
+  ```bash
+  make build && ./bin/gpu-triangle-demo
+  # Visual verification: triangle renders correctly
+  ```
 
-| Criterion | Value | Classification |
-|-----------|-------|----------------|
-| Functions to implement | ~12-15 new | Medium |
-| Lines of code estimated | ~600-900 | Medium |
-| Packages to create | 3 new | Medium |
-| Complexity risk | Moderate (X11 protocol work) | Medium |
-| Duplication debt | 11 violations | Requires Step 5 |
+### Step 10: Integration Test Suite
+- **Deliverable**: Create `internal/integration/gpu_test.go` with:
+  - GPU detection test (passes on Intel hardware, skips on others)
+  - Batch construction test (verifies command serialization)
+  - Submission test (clear + draw, read back via CPU mmap, verify pixel values)
+- **Dependencies**: Step 9 complete
+- **Acceptance**: `make test-go` passes on Intel GPU systems; tests skip gracefully on non-Intel
+- **Validation**:
+  ```bash
+  make test-go 2>&1 | grep -E "(PASS|SKIP).*gpu"
+  ```
 
-## Success Criteria for Phase 2 Completion
+---
 
-1. **Functional**: `x11-dmabuf-demo` displays GPU-allocated buffer via DRI3
-2. **Quality**: Duplication ratio < 7% (down from 9.68%)
-3. **Documentation**: Function coverage ≥ 95% for new packages
-4. **Testing**: Integration test passes on CI
-5. **No regression**: All existing tests continue to pass
+## Deferred Work (Outside Phase 3 Scope)
+
+### Code Quality (opportunistic, not blocking)
+1. **Duplication in X11 extensions** (36-line clone): Extract shared reply parsing into `internal/x11/wire/extensions.go`
+   - **Validation**: `go-stats-generator analyze . --sections duplication | jq '.duplication.duplication_ratio < 0.035'`
+
+2. **Complexity in `SendRequestAndReplyWithFDs`** (CC=13): Split into `sendRequest` + `receiveReplyWithFDs`
+   - **Validation**: `go-stats-generator analyze . | jq '[.functions[] | select(.file | contains("client.go")) | select(.complexity.cyclomatic > 10)] | length == 0'`
+
+### Future Phases
+- **Phase 4**: Shader compiler pipeline (naga IR → Intel EU binary)
+- **Phase 5**: Rendering backend integration (display list → GPU batch)
+- **Phase 6**: AMD GPU support (AMDGPU ioctls + RDNA ISA backend)
+
+---
+
+## Risk Assessment
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+| First triangle takes >4 weeks | Medium | High | Timebox; consult Mesa iris driver line-by-line |
+| i915/Xe command encoding mismatch | Low | Medium | Target Gen12 first (most documented), backport to Gen9 |
+| GPU hangs during development | High | Low | Run tests with `IGT_HANG_LIMIT=1`; fallback to software |
+| Static linking breaks with new Rust code | Low | Medium | CI enforces `make check-static` on every commit |
+
+---
 
 ## Validation Commands Summary
 
 ```bash
-# Full metrics after implementation
-go-stats-generator analyze . --skip-tests --format json --output metrics-post.json
+# Full Phase 3 validation suite
+make test-rust                                    # Rust unit tests
+make test-go                                      # Go unit tests (CGO-linked)
+make check-static                                 # Verify static binary
 
-# Compare duplication
-jq '.duplication.duplication_ratio' metrics-post.json
-
-# Check new packages
-jq '.packages[] | select(.name | test("dri3|present|buffer|demo"))' metrics-post.json
-
-# Verify no new complexity hotspots
-jq '[.functions[] | select(.cyclomatic_complexity > 9)] | length' metrics-post.json
+# Metrics monitoring
+go-stats-generator analyze . --skip-tests --format json | jq '{
+  complexity_hotspots: [.functions[] | select(.complexity.cyclomatic > 9)] | length,
+  duplication_ratio: .duplication.duplication_ratio,
+  doc_coverage: .documentation.coverage.overall
+}'
+# Target: complexity_hotspots ≤ 10, duplication_ratio < 5%, doc_coverage > 85%
 ```
 
 ---
 
-## Gaps Document: Out-of-Scope Findings
-
-The following items were identified during analysis but are outside Phase 2.4 scope:
-
-### Deferred to Phase 3 (GPU Command Submission)
-- Hardware detection and GPU generation query
-- Batch buffer construction
-- Pipeline state objects
-
-### Deferred to Phase 5 (Rendering Backend Integration)  
-- Damage tracking for partial redraws
-- Texture atlas management for GPU path
-
-### Technical Debt (No Timeline)
-- `main` package coupling (4.5) — acceptable for demo apps, would need refactoring if demos become public API
-- Missing `test_coverage` metrics — CI does not yet report coverage percentages
-
-### Nice-to-Have Improvements
-- Convert demo 83-line clone to shared rendering loop abstraction
-- Add property-based tests for wire protocol encoding (complement existing fuzz tests)
+*Generated: 2026-03-07 | Next review: After Step 5 completion*
