@@ -23,3 +23,16 @@ target
 
 # Go build output
 bin/
+
+# Analysis tool outputs (go-stats-generator, gosec, staticcheck)
+*-baseline.json
+*-post.json
+pre-cleanup.json
+post-cleanup.json
+diff-report*.json
+
+# Coverage and profiling artifacts
+*.out
+coverage.html
+cpu.prof
+mem.prof
