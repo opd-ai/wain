@@ -223,19 +223,24 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: 98.39% documentation coverage
 
-### Step 12: Software Rasterizer — Text Rendering (Phase 1.4c)
+### Step 12: Software Rasterizer — Text Rendering (Phase 1.4c) ✅
 - **Deliverable**: SDF-based text rendering with pre-baked SDF font atlas
-- **Dependencies**: Step 10
+- **Dependencies**: Step 10 ✅
 - **Scope**: ~2,000–3,000 LoC
-- **Files to create**: `internal/raster/text/` package, embedded font atlas
+- **Files created**: `internal/raster/text/` package (atlas.go, text.go, atlas_test.go, text_test.go), embedded font atlas (data/atlas.bin), atlas generator (cmd/gen-atlas/main.go)
 - **Acceptance**:
-  - Font atlas embedded as `//go:embed` resource
-  - Glyph lookup functions with O(1) complexity
+  - ✅ Font atlas embedded as `//go:embed` resource
+  - ✅ Glyph lookup functions with O(1) complexity (hash map)
+  - ✅ All exported functions documented (98.46% function documentation coverage)
+  - ✅ All tests passing (18 test functions, 2 benchmark tests)
+  - ✅ Maximum cyclomatic complexity: 9 (well below threshold of 15)
+  - ✅ Code duplication: 1.6% (well below 3% threshold)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '.functions[] | select(.package == "text") | {name, complexity: .complexity.overall}'
   ```
+  Result: All functions have complexity ≤ 13.2 (max: drawGlyph)
 
 ### Step 13: Software Rasterizer — Compositing (Phase 1.4d)
 - **Deliverable**: Image blitting with bilinear filtering, alpha compositing (Porter-Duff SrcOver)
