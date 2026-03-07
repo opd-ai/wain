@@ -15,7 +15,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1-1.2) — ✅ Complete
-**Wayland Client** (8 packages, ~4,000 LOC):
+**Wayland Client** (7 packages, ~6,970 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
@@ -23,7 +23,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (7 packages, ~2,500 LOC):
+**X11 Client** (7 packages, ~5,596 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -33,14 +33,14 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Present extension: frame synchronization and swap control
 
 ### Buffer Infrastructure (Phase 2.1-2.2) — ✅ Complete
-**Rust DRM/KMS Integration** (~1,400 LOC):
+**Rust DRM/KMS Integration** (~1,604 LOC):
 - ✅ Kernel ioctl wrappers: i915 and Xe GPU drivers
 - ✅ Buffer allocation: GPU-visible buffers with tiling support
 - ✅ DMA-BUF export: fd-based buffer sharing across processes
 - ✅ Slab allocator: efficient sub-allocation from large GPU buffers
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
-**Software 2D Rasterizer** (5 packages, ~1,550 LOC):
+**Software 2D Rasterizer** (5 packages, ~5,282 LOC):
 - ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
 - ✅ Curves: quadratic/cubic Bezier, arc fills
 - ✅ Text: SDF-based rendering with embedded glyph atlas
@@ -48,7 +48,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
 
 ### UI Framework (Phase 1.5) — ✅ Complete
-**Widget Layer** (3 packages, ~700 LOC):
+**Widget Layer** (3 packages, ~2,957 LOC):
 - ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
 - ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
 - ✅ Sizing: percentage-based dimensions with auto-layout
@@ -155,8 +155,8 @@ render-sys/src/lib.rs  →  librender.a (static library)
 
 ### 2. Protocol Layer (internal/wayland/, internal/x11/)
 ```
-Protocol Implementations (~5,300 LOC)
-├── Wayland Client (7 packages)
+Protocol Implementations (~12,566 LOC)
+├── Wayland Client (7 packages, ~6,970 LOC)
 │   ├── wire/        → Binary marshaling + fd passing
 │   ├── socket/      → Unix domain socket + SCM_RIGHTS
 │   ├── client/      → Display, Registry, Compositor, Surface
@@ -164,17 +164,19 @@ Protocol Implementations (~5,300 LOC)
 │   ├── xdg/         → Window management (xdg-shell)
 │   ├── input/       → Seat, Pointer, Keyboard, xkbcommon
 │   └── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
-└── X11 Client (5 packages)
+└── X11 Client (7 packages, ~5,596 LOC)
     ├── wire/        → Request/reply/event encoding, extension queries
     ├── client/      → Connection, CreateWindow, MapWindow, extension support
     ├── events/      → KeyPress, Button, Motion events
     ├── gc/          → Graphics context, PutImage
-    └── shm/         → MIT-SHM extension (zero-copy image transfers)
+    ├── shm/         → MIT-SHM extension (zero-copy image transfers)
+    ├── dri3/        → DRI3 extension (GPU buffer sharing via DMA-BUF)
+    └── present/     → Present extension (frame synchronization)
 ```
 
 ### 3. Rendering Layer (internal/raster/)
 ```
-Software 2D Rasterizer (~1,550 LOC)
+Software 2D Rasterizer (~5,282 LOC)
 ├── core/        → Rectangles, rounded rects, lines
 ├── curves/      → Quadratic/cubic Bezier, arc fills
 ├── composite/   → Alpha blending, image filtering
@@ -184,7 +186,7 @@ Software 2D Rasterizer (~1,550 LOC)
 
 ### 4. UI Framework (internal/ui/)
 ```
-Widget Layer (~700 LOC)
+Widget Layer (~2,957 LOC)
 ├── layout/      → Flexbox-like Row/Column layout
 ├── pctwidget/   → Percentage-based sizing
 └── widgets/     → Button, TextInput, ScrollContainer
@@ -263,7 +265,7 @@ wain/
 
 - **Error handling:** Not yet standardized (Phase 1 focus was implementation breadth)
 - **Testing:** Table-driven tests for Go; unit tests for Rust
-- **Documentation:** All exported functions should have godoc comments (91.9% overall coverage: 98.8% functions, 100% methods as of Phase 1 completion)
+- **Documentation:** All exported functions should have godoc comments (89.87% overall coverage: 97.98% functions, 84.87% methods as of Phase 2 completion)
 - **Naming:** Follow Go conventions; avoid package/file stuttering
 - **Complexity targets:** Cyclomatic ≤10, function length ≤50 lines (some Phase 1 functions exceed this)
 

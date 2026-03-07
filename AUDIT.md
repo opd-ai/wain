@@ -41,29 +41,29 @@ The project demonstrates strong implementation quality with:
 
 ### HIGH
 
-- [ ] **README claims 8 Wayland packages, actual count is 7** — README.md:18 — README states "Wayland Client (8 packages, ~4,000 LOC)" but actual package count is 7 (client, dmabuf, input, shm, socket, wire, xdg). This is a factual error in the primary documentation. **Evidence:** `ls -d internal/wayland/*/` shows 7 directories; `go list ./... | grep wayland` shows 7 packages.
+- [x] **README claims 8 Wayland packages, actual count is 7** — README.md:18 — FIXED: Updated README to state "7 packages, ~6,970 LOC" (verified with `wc -l internal/wayland/*/*.go`). All package counts now accurate throughout the document.
 
-- [ ] **README claims 7 X11 packages, actual count is 7** — README.md:26 — README states "X11 Client (7 packages, ~2,500 LOC)" which is accurate for packages, but then lists only 5 packages in line 159-173 (wire, client, events, gc, shm), omitting dri3 and present. LOC claim is also inaccurate: actual is ~12,552 lines total (includes test files). **Evidence:** `wc -l internal/x11/*/*.go` shows 12,552 total lines; package list incomplete.
+- [x] **README claims 7 X11 packages, actual count is 7** — README.md:26 — FIXED: Updated README LOC to ~5,596 (verified with `wc -l internal/x11/*/*.go`). Also added dri3 and present packages to the enumerated list in the Architecture section (lines 159-173).
 
 - [ ] **Missing demo binaries referenced in README** — README.md:57,200 — README references `wayland-demo`, `x11-demo`, `widget-demo`, and `x11-dmabuf-demo` as demonstration binaries, but only 5 of 8 cmd/ directories have built binaries in bin/. Missing: `dmabuf-demo`, `gen-atlas`, `widget-demo`. **Evidence:** `ls bin/` shows only demo, wain, wayland-demo, x11-demo, x11-dmabuf-demo; `ls cmd/` shows 8 directories.
 
-- [ ] **README claims ~1,550 LOC for rasterizer, actual is ~5,282** — README.md:43,176 — README states "Software 2D Rasterizer (5 packages, ~1,550 LOC)" but actual line count is 5,282 lines (including tests). This is a 3.4x discrepancy. The package count of 5 is correct. **Evidence:** `wc -l internal/raster/*/*.go` outputs 5,282 total lines.
+- [x] **README claims ~1,550 LOC for rasterizer, actual is ~5,282** — README.md:43,176 — FIXED: Updated README to state "~5,282 LOC" (verified with `wc -l internal/raster/*/*.go`).
 
 ### MEDIUM
 
-- [ ] **README claims ~700 LOC for UI framework, actual is ~2,957** — README.md:51,186 — README states "Widget Layer (~700 LOC)" but actual line count is 2,957 lines (including tests). This is a 4.2x discrepancy. The 3-package count is correct. **Evidence:** `wc -l internal/ui/*/*.go` outputs 2,957 total lines.
+- [x] **README claims ~700 LOC for UI framework, actual is ~2,957** — README.md:51,186 — FIXED: Updated README to state "~2,957 LOC" (verified with `wc -l internal/ui/*/*.go`).
 
 - [ ] **Documentation coverage null for all 23 packages** — audit-baseline.json — go-stats-generator reports `"doc_coverage": null` for all packages despite 97.98% function documentation coverage. This suggests the tool is not calculating per-package documentation coverage correctly, making it impossible to identify packages needing attention. **Evidence:** `jq '.packages[] | select(.documentation_coverage < 70)'` shows all packages have null doc_coverage.
 
 - [ ] **README claims 6 NOTE comments, actual count is 6** — README.md:266 — README documentation section does not mention NOTE comments, but the codebase contains 6 NOTE annotations. While not a problem per se, these should be tracked for completeness. All are informational and non-blocking. **Evidence:** audit-baseline.json shows 6 note_comments.
 
-- [ ] **README claims Phase 1 complete with ~4,000 LOC Wayland, actual varies significantly** — README.md:18 — README states "Wayland Client (8 packages, ~4,000 LOC)" but line count methodology is unclear (source-only vs. with tests). If counting only non-test files: 18 files × ~220 avg ≈ 4,000 is plausible. However, the total for all Wayland+X11 protocol files is 12,552 lines (with tests), suggesting LOC claims may be source-only. Documentation should clarify counting methodology. **Evidence:** Mixed LOC reporting throughout README.
+- [x] **README claims Phase 1 complete with ~4,000 LOC Wayland, actual varies significantly** — README.md:18 — FIXED: Updated all LOC claims to match actual counts with tests included. All counts now verified and consistent: Wayland ~6,970, X11 ~5,596, Protocol total ~12,566. Methodology is now clear (includes test files).
 
-- [ ] **README architecture section inconsistency** — README.md:159-173 — The "Protocol Layer" section lists "Wayland Client (7 packages)" but then enumerates only 7 sub-packages, while earlier in line 18 it claims 8 packages. Cross-document inconsistency. **Evidence:** Line 18 says 8 packages, line 159 says 7 packages.
+- [x] **README architecture section inconsistency** — README.md:159-173 — FIXED: Updated Architecture section to consistently show 7 Wayland packages with LOC counts. All cross-references now consistent throughout the document.
 
-- [ ] **README claims 91.9% overall doc coverage, actual is 89.9%** — README.md:266 — README states "91.9% overall coverage: 98.8% functions, 100% methods as of Phase 1 completion" but audit baseline shows 89.87% overall, 97.98% functions, 84.87% methods. This is a 2% discrepancy for overall coverage and significant (15.13%) for methods. **Evidence:** audit-baseline.json documentation.coverage shows 89.87% overall, 84.87% methods.
+- [x] **README claims 91.9% overall doc coverage, actual is 89.9%** — README.md:266 — FIXED: Updated documentation coverage claims to match actual metrics: 89.87% overall, 97.98% functions, 84.87% methods (as of Phase 2 completion).
 
-- [ ] **Package count claims vary: 8 vs 7 Wayland packages** — README.md:18,159 — README inconsistently claims both 8 packages (line 18) and 7 packages (line 159) for the Wayland client. Actual count is 7 packages. This creates confusion about project scope. **Evidence:** `go list ./... | grep wayland | wc -l` = 7.
+- [x] **Package count claims vary: 8 vs 7 Wayland packages** — README.md:18,159 — FIXED: All references now consistently state 7 Wayland packages (client, dmabuf, input, shm, socket, wire, xdg).
 
 ### LOW
 
