@@ -319,9 +319,9 @@ func TestX11ProtocolIntegration(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Minimal CreateWindow request
-	buf.WriteByte(1)      // opcode
-	buf.WriteByte(24)     // depth (24-bit color)
-	binary.Write(&buf, binary.LittleEndian, uint16(8)) // length (8 * 4 = 32 bytes)
+	buf.WriteByte(1)                                     // opcode
+	buf.WriteByte(24)                                    // depth (24-bit color)
+	binary.Write(&buf, binary.LittleEndian, uint16(8))   // length (8 * 4 = 32 bytes)
 	binary.Write(&buf, binary.LittleEndian, uint32(100)) // wid
 	binary.Write(&buf, binary.LittleEndian, uint32(1))   // parent (root)
 	binary.Write(&buf, binary.LittleEndian, int16(0))    // x
