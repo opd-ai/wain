@@ -2,7 +2,7 @@
 PLAN: Statically-Compiled Go UI Toolkit with Hardware-Accelerated Rendering
 ================================================================================
 
-**Current Status:** Phase 0 complete. Phases 1-8 are planned.
+**Current Status:** Phases 0-2 complete. Phases 3-8 are planned.
 
 Target: A single static Go binary that speaks X11/Wayland natively and renders
 UI via GPU using a custom minimal Rust driver (Intel first, then AMD).
@@ -25,7 +25,7 @@ PHASE 0: Foundation & Toolchain Setup (Week 1-2) ✅ COMPLETE
 0.3  ✅ Set up CI that cross-checks static linking on every commit.
 
 --------------------------------------------------------------------------------
-PHASE 1: Software Rendering Path (Weeks 2-6)
+PHASE 1: Software Rendering Path (Weeks 2-6) ✅ COMPLETE
 --------------------------------------------------------------------------------
 
 Build the full UI pipeline with CPU rendering first. This becomes your
@@ -75,7 +75,7 @@ fallback path and your test harness for everything above the GPU layer.
        running on software renderer over both X11 and Wayland.
 
 --------------------------------------------------------------------------------
-PHASE 2: DRM/KMS Buffer Infrastructure in Rust (Weeks 6-9)
+PHASE 2: DRM/KMS Buffer Infrastructure (Weeks 6-9) ✅ COMPLETE
 --------------------------------------------------------------------------------
 
 2.1  ✅ KERNEL IOCTL WRAPPERS
@@ -105,14 +105,27 @@ PHASE 2: DRM/KMS Buffer Infrastructure in Rust (Weeks 6-9)
      - Milestone: display a solid-color GPU-allocated buffer in a Wayland
        window (fill via CPU mmap for now — GPU rendering comes next).
 
-2.4  DRI3 INTEGRATION WITH X11 (Go side)
+2.4  ✅ DRI3 INTEGRATION WITH X11 (Go side)
      - Implement the DRI3 and Present X11 extensions in your Go X11 client.
      - Use DRI3PixmapFromBuffers to share GPU buffers with the X server.
      - Milestone: same as above but on X11.
+     - Implementation: Created `internal/x11/dri3/` and `internal/x11/present/`
+       packages (~24KB source); `cmd/x11-dmabuf-demo/` binary demonstrating
+       GPU buffer sharing; integration tests for end-to-end validation.
 
 --------------------------------------------------------------------------------
 PHASE 3: GPU Command Submission — Intel (Weeks 9-14)
 --------------------------------------------------------------------------------
+
+PREREQUISITES for Phase 3 (completed in Phase 2):
+  ✅ Rust DRM ioctl infrastructure (render-sys/src/drm.rs)
+  ✅ i915 and Xe driver wrappers (render-sys/src/{i915,xe}.rs)
+  ✅ Buffer allocation and DMA-BUF export (render-sys/src/allocator.rs)
+  ✅ Protocol integration (internal/wayland/dmabuf, internal/x11/{dri3,present})
+
+Phase 3 builds on Phase 2's buffer infrastructure to submit rendering commands
+to the GPU. The focus is Intel GPUs (Gen9-Gen12), targeting both i915 and Xe
+kernel drivers.
 
 3.1  HARDWARE DETECTION
      - Query GPU generation from i915/Xe kernel params.

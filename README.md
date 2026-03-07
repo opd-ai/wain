@@ -4,7 +4,7 @@
 
 ## Status
 
-**Phase 1** (Software Rendering Path) — ✅ 100% Complete  
+**Phase 2** (DRM/KMS Buffer Infrastructure) — ✅ 100% Complete  
 See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 
 ## Current Functionality
@@ -15,19 +15,29 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1-1.2) — ✅ Complete
-**Wayland Client** (7 packages, ~3,400 LOC):
+**Wayland Client** (8 packages, ~4,000 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
 - ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
+- ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (5 packages, ~2,000 LOC):
+**X11 Client** (7 packages, ~2,500 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
 - ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
 - ✅ MIT-SHM extension: zero-copy shared memory image transfers
+- ✅ DRI3 extension: GPU buffer sharing via DMA-BUF file descriptors
+- ✅ Present extension: frame synchronization and swap control
+
+### Buffer Infrastructure (Phase 2.1-2.2) — ✅ Complete
+**Rust DRM/KMS Integration** (~1,400 LOC):
+- ✅ Kernel ioctl wrappers: i915 and Xe GPU drivers
+- ✅ Buffer allocation: GPU-visible buffers with tiling support
+- ✅ DMA-BUF export: fd-based buffer sharing across processes
+- ✅ Slab allocator: efficient sub-allocation from large GPU buffers
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
 **Software 2D Rasterizer** (5 packages, ~1,550 LOC):
@@ -44,11 +54,12 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Sizing: percentage-based dimensions with auto-layout
 
 ### Integration Status — ✅ Complete
-- ✅ Demonstration binaries available: `wayland-demo`, `x11-demo`, `widget-demo`
+- ✅ Demonstration binaries: `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`
 - ✅ Full protocol → rasterizer → display pipeline verified with integration tests
-- ⚠️ All packages marked `internal/` (public API surface planned for Phase 1.6)
+- ✅ GPU buffer sharing tested on both X11 (DRI3) and Wayland (dmabuf)
+- ⚠️ All packages marked `internal/` (public API surface planned for later)
 
-**Not yet implemented:** GPU rendering (Phase 2+), DRM/KMS buffer infrastructure, Intel/AMD GPU command submission, shader compiler pipeline. The project currently uses CPU-based software rendering only.
+**Not yet implemented:** GPU command submission (Phase 3+), shader compiler pipeline (Phase 4+), Intel/AMD GPU rendering backends (Phase 5-6). The project currently uses CPU-based software rendering only; GPU buffers are allocated and shared but not yet used for rendering.
 
 ## Prerequisites
 
@@ -283,30 +294,35 @@ The generated atlas is embedded in the text rendering package. You only need to 
 - Modify glyph size or atlas dimensions
 - Switch to a different font or rendering algorithm
 
-### Phase 1 Complete! 🎉
+### Phase 2 Complete! 🎉
 
-Phase 1 (Software Rendering Path) is now complete with all components implemented and integrated:
+Phase 2 (DRM/KMS Buffer Infrastructure) is now complete with all components implemented and integrated:
 
-1. ✅ **Demonstration binaries created:**
-   - `cmd/wayland-demo/` — Opens a Wayland window with software rasterizer
-   - `cmd/x11-demo/` — Opens an X11 window with software rasterizer
-   - `cmd/widget-demo/` — Interactive UI with buttons, text input, scrolling
+1. ✅ **Rust DRM/KMS layer created:**
+   - i915 and Xe GPU driver ioctl wrappers
+   - Buffer allocation with tiling support
+   - DMA-BUF export for cross-process buffer sharing
+   - Slab allocator for efficient sub-allocation
 
-2. ✅ **Complexity refactored:**
-   - `layoutRow`/`layoutColumn` reduced from CC=17 to CC=3
-   - `EncodeMessage` reduced from CC=17 to CC=3
-   - `BoxShadow` reduced from CC=15 to CC=4
+2. ✅ **Protocol extensions implemented:**
+   - Wayland: `zwp_linux_dmabuf_v1` for GPU buffer attachment
+   - X11: DRI3 extension for pixmap-from-buffer operations
+   - X11: Present extension for frame synchronization
 
-3. ✅ **Integration tests added:**
-   - End-to-end tests covering protocol → rasterizer → display pipeline
-   - Fuzz tests for wire protocol encoding/decoding
+3. ✅ **Demonstration binary created:**
+   - `cmd/x11-dmabuf-demo/` — Opens an X11 window with GPU-allocated buffer
 
-4. ✅ **Documentation improved:**
-   - Documentation coverage: 91.9% overall (98.8% functions, 100% methods)
-   - gen-atlas tool documented in README
-   - All Makefile targets documented
+4. ✅ **Integration tests added:**
+   - End-to-end tests covering DRI3 buffer sharing
+   - Version negotiation tests for both DRI3 and Present
+   - Rust allocator integration tests
 
-**Next Steps (Phase 2):** DRM/KMS buffer infrastructure, GPU command submission. See [ROADMAP.md](ROADMAP.md).
+5. ✅ **Code quality improvements:**
+   - Duplication ratio reduced from 9.68% to 4.32% (55% improvement)
+   - Extracted `internal/demo/` package for shared demo utilities
+   - Zero complexity hotspots maintained (all functions CC ≤ 9)
+
+**Next Steps (Phase 3):** GPU command submission infrastructure for Intel GPUs. See [ROADMAP.md](ROADMAP.md).
 
 ### Adding New Functionality
 
@@ -372,14 +388,14 @@ See [LICENSE](LICENSE) file.
 
 ## Contributing
 
-This project has completed **Phase 1** (Software Rendering Path — 100% complete). 
+This project has completed **Phase 2** (DRM/KMS Buffer Infrastructure — 100% complete). 
 
-**Priority contributions for Phase 1.6 (Public API):**
-1. **Public API design** — Move packages from `internal/` to public exports with stable interfaces
-2. **Platform abstraction** — Create unified API that auto-detects and abstracts X11/Wayland differences
-3. **Tile-based threading** — Parallelize software rasterizer for multi-core performance
-4. **HiDPI support** — Scale factor detection and rendering
-5. **Clipboard integration** — Copy/paste support via X11/Wayland protocols
+**Priority contributions for Phase 3 (GPU Command Submission):**
+1. **Hardware detection** — Query GPU generation from i915/Xe kernel parameters
+2. **Batch buffer construction** — Implement Intel GPU command emission infrastructure
+3. **Pipeline state objects** — Create pre-configured GPU state for common draw operations
+4. **Surface and sampler state** — Encode render targets and texture bindings
+5. **First triangle** — Validate GPU command submission with a simple test draw
 
-**For Phase 2+ contributions:**
-See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan toward GPU rendering.
+**For later phases:**
+See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan toward full GPU rendering.
