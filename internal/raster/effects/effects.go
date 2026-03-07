@@ -35,40 +35,46 @@ func BoxShadow(buf *core.Buffer, x, y, width, height, blurRadius int, color core
 		return
 	}
 
-	// Clamp blur radius to reasonable values
 	if blurRadius > 50 {
 		blurRadius = 50
 	}
 
-	// Create shadow area with blur radius padding
 	shadowX := x - blurRadius
 	shadowY := y - blurRadius
 	shadowWidth := width + 2*blurRadius
 	shadowHeight := height + 2*blurRadius
 
-	// Clip to buffer bounds
-	if shadowX >= buf.Width || shadowY >= buf.Height {
-		return
-	}
-	if shadowX+shadowWidth < 0 || shadowY+shadowHeight < 0 {
-		return
-	}
-
-	x1 := max(0, shadowX)
-	y1 := max(0, shadowY)
-	x2 := min(buf.Width, shadowX+shadowWidth)
-	y2 := min(buf.Height, shadowY+shadowHeight)
-
-	// Create alpha mask for the shadow
+	x1, y1, x2, y2 := clipShadowBounds(buf, shadowX, shadowY, shadowWidth, shadowHeight)
 	maskWidth := x2 - x1
 	maskHeight := y2 - y1
 	if maskWidth <= 0 || maskHeight <= 0 {
 		return
 	}
 
+	mask := createShadowMask(x, y, width, height, shadowX, shadowY, shadowWidth, shadowHeight, maskWidth, maskHeight, blurRadius)
+	applyShadowToBuffer(buf, mask, maskWidth, maskHeight, x1, y1, color)
+}
+
+// clipShadowBounds computes the clipped bounds of the shadow area.
+func clipShadowBounds(buf *core.Buffer, shadowX, shadowY, shadowWidth, shadowHeight int) (int, int, int, int) {
+	if shadowX >= buf.Width || shadowY >= buf.Height {
+		return 0, 0, 0, 0
+	}
+	if shadowX+shadowWidth < 0 || shadowY+shadowHeight < 0 {
+		return 0, 0, 0, 0
+	}
+
+	x1 := max(0, shadowX)
+	y1 := max(0, shadowY)
+	x2 := min(buf.Width, shadowX+shadowWidth)
+	y2 := min(buf.Height, shadowY+shadowHeight)
+	return x1, y1, x2, y2
+}
+
+// createShadowMask creates and blurs the alpha mask for the shadow.
+func createShadowMask(x, y, width, height, shadowX, shadowY, shadowWidth, shadowHeight, maskWidth, maskHeight, blurRadius int) []uint8 {
 	mask := make([]uint8, maskWidth*maskHeight)
 
-	// Fill the core rectangle area in the mask
 	coreX1 := max(0, x-shadowX)
 	coreY1 := max(0, y-shadowY)
 	coreX2 := min(shadowWidth, x+width-shadowX)
@@ -82,13 +88,16 @@ func BoxShadow(buf *core.Buffer, x, y, width, height, blurRadius int, color core
 		}
 	}
 
-	// Apply Gaussian blur using box blur approximation (3 passes)
 	for pass := 0; pass < 3; pass++ {
 		blurHorizontal(mask, maskWidth, maskHeight, blurRadius/3)
 		blurVertical(mask, maskWidth, maskHeight, blurRadius/3)
 	}
 
-	// Composite the shadow onto the buffer
+	return mask
+}
+
+// applyShadowToBuffer composites the blurred shadow mask onto the buffer.
+func applyShadowToBuffer(buf *core.Buffer, mask []uint8, maskWidth, maskHeight, x1, y1 int, color core.Color) {
 	for row := 0; row < maskHeight; row++ {
 		bufY := y1 + row
 		if bufY < 0 || bufY >= buf.Height {
@@ -106,30 +115,22 @@ func BoxShadow(buf *core.Buffer, x, y, width, height, blurRadius int, color core
 				continue
 			}
 
-			// Modulate shadow color alpha by mask
 			shadowAlpha := (uint32(color.A) * uint32(maskAlpha)) / 255
-
 			idx := bufY*buf.Stride + bufX*4
+
+			srcR := uint32(color.R)
+			srcG := uint32(color.G)
+			srcB := uint32(color.B)
 			dstR := uint32(buf.Pixels[idx+2])
 			dstG := uint32(buf.Pixels[idx+1])
 			dstB := uint32(buf.Pixels[idx])
 			dstA := uint32(buf.Pixels[idx+3])
 
-			srcR := uint32(color.R)
-			srcG := uint32(color.G)
-			srcB := uint32(color.B)
-
 			invA := 255 - shadowAlpha
-
-			outR := (srcR*shadowAlpha + dstR*invA) / 255
-			outG := (srcG*shadowAlpha + dstG*invA) / 255
-			outB := (srcB*shadowAlpha + dstB*invA) / 255
-			outA := shadowAlpha + (dstA*invA)/255
-
-			buf.Pixels[idx] = uint8(outB)
-			buf.Pixels[idx+1] = uint8(outG)
-			buf.Pixels[idx+2] = uint8(outR)
-			buf.Pixels[idx+3] = uint8(outA)
+			buf.Pixels[idx] = uint8((srcB*shadowAlpha + dstB*invA) / 255)
+			buf.Pixels[idx+1] = uint8((srcG*shadowAlpha + dstG*invA) / 255)
+			buf.Pixels[idx+2] = uint8((srcR*shadowAlpha + dstR*invA) / 255)
+			buf.Pixels[idx+3] = uint8(shadowAlpha + (dstA*invA)/255)
 		}
 	}
 }

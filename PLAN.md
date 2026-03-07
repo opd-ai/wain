@@ -144,14 +144,14 @@
   ```
 - **Status**: COMPLETE - Makefile updated with widget-demo target and documentation. All targets build successfully.
 
-### Step 8: Reduce BoxShadow Complexity (Medium Impact)
+### Step 8: Reduce BoxShadow Complexity (Medium Impact) ✅
 - **Deliverable**: Extract blur pass helpers from `internal/raster/effects/effects.go`
 - **Dependencies**: Steps 1-2 complete (demos verify rendering correctness)
 - **Rationale**: CC=15, 101 lines; implements separable Gaussian blur with two passes
 - **Target Helpers**:
-  - `computeKernel(radius int) []float64`
-  - `blurHorizontal(buf *core.Buffer, kernel []float64, rect Rect)`
-  - `blurVertical(buf *core.Buffer, kernel []float64, rect Rect)`
+  - `clipShadowBounds()` - computes clipped shadow area bounds
+  - `createShadowMask()` - creates and blurs the alpha mask
+  - `applyShadowToBuffer()` - composites shadow onto buffer
 - **Acceptance**: BoxShadow reduced to CC ≤ 10
 - **Validation**:
   ```bash
@@ -159,6 +159,7 @@
   jq '[.functions[] | select(.name == "BoxShadow")] | .[0] | {name, cc: .complexity.cyclomatic}' /tmp/check.json
   # Expected: cc ≤ 10
   ```
+- **Status**: COMPLETE - BoxShadow refactored to CC=4 (73% reduction from CC=15), 22 lines. Helper functions extracted: clipShadowBounds, createShadowMask, applyShadowToBuffer. All tests pass.
 
 ### Step 9: Add Wire Protocol Fuzz Tests
 - **Deliverable**: Fuzz tests for `internal/wayland/wire` and `internal/x11/wire`
