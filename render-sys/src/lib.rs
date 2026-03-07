@@ -9,10 +9,12 @@ pub mod i915;
 pub mod xe;
 pub mod allocator;
 pub mod slab;
+pub mod detect;
 
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
 use allocator::{BufferAllocator, Buffer, TilingFormat, DriverType};
+use detect::GpuGeneration;
 
 /// Add two 32-bit integers and return the result.
 ///
@@ -32,6 +34,49 @@ pub extern "C" fn render_version() -> *const std::ffi::c_char {
     static VERSION: &[u8] = b"0.1.0\0";
     VERSION.as_ptr() as *const std::ffi::c_char
 }
+
+/// Detect GPU generation from the DRM device at the given path.
+///
+/// Returns an integer representing the GPU generation:
+/// - 0: Unknown
+/// - 9: Gen9 (Skylake/Kaby Lake/Coffee Lake)
+/// - 11: Gen11 (Ice Lake)
+/// - 12: Gen12 (Tiger Lake/Rocket Lake/Alder Lake)
+/// - 13: Xe (Meteor Lake+)
+/// - -1: Error opening device or querying
+///
+/// # Safety
+/// - path must be a valid null-terminated C string
+#[no_mangle]
+pub unsafe extern "C" fn render_detect_gpu(path: *const std::ffi::c_char) -> i32 {
+    if path.is_null() {
+        return -1;
+    }
+
+    let c_str = match std::ffi::CStr::from_ptr(path).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    let device = match DrmDevice::open(c_str) {
+        Ok(d) => d,
+        Err(_) => return -1,
+    };
+
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+
+    match generation {
+        GpuGeneration::Gen9 => 9,
+        GpuGeneration::Gen11 => 11,
+        GpuGeneration::Gen12 => 12,
+        GpuGeneration::Xe => 13,
+        GpuGeneration::Unknown => 0,
+    }
+}
+
 
 /// Create a buffer allocator for the DRM device at the given path.
 ///

@@ -67,3 +67,53 @@ func TestVersion(t *testing.T) {
 	}
 	t.Logf("render library version: %s", v)
 }
+
+func TestDetectGPU(t *testing.T) {
+	// Test with a non-existent path - should return GpuUnknown
+	gen := render.DetectGPU("/dev/null")
+	if gen != render.GpuUnknown {
+		t.Errorf("DetectGPU(/dev/null) = %v, want GpuUnknown", gen)
+	}
+
+	// Test with the standard render node path
+	// This may or may not exist on the test machine, so we accept any result
+	gen = render.DetectGPU("/dev/dri/renderD128")
+	t.Logf("GPU detection result for /dev/dri/renderD128: %s (code: %d)", gen, gen)
+
+	// Test that the generation constants have expected values
+	if render.GpuGen9 != 9 {
+		t.Errorf("GpuGen9 = %d, want 9", render.GpuGen9)
+	}
+	if render.GpuGen11 != 11 {
+		t.Errorf("GpuGen11 = %d, want 11", render.GpuGen11)
+	}
+	if render.GpuGen12 != 12 {
+		t.Errorf("GpuGen12 = %d, want 12", render.GpuGen12)
+	}
+	if render.GpuXe != 13 {
+		t.Errorf("GpuXe = %d, want 13", render.GpuXe)
+	}
+}
+
+func TestGpuGenerationString(t *testing.T) {
+	tests := []struct {
+		gen      render.GpuGeneration
+		expected string
+	}{
+		{render.GpuGen9, "Gen9 (Skylake/Kaby Lake/Coffee Lake)"},
+		{render.GpuGen11, "Gen11 (Ice Lake)"},
+		{render.GpuGen12, "Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"},
+		{render.GpuXe, "Xe (Meteor Lake+)"},
+		{render.GpuUnknown, "Unknown"},
+		{render.GpuGeneration(999), "Invalid"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.expected, func(t *testing.T) {
+			got := tc.gen.String()
+			if got != tc.expected {
+				t.Errorf("GpuGeneration(%d).String() = %q, want %q", tc.gen, got, tc.expected)
+			}
+		})
+	}
+}
+

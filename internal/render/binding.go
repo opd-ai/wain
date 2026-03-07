@@ -55,10 +55,14 @@ package render
 // Use `make build` or `make test-go` which set CGO_LDFLAGS automatically.
 
 // #include <stdint.h>
+// #include <stdlib.h>
 //
 // int32_t render_add(int32_t a, int32_t b);
 // const char *render_version(void);
+// int32_t render_detect_gpu(const char *path);
 import "C"
+
+import "unsafe"
 
 // Add calls the Rust render_add function via the C ABI and returns a + b.
 // This is the canonical smoke-test for the Go → Rust static-library link.
@@ -70,3 +74,61 @@ func Add(a, b int32) int32 {
 func Version() string {
 	return C.GoString(C.render_version())
 }
+
+// GpuGeneration represents a detected Intel GPU generation.
+type GpuGeneration int
+
+const (
+	// GpuUnknown represents an unknown or unsupported GPU.
+	GpuUnknown GpuGeneration = 0
+	// GpuGen9 represents Gen9 (Skylake, Kaby Lake, Coffee Lake).
+	GpuGen9 GpuGeneration = 9
+	// GpuGen11 represents Gen11 (Ice Lake).
+	GpuGen11 GpuGeneration = 11
+	// GpuGen12 represents Gen12 (Tiger Lake, Rocket Lake, Alder Lake).
+	GpuGen12 GpuGeneration = 12
+	// GpuXe represents Xe (Meteor Lake and later).
+	GpuXe GpuGeneration = 13
+)
+
+// String returns a human-readable name for the GPU generation.
+func (g GpuGeneration) String() string {
+	switch g {
+	case GpuGen9:
+		return "Gen9 (Skylake/Kaby Lake/Coffee Lake)"
+	case GpuGen11:
+		return "Gen11 (Ice Lake)"
+	case GpuGen12:
+		return "Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"
+	case GpuXe:
+		return "Xe (Meteor Lake+)"
+	case GpuUnknown:
+		return "Unknown"
+	default:
+		return "Invalid"
+	}
+}
+
+// DetectGPU queries the GPU generation from the DRM device at the given path.
+//
+// Returns GpuUnknown on error or if the GPU is not recognized.
+//
+// Example:
+//
+//	gen := render.DetectGPU("/dev/dri/renderD128")
+//	if gen == render.GpuUnknown {
+//	    log.Println("Unknown or unsupported GPU")
+//	} else {
+//	    log.Printf("Detected: %s", gen)
+//	}
+func DetectGPU(path string) GpuGeneration {
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+	
+	result := C.render_detect_gpu(cpath)
+	if result < 0 {
+		return GpuUnknown
+	}
+	return GpuGeneration(result)
+}
+
