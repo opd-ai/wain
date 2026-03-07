@@ -30,14 +30,13 @@ func TestMain(m *testing.M) {
 	// Try to call a Rust function to verify the library is linked
 	// If this panics or the linker failed before we got here, TestMain won't run
 	// but the linker error is clear enough. If we get here, the library is available.
-	
+
 	// Note: We can't actually test this without triggering the link error,
 	// so we just provide documentation via this TestMain's existence.
 	// The real fix is that if linking fails, the error message is clear.
-	
+
 	os.Exit(m.Run())
 }
-
 
 func TestAdd(t *testing.T) {
 	tests := []struct {
