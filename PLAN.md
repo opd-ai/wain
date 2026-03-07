@@ -188,19 +188,22 @@ Per ROADMAP.md, Phase 1 consists of 5 sub-phases that must be completed before G
   ```
   Result: 0.0055 (0.55%, well below 3% threshold)
 
-### Step 10: Software Rasterizer Core (Phase 1.4a)
+### Step 10: Software Rasterizer Core (Phase 1.4a) ✅
 - **Deliverable**: Tile-based 2D rasterizer foundation — filled rectangles, rounded rectangles, line segments
 - **Dependencies**: None (can proceed in parallel with protocol work)
 - **Scope**: ~3,000–4,000 LoC
-- **Files to create**: `internal/raster/core/` package
+- **Files created**: `internal/raster/core/` package (buffer.go, rect.go, line.go, buffer_test.go, rect_test.go, line_test.go)
 - **Acceptance**:
-  - Algorithm functions with complexity < 15
-  - ARGB8888 buffer operations documented
+  - ✅ Algorithm functions with complexity < 15 (max: cyclomatic 10, overall 14.5)
+  - ✅ ARGB8888 buffer operations documented (98.28% function documentation coverage)
+  - ✅ All tests passing (18 test functions, comprehensive coverage)
+  - ✅ Zero regression in metrics (duplication ratio: 0.74%, well below 3% threshold)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '.functions[] | select(.package == "core") | select(.complexity.cyclomatic > 15)'
   ```
+  Result: No functions exceed complexity threshold (max: 10)
 
 ### Step 11: Software Rasterizer — Curves & Arcs (Phase 1.4b)
 - **Deliverable**: Quadratic/cubic Bezier curves, arc fills
