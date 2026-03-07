@@ -214,9 +214,9 @@ func (e *Extension) Open(conn Connection, drawable XID, provider uint32) (int, e
 //
 // The fd should point to a GPU-allocated buffer. The X server will import it
 // and the pixmap can then be used with Present or standard X11 operations.
-func (e *Extension) PixmapFromBuffer(conn Connection, pixmap XID, drawable XID,
-	size uint32, width, height uint16, stride uint16, depth, bpp uint8, fd int) error {
-
+func (e *Extension) PixmapFromBuffer(conn Connection, pixmap, drawable XID,
+	size uint32, width, height, stride uint16, depth, bpp uint8, fd int,
+) error {
 	if fd < 0 {
 		return ErrInvalidFD
 	}
@@ -261,10 +261,10 @@ func (e *Extension) PixmapFromBuffer(conn Connection, pixmap XID, drawable XID,
 //
 // For simple single-plane formats, use PixmapFromBuffer instead.
 // This function is needed for YUV formats or tiled/compressed GPU buffers.
-func (e *Extension) PixmapFromBuffers(conn Connection, pixmap XID, drawable XID,
+func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 	width, height uint16, fourcc, modifier uint32, depth, bpp uint8,
-	strides, offsets []uint32, fds []int) error {
-
+	strides, offsets []uint32, fds []int,
+) error {
 	if !e.SupportsModifiers() {
 		return fmt.Errorf("dri3: PixmapFromBuffers requires version 1.2+ (have %d.%d)",
 			e.majorVersion, e.minorVersion)

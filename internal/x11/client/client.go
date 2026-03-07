@@ -398,7 +398,7 @@ func (c *Connection) SendRequestWithFDs(req []byte, fds []int) error {
 		header.Level = syscall.SOL_SOCKET
 		header.Type = syscall.SCM_RIGHTS
 		header.SetLen(syscall.CmsgLen(4 * len(fds)))
-		
+
 		// Copy file descriptors into control message
 		data := rights[syscall.CmsgSpace(0):]
 		for i, fd := range fds {
@@ -435,7 +435,7 @@ func (c *Connection) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, 
 	// Read reply header with potential file descriptors
 	reply := make([]byte, wire.ReplyHeaderSize)
 	oob := make([]byte, syscall.CmsgSpace(4*16)) // Space for up to 16 fds
-	
+
 	n, oobn, _, _, err := unixConn.ReadMsgUnix(reply, oob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("client: failed to read reply: %w", err)
@@ -467,7 +467,7 @@ func (c *Connection) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, 
 		if err != nil {
 			return nil, nil, fmt.Errorf("client: failed to parse control message: %w", err)
 		}
-		
+
 		for _, msg := range messages {
 			if msg.Header.Level == syscall.SOL_SOCKET && msg.Header.Type == syscall.SCM_RIGHTS {
 				// Extract file descriptors
