@@ -302,7 +302,7 @@ func arcCoverage(px, py, cx, cy, rx, ry, startAngle, endAngle float64) float64 {
 	// Check if angle is within the arc range
 	inArc := false
 	if endAngle > 2*math.Pi {
-		inArc = angle >= startAngle || angle <= (endAngle - 2*math.Pi)
+		inArc = angle >= startAngle || angle <= (endAngle-2*math.Pi)
 	} else {
 		inArc = angle >= startAngle && angle <= endAngle
 	}
