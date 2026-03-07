@@ -24,16 +24,9 @@
 
 ### CRITICAL
 
-- [ ] **Build system failure for Phase 0 validation** — `Makefile:120` / `internal/render/render.go:1-70` — The `make build` target fails with linker error: `undefined reference to '_dl_find_object'` when attempting to build `cmd/wain`. This contradicts README claim "Build the static binary: make build" (line 90). Root cause: musl-gcc linker attempting to link against glibc's libgcc_eh.a which references glibc-only symbols. The existing `bin/wain` binary (2.2MB, statically linked) was built successfully at an earlier time, but current build system cannot reproduce it. **IMPACT:** New contributors cannot build the foundational validation binary, blocking Phase 0 verification.
+- [x] **Build system failure for Phase 0 validation** — `Makefile:120` / `internal/render/render.go:1-70` — The `make build` target now succeeds. Root cause was musl-gcc linker attempting to link against glibc's libgcc_eh.a which references glibc-only symbol `_dl_find_object`. **SOLUTION:** Created `internal/render/dl_find_object_stub.c` with weak stub implementation that returns -1, allowing libgcc_eh to fall back to traditional frame discovery. Updated all Makefile targets to compile and link the stub. All binaries now build successfully and are fully statically linked. **FIXED:** 2026-03-07
 
-- [ ] **Inconsistent static linking across demonstration binaries** — `bin/demo:1` / `bin/x11-demo:1` — README claims "Fully static binary output (no dynamic dependencies)" (line 15) and documents verification via `make check-static` (line 115). However, `file` reveals:
-  - `bin/demo`: **dynamically linked** (interpreter `/lib64/ld-linux-x86-64.so.2`)
-  - `bin/x11-demo`: **dynamically linked** (interpreter `/lib/ld-musl-x86_64.so.1`)
-  - `bin/wain`: statically linked ✓
-  - `bin/gen-atlas`: statically linked ✓
-  - `bin/widget-demo`: statically linked ✓
-  
-  This partial compliance undermines the "fully static" claim and deployment reliability. The `make check-static` target likely only checks one binary.
+- [x] **Inconsistent static linking across demonstration binaries** — `bin/demo:1` / `bin/x11-demo:1` — README claims "Fully static binary output (no dynamic dependencies)" (line 15). **SOLUTION:** Updated Makefile build targets. Pure-Go demos (demo, wayland-demo, x11-demo) now build with `CGO_ENABLED=0` for static linking. CGO-dependent binaries (wain, widget-demo, gen-atlas) use musl-gcc with dl_find_object stub. All 6 binaries now statically linked. **VERIFIED:** `file bin/*` shows "statically linked" for all binaries. **FIXED:** 2026-03-07
 
 - [ ] **Unsafe pointer misuse detected** — `internal/x11/shm/shm.go:265` — `go vet` reports "possible misuse of unsafe.Pointer" in `GetBuffer()` method. Code uses `(*[1 << 30]byte)(unsafe.Pointer(seg.Addr))[:seg.Size:seg.Size]` to cast mmap'd memory to byte slice. While this pattern is common for syscall interfaces, `go vet` flags it as potentially unsafe. **RISK:** Data corruption if `seg.Addr` is misaligned or `seg.Size` exceeds actual allocation. This is in the MIT-SHM zero-copy path (README line 30), a performance-critical component.
 
@@ -45,7 +38,7 @@
 
 - [ ] **Documentation coverage gap for methods** — Analysis shows **87.6%** method documentation coverage vs. **98.8%** function coverage and **96.0%** type coverage (audit-baseline.json). While overall coverage is 91.9% (above the 70% minimum), the 10+ percentage point gap suggests exported methods are less documented than standalone functions. README claims "96.9% current coverage" (line 253), which is inconsistent with measured 91.9% overall coverage. **IMPACT:** API users may lack guidance on method usage.
 
-- [ ] **Missing wayland-demo binary** — `bin/` directory lacks `wayland-demo` executable despite README documentation of demonstration binaries (lines 47, 287-292). Present: `demo`, `gen-atlas`, `wain`, `widget-demo`, `x11-demo`. Missing: `wayland-demo`. **NOTE:** Source file `cmd/wayland-demo/main.go` exists (8,930 bytes, modified Mar 7 13:34). This suggests build failure similar to `cmd/wain` issue. README claims "✅ Demonstration binaries available: wayland-demo, x11-demo, widget-demo" (line 47).
+- [x] **Missing wayland-demo binary** — `bin/` directory now contains `wayland-demo` executable. **FIXED:** Build system fix (dl_find_object stub) resolved the build failure. Binary is statically linked and builds successfully via `make wayland-demo`. **VERIFIED:** 2026-03-07
 
 - [ ] **Fuzz test visibility in metrics** — README claims "✅ Fuzz tests for wire protocol encoding/decoding" (line 300), and manual verification confirms 14 fuzz functions exist in `internal/wayland/wire/wire_fuzz_test.go` (7 tests) and `internal/x11/wire/wire_fuzz_test.go` (7 tests). However, go-stats-generator JSON output reports 0 fuzz functions: `jq '.functions[] | select(.name | startswith("Fuzz"))' audit-baseline.json` returns empty. This is a tool limitation, not a code issue, but creates audit visibility gap. **WORKAROUND:** Manual `grep -r "func Fuzz"` confirms presence.
 

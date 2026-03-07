@@ -50,6 +50,10 @@ RUST_MUSL_TARGET := $(HOST_ARCH)-unknown-linux-musl
 RUST_DIR  := render-sys
 RUST_LIB  := $(RUST_DIR)/target/$(RUST_MUSL_TARGET)/release/librender.a
 
+# Stub object for _dl_find_object (GCC 14+ with musl compatibility)
+DL_STUB_SRC := internal/render/dl_find_object_stub.c
+DL_STUB_OBJ := internal/render/dl_find_object_stub.o
+
 GO_BIN       := bin/wain
 GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
@@ -113,12 +117,20 @@ $(RUST_LIB):
 	  --target $(RUST_MUSL_TARGET) \
 	  $(CARGO_FLAGS)
 
+## ── C stub for musl compatibility ────────────────────────────────────────────
+#
+# GCC 14+ libgcc_eh.a references _dl_find_object (glibc 2.35+), which musl
+# does not provide. This stub allows static linking with musl-gcc.
+
+$(DL_STUB_OBJ): $(DL_STUB_SRC)
+	$(CC) -c -o $(DL_STUB_OBJ) $(DL_STUB_SRC)
+
 ## ── Go ───────────────────────────────────────────────────────────────────────
 
-go: rust
+go: rust $(DL_STUB_OBJ)
 	mkdir -p bin
 	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
 	  CGO_LDFLAGS_ALLOW=".*" \
 	  go build \
 	    -ldflags "-extldflags '-static'" \
@@ -126,54 +138,50 @@ go: rust
 
 build: go
 
-demo: rust
+demo:
 	mkdir -p bin
-	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
-	  CGO_LDFLAGS_ALLOW=".*" \
-	  go build \
-	    -ldflags "-extldflags '-static'" \
-	    -o bin/demo github.com/opd-ai/wain/cmd/demo
+	CGO_ENABLED=0 go build \
+	  -ldflags "-s -w" \
+	  -o bin/demo github.com/opd-ai/wain/cmd/demo
 
-wayland-demo: rust
+wayland-demo:
 	mkdir -p bin
-	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
-	  CGO_LDFLAGS_ALLOW=".*" \
-	  go build \
-	    -ldflags "-extldflags '-static'" \
-	    -o bin/wayland-demo github.com/opd-ai/wain/cmd/wayland-demo
+	CGO_ENABLED=0 go build \
+	  -ldflags "-s -w" \
+	  -o bin/wayland-demo github.com/opd-ai/wain/cmd/wayland-demo
 
-x11-demo: rust
+x11-demo:
 	mkdir -p bin
-	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
-	  CGO_LDFLAGS_ALLOW=".*" \
-	  go build \
-	    -ldflags "-extldflags '-static'" \
-	    -o bin/x11-demo github.com/opd-ai/wain/cmd/x11-demo
+	CGO_ENABLED=0 go build \
+	  -ldflags "-s -w" \
+	  -o bin/x11-demo github.com/opd-ai/wain/cmd/x11-demo
 
-widget-demo: rust
+widget-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
 	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
 	  CGO_LDFLAGS_ALLOW=".*" \
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/widget-demo github.com/opd-ai/wain/cmd/widget-demo
 
-dmabuf-demo: rust
+dmabuf-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
 	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
 	  CGO_LDFLAGS_ALLOW=".*" \
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/dmabuf-demo github.com/opd-ai/wain/cmd/dmabuf-demo
 
-gen-atlas:
+gen-atlas: rust $(DL_STUB_OBJ)
 	mkdir -p bin
-	go build -o $(GEN_ATLAS_BIN) $(GEN_ATLAS_PKG)
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o $(GEN_ATLAS_BIN) $(GEN_ATLAS_PKG)
 
 ## ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -182,9 +190,9 @@ test-rust: check-deps
 	  --target $(RUST_MUSL_TARGET) \
 	  $(CARGO_FLAGS)
 
-test-go: rust
+test-go: rust $(DL_STUB_OBJ)
 	CC=$(CC) CGO_ENABLED=1 \
-	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
 	  CGO_LDFLAGS_ALLOW=".*" \
 	  go test ./...
 
@@ -213,3 +221,4 @@ check-static: build
 clean:
 	cargo clean --manifest-path $(RUST_DIR)/Cargo.toml
 	rm -rf bin
+	rm -f $(DL_STUB_OBJ)
