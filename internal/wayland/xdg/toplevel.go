@@ -21,20 +21,20 @@ type Toplevel struct {
 }
 
 const (
-	toplevelOpcodeDestroy            uint16 = 0
-	toplevelOpcodeSetParent          uint16 = 1
-	toplevelOpcodeSetTitle           uint16 = 2
-	toplevelOpcodeSetAppID           uint16 = 3
-	toplevelOpcodeShowWindowMenu     uint16 = 4
-	toplevelOpcodeMove               uint16 = 5
-	toplevelOpcodeResize             uint16 = 6
-	toplevelOpcodeSetMaxSize         uint16 = 7
-	toplevelOpcodeSetMinSize         uint16 = 8
-	toplevelOpcodeSetMaximized       uint16 = 9
-	toplevelOpcodeUnsetMaximized     uint16 = 10
-	toplevelOpcodeSetFullscreen      uint16 = 11
-	toplevelOpcodeUnsetFullscreen    uint16 = 12
-	toplevelOpcodeSetMinimized       uint16 = 13
+	toplevelOpcodeDestroy         uint16 = 0
+	toplevelOpcodeSetParent       uint16 = 1
+	toplevelOpcodeSetTitle        uint16 = 2
+	toplevelOpcodeSetAppID        uint16 = 3
+	toplevelOpcodeShowWindowMenu  uint16 = 4
+	toplevelOpcodeMove            uint16 = 5
+	toplevelOpcodeResize          uint16 = 6
+	toplevelOpcodeSetMaxSize      uint16 = 7
+	toplevelOpcodeSetMinSize      uint16 = 8
+	toplevelOpcodeSetMaximized    uint16 = 9
+	toplevelOpcodeUnsetMaximized  uint16 = 10
+	toplevelOpcodeSetFullscreen   uint16 = 11
+	toplevelOpcodeUnsetFullscreen uint16 = 12
+	toplevelOpcodeSetMinimized    uint16 = 13
 )
 
 const (
@@ -46,14 +46,14 @@ const (
 type State uint32
 
 const (
-	StateMaximized       State = 1
-	StateFullscreen      State = 2
-	StateResizing        State = 3
-	StateActivated       State = 4
-	StateTiledLeft       State = 5
-	StateTiledRight      State = 6
-	StateTiledTop        State = 7
-	StateTiledBottom     State = 8
+	StateMaximized   State = 1
+	StateFullscreen  State = 2
+	StateResizing    State = 3
+	StateActivated   State = 4
+	StateTiledLeft   State = 5
+	StateTiledRight  State = 6
+	StateTiledTop    State = 7
+	StateTiledBottom State = 8
 )
 
 // ConfigureEvent represents a configure event from the compositor.

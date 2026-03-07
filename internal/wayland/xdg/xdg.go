@@ -71,7 +71,7 @@ const (
 )
 
 // NewWmBase creates a new WmBase object from a registry binding.
-func NewWmBase(conn Conn, id uint32, version uint32) *WmBase {
+func NewWmBase(conn Conn, id, version uint32) *WmBase {
 	return &WmBase{
 		objectBase: objectBase{
 			id:    id,

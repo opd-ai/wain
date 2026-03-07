@@ -78,7 +78,6 @@ func TestWmBaseGetXdgSurface(t *testing.T) {
 
 	surfaceID := uint32(100)
 	xdgSurface, err := wmBase.GetXdgSurface(surfaceID)
-
 	if err != nil {
 		t.Fatalf("GetXdgSurface failed: %v", err)
 	}
@@ -128,7 +127,6 @@ func TestWmBasePong(t *testing.T) {
 
 	serial := uint32(12345)
 	err := wmBase.Pong(serial)
-
 	if err != nil {
 		t.Fatalf("Pong failed: %v", err)
 	}
