@@ -44,7 +44,9 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-musl-
 
       - name: Run Rust tests
-        run: cargo test --manifest-path render-sys/Cargo.toml
+        run: |
+          cargo test --manifest-path render-sys/Cargo.toml \
+            --target x86_64-unknown-linux-musl
 
       - name: Build Rust static library (musl)
         run: |
@@ -56,11 +58,13 @@ jobs:
         env:
           CC: musl-gcc
           CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
         run: |
-          go build \
-            -ldflags "-extldflags '-static'" \
-            -o bin/wain \
-            ./cmd/wain
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+            go build \
+              -ldflags "-extldflags '-static'" \
+              -o bin/wain \
+              ./cmd/wain
 
       - name: Run Go tests
         env:
