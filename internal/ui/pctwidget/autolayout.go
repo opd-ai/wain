@@ -1,4 +1,4 @@
-package widget
+package pctwidget
 
 // FlowDirection controls the direction of the automatic layout flow.
 type FlowDirection int
@@ -77,6 +77,11 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 			p.x = cx + cursor
 			p.y = cy
 			cursor += p.width + gap
+		default:
+			// Treat unknown FlowDirection values as FlowColumn.
+			p.x = cx
+			p.y = cy + cursor
+			cursor += p.height + gap
 		}
 
 		// Recurse into children.

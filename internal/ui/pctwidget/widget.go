@@ -1,4 +1,4 @@
-package widget
+package pctwidget
 
 import (
 	"errors"
@@ -140,7 +140,14 @@ func (p *Panel) Draw(buf *core.Buffer) error {
 	buf.FillRect(p.x, p.y, p.width, p.height, s.Background())
 	// Border (drawn as four lines on the edges).
 	bw := s.BorderWidth()
-	if bw > 0 {
+	if bw > 0 && p.width > 0 && p.height > 0 {
+		// Clamp border width so it doesn't exceed half the panel dimension.
+		if bw > p.width/2 {
+			bw = p.width / 2
+		}
+		if bw > p.height/2 {
+			bw = p.height / 2
+		}
 		bc := s.Border()
 		// top
 		buf.FillRect(p.x, p.y, p.width, bw, bc)

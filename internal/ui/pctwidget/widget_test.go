@@ -1,4 +1,4 @@
-package widget
+package pctwidget
 
 import (
 	"testing"
@@ -431,6 +431,66 @@ func TestAutoLayoutPercentageConsistency(t *testing.T) {
 	}
 	if w2 != expectedW2 || h2 != expectedH2 {
 		t.Errorf("400x300: got (%d,%d), want (%d,%d)", w2, h2, expectedW2, expectedH2)
+	}
+}
+
+func TestAutoLayoutDefaultFlowDirection(t *testing.T) {
+	c1 := NewPanel(100, 30)
+	c2 := NewPanel(100, 30)
+
+	// Use an invalid FlowDirection value; should behave like FlowColumn.
+	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowDirection(99), DefaultStyle())
+
+	style := DefaultStyle()
+	pad := style.Padding()
+	gap := style.Gap()
+
+	x1, y1, _, h1 := c1.ResolvedBounds()
+	if x1 != pad || y1 != pad {
+		t.Errorf("c1 position = (%d,%d), want (%d,%d)", x1, y1, pad, pad)
+	}
+	x2, y2, _, _ := c2.ResolvedBounds()
+	expectedY2 := pad + h1 + gap
+	if x2 != pad || y2 != expectedY2 {
+		t.Errorf("c2 position = (%d,%d), want (%d,%d)", x2, y2, pad, expectedY2)
+	}
+}
+
+func TestDefaultStyleSingleton(t *testing.T) {
+	s1 := DefaultStyle()
+	s2 := DefaultStyle()
+	if s1 != s2 {
+		t.Error("DefaultStyle should return the same singleton instance")
+	}
+}
+
+func TestPanelDrawBorderClamped(t *testing.T) {
+	buf, err := core.NewBuffer(200, 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Create a tiny panel where border width exceeds half the dimensions.
+	p := NewPanel(100, 100)
+	p.SetPosition(0, 0, 4, 4)
+	bigBorder := &RetroStyle{
+		BgColor:     core.Color{R: 30, G: 30, B: 46, A: 255},
+		BorderColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+		BaseBorderW: 10, // much larger than the 4x4 panel
+	}
+	p.SetStyle(bigBorder)
+	// Should not panic or draw outside bounds.
+	if err := p.Draw(buf); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAutoLayoutZeroParent(t *testing.T) {
+	c := NewPanel(50, 50)
+	// Parent area smaller than 2*padding should not panic.
+	AutoLayout([]*Panel{c}, 0, 0, 2, 2, FlowColumn, DefaultStyle())
+	_, _, w, h := c.ResolvedBounds()
+	if w != 0 || h != 0 {
+		t.Errorf("expected zero dimensions for tiny parent, got (%d,%d)", w, h)
 	}
 }
 

@@ -1,4 +1,4 @@
-package widget
+package pctwidget
 
 import "github.com/opd-ai/wain/internal/raster/core"
 
@@ -67,19 +67,24 @@ func (s *RetroStyle) Gap() int { return s.BaseGap }
 // BorderWidth implements [Style].
 func (s *RetroStyle) BorderWidth() int { return s.BaseBorderW }
 
+// defaultStyle is the package-level singleton for the default retro style.
+// It is created once and reused to avoid per-call heap allocations.
+var defaultStyle Style = &RetroStyle{
+	BgColor:      core.Color{R: 30, G: 30, B: 46, A: 255},    // dark blue-gray
+	FgColor:      core.Color{R: 205, G: 214, B: 244, A: 255}, // soft white
+	AccentColor:  core.Color{R: 137, G: 180, B: 250, A: 255}, // bright blue
+	BorderColor:  core.Color{R: 88, G: 91, B: 112, A: 255},   // muted gray
+	BaseFontSize: 14.0,
+	BasePadding:  8,
+	BaseGap:      6,
+	BaseBorderW:  1,
+}
+
 // DefaultStyle returns the built-in retro-pixel-art style.
 //
-// Colors are chosen for a dark-background, high-contrast aesthetic reminiscent
-// of classic pixel-art UIs but rendered at modern resolutions.
+// The returned value is a package-level singleton and should be treated as
+// immutable. Colors are chosen for a dark-background, high-contrast aesthetic
+// reminiscent of classic pixel-art UIs but rendered at modern resolutions.
 func DefaultStyle() Style {
-	return &RetroStyle{
-		BgColor:      core.Color{R: 30, G: 30, B: 46, A: 255},    // dark blue-gray
-		FgColor:      core.Color{R: 205, G: 214, B: 244, A: 255}, // soft white
-		AccentColor:  core.Color{R: 137, G: 180, B: 250, A: 255}, // bright blue
-		BorderColor:  core.Color{R: 88, G: 91, B: 112, A: 255},   // muted gray
-		BaseFontSize: 14.0,
-		BasePadding:  8,
-		BaseGap:      6,
-		BaseBorderW:  1,
-	}
+	return defaultStyle
 }

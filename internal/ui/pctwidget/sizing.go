@@ -1,8 +1,10 @@
-// Package widget implements a percentage-based widget system with automatic layout.
+// Package pctwidget implements a percentage-based widget system with automatic layout.
 //
-// This package provides a high-level widget abstraction layer built on top of the
-// existing layout and raster packages. Widgets are sized using percentages (0–100)
-// of their parent container, enabling responsive layouts that adapt to window resizes.
+// This package provides a high-level widget abstraction layer that sits alongside
+// the existing widgets and raster packages. Widgets are sized using percentages
+// (0–100) of their parent container, enabling responsive layouts that adapt to
+// window resizes. It includes its own auto-layout engine for zero-configuration
+// positioning and a Style interface for pluggable visual customization.
 //
 // # Sizing Model
 //
@@ -19,9 +21,9 @@
 //
 // # Coordinate System
 //
-// Same as the layout and raster packages: origin (0,0) at top-left,
+// Same as the raster packages: origin (0,0) at top-left,
 // X increases right, Y increases down.
-package widget
+package pctwidget
 
 import "errors"
 
