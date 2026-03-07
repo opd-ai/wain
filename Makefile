@@ -1,73 +1,134 @@
 # Wain – Go UI toolkit with static Rust rendering library
 #
-# Targets:
-#   make build        – build the Rust static library then the Go binary
-#   make test         – run both Rust and Go test suites
-#   make clean        – remove build artifacts
-#   make check-static – verify the final binary is fully statically linked
+# musl libc is required for all builds. This ensures the final binary is
+# fully statically linked and has no glibc version dependency.
 #
-# Environment variables:
-#   CARGO_FLAGS   – extra flags passed to cargo (e.g. CARGO_FLAGS="--quiet")
-#   GO_LDFLAGS    – extra flags passed to `go build -ldflags` (default empty)
+# Targets:
+#   make build        – check deps, build Rust (musl), build Go (static)
+#   make test         – run both Rust and Go test suites
+#   make check-static – assert the final binary is fully statically linked
+#   make clean        – remove build artifacts
+#
+# Prerequisites:
+#   musl-gcc     Ubuntu/Debian:  sudo apt-get install musl-tools
+#                Fedora/RHEL:    sudo dnf install musl-gcc
+#                Arch Linux:     sudo pacman -S musl
+#                Alpine Linux:   apk add musl-dev
+#                macOS (cross):  brew install FiloSottile/musl-cross/musl-cross
+#
+#   musl Rust target:  rustup target add $(RUST_MUSL_TARGET)
 
 SHELL := /bin/bash
 
-RUST_DIR    := render-sys
-RUST_TARGET := $(RUST_DIR)/target/release/librender.a
+## ── Architecture & target detection ─────────────────────────────────────────
 
-GO_BIN      := bin/wain
-GO_PKG      := github.com/opd-ai/wain/cmd/wain
+# Detect host architecture from Rust's host triple (e.g. x86_64, aarch64).
+RUST_HOST       := $(shell rustc -vV 2>/dev/null | awk '/^host:/{print $$2}')
+# Strip the vendor+OS suffix to get the raw arch (x86_64, aarch64, …).
+HOST_ARCH       := $(firstword $(subst -, ,$(RUST_HOST)))
+RUST_MUSL_TARGET := $(HOST_ARCH)-unknown-linux-musl
 
-.PHONY: all build rust go test test-rust test-go clean check-static
+RUST_DIR        := render-sys
+RUST_LIB        := $(RUST_DIR)/target/$(RUST_MUSL_TARGET)/release/librender.a
+
+GO_BIN          := bin/wain
+GO_PKG          := github.com/opd-ai/wain/cmd/wain
+
+.PHONY: all build rust go test test-rust test-go clean check-static check-deps
 
 all: build
 
+## ── Dependency checks ────────────────────────────────────────────────────────
+#
+# These checks run before any build step and fail immediately with actionable
+# installation instructions if a required tool is absent.
+
+check-deps: check-musl-gcc check-musl-rust-target
+
+check-musl-gcc:
+	@if ! command -v musl-gcc >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: musl-gcc not found."; \
+		echo ""; \
+		echo "musl libc is required for all wain builds. Install musl-tools:"; \
+		echo ""; \
+		echo "  Ubuntu / Debian:  sudo apt-get install musl-tools"; \
+		echo "  Fedora / RHEL:    sudo dnf install musl-gcc"; \
+		echo "  Arch Linux:       sudo pacman -S musl"; \
+		echo "  Alpine Linux:     apk add musl-dev"; \
+		echo "  macOS (cross):    brew install FiloSottile/musl-cross/musl-cross"; \
+		echo ""; \
+		echo "After installing, re-run: make build"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ musl-gcc found: $$(command -v musl-gcc)"
+
+check-musl-rust-target:
+	@if ! rustup target list --installed 2>/dev/null | grep -q "^$(RUST_MUSL_TARGET)$$"; then \
+		echo ""; \
+		echo "ERROR: Rust target '$(RUST_MUSL_TARGET)' is not installed."; \
+		echo ""; \
+		echo "Install it with:"; \
+		echo ""; \
+		echo "  rustup target add $(RUST_MUSL_TARGET)"; \
+		echo ""; \
+		echo "After installing, re-run: make build"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ Rust musl target installed: $(RUST_MUSL_TARGET)"
+
 ## ── Rust ─────────────────────────────────────────────────────────────────────
 
-rust: $(RUST_TARGET)
+rust: check-deps $(RUST_LIB)
 
-$(RUST_TARGET):
-	cargo build --release --manifest-path $(RUST_DIR)/Cargo.toml $(CARGO_FLAGS)
+$(RUST_LIB):
+	cargo build --release \
+	  --manifest-path $(RUST_DIR)/Cargo.toml \
+	  --target $(RUST_MUSL_TARGET) \
+	  $(CARGO_FLAGS)
 
 ## ── Go ───────────────────────────────────────────────────────────────────────
 
 go: rust
 	mkdir -p bin
-	CGO_ENABLED=1 go build -ldflags "$(GO_LDFLAGS)" -o $(GO_BIN) $(GO_PKG)
+	CC=musl-gcc CGO_ENABLED=1 \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o $(GO_BIN) $(GO_PKG)
 
 build: go
 
 ## ── Tests ────────────────────────────────────────────────────────────────────
 
-test-rust:
+test-rust: check-deps
 	cargo test --manifest-path $(RUST_DIR)/Cargo.toml $(CARGO_FLAGS)
 
 test-go: rust
-	CGO_ENABLED=1 go test ./...
+	CC=musl-gcc CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go test ./...
 
 test: test-rust test-go
 
 ## ── Static-link verification ─────────────────────────────────────────────────
-#
-# For a fully static binary (no shared-library dependencies) the build must
-# target a musl-based toolchain:
-#
-#   rustup target add x86_64-unknown-linux-musl
-#   CARGO_FLAGS="--target x86_64-unknown-linux-musl" \
-#   GO_LDFLAGS="-extldflags '-static'" \
-#   CC=musl-gcc \
-#   make build check-static
-#
-# The CI job attempts this when the musl toolchain is available, and falls back
-# to a dynamic-link build otherwise.
 
 check-static: build
-	@echo "Checking linkage of $(GO_BIN)…"
+	@echo "Verifying static linkage of $(GO_BIN)…"
 	@if ldd $(GO_BIN) 2>&1 | grep -q "not a dynamic executable"; then \
 		echo "✓ Binary is fully statically linked."; \
 	else \
-		echo "ℹ Binary is dynamically linked (musl toolchain required for a fully static build):"; \
+		echo ""; \
+		echo "ERROR: $(GO_BIN) is dynamically linked."; \
+		echo ""; \
 		ldd $(GO_BIN); \
+		echo ""; \
+		echo "Ensure CC=musl-gcc and -extldflags '-static' are set."; \
+		echo "Run 'make build' which enforces these flags automatically."; \
+		echo ""; \
+		exit 1; \
 	fi
 
 ## ── Cleanup ──────────────────────────────────────────────────────────────────

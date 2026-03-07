@@ -1,30 +1,49 @@
 // Package render provides Go bindings to the Rust render-sys static library.
 //
-// Build the Rust library first:
+// musl libc is required. The Rust library must be compiled for the musl
+// target, and CC must be set to musl-gcc when building Go. Use `make build`
+// which enforces both requirements and produces a fully static binary.
 //
-//	cd render-sys && cargo build --release
+// Manual build steps:
 //
-// Then build the Go package with CGO enabled (the default):
+//	# 1. Add the musl Rust target (once)
+//	rustup target add x86_64-unknown-linux-musl
 //
-//	CGO_ENABLED=1 go build ./...
-//
-// # Musl / fully-static builds
-//
-// To link against a musl-target Rust library (required for a fully static
-// binary), override the library path via CGO_LDFLAGS at build time:
-//
+//	# 2. Build the Rust static library
 //	cargo build --release --target x86_64-unknown-linux-musl \
 //	  --manifest-path render-sys/Cargo.toml
 //
-//	MUSL_LIB=render-sys/target/x86_64-unknown-linux-musl/release/librender.a
-//	CGO_ENABLED=1 \
-//	  CGO_LDFLAGS="${MUSL_LIB} -ldl -lm -lpthread" \
-//	  CGO_LDFLAGS_ALLOW=".*" \
-//	  CC=musl-gcc \
+//	# 3. Build the Go binary against musl
+//	CC=musl-gcc CGO_ENABLED=1 \
+//	  go build -ldflags "-extldflags '-static'" ./...
+//
+// # Installation of musl-gcc
+//
+// The build will fail if musl-gcc is not present. Install it with:
+//
+//	Ubuntu / Debian:  sudo apt-get install musl-tools
+//	Fedora / RHEL:    sudo dnf install musl-gcc
+//	Arch Linux:       sudo pacman -S musl
+//	Alpine Linux:     apk add musl-dev
+//	macOS (cross):    brew install FiloSottile/musl-cross/musl-cross
+//	                  (sets up x86_64-linux-musl-gcc, not musl-gcc directly)
+//
+// # Cross-architecture builds
+//
+// The default LDFLAGS embed the x86_64 musl path. On other Linux
+// architectures (e.g. aarch64) use make, which auto-detects the host arch:
+//
+//	make build   # detects RUST_MUSL_TARGET automatically via rustc -vV
+//
+// Or set CGO_LDFLAGS manually:
+//
+//	MUSL_LIB=render-sys/target/aarch64-unknown-linux-musl/release/librender.a
+//	CGO_ENABLED=1 CGO_LDFLAGS="${MUSL_LIB} -ldl -lm -lpthread" \
+//	  CGO_LDFLAGS_ALLOW=".*" CC=musl-gcc \
 //	  go build -ldflags "-extldflags '-static'" ./...
 package render
 
-// #cgo LDFLAGS: ${SRCDIR}/../../render-sys/target/release/librender.a -ldl -lm -lpthread
+// #cgo LDFLAGS: ${SRCDIR}/../../render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread
 //
 // #include <stdint.h>
 //

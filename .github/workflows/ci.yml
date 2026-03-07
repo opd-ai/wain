@@ -11,48 +11,6 @@ permissions:
 
 jobs:
   build-and-test:
-    name: Build & Test (dynamic link)
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust build artifacts
-        uses: actions/cache@v4
-        with:
-          path: render-sys/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('render-sys/Cargo.toml', 'render-sys/src/**') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Build Rust static library
-        run: cargo build --release --manifest-path render-sys/Cargo.toml
-
-      - name: Run Rust tests
-        run: cargo test --manifest-path render-sys/Cargo.toml
-
-      - name: Build Go binary
-        run: CGO_ENABLED=1 go build -o bin/wain ./cmd/wain
-
-      - name: Run Go tests
-        run: CGO_ENABLED=1 go test ./...
-
-      - name: Smoke-test binary
-        run: ./bin/wain
-
-      - name: Report linkage
-        run: |
-          echo "=== ldd output ==="
-          ldd bin/wain || true
-
-  build-static:
     name: Build & Test (fully static via musl)
     runs-on: ubuntu-latest
 
@@ -64,20 +22,29 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # Install musl-tools before the Rust toolchain so the linker is present
+      # when Cargo's build.rs scripts run.  This step is required; the build
+      # will fail if musl-gcc is not available.
+      - name: Install musl toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+          musl-gcc --version
+
       - name: Set up Rust with musl target
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-musl
 
-      - name: Install musl toolchain
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
-      - name: Cache Rust build artifacts (musl)
+      - name: Cache Rust build artifacts
         uses: actions/cache@v4
         with:
           path: render-sys/target
           key: ${{ runner.os }}-cargo-musl-${{ hashFiles('render-sys/Cargo.toml', 'render-sys/src/**') }}
           restore-keys: ${{ runner.os }}-cargo-musl-
+
+      - name: Run Rust tests
+        run: cargo test --manifest-path render-sys/Cargo.toml
 
       - name: Build Rust static library (musl)
         run: |
@@ -88,31 +55,32 @@ jobs:
       - name: Build fully static Go binary
         env:
           CC: musl-gcc
+          CGO_ENABLED: "1"
         run: |
-          # Override the CGO LDFLAGS to point at the musl-target library.
-          # The render.go source embeds the GNU-target path via ${SRCDIR};
-          # CGO_LDFLAGS_ALLOW lets us pass a replacement at build time.
-          MUSL_LIB=render-sys/target/x86_64-unknown-linux-musl/release/librender.a
-          CGO_ENABLED=1 \
-            CGO_LDFLAGS="${MUSL_LIB} -ldl -lm -lpthread" \
-            CGO_LDFLAGS_ALLOW=".*" \
-            go build \
-              -ldflags "-extldflags '-static'" \
-              -o bin/wain-static \
-              ./cmd/wain
-        # musl static build is best-effort in CI
-        continue-on-error: true
+          go build \
+            -ldflags "-extldflags '-static'" \
+            -o bin/wain \
+            ./cmd/wain
 
-      - name: Verify fully static binary
+      - name: Run Go tests
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
         run: |
-          if [ -f bin/wain-static ]; then
-            echo "=== ldd output ==="
-            if ldd bin/wain-static 2>&1 | grep -q "not a dynamic executable"; then
-              echo "✓ Binary is fully statically linked."
-            else
-              echo "Binary linkage:"
-              ldd bin/wain-static || true
-            fi
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+            go test ./...
+
+      - name: Smoke-test binary
+        run: ./bin/wain
+
+      - name: Assert fully static binary
+        run: |
+          echo "=== ldd output ==="
+          ldd bin/wain 2>&1 || true
+          if ldd bin/wain 2>&1 | grep -q "not a dynamic executable"; then
+            echo "✓ Binary is fully statically linked."
           else
-            echo "Static binary not produced (musl build not yet fully configured)."
+            echo "ERROR: binary is dynamically linked — musl build must produce a static binary."
+            exit 1
           fi
