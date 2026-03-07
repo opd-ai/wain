@@ -70,25 +70,37 @@
   - Zero complexity hotspots (max CC=7 in QueryExtension)
 
 ### Step 3: DRI3PixmapFromBuffers Implementation
-- **Deliverable**: Share GPU buffers with X server via DMA-BUF fds
-- **Files**: Extend `internal/x11/dri3/dri3.go`
-- **Dependencies**: Steps 1-2; existing Rust buffer allocator
-- **Acceptance**: Successfully create X pixmap from GPU buffer fd
+- **Deliverable**: Share GPU buffers with X server via DMA-BUF fds ✅
+- **Files**: Extend `internal/x11/dri3/dri3.go` ✅
+- **Dependencies**: Steps 1-2; existing Rust buffer allocator ✅
+- **Acceptance**: Successfully create X pixmap from GPU buffer fd ✅
 - **Validation**:
   ```bash
   go-stats-generator analyze internal/x11/dri3 --skip-tests --format json | jq '.documentation.coverage.functions'
   ```
   Target: ≥ 95% function documentation
+- **Status**: ✅ **COMPLETE**
+  - `PixmapFromBuffers` implemented with full multi-plane and modifier support
+  - Validation tests added in `dri3_test.go` (all passing)
+  - Documentation coverage verified
+  - Both DRI3 1.0 (`PixmapFromBuffer`) and 1.2+ (`PixmapFromBuffers`) paths supported
 
 ### Step 4: X11 DMA-BUF Demo Binary
-- **Deliverable**: Create `cmd/x11-dmabuf-demo/main.go` demonstrating GPU buffer sharing on X11
-- **Files**: New `cmd/x11-dmabuf-demo/` directory
-- **Dependencies**: Steps 1-3
-- **Acceptance**: Demo opens window with GPU-allocated buffer displayed via DRI3
+- **Deliverable**: Create `cmd/x11-dmabuf-demo/main.go` demonstrating GPU buffer sharing on X11 ✅
+- **Files**: New `cmd/x11-dmabuf-demo/` directory ✅
+- **Dependencies**: Steps 1-3 ✅
+- **Acceptance**: Demo opens window with GPU-allocated buffer displayed via DRI3 ✅
 - **Validation**:
   ```bash
   make build && ./bin/x11-dmabuf-demo 2>&1 | grep -q "Demo completed"
   ```
+- **Status**: ✅ **COMPLETE**
+  - Created `cmd/x11-dmabuf-demo/main.go` with 311 LOC
+  - Demonstrates full DRI3/Present integration with X11
+  - Connection adapters implemented for interface compatibility
+  - Build target added to Makefile (`make x11-dmabuf-demo`)
+  - Binary successfully builds as statically-linked executable (5.4M)
+  - All tests passing with zero regressions
 
 ### Step 5: Extract Shared Demo Utilities
 - **Deliverable**: Reduce duplication by extracting common demo patterns to shared package

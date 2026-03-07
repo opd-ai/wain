@@ -59,7 +59,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas demo wayland-demo x11-demo widget-demo
+.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas demo wayland-demo x11-demo x11-dmabuf-demo widget-demo
 
 all: build
 
@@ -155,6 +155,15 @@ x11-demo:
 	CGO_ENABLED=0 go build \
 	  -ldflags "-s -w" \
 	  -o bin/x11-demo github.com/opd-ai/wain/cmd/x11-demo
+
+x11-dmabuf-demo: rust $(DL_STUB_OBJ)
+	mkdir -p bin
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o bin/x11-dmabuf-demo github.com/opd-ai/wain/cmd/x11-dmabuf-demo
 
 widget-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
