@@ -30,6 +30,10 @@ bin/
 pre-cleanup.json
 post-cleanup.json
 diff-report*.json
+baseline.json
+metrics.json
+post.json
+audit-*.json
 
 # Coverage and profiling artifacts
 *.out
