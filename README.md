@@ -274,7 +274,7 @@ make coverage-html
 ```
 
 **Test Suite Coverage:**
-- **Rust:** 252 tests total (244 passing, 8 GPU tests ignored)
+- **Rust:** 263 tests total (249 passing, 6 hardware-dependent failures, 8 GPU tests ignored)
   - Includes comprehensive unit tests for shader compilation, EU backend, batch processing, and pipeline management
   - 22 shader validation tests (naga integration tests for all 7 WGSL shaders)
 - **Go:** 57 test files covering all 40 packages
@@ -287,6 +287,7 @@ make coverage-html
     - Moderate coverage (50-90%): Wayland/X11 protocols, UI widgets, effects
     - Lower coverage (<50%): render backend, integration tests (hardware-dependent)
     - Authoritative coverage computed via `scripts/compute-coverage.sh`
+  - **Note:** Test counts verified as of 2026-03-08; run `make test` to see current totals.
 
 **Without direnv:** Use `make test-go` instead of `go test ./...`. Direct `go test` requires `CGO_LDFLAGS` to link the Rust library (see [Troubleshooting](#troubleshooting)).
 
