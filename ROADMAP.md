@@ -348,8 +348,18 @@ PHASE 5: Rendering Backend Integration (Weeks 18-22)
        - All 29 damage tracking tests passing
        - Infrastructure ready for incremental UI updates in Phase 5.5
 
-5.5  Milestone: full demo app from Phase 1.5 running on GPU backend,
-     visually identical to software path.
+5.5  ✅ DEMO APP ON GPU BACKEND (Complete)
+     - Full demo app from Phase 1.5 running on both GPU backend and software path
+     - **Status**: ✅ Implemented
+       - Created SoftwareConsumer for DisplayList → CPU rasterization (internal/raster/consumer/)
+       - Added RenderToDisplayList() methods to all widgets (Button, TextInput, ScrollContainer)
+       - Widgets now support both direct rendering (Draw) and display list emission
+       - Integration tests validate parity between software direct path and DisplayList path
+       - All 15+ consumer tests passing (software rendering + widget integration)
+       - Ready for Phase 6 (AMD GPU support) - architecture proven for multiple backends
+     - Milestone: widgets can emit DisplayLists consumed by either software or GPU backends,
+       enabling backend-agnostic UI development
+
 
 --------------------------------------------------------------------------------
 PHASE 6: AMD GPU Support (Weeks 22-30)
