@@ -65,6 +65,7 @@ const (
 	DisplayServerX11
 )
 
+// String returns a human-readable name for the display server.
 func (d DisplayServer) String() string {
 	switch d {
 	case DisplayServerWayland:

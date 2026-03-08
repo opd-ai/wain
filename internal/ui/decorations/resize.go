@@ -9,15 +9,25 @@ import (
 // ResizeEdge indicates which edge or corner is being resized.
 type ResizeEdge int
 
+// Resize edge constants identify which edge or corner is being resized.
 const (
+	// ResizeEdgeNone indicates no resize in progress.
 	ResizeEdgeNone ResizeEdge = iota
+	// ResizeEdgeTop indicates resizing from the top edge.
 	ResizeEdgeTop
+	// ResizeEdgeBottom indicates resizing from the bottom edge.
 	ResizeEdgeBottom
+	// ResizeEdgeLeft indicates resizing from the left edge.
 	ResizeEdgeLeft
+	// ResizeEdgeRight indicates resizing from the right edge.
 	ResizeEdgeRight
+	// ResizeEdgeTopLeft indicates resizing from the top-left corner.
 	ResizeEdgeTopLeft
+	// ResizeEdgeTopRight indicates resizing from the top-right corner.
 	ResizeEdgeTopRight
+	// ResizeEdgeBottomLeft indicates resizing from the bottom-left corner.
 	ResizeEdgeBottomLeft
+	// ResizeEdgeBottomRight indicates resizing from the bottom-right corner.
 	ResizeEdgeBottomRight
 )
 

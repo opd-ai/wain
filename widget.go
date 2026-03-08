@@ -37,37 +37,44 @@ type BaseWidget struct {
 	onTouch   func(*TouchEvent)
 }
 
+// Contains returns true if the point (x, y) is inside the widget's bounds.
 func (w *BaseWidget) Contains(x, y float64) bool {
 	return x >= w.x && x < w.x+w.width &&
 		y >= w.y && y < w.y+w.height
 }
 
+// Children returns the widget's child widgets.
 func (w *BaseWidget) Children() []Widget {
 	return w.children
 }
 
+// HandlePointer processes a pointer event, invoking the callback if set.
 func (w *BaseWidget) HandlePointer(evt *PointerEvent) {
 	if w.onPointer != nil {
 		w.onPointer(evt)
 	}
 }
 
+// HandleKey processes a keyboard event, invoking the callback if set.
 func (w *BaseWidget) HandleKey(evt *KeyEvent) {
 	if w.onKey != nil {
 		w.onKey(evt)
 	}
 }
 
+// HandleTouch processes a touch event, invoking the callback if set.
 func (w *BaseWidget) HandleTouch(evt *TouchEvent) {
 	if w.onTouch != nil {
 		w.onTouch(evt)
 	}
 }
 
+// SetFocused sets the widget's keyboard focus state.
 func (w *BaseWidget) SetFocused(focused bool) {
 	w.focused = focused
 }
 
+// IsFocused returns true if the widget currently has keyboard focus.
 func (w *BaseWidget) IsFocused() bool {
 	return w.focused
 }

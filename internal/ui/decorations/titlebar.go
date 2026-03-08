@@ -11,9 +11,13 @@ import (
 // ButtonType represents the type of window control button.
 type ButtonType int
 
+// Button type constants for window control buttons.
 const (
+	// ButtonTypeClose represents the window close button.
 	ButtonTypeClose ButtonType = iota
+	// ButtonTypeMaximize represents the window maximize button.
 	ButtonTypeMaximize
+	// ButtonTypeMinimize represents the window minimize button.
 	ButtonTypeMinimize
 )
 

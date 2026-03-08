@@ -10,8 +10,11 @@ import (
 // DecorationMode indicates whether decorations are client-side or server-side.
 type DecorationMode uint32
 
+// Decoration mode constants.
 const (
+	// DecorationModeClientSide indicates the client draws decorations.
 	DecorationModeClientSide DecorationMode = 1
+	// DecorationModeServerSide indicates the compositor draws decorations.
 	DecorationModeServerSide DecorationMode = 2
 )
 
