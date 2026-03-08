@@ -18,6 +18,9 @@ pub mod shader;
 pub mod shaders;
 pub mod eu;
 
+#[cfg(test)]
+pub mod gpu_test;
+
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
 use allocator::{BufferAllocator, Buffer, TilingFormat, DriverType};
