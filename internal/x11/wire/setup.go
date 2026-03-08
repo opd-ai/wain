@@ -362,7 +362,7 @@ func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScree
 		&reply.BitmapScanlinePad, &reply.MinKeycode, &reply.MaxKeycode)
 
 	io.CopyN(io.Discard, r, 4)
-	return
+	return vendorLen, numScreens, numFormats
 }
 
 // decodeVendorString reads the vendor string if present.
