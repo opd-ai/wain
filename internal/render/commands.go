@@ -155,6 +155,28 @@ func (cb *CommandBuilder) State3DPS(kernelAddr uint64) {
 	}
 }
 
+// State3DVS emits a 3DSTATE_VS command with shader kernel address.
+func (cb *CommandBuilder) State3DVS(kernelAddr uint64) {
+	opcode := uint32(0x7821)
+	length := uint32(8) // 9 DWords total
+	dw0 := (3 << 29) | (opcode << 16) | length
+
+	dw1 := uint32(kernelAddr & 0xFFFFFFFF)
+	dw2 := uint32(kernelAddr >> 32)
+
+	dw3 := uint32(0)
+	dw3 |= 1 << 0 // Vertex shader enable
+
+	cb.EmitDword(dw0)
+	cb.EmitDword(dw1)
+	cb.EmitDword(dw2)
+	cb.EmitDword(dw3)
+	// DWords 4-8 (shader parameters - zeros for now)
+	for i := 0; i < 5; i++ {
+		cb.EmitDword(0)
+	}
+}
+
 // State3DVertexBuffers emits a 3DSTATE_VERTEX_BUFFERS command.
 func (cb *CommandBuilder) State3DVertexBuffers(index uint32, address uint64, size, stride uint32) {
 	opcode := uint32(0x7808)
