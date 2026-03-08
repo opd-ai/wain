@@ -169,95 +169,26 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 	}
 	fmt.Println("       ✓ Connected to :0")
 
-	fmt.Println("\n[2/12] Querying DRI3 extension...")
-	dri3Adapter := &dri3ConnectionAdapter{conn}
-	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
+	dri3Ext, presentExt, renderFd, err := setupExtensions(conn)
 	if err != nil {
 		conn.Close()
-		return nil, nil, fmt.Errorf("query DRI3: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
 
-	fmt.Println("\n[3/12] Querying Present extension...")
-	presentAdapter := &presentConnectionAdapter{conn}
-	presentExt, err := present.QueryExtension(presentAdapter)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("query Present: %w", err)
-	}
-	fmt.Printf("       ✓ Present version %d.%d\n", presentExt.MajorVersion(), presentExt.MinorVersion())
-
-	fmt.Println("\n[4/12] Opening DRI3 render node...")
-	root := conn.RootWindow()
-	renderFd, err := dri3Ext.Open(dri3Adapter, dri3.XID(root), 0)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("open DRI3: %w", err)
-	}
-	fmt.Printf("       ✓ Opened render node (fd %d)\n", renderFd)
-
-	fmt.Println("\n[5/12] Creating GPU buffer allocator...")
-	allocator, err := render.NewAllocator(drmPath)
+	allocator, gpuCtx, err := setupGPU()
 	if err != nil {
 		syscall.Close(renderFd)
 		conn.Close()
-		return nil, nil, fmt.Errorf("create allocator: %w (is %s accessible?)", err, drmPath)
+		return nil, nil, err
 	}
-	fmt.Printf("       ✓ Opened %s\n", drmPath)
 
-	fmt.Println("\n[6/12] Detecting GPU generation...")
-	gpuGen := render.DetectGPU(drmPath)
-	if gpuGen == render.GpuUnknown {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
-		return nil, nil, fmt.Errorf("GPU detection failed or unsupported GPU")
-	}
-	fmt.Printf("       ✓ Detected: %s\n", gpuGen)
-
-	fmt.Println("\n[7/12] Creating GPU context...")
-	gpuCtx, err := render.CreateContext(drmPath)
+	wid, err := setupX11Window(conn)
 	if err != nil {
 		allocator.Close()
 		syscall.Close(renderFd)
 		conn.Close()
-		return nil, nil, fmt.Errorf("create GPU context: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
-	if gpuCtx.VmID != 0 {
-		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
-	}
-	fmt.Println()
-
-	fmt.Println("\n[8/12] Creating X11 window...")
-	const (
-		x           = 100
-		y           = 100
-		borderWidth = 0
-		windowClass = wire.WindowClassInputOutput
-		visual      = 0 // CopyFromParent
-		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress
-	)
-
-	mask := uint32(wire.CWEventMask)
-	attrs := []uint32{eventMask}
-
-	wid, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
-	if err != nil {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
-		return nil, nil, fmt.Errorf("create window: %w", err)
-	}
-	fmt.Printf("       ✓ Created window XID %d\n", wid)
-
-	if err := conn.MapWindow(wid); err != nil {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
-		return nil, nil, fmt.Errorf("map window: %w", err)
-	}
-	fmt.Println("       ✓ Window mapped to display")
 
 	ctx := &demoContext{
 		conn:       conn,
@@ -273,6 +204,94 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 		conn.Close()
 	}
 	return ctx, cleanup, nil
+}
+
+func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Extension, int, error) {
+	fmt.Println("\n[2/12] Querying DRI3 extension...")
+	dri3Adapter := &dri3ConnectionAdapter{conn}
+	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
+	if err != nil {
+		return nil, nil, 0, fmt.Errorf("query DRI3: %w", err)
+	}
+	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
+
+	fmt.Println("\n[3/12] Querying Present extension...")
+	presentAdapter := &presentConnectionAdapter{conn}
+	presentExt, err := present.QueryExtension(presentAdapter)
+	if err != nil {
+		return nil, nil, 0, fmt.Errorf("query Present: %w", err)
+	}
+	fmt.Printf("       ✓ Present version %d.%d\n", presentExt.MajorVersion(), presentExt.MinorVersion())
+
+	fmt.Println("\n[4/12] Opening DRI3 render node...")
+	root := conn.RootWindow()
+	renderFd, err := dri3Ext.Open(dri3Adapter, dri3.XID(root), 0)
+	if err != nil {
+		return nil, nil, 0, fmt.Errorf("open DRI3: %w", err)
+	}
+	fmt.Printf("       ✓ Opened render node (fd %d)\n", renderFd)
+
+	return dri3Ext, presentExt, renderFd, nil
+}
+
+func setupGPU() (*render.Allocator, *render.GpuContext, error) {
+	fmt.Println("\n[5/12] Creating GPU buffer allocator...")
+	allocator, err := render.NewAllocator(drmPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("create allocator: %w (is %s accessible?)", err, drmPath)
+	}
+	fmt.Printf("       ✓ Opened %s\n", drmPath)
+
+	fmt.Println("\n[6/12] Detecting GPU generation...")
+	gpuGen := render.DetectGPU(drmPath)
+	if gpuGen == render.GpuUnknown {
+		allocator.Close()
+		return nil, nil, fmt.Errorf("GPU detection failed or unsupported GPU")
+	}
+	fmt.Printf("       ✓ Detected: %s\n", gpuGen)
+
+	fmt.Println("\n[7/12] Creating GPU context...")
+	gpuCtx, err := render.CreateContext(drmPath)
+	if err != nil {
+		allocator.Close()
+		return nil, nil, fmt.Errorf("create GPU context: %w", err)
+	}
+	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
+	if gpuCtx.VmID != 0 {
+		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
+	}
+	fmt.Println()
+
+	return allocator, gpuCtx, nil
+}
+
+func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
+	fmt.Println("\n[8/12] Creating X11 window...")
+	const (
+		x           = 100
+		y           = 100
+		borderWidth = 0
+		windowClass = wire.WindowClassInputOutput
+		visual      = 0 // CopyFromParent
+		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress
+	)
+
+	mask := uint32(wire.CWEventMask)
+	attrs := []uint32{eventMask}
+	root := conn.RootWindow()
+
+	wid, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
+	if err != nil {
+		return 0, fmt.Errorf("create window: %w", err)
+	}
+	fmt.Printf("       ✓ Created window XID %d\n", wid)
+
+	if err := conn.MapWindow(wid); err != nil {
+		return 0, fmt.Errorf("map window: %w", err)
+	}
+	fmt.Println("       ✓ Window mapped to display")
+
+	return wid, nil
 }
 
 func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {

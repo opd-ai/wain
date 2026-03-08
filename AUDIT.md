@@ -52,7 +52,7 @@ The codebase is generally well-structured with:
 
 ### MEDIUM
 
-- [ ] **Long Function: setupX11AndGPU** — cmd/gpu-triangle-demo/main.go:164 — 111 lines with cyclomatic complexity 11. This function handles X11 connection, DRI3 setup, Present extension, GPU detection, context creation, window setup, buffer allocation, and batch preparation. **Recommendation:** Extract GPU setup, window creation, and buffer allocation into separate functions for better testability and maintainability.
+- [x] **Long Function: setupX11AndGPU** — cmd/gpu-triangle-demo/main.go:164 — 111 lines with cyclomatic complexity 11. This function handles X11 connection, DRI3 setup, Present extension, GPU detection, context creation, window setup, buffer allocation, and batch preparation. **Recommendation:** Extract GPU setup, window creation, and buffer allocation into separate functions for better testability and maintainability. **Resolution:** Refactored into 3 helper functions (setupExtensions, setupGPU, setupX11Window) reducing complexity from 11→5 (54.5% improvement) and overall complexity from 14.8→7 (52.7% improvement). Tests pass. (commit 2026-03-08)
 
 - [ ] **Long Function: DecodeSetupReply** — internal/x11/wire/setup.go:177 — 127 lines with cyclomatic complexity 11. This function handles X11 protocol setup reply decoding with nested loops for screens, depths, and visuals. **Recommendation:** Extract screen/depth/visual decoding into helper functions.
 
