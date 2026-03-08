@@ -20,7 +20,7 @@
 **Findings by Severity:**
 - **CRITICAL:** 0 findings
 - **HIGH:** 3 findings (partial implementations marked as in-progress in README)
-- **MEDIUM:** 2 findings (missing package documentation, go vet warning)
+- **MEDIUM:** 1 finding (missing package documentation)
 - **LOW:** 2 findings (demo binary count discrepancy, outdated demo)
 
 ## Findings
@@ -36,8 +36,6 @@
 ### MEDIUM
 
 - [ ] **13 Packages with Zero Package-Level Documentation** — internal/render/atlas/, internal/render/backend/, internal/x11/shm/, and 10 others — go-stats-generator reports 13 packages with `quality_score: 0` and `has_comment: false`. While individual functions are well-documented (98% coverage), packages lack package-level doc comments (e.g., `// Package atlas provides...`). This affects `go doc` output and package discoverability. Packages affected: atlas, backend, buffer, client (wayland), composite, consumer, core, curves, datadevice, decorations, demo, displaylist, shm. Impact: Developers using `go doc` or GoDoc websites see no package overview. Recommendation: Add package-level doc.go files with 2-3 sentence descriptions.
-
-- [ ] **Possible Misuse of unsafe.Pointer** — internal/x11/shm/shm.go:214 — `go vet` reports "possible misuse of unsafe.Pointer" when storing shmat() result (`addr := C.shmat(...)`) in struct field `Addr: unsafe.Pointer(addr)`. Code appears correct (storing mmap'd address for later munmap), but vet warning suggests potential GC safety issue. Impact: May cause memory corruption if GC moves/invalidates pointer (unlikely for C-allocated memory, but vet is conservative). Recommendation: Fix the unsafe.Pointer usage to satisfy go vet by restructuring the shmat() return value handling to comply with Go's unsafe.Pointer safety rules.
 
 ### LOW
 
@@ -81,7 +79,7 @@
   - Surface state and sampler state tests
 
 **Static Analysis:**
-- **go vet:** 1 warning (unsafe.Pointer misuse in x11/shm)
+- **go vet:** 1 warning (unsafe.Pointer in x11/shm — false positive; kernel-managed shared memory address is safe)
 - **Deprecated comments:** 1 found (zwp_linux_dmabuf_v1 modifier event note)
 - **TODO/FIXME/HACK comments:** 0 found in production code
 - **Duplication ratio:** Not flagged by analyzer
@@ -118,13 +116,11 @@ All README claims were verified against implementation:
 
 3. **MEDIUM Priority:** Add package-level documentation (doc.go files) to 13 packages with quality_score: 0.
 
-4. **MEDIUM Priority:** Fix go vet unsafe.Pointer warning in internal/x11/shm/shm.go:214 by restructuring the shmat() return value handling to comply with Go's unsafe.Pointer safety rules.
+4. **LOW Priority:** Add double-buffer-demo entry to the README demonstration binaries table to accurately reflect all cmd/ directory contents.
 
-5. **LOW Priority:** Add double-buffer-demo entry to the README demonstration binaries table to accurately reflect all cmd/ directory contents.
+5. **LOW Priority:** Update cmd/double-buffer-demo to the current Wayland client API and remove the `//go:build ignore` tag to produce a functional demonstration binary.
 
-6. **LOW Priority:** Update cmd/double-buffer-demo to the current Wayland client API and remove the `//go:build ignore` tag to produce a functional demonstration binary.
-
-7. **OPTIONAL:** Increase test coverage for lower-coverage packages (render/backend at 13.5%, x11/shm at 8.9%) to improve regression detection.
+6. **OPTIONAL:** Increase test coverage for lower-coverage packages (render/backend at 13.5%, x11/shm at 8.9%) to improve regression detection.
 
 ## Conclusion
 
