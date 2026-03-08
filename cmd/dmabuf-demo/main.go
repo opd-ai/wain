@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
@@ -34,21 +33,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("dmabuf-demo", "Wayland DMA-BUF GPU buffer sharing demonstration", []string{
-		demo.FormatExample("dmabuf-demo", "Run demo on Wayland compositor"),
-		demo.FormatExample("dmabuf-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("==============================================")
-	fmt.Println("wain Phase 2.3 Demo - DMA-BUF + Wayland")
-	fmt.Println("==============================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"dmabuf-demo",
+		"Wayland DMA-BUF GPU buffer sharing demonstration",
+		[]string{
+			demo.FormatExample("dmabuf-demo", "Run demo on Wayland compositor"),
+			demo.FormatExample("dmabuf-demo --help", "Show this help message"),
+		},
+		"wain Phase 2.3 Demo - DMA-BUF + Wayland",
+		runDemo,
+	)
 }
 
 type demoContext struct {
@@ -108,14 +102,11 @@ func setupWaylandContext() (*demoContext, func(), error) {
 		return nil, nil, err
 	}
 
-	fmt.Println("\n[3/8] Creating GPU buffer allocator...")
-	drmPath := "/dev/dri/renderD128"
-	allocator, err := render.NewAllocator(drmPath)
+	allocator, err := demo.SetupGPUAllocatorSimple(demo.DefaultDRMPath, 3, 8)
 	if err != nil {
 		conn.Close()
-		return nil, nil, fmt.Errorf("create allocator: %w (is %s accessible?)", err, drmPath)
+		return nil, nil, err
 	}
-	fmt.Printf("      ✓ Opened %s\n", drmPath)
 
 	ctx := &demoContext{
 		conn:       conn,

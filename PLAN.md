@@ -60,7 +60,7 @@
 
 ## Implementation Steps
 
-### Step 1: Extract Render Presentation Logic
+### Step 1: Extract Render Presentation Logic ✅ COMPLETE
 - **Deliverable**: Create shared `internal/render/present/present.go` to deduplicate 29-line render-and-present pattern across Wayland and X11 display modules
 - **Dependencies**: None
 - **Files**: 
@@ -73,7 +73,7 @@
     jq '.duplication | {ratio: .duplication_ratio, lines: .duplicated_lines}'
   ```
 
-### Step 2: Refactor FillRoundedRect (Highest Complexity)
+### Step 2: Refactor FillRoundedRect (Highest Complexity) ✅ COMPLETE
 - **Deliverable**: Extract corner-drawing and edge-filling into helper functions to reduce cyclomatic complexity
 - **Dependencies**: None
 - **Files**: `internal/raster/core/rect.go` (line 47, complexity 14.5)
@@ -100,7 +100,7 @@
   ```
   Result: 4.4 (68.6% improvement from baseline)
 
-### Step 4: Deduplicate Demo Setup Patterns
+### Step 4: Deduplicate Demo Setup Patterns ✅ COMPLETE
 - **Deliverable**: Create shared demo setup helpers in `internal/demo/` to eliminate GPU triangle/dmabuf/perf demo duplication (25-34 line blocks)
 - **Dependencies**: None
 - **Files**:

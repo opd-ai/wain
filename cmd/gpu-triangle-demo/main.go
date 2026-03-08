@@ -21,7 +21,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
@@ -37,25 +36,19 @@ const (
 	windowHeight = 600
 	bpp          = 32 // ARGB8888
 	depth        = 24
-	drmPath      = "/dev/dri/renderD128"
 )
 
 func main() {
-	demo.CheckHelpFlag("gpu-triangle-demo", "GPU command submission with Intel EU rendering", []string{
-		demo.FormatExample("gpu-triangle-demo", "Render triangle via GPU commands"),
-		demo.FormatExample("gpu-triangle-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("==============================================")
-	fmt.Println("wain Phase 3 Demo - GPU Triangle Rendering")
-	fmt.Println("==============================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"gpu-triangle-demo",
+		"GPU command submission with Intel EU rendering",
+		[]string{
+			demo.FormatExample("gpu-triangle-demo", "Render triangle via GPU commands"),
+			demo.FormatExample("gpu-triangle-demo --help", "Show this help message"),
+		},
+		"wain Phase 3 Demo - GPU Triangle Rendering",
+		runDemo,
+	)
 }
 
 type demoContext struct {
@@ -67,77 +60,7 @@ type demoContext struct {
 	window     x11client.XID
 }
 
-// dri3ConnectionAdapter adapts x11client.Connection to dri3.Connection.
-type dri3ConnectionAdapter struct {
-	*x11client.Connection
-}
 
-// AllocXID allocates an X ID by delegating to the underlying connection.
-func (a *dri3ConnectionAdapter) AllocXID() (dri3.XID, error) {
-	xid, err := a.Connection.AllocXID()
-	return dri3.XID(xid), err
-}
-
-// SendRequest sends an X11 request by delegating to the underlying connection.
-func (a *dri3ConnectionAdapter) SendRequest(buf []byte) error {
-	return a.Connection.SendRequest(buf)
-}
-
-// SendRequestAndReply sends a request and receives a reply by delegating to the underlying connection.
-func (a *dri3ConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
-	return a.Connection.SendRequestAndReply(req)
-}
-
-// SendRequestWithFDs sends a request with file descriptors by delegating to the underlying connection.
-func (a *dri3ConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
-	return a.Connection.SendRequestWithFDs(req, fds)
-}
-
-// SendRequestAndReplyWithFDs sends a request with file descriptors and receives a reply.
-func (a *dri3ConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
-	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
-}
-
-// ExtensionOpcode returns the opcode for an X11 extension by delegating to the underlying connection.
-func (a *dri3ConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
-	return a.Connection.ExtensionOpcode(name)
-}
-
-// presentConnectionAdapter adapts x11client.Connection to present.Connection.
-type presentConnectionAdapter struct {
-	*x11client.Connection
-}
-
-// AllocXID allocates an X ID by delegating to the underlying connection.
-func (a *presentConnectionAdapter) AllocXID() (present.XID, error) {
-	xid, err := a.Connection.AllocXID()
-	return present.XID(xid), err
-}
-
-// SendRequest sends an X11 request by delegating to the underlying connection.
-func (a *presentConnectionAdapter) SendRequest(buf []byte) error {
-	return a.Connection.SendRequest(buf)
-}
-
-// SendRequestAndReply sends a request and receives a reply by delegating to the underlying connection.
-func (a *presentConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
-	return a.Connection.SendRequestAndReply(req)
-}
-
-// SendRequestWithFDs sends a request with file descriptors by delegating to the underlying connection.
-func (a *presentConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
-	return a.Connection.SendRequestWithFDs(req, fds)
-}
-
-// SendRequestAndReplyWithFDs sends a request with file descriptors and receives a reply.
-func (a *presentConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
-	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
-}
-
-// ExtensionOpcode returns the opcode for an X11 extension by delegating to the underlying connection.
-func (a *presentConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
-	return a.Connection.ExtensionOpcode(name)
-}
 
 func runDemo() error {
 	ctx, cleanup, err := setupX11AndGPU()
@@ -214,7 +137,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 
 func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Extension, int, error) {
 	fmt.Println("\n[2/12] Querying DRI3 extension...")
-	dri3Adapter := &dri3ConnectionAdapter{conn}
+	dri3Adapter := demo.NewDRI3ConnectionAdapter(conn)
 	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("query DRI3: %w", err)
@@ -222,7 +145,7 @@ func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Exte
 	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
 
 	fmt.Println("\n[3/12] Querying Present extension...")
-	presentAdapter := &presentConnectionAdapter{conn}
+	presentAdapter := demo.NewPresentConnectionAdapter(conn)
 	presentExt, err := present.QueryExtension(presentAdapter)
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("query Present: %w", err)
@@ -241,34 +164,7 @@ func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Exte
 }
 
 func setupGPU() (*render.Allocator, *render.GpuContext, error) {
-	fmt.Println("\n[5/12] Creating GPU buffer allocator...")
-	allocator, err := render.NewAllocator(drmPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create allocator: %w (is %s accessible?)", err, drmPath)
-	}
-	fmt.Printf("       ✓ Opened %s\n", drmPath)
-
-	fmt.Println("\n[6/12] Detecting GPU generation...")
-	gpuGen := render.DetectGPU(drmPath)
-	if gpuGen == render.GpuUnknown {
-		allocator.Close()
-		return nil, nil, fmt.Errorf("GPU detection failed or unsupported GPU")
-	}
-	fmt.Printf("       ✓ Detected: %s\n", gpuGen)
-
-	fmt.Println("\n[7/12] Creating GPU context...")
-	gpuCtx, err := render.CreateContext(drmPath)
-	if err != nil {
-		allocator.Close()
-		return nil, nil, fmt.Errorf("create GPU context: %w", err)
-	}
-	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
-	if gpuCtx.VmID != 0 {
-		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
-	}
-	fmt.Println()
-
-	return allocator, gpuCtx, nil
+	return demo.SetupGPUAllocator(demo.DefaultDRMPath, 5, 12)
 }
 
 func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
@@ -339,7 +235,7 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 	// Empty relocations for this smoke test batch
 	var relocs []render.Relocation
 
-	err = render.SubmitBatch(drmPath, batchBuffer.GemHandle(), uint32(len(batchData)), relocs, ctx.gpuCtx.ContextID)
+	err = render.SubmitBatch(demo.DefaultDRMPath, batchBuffer.GemHandle(), uint32(len(batchData)), relocs, ctx.gpuCtx.ContextID)
 	if err != nil {
 		batchBuffer.Destroy()
 		buffer.Destroy()
@@ -439,7 +335,7 @@ func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11c
 	}
 
 	size := buffer.Stride * buffer.Height
-	dri3Adapter := &dri3ConnectionAdapter{ctx.conn}
+	dri3Adapter := demo.NewDRI3ConnectionAdapter(ctx.conn)
 	err = ctx.dri3Ext.PixmapFromBuffer(
 		dri3Adapter,
 		dri3.XID(pixmapXID),
@@ -463,7 +359,7 @@ func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11c
 func presentPixmap(ctx *demoContext, pixmap x11client.XID) error {
 	fmt.Println("\n       Presenting pixmap to window...")
 
-	presentAdapter := &presentConnectionAdapter{ctx.conn}
+	presentAdapter := demo.NewPresentConnectionAdapter(ctx.conn)
 	err := ctx.presentExt.PresentPixmap(presentAdapter, present.PixmapPresentOptions{
 		Window:  present.XID(ctx.window),
 		Pixmap:  present.XID(pixmap),

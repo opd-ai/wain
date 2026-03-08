@@ -16,25 +16,30 @@ import (
 )
 
 func main() {
-	demo.CheckHelpFlag("perf-demo", "GPU performance profiling and benchmarking", []string{
-		demo.FormatExample("perf-demo", "Run GPU performance tests"),
-		demo.FormatExample("perf-demo --help", "Show this help message"),
-	})
+	demo.RunDemoWithSetup(
+		"perf-demo",
+		"GPU performance profiling and benchmarking",
+		[]string{
+			demo.FormatExample("perf-demo", "Run GPU performance tests"),
+			demo.FormatExample("perf-demo --help", "Show this help message"),
+		},
+		"=== GPU Performance Profiling Demo ===",
+		runPerfTests,
+	)
+}
 
-	fmt.Println("=== GPU Performance Profiling Demo ===")
-	fmt.Println()
-
+func runPerfTests() error {
 	// Create GPU backend
 	cfg := backend.DefaultConfig()
 	cfg.Width = 1920
 	cfg.Height = 1080
-	cfg.DRMPath = "/dev/dri/renderD128"
+	cfg.DRMPath = demo.DefaultDRMPath
 
 	b, err := backend.New(cfg)
 	if err != nil {
 		log.Printf("GPU backend unavailable: %v", err)
 		log.Println("This demo requires an Intel or AMD GPU")
-		return
+		return err
 	}
 	defer b.Destroy()
 
@@ -100,6 +105,7 @@ func main() {
 	fmt.Println()
 
 	fmt.Println("=== Profiling Complete ===")
+	return nil
 }
 
 // createWorkload creates a synthetic UI workload for profiling.
