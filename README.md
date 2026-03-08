@@ -96,7 +96,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Frame buffer ring management for double/triple buffering (`internal/buffer/`)
 - ⚠️ All packages marked `internal/` (public API surface planned for later)
 
-**Not yet implemented:** GPU-accelerated rendering backends (Phase 5+), shader lowering to Intel EU machine code (Phase 4.2+), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering; GPU buffers are allocated and shared, and GPU command submission infrastructure exists, but GPU rendering is not yet wired into the display pipeline.
+**Not yet implemented:** GPU-accelerated rendering backends (Phase 5+), shader lowering to Intel EU machine code (Phase 4.2+), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, and GPU command submission infrastructure exists, but GPU rendering is not yet wired into the display pipeline.
 
 ## Prerequisites
 
