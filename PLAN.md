@@ -132,7 +132,7 @@
   - Complexity: All functions CC ≤ 3
   - Zero regressions in Go code metrics
 
-### Step 5: Surface State & Sampler State
+### Step 5: Surface State & Sampler State ✅ COMPLETE
 - **Deliverable**: Create `render-sys/src/surface.rs` to encode:
   - `RENDER_SURFACE_STATE` for render targets and texture sources
   - `SAMPLER_STATE` for bilinear/nearest filtering
@@ -143,6 +143,21 @@
   ```bash
   cd render-sys && cargo test surface:: -- --nocapture
   ```
+- **Status**: ✅ Implemented in this commit
+  - Created render-sys/src/surface.rs with surface and sampler state encoding (~632 LOC)
+  - Implemented RenderSurfaceState struct with Gen9-Gen12 serialization (16 DWords/64 bytes)
+  - Implemented SamplerState struct with Gen9-Gen12 serialization (4 DWords/16 bytes)
+  - Implemented BindingTable manager for shader binding indices
+  - Added surface format enum (R8, RGBA8, RGBA16F) with bpp calculation
+  - Added surface type enum (1D/2D/3D/Cube/Buffer)
+  - Added tiling mode enum (Linear/TileX/TileY/TileYf)
+  - Added sampler filter modes (Nearest/Linear) and address modes (Repeat/ClampToEdge/ClampToBorder/Mirror)
+  - Helper methods: render_target(), texture_2d(), bilinear(), nearest()
+  - All 12 surface tests passing (91 total Rust tests, all Go tests passing)
+  - Test coverage: 100% for public API (surface state, sampler state, binding table)
+  - Complexity: All functions CC ≤ 3
+  - Zero regressions in Go code metrics
+  - Static linking verified
 
 ### Step 6: Batch Submission (i915)
 - **Deliverable**: Extend `render-sys/src/i915.rs` with:
