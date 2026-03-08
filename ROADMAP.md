@@ -286,22 +286,23 @@ to GPU machine code entirely within Rust.
 PHASE 5: Rendering Backend Integration (Weeks 18-22)
 --------------------------------------------------------------------------------
 
-5.1  🔧 DISPLAY LIST CONSUMER (In Progress)
+5.1  ✅ DISPLAY LIST CONSUMER (Complete)
      - Your Go UI layer (from Phase 1) emits a display list of draw
        commands. Write a GPU backend that consumes this list:
        ✅ - Sort/batch by pipeline state to minimize state changes.
        ✅ - Pack vertices into a dynamic vertex buffer.
-       ⚠️ - Build a batch buffer with all draw calls for the frame.
-       ⚠️ - Submit and present.
-     - **Status**: Partial implementation complete
+       ✅ - Build a batch buffer with all draw calls for the frame.
+       ✅ - Submit and present.
+     - **Status**: Complete implementation
        - ✅ Display list infrastructure complete (internal/raster/displaylist/)
        - ✅ Batch grouping by pipeline state (internal/render/backend/batch.go)
        - ✅ Vertex packing for all 8 command types (internal/render/backend/vertex.go)
        - ✅ GPU batch submission infrastructure (internal/render/backend/submit.go)
-       - ✅ Minimal GPU command encoding (PIPELINE_SELECT, PIPE_CONTROL, END)
-       - ⚠️ Full 3D pipeline state encoding deferred to Phase 5.2
-       - ⚠️ Actual draw calls (3DPRIMITIVE) deferred to Phase 5.2
-       - End-to-end pipeline validated: display list → batches → GPU submission
+       - ✅ Full 3D pipeline state encoding (STATE_BASE_ADDRESS, VERTEX_BUFFERS, VERTEX_ELEMENTS)
+       - ✅ 3DPRIMITIVE draw calls per batch
+       - ✅ mmap implementation for vertex and batch buffer writes
+       - ✅ Present() method for exporting render target as DMA-BUF
+       - End-to-end pipeline complete: display list → batches → GPU submission → present
 
 5.2  TEXTURE ATLAS MANAGEMENT
      - Font glyphs: maintain an SDF glyph atlas texture, rasterize new

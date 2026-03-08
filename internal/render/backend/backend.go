@@ -183,3 +183,14 @@ func (b *GPUBackend) RenderTarget() *render.BufferHandle {
 func (b *GPUBackend) Dimensions() (width, height int) {
 	return b.width, b.height
 }
+
+// Present exports the render target as a DMA-BUF file descriptor for display.
+// The caller is responsible for closing the returned file descriptor.
+func (b *GPUBackend) Present() (int, error) {
+	// Export the render target as a DMA-BUF file descriptor
+	fd, err := b.allocator.ExportDmabuf(b.renderTarget)
+	if err != nil {
+		return -1, fmt.Errorf("backend: export dmabuf failed: %w", err)
+	}
+	return fd, nil
+}
