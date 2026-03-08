@@ -151,40 +151,51 @@ func (o *Output) handleGeometry(args []wire.Argument) error {
 		return fmt.Errorf("output: geometry event requires 8 args, got %d", len(args))
 	}
 
-	x, ok := args[0].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid x type")
-	}
-	y, ok := args[1].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid y type")
-	}
-	physicalW, ok := args[2].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid physical_width type")
-	}
-	physicalH, ok := args[3].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid physical_height type")
-	}
-	subpixel, ok := args[4].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid subpixel type")
-	}
-	make, ok := args[5].Value.(string)
-	if !ok {
-		return fmt.Errorf("output: invalid make type")
-	}
-	model, ok := args[6].Value.(string)
-	if !ok {
-		return fmt.Errorf("output: invalid model type")
-	}
-	transform, ok := args[7].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid transform type")
+	geom, err := parseGeometryArgs(args)
+	if err != nil {
+		return err
 	}
 
-	o.geometry = Geometry{
+	o.geometry = geom
+	return nil
+}
+
+// parseGeometryArgs extracts and validates geometry arguments.
+func parseGeometryArgs(args []wire.Argument) (Geometry, error) {
+	x, err := getInt32Arg(args[0], "x")
+	if err != nil {
+		return Geometry{}, err
+	}
+	y, err := getInt32Arg(args[1], "y")
+	if err != nil {
+		return Geometry{}, err
+	}
+	physicalW, err := getInt32Arg(args[2], "physical_width")
+	if err != nil {
+		return Geometry{}, err
+	}
+	physicalH, err := getInt32Arg(args[3], "physical_height")
+	if err != nil {
+		return Geometry{}, err
+	}
+	subpixel, err := getInt32Arg(args[4], "subpixel")
+	if err != nil {
+		return Geometry{}, err
+	}
+	make, err := getStringArg(args[5], "make")
+	if err != nil {
+		return Geometry{}, err
+	}
+	model, err := getStringArg(args[6], "model")
+	if err != nil {
+		return Geometry{}, err
+	}
+	transform, err := getInt32Arg(args[7], "transform")
+	if err != nil {
+		return Geometry{}, err
+	}
+
+	return Geometry{
 		X:         x,
 		Y:         y,
 		PhysicalW: physicalW,
@@ -193,9 +204,25 @@ func (o *Output) handleGeometry(args []wire.Argument) error {
 		Make:      make,
 		Model:     model,
 		Transform: transform,
-	}
+	}, nil
+}
 
-	return nil
+// getInt32Arg extracts an int32 argument with error handling.
+func getInt32Arg(arg wire.Argument, name string) (int32, error) {
+	val, ok := arg.Value.(int32)
+	if !ok {
+		return 0, fmt.Errorf("output: invalid %s type", name)
+	}
+	return val, nil
+}
+
+// getStringArg extracts a string argument with error handling.
+func getStringArg(arg wire.Argument, name string) (string, error) {
+	val, ok := arg.Value.(string)
+	if !ok {
+		return "", fmt.Errorf("output: invalid %s type", name)
+	}
+	return val, nil
 }
 
 // handleMode processes a mode event.
