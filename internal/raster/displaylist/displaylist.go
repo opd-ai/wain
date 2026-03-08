@@ -270,3 +270,13 @@ func (dl *DisplayList) Commands() []DrawCommand {
 func (dl *DisplayList) Len() int {
 	return len(dl.commands)
 }
+
+// ComputeDamage computes damage regions for all commands in the display list.
+func (dl *DisplayList) ComputeDamage() *DamageTracker {
+	dt := NewDamageTracker()
+	for _, cmd := range dl.commands {
+		rect := ComputeDamageForCommand(cmd)
+		dt.AddRectStruct(rect)
+	}
+	return dt
+}

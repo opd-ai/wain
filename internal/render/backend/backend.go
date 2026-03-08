@@ -143,6 +143,13 @@ func (b *GPUBackend) Destroy() error {
 
 // Render renders a display list to the GPU render target.
 func (b *GPUBackend) Render(dl *displaylist.DisplayList) error {
+	return b.RenderWithDamage(dl, nil)
+}
+
+// RenderWithDamage renders a display list with optional damage tracking.
+// If damage is nil or empty, renders the full frame.
+// Phase 5.4 implementation: damage tracking with scissor rects.
+func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []displaylist.Rect) error {
 	if dl == nil {
 		return ErrNilDisplayList
 	}
@@ -151,14 +158,31 @@ func (b *GPUBackend) Render(dl *displaylist.DisplayList) error {
 		return nil // Nothing to render
 	}
 
-	// Phase 5.1 implementation plan:
-	// 1. Sort/batch commands by pipeline state
-	// 2. Pack vertices into vertex buffer
-	// 3. Build batch buffer with GPU commands
-	// 4. Submit and wait
+	// Phase 5.4: Filter commands by damage regions if provided
+	commands := dl.Commands()
+	scissorRects := []ScissorRect(nil)
+
+	if len(damage) > 0 {
+		// Filter commands to only those intersecting damage regions
+		commands = displaylist.FilterCommandsByDamage(commands, damage)
+
+		if len(commands) == 0 {
+			return nil // No commands intersect damage regions
+		}
+
+		// Convert damage regions to scissor rects
+		scissorRects = make([]ScissorRect, len(damage))
+		for i, rect := range damage {
+			scissorRects[i] = ClampScissorRect(
+				ScissorRectFromDamage(rect),
+				b.width,
+				b.height,
+			)
+		}
+	}
 
 	// Sort and batch commands by type to minimize state changes
-	batches := batchCommands(dl.Commands())
+	batches := batchCommands(commands)
 
 	// Pack vertices for all batches
 	vertexData, err := b.packVertices(batches)
@@ -166,8 +190,8 @@ func (b *GPUBackend) Render(dl *displaylist.DisplayList) error {
 		return fmt.Errorf("backend: vertex packing failed: %w", err)
 	}
 
-	// Build and submit GPU batch buffer
-	if err := b.submitBatches(batches, vertexData); err != nil {
+	// Build and submit GPU batch buffer with scissor state
+	if err := b.submitBatchesWithScissor(batches, vertexData, scissorRects); err != nil {
 		return fmt.Errorf("backend: batch submission failed: %w", err)
 	}
 
