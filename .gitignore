@@ -34,6 +34,7 @@ baseline.json
 metrics.json
 post.json
 audit-*.json
+review-metrics.json
 
 # Coverage and profiling artifacts
 *.out
