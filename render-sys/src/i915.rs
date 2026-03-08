@@ -135,6 +135,30 @@ impl Default for ContextCreate {
     }
 }
 
+/// I915_CONTEXT_DESTROY: Destroy a GPU context.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ContextDestroy {
+    pub ctx_id: u32,   // in: context ID to destroy
+    pub pad: u32,
+}
+
+impl ContextDestroy {
+    /// Create a new ContextDestroy request.
+    pub fn new(ctx_id: u32) -> Self {
+        Self {
+            ctx_id,
+            pad: 0,
+        }
+    }
+}
+
+impl Default for ContextDestroy {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
 /// I915_GETPARAM: Query device parameters.
 ///
 /// Used to detect GPU generation, available features, etc.
@@ -307,6 +331,7 @@ const I915_GEM_MMAP_OFFSET: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_
 const I915_GEM_SET_TILING: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x21, std::mem::size_of::<GemSetTiling>());
 const I915_GEM_WAIT: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2c, std::mem::size_of::<GemWait>());
 const I915_GEM_CONTEXT_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2d, std::mem::size_of::<ContextCreate>());
+const I915_GEM_CONTEXT_DESTROY: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x2e, std::mem::size_of::<ContextDestroy>());
 const I915_GETPARAM: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x06, std::mem::size_of::<GetParam>());
 const I915_GEM_EXECBUFFER2: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x29, std::mem::size_of::<ExecBuffer2>());
 
@@ -348,6 +373,14 @@ impl DrmDevice {
     pub fn i915_context_create(&self, req: &mut ContextCreate) -> io::Result<()> {
         unsafe {
             nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_CREATE as _, req as *mut ContextCreate)
+        };
+        Ok(())
+    }
+
+    /// Destroy a GPU execution context (i915-specific).
+    pub fn i915_context_destroy(&self, req: &mut ContextDestroy) -> io::Result<()> {
+        unsafe {
+            nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_DESTROY as _, req as *mut ContextDestroy)
         };
         Ok(())
     }
@@ -431,6 +464,14 @@ impl DrmDevice {
         let mut req = ContextCreate::new();
         self.i915_context_create(&mut req)?;
         Ok(req.ctx_id)
+    }
+
+    /// Destroy a GPU context and release associated resources.
+    ///
+    /// After destruction, the context cannot be used for further submissions.
+    pub fn i915_destroy_context(&self, ctx_id: u32) -> io::Result<()> {
+        let mut req = ContextDestroy::new(ctx_id);
+        self.i915_context_destroy(&mut req)
     }
 }
 

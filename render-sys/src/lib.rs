@@ -412,6 +412,69 @@ pub unsafe extern "C" fn render_create_context(
     }
 }
 
+/// Destroy a GPU context and release associated resources.
+///
+/// # Arguments
+/// - path: Path to the DRM device (e.g., "/dev/dri/renderD128")
+/// - context_id: Context ID to destroy (from render_create_context)
+/// - vm_id: VM ID (Xe only, 0 for i915)
+///
+/// Returns 0 on success, -1 on error.
+///
+/// # Safety
+/// - path must be a valid null-terminated C string
+/// - context_id must be a valid context ID from render_create_context
+#[no_mangle]
+pub unsafe extern "C" fn render_destroy_context(
+    path: *const std::ffi::c_char,
+    context_id: u32,
+    vm_id: u32,
+) -> i32 {
+    if path.is_null() {
+        return -1;
+    }
+
+    let c_str = match std::ffi::CStr::from_ptr(path).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    let device = match DrmDevice::open(c_str) {
+        Ok(d) => d,
+        Err(_) => return -1,
+    };
+
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let dev = allocator.device();
+
+    match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => {
+            // Use i915 context destruction
+            match dev.i915_destroy_context(context_id) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::Xe => {
+            // Use Xe context destruction (VM + exec queue)
+            match dev.xe_destroy_context(vm_id, context_id) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
+            // AMD context destruction not yet implemented
+            -1
+        }
+        GpuGeneration::Unknown => -1,
+    }
+}
+
 /// Map a GPU buffer into CPU address space for reading/writing.
 ///
 /// Returns a pointer to the mapped memory or null on error.

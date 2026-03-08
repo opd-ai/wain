@@ -128,6 +128,30 @@ impl VmCreate {
     }
 }
 
+/// DRM_IOCTL_XE_VM_DESTROY: Destroy a VM and free associated resources.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct VmDestroy {
+    pub vm_id: u32,
+    pub pad: u32,
+}
+
+impl VmDestroy {
+    /// Create a new VmDestroy request.
+    pub fn new(vm_id: u32) -> Self {
+        Self {
+            vm_id,
+            pad: 0,
+        }
+    }
+}
+
+impl Default for VmDestroy {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
 impl Default for VmCreate {
     fn default() -> Self {
         Self::new()
@@ -290,6 +314,30 @@ impl ExecQueueCreate {
     }
 }
 
+/// DRM_IOCTL_XE_EXEC_QUEUE_DESTROY: Destroy an execution queue.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ExecQueueDestroy {
+    pub exec_queue_id: u32,
+    pub pad: u32,
+}
+
+impl ExecQueueDestroy {
+    /// Create a new ExecQueueDestroy request.
+    pub fn new(exec_queue_id: u32) -> Self {
+        Self {
+            exec_queue_id,
+            pad: 0,
+        }
+    }
+}
+
+impl Default for ExecQueueDestroy {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
 const DRM_IOCTL_BASE: u8 = b'd';
 const DRM_COMMAND_BASE: u64 = 0x40;
 
@@ -297,9 +345,11 @@ const DRM_COMMAND_BASE: u64 = 0x40;
 const DRM_XE_DEVICE_QUERY: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x00, std::mem::size_of::<DeviceQuery>());
 const DRM_XE_GEM_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x01, std::mem::size_of::<GemCreate>());
 const DRM_XE_VM_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x03, std::mem::size_of::<VmCreate>());
+const DRM_XE_VM_DESTROY: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x04, std::mem::size_of::<VmDestroy>());
 const DRM_XE_VM_BIND: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x05, std::mem::size_of::<VmBind>());
 const DRM_XE_EXEC: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x06, std::mem::size_of::<Exec>());
 const DRM_XE_EXEC_QUEUE_CREATE: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x09, std::mem::size_of::<ExecQueueCreate>());
+const DRM_XE_EXEC_QUEUE_DESTROY: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, DRM_COMMAND_BASE + 0x0a, std::mem::size_of::<ExecQueueDestroy>());
 
 impl DrmDevice {
     /// Query device capabilities (Xe-specific).
@@ -326,6 +376,14 @@ impl DrmDevice {
         Ok(())
     }
 
+    /// Destroy a GPU virtual memory context (Xe-specific).
+    pub fn xe_vm_destroy(&self, req: &mut VmDestroy) -> io::Result<()> {
+        unsafe {
+            nix::libc::ioctl(self.fd(), DRM_XE_VM_DESTROY as _, req as *mut VmDestroy)
+        };
+        Ok(())
+    }
+
     /// Bind a GEM buffer to a VM address (Xe-specific).
     pub fn xe_vm_bind(&self, req: &mut VmBind) -> io::Result<()> {
         unsafe {
@@ -346,6 +404,14 @@ impl DrmDevice {
     pub fn xe_exec_queue_create(&self, req: &mut ExecQueueCreate) -> io::Result<()> {
         unsafe {
             nix::libc::ioctl(self.fd(), DRM_XE_EXEC_QUEUE_CREATE as _, req as *mut ExecQueueCreate)
+        };
+        Ok(())
+    }
+
+    /// Destroy an execution queue (Xe-specific).
+    pub fn xe_exec_queue_destroy(&self, req: &mut ExecQueueDestroy) -> io::Result<()> {
+        unsafe {
+            nix::libc::ioctl(self.fd(), DRM_XE_EXEC_QUEUE_DESTROY as _, req as *mut ExecQueueDestroy)
         };
         Ok(())
     }
@@ -511,6 +577,22 @@ impl DrmDevice {
         let exec_queue_id = queue_create.exec_queue_id;
 
         Ok((vm_id, exec_queue_id))
+    }
+
+    /// Destroy a VM and exec queue pair created by xe_create_context.
+    ///
+    /// Releases the resources associated with the context. After destruction,
+    /// the VM and exec queue cannot be used for further submissions.
+    pub fn xe_destroy_context(&self, vm_id: u32, exec_queue_id: u32) -> io::Result<()> {
+        // Destroy exec queue first
+        let mut queue_destroy = ExecQueueDestroy::new(exec_queue_id);
+        self.xe_exec_queue_destroy(&mut queue_destroy)?;
+
+        // Then destroy VM
+        let mut vm_destroy = VmDestroy::new(vm_id);
+        self.xe_vm_destroy(&mut vm_destroy)?;
+
+        Ok(())
     }
 
     /// Detect which Intel driver is active (i915 vs Xe).

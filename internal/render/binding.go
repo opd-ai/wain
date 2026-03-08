@@ -86,6 +86,12 @@ package render
 //     uint32_t *out_vm_id
 // );
 //
+// int32_t render_destroy_context(
+//     const char *path,
+//     uint32_t context_id,
+//     uint32_t vm_id
+// );
+//
 // // Buffer mmap/munmap functions
 // uint8_t *buffer_mmap(
 //     void *allocator,
@@ -96,7 +102,10 @@ package render
 // int32_t buffer_munmap(uint8_t *ptr, size_t size);
 import "C"
 
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // Add calls the Rust render_add function via the C ABI and returns a + b.
 // This is the canonical smoke-test for the Go → Rust static-library link.
@@ -251,19 +260,42 @@ func SubmitBatch(path string, batchHandle, batchLenBytes uint32, relocs []Reloca
 	)
 
 	if result < 0 {
-		return &SubmitError{path: path}
+		return &SubmitError{path: path, errorCode: int(result)}
 	}
 	return nil
 }
 
 // SubmitError represents an error during batch submission.
 type SubmitError struct {
-	path string
+	path      string
+	errorCode int
 }
 
 // Error returns the error message for a batch submission failure.
 func (e *SubmitError) Error() string {
-	return "batch submission failed for device " + e.path
+	switch e.errorCode {
+	case -2:
+		return "batch submission timeout for device " + e.path
+	case -3:
+		return "context banned (GPU hang detected) for device " + e.path
+	default:
+		return "batch submission failed for device " + e.path
+	}
+}
+
+// IsTimeout returns true if the error was caused by a timeout.
+func (e *SubmitError) IsTimeout() bool {
+	return e.errorCode == -2
+}
+
+// IsContextBan returns true if the error was caused by a context ban (GPU hang).
+func (e *SubmitError) IsContextBan() bool {
+	return e.errorCode == -3
+}
+
+// IsRecoverable returns true if the error is recoverable (timeout or ban).
+func (e *SubmitError) IsRecoverable() bool {
+	return e.IsTimeout() || e.IsContextBan()
 }
 
 // GpuContext represents a GPU context handle.
@@ -311,6 +343,45 @@ func CreateContext(path string) (*GpuContext, error) {
 		ContextID: uint32(contextID),
 		VmID:      uint32(vmID),
 	}, nil
+}
+
+// DestroyContext destroys a GPU context and releases associated resources.
+//
+// This function should be called to clean up contexts that are no longer needed,
+// or when recovering from a GPU hang. After destruction, the context cannot be
+// used for further command submissions.
+//
+// Returns an error if context destruction fails.
+func DestroyContext(path string, ctx *GpuContext) error {
+	if ctx == nil {
+		return nil
+	}
+
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+
+	result := C.render_destroy_context(
+		cpath,
+		C.uint32_t(ctx.ContextID),
+		C.uint32_t(ctx.VmID),
+	)
+
+	if result < 0 {
+		return &ContextDestroyError{path: path, contextID: ctx.ContextID}
+	}
+
+	return nil
+}
+
+// ContextDestroyError represents an error during context destruction.
+type ContextDestroyError struct {
+	path      string
+	contextID uint32
+}
+
+// Error returns the error message for a context destruction failure.
+func (e *ContextDestroyError) Error() string {
+	return fmt.Sprintf("context destruction failed for device %s (context ID: %d)", e.path, e.contextID)
 }
 
 // ContextCreateError represents an error during context creation.
