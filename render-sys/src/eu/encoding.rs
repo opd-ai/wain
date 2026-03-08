@@ -11,7 +11,7 @@
 //
 // Reference: Intel PRMs Volume 4, Section "Instruction Format"
 
-use super::instruction::{EUOpcode, Register, RegFile};
+use super::instruction::{EUOpcode, Register, RegFile, SendDescriptor};
 use super::IntelGen;
 
 /// Encode opcode to binary format
@@ -226,6 +226,36 @@ impl SrcMod {
     }
 }
 
+/// Encode SEND message descriptor
+///
+/// Message descriptor format (DWord 3 for SEND instructions):
+/// Bits 0-3: Response length (in GRF registers, 0-15)
+/// Bits 4-8: Message length (in GRF registers, 0-31)
+/// Bits 9-13: (reserved/function-specific)
+/// Bits 14-17: SFID (Shared Function ID, 0-15)
+/// Bits 18-24: Function control (function-specific bits)
+/// Bits 25-31: Extended function control
+///
+/// Reference: Intel PRM Vol 2a, Command Reference, SEND instruction
+pub fn encode_send_descriptor(desc: &SendDescriptor) -> u32 {
+    let mut encoded: u32 = 0;
+    
+    // Response length (bits 0-3): how many GRF registers to receive back
+    encoded |= (desc.response_length as u32 & 0xF) << 0;
+    
+    // Message length (bits 4-8): how many GRF registers to send
+    encoded |= (desc.message_length as u32 & 0x1F) << 4;
+    
+    // SFID (bits 14-17): which shared function to target
+    encoded |= ((desc.sfid as u32) & 0xF) << 14;
+    
+    // Function control (bits 18-24): function-specific control bits
+    // The exact format depends on the SFID (sampler, URB, etc.)
+    encoded |= (desc.function_control & 0x7F) << 18;
+    
+    encoded
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,5 +314,28 @@ mod tests {
         
         let both = SrcMod { negate: true, absolute: true };
         assert_eq!(both.encode(), 3);
+    }
+    
+    #[test]
+    fn test_send_descriptor_encoding() {
+        use super::super::instruction::SharedFunctionID;
+        
+        let desc = SendDescriptor {
+            sfid: SharedFunctionID::Sampler,
+            response_length: 4,   // 4 GRF registers back
+            message_length: 2,    // 2 GRF registers sent
+            function_control: 0,  // No special control bits
+        };
+        
+        let encoded = encode_send_descriptor(&desc);
+        
+        // Response length in bits 0-3
+        assert_eq!(encoded & 0xF, 4);
+        
+        // Message length in bits 4-8
+        assert_eq!((encoded >> 4) & 0x1F, 2);
+        
+        // SFID in bits 14-17 (Sampler = 0x2)
+        assert_eq!((encoded >> 14) & 0xF, 0x2);
     }
 }

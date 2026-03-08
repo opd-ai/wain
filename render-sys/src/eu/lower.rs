@@ -7,7 +7,7 @@
 // Reference: Intel PRMs Volume 4 (EU ISA)
 // Inspiration: Mesa's src/intel/compiler/brw_nir_lower_* for patterns
 
-use super::instruction::{EUInstruction, EUOpcode, Register, RegFile};
+use super::instruction::{EUInstruction, EUOpcode, Register, RegFile, SendDescriptor, SharedFunctionID};
 use super::regalloc::{RegAllocator, VirtualReg};
 use super::encoding::{ExecSize, DataType, CondMod};
 use super::{EUCompileError, IntelGen};
@@ -387,36 +387,92 @@ impl<'a> LoweringContext<'a> {
                 Ok(())
             }
             MathFunction::Sqrt => {
-                // Sqrt: Square root via EU math instruction
-                // On Intel EU, sqrt can be done via:
-                // 1. SEND to math function unit (proper implementation)
-                // 2. Reciprocal sqrt approximation + refinement (faster but less accurate)
-                // 
-                // For this implementation, we'll use a placeholder that documents
-                // the proper approach. SEND instruction lowering will be implemented
-                // in a later iteration when texture sampling is added.
+                // Sqrt: Square root via SEND to math function unit
+                // On Intel EU, sqrt is implemented via SEND instruction to the math
+                // shared function (SFID 0xB) with function control for sqrt operation.
                 //
-                // Algorithm (when SEND is ready):
-                // - SEND with math function 1 (sqrt) to shared function unit
-                // - Math descriptor specifies sqrt operation
-                // - Result returned via GRF
+                // Algorithm:
+                // - SEND with math function for sqrt (function_control = 0x1)
+                // - Result returned via GRF destination register
                 
-                // For now, return a documented error that explains the requirement
-                Err(EUCompileError::from(
-                    "Sqrt requires SEND instruction to math function unit (SFID 0x6). \
-                     This will be implemented alongside texture sampling in the next iteration. \
-                     Alternative: use rsqrt (reciprocal sqrt) + multiply for approximation."
-                ))
+                let src_reg = self.get_or_alloc_reg(arg)?;
+                let dst_reg = self.alloc_reg(result)?;
+                
+                let src_phys = self.reg_alloc.get_physical(src_reg)
+                    .ok_or_else(|| EUCompileError::from("Source not allocated"))?;
+                let dst_phys = self.reg_alloc.get_physical(dst_reg)
+                    .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+                
+                let src = Register {
+                    file: RegFile::GRF,
+                    num: src_phys.grf_num,
+                    subreg: 0,
+                };
+                let dst = Register {
+                    file: RegFile::GRF,
+                    num: dst_phys.grf_num,
+                    subreg: 0,
+                };
+                
+                // Create SEND descriptor for math function (sqrt)
+                // Math function control: 0x1 = sqrt
+                let descriptor = SendDescriptor {
+                    sfid: SharedFunctionID::Math,
+                    response_length: 1,  // 1 GRF register back
+                    message_length: 1,   // 1 GRF register sent
+                    function_control: 0x1,  // Sqrt operation
+                };
+                
+                let inst = EUInstruction::new(EUOpcode::Send)
+                    .with_dst(dst, DataType::F)
+                    .with_src0(src, DataType::F)
+                    .with_exec_size(ExecSize::Scalar)
+                    .with_send_descriptor(descriptor);
+                
+                self.instructions.push(inst);
+                Ok(())
             }
             MathFunction::InverseSqrt => {
                 // InverseSqrt: Reciprocal square root (1/sqrt(x))
-                // Similar to sqrt, requires SEND to math function unit
-                // This is actually more efficient than sqrt on many GPUs
+                // Implemented via SEND to math function unit with rsqrt operation
+                // This is typically faster than sqrt on Intel GPUs
                 
-                Err(EUCompileError::from(
-                    "InverseSqrt requires SEND instruction to math function unit (SFID 0x6). \
-                     This will be implemented alongside texture sampling."
-                ))
+                let src_reg = self.get_or_alloc_reg(arg)?;
+                let dst_reg = self.alloc_reg(result)?;
+                
+                let src_phys = self.reg_alloc.get_physical(src_reg)
+                    .ok_or_else(|| EUCompileError::from("Source not allocated"))?;
+                let dst_phys = self.reg_alloc.get_physical(dst_reg)
+                    .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+                
+                let src = Register {
+                    file: RegFile::GRF,
+                    num: src_phys.grf_num,
+                    subreg: 0,
+                };
+                let dst = Register {
+                    file: RegFile::GRF,
+                    num: dst_phys.grf_num,
+                    subreg: 0,
+                };
+                
+                // Create SEND descriptor for math function (rsqrt)
+                // Math function control: 0x2 = rsqrt (reciprocal sqrt)
+                let descriptor = SendDescriptor {
+                    sfid: SharedFunctionID::Math,
+                    response_length: 1,  // 1 GRF register back
+                    message_length: 1,   // 1 GRF register sent
+                    function_control: 0x2,  // Rsqrt operation
+                };
+                
+                let inst = EUInstruction::new(EUOpcode::Send)
+                    .with_dst(dst, DataType::F)
+                    .with_src0(src, DataType::F)
+                    .with_exec_size(ExecSize::Scalar)
+                    .with_send_descriptor(descriptor);
+                
+                self.instructions.push(inst);
+                Ok(())
             }
             MathFunction::Mix => {
                 // Mix (lerp): result = x * (1 - a) + y * a
@@ -654,6 +710,78 @@ impl<'a> LoweringContext<'a> {
         Err(EUCompileError::from(
             "Division requires SEND instruction support (deferred to next iteration)"
         ))
+    }
+
+    /// Lower image/texture sampling operation
+    ///
+    /// Generates SEND instruction to sampler shared function for texture reads
+    /// This is the core operation for reading from textures in shaders.
+    ///
+    /// Arguments:
+    /// - image: Handle to the image/texture resource
+    /// - sampler: Handle to the sampler state
+    /// - coordinate: Handle to texture coordinates (vec2/vec3/vec4)
+    /// - result: Handle to store the sampled color value
+    pub fn lower_image_sample(
+        &mut self,
+        _image: naga::Handle<Expression>,
+        _sampler: naga::Handle<Expression>,
+        coordinate: naga::Handle<Expression>,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        // Texture sampling via SEND to sampler shared function (SFID 0x2)
+        //
+        // Algorithm:
+        // 1. Pack texture coordinates into GRF message payload
+        // 2. SEND with sampler message descriptor
+        // 3. Sampler returns RGBA color in destination GRF
+        //
+        // Message descriptor format for sampler:
+        // - Function control bits specify: texture type (2D/3D/cube),
+        //   filtering mode (bilinear/trilinear), and message type (sample)
+        //
+        // Reference: Intel PRM Vol 4, Part 1, Section "Sampler Messages"
+        
+        let coord_reg = self.get_or_alloc_reg(coordinate)?;
+        let dst_reg = self.alloc_reg(result)?;
+        
+        let coord_phys = self.reg_alloc.get_physical(coord_reg)
+            .ok_or_else(|| EUCompileError::from("Coordinate not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+        
+        let coord = Register {
+            file: RegFile::GRF,
+            num: coord_phys.grf_num,
+            subreg: 0,
+        };
+        let dst = Register {
+            file: RegFile::GRF,
+            num: dst_phys.grf_num,
+            subreg: 0,
+        };
+        
+        // Create SEND descriptor for sampler
+        // Function control for 2D texture sample with bilinear filtering:
+        // Bits 0-4: Message type (0x0 = sample)
+        // Bits 5-8: Sampler index (0)
+        // Bits 9-12: Binding table index (0 for now)
+        // Bit 13: SIMD mode (0 = SIMD8, 1 = SIMD16)
+        let descriptor = SendDescriptor {
+            sfid: SharedFunctionID::Sampler,
+            response_length: 4,  // 4 GRF registers back (RGBA, 32-bit float each)
+            message_length: 2,   // 2 GRF registers sent (U, V coordinates)
+            function_control: 0x0000,  // Sample operation, sampler 0, binding 0
+        };
+        
+        let inst = EUInstruction::new(EUOpcode::Send)
+            .with_dst(dst, DataType::F)
+            .with_src0(coord, DataType::F)
+            .with_exec_size(ExecSize::Size8)  // SIMD8 for texture sampling
+            .with_send_descriptor(descriptor);
+        
+        self.instructions.push(inst);
+        Ok(())
     }
 
     /// Lower a type conversion (cast) operation
@@ -1403,7 +1531,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lower_math_sqrt_deferred() {
+    fn test_lower_math_sqrt() {
         let mut module = naga::Module::default();
         
         let arg = module.const_expressions.append(Expression::Literal(
@@ -1420,12 +1548,14 @@ mod tests {
         let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
 
         let res = ctx.lower_math(MathFunction::Sqrt, arg, None, None, result);
-        assert!(res.is_err(), "Sqrt should return error (requires SEND)");
-        assert!(res.unwrap_err().to_string().contains("SEND instruction"));
+        assert!(res.is_ok(), "Sqrt should succeed via SEND instruction");
+        
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1, "Sqrt should generate one SEND instruction");
     }
 
     #[test]
-    fn test_lower_math_inverse_sqrt_deferred() {
+    fn test_lower_math_inverse_sqrt() {
         let mut module = naga::Module::default();
         
         let arg = module.const_expressions.append(Expression::Literal(
@@ -1442,8 +1572,10 @@ mod tests {
         let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
 
         let res = ctx.lower_math(MathFunction::InverseSqrt, arg, None, None, result);
-        assert!(res.is_err(), "InverseSqrt should return error (requires SEND)");
-        assert!(res.unwrap_err().to_string().contains("SEND instruction"));
+        assert!(res.is_ok(), "InverseSqrt should succeed via SEND instruction");
+        
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1, "InverseSqrt should generate one SEND instruction");
     }
 
     #[test]

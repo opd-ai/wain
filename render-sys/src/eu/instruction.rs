@@ -6,7 +6,7 @@
 // Reference: Intel PRMs Volume 4 (Execution Unit ISA), Section on Instruction Format
 
 use super::IntelGen;
-use super::encoding::{encode_opcode, encode_register, ExecSize, DataType, CondMod, SrcMod};
+use super::encoding::{encode_opcode, encode_register, encode_send_descriptor, ExecSize, DataType, CondMod, SrcMod};
 
 /// EU instruction opcode categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,6 +73,42 @@ pub struct Register {
     pub subreg: u8,  // Sub-register offset
 }
 
+/// Shared Function ID for SEND instructions
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum SharedFunctionID {
+    /// Null function (no operation)
+    Null = 0x0,
+    /// Sampler (texture sampling)
+    Sampler = 0x2,
+    /// Gateway (barrier synchronization)
+    Gateway = 0x3,
+    /// Data Cache (load/store operations)
+    DataCache = 0x4,
+    /// Render Target Cache (pixel write)
+    RenderTargetCache = 0x5,
+    /// URB (Unified Return Buffer - vertex/geometry data)
+    URB = 0x6,
+    /// Thread Spawner
+    ThreadSpawner = 0x7,
+    /// Math function unit (sqrt, sin, cos, etc.)
+    Math = 0xb,
+}
+
+/// Message descriptor for SEND instructions
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub struct SendDescriptor {
+    /// Shared function ID (SFID) - which fixed function to send to
+    pub sfid: SharedFunctionID,
+    /// Response length in GRF registers (0-15)
+    pub response_length: u8,
+    /// Message length in GRF registers (0-15)
+    pub message_length: u8,
+    /// Function-specific control bits
+    pub function_control: u32,
+}
+
 /// EU instruction (128-bit / 16-byte format for Gen9+)
 #[derive(Debug)]
 pub struct EUInstruction {
@@ -94,6 +130,9 @@ pub struct EUInstruction {
     // Predication
     predicate_enable: bool,
     predicate_inverse: bool,
+    
+    // SEND-specific fields (only used when opcode is Send or SendC)
+    send_descriptor: Option<SendDescriptor>,
 }
 
 impl EUInstruction {
@@ -114,6 +153,7 @@ impl EUInstruction {
             src1_mod: SrcMod::NONE,
             predicate_enable: false,
             predicate_inverse: false,
+            send_descriptor: None,
         }
     }
     
@@ -153,6 +193,12 @@ impl EUInstruction {
     /// Set source 0 modifier
     pub fn with_src0_mod(mut self, src_mod: SrcMod) -> Self {
         self.src0_mod = src_mod;
+        self
+    }
+    
+    /// Set SEND descriptor (for SEND instructions only)
+    pub fn with_send_descriptor(mut self, descriptor: SendDescriptor) -> Self {
+        self.send_descriptor = Some(descriptor);
         self
     }
     
@@ -233,7 +279,7 @@ impl EUInstruction {
     ///   - Bits 28-31: Source 0 data type
     /// DWord 1: Destination register encoding
     /// DWord 2: Source 0 register encoding
-    /// DWord 3: Source 1 register encoding
+    /// DWord 3: Source 1 register encoding OR message descriptor (for SEND)
     pub fn encode(&self, gen: IntelGen) -> [u8; 16] {
         let mut binary = [0u8; 16];
         
@@ -261,12 +307,21 @@ impl EUInstruction {
             binary[8..12].copy_from_slice(&src0_bits.to_le_bytes());
         }
         
-        // DWord 3: Source 1 register
-        if let Some(ref src1) = self.src1 {
-            let mut src1_bits = encode_register(src1, self.src1_type);
-            // Add source modifiers (bits 16-17)
-            src1_bits |= (self.src1_mod.encode() as u32) << 16;
-            binary[12..16].copy_from_slice(&src1_bits.to_le_bytes());
+        // DWord 3: Source 1 register OR message descriptor (for SEND)
+        if self.opcode == EUOpcode::Send || self.opcode == EUOpcode::SendC {
+            // For SEND instructions, DWord 3 contains the message descriptor
+            if let Some(ref desc) = self.send_descriptor {
+                let desc_bits = encode_send_descriptor(desc);
+                binary[12..16].copy_from_slice(&desc_bits.to_le_bytes());
+            }
+        } else {
+            // For normal instructions, DWord 3 contains Source 1 register
+            if let Some(ref src1) = self.src1 {
+                let mut src1_bits = encode_register(src1, self.src1_type);
+                // Add source modifiers (bits 16-17)
+                src1_bits |= (self.src1_mod.encode() as u32) << 16;
+                binary[12..16].copy_from_slice(&src1_bits.to_le_bytes());
+            }
         }
         
         binary
