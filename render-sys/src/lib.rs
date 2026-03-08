@@ -210,6 +210,19 @@ pub unsafe extern "C" fn buffer_get_info(
     0
 }
 
+/// Get buffer GEM handle for GPU command submission.
+///
+/// # Safety
+/// - buffer must be a valid pointer returned by buffer_allocate
+#[no_mangle]
+pub unsafe extern "C" fn buffer_get_handle(buffer: *mut Buffer) -> u32 {
+    if buffer.is_null() {
+        return 0;
+    }
+    let buf = &*buffer;
+    buf.handle
+}
+
 /// Destroy a buffer created with buffer_allocate.
 ///
 /// # Safety

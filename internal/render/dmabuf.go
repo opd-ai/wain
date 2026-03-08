@@ -13,6 +13,7 @@ package render
 // Buffer buffer_allocate(BufferAllocator allocator, uint32_t width, uint32_t height, uint32_t bpp, uint32_t tiling);
 // int32_t buffer_export_dmabuf(BufferAllocator allocator, Buffer buffer);
 // int32_t buffer_get_info(Buffer buffer, uint32_t* out_width, uint32_t* out_height, uint32_t* out_stride);
+// uint32_t buffer_get_handle(Buffer buffer);
 // int32_t buffer_destroy(BufferAllocator allocator, Buffer buffer);
 import "C"
 
@@ -116,6 +117,17 @@ func (a *Allocator) ExportDmabuf(buffer *BufferHandle) (int, error) {
 	}
 
 	return int(fd), nil
+}
+
+// GemHandle returns the GEM buffer handle for GPU command submission.
+//
+// This handle can be used with render.SubmitBatch to reference the buffer
+// in GPU commands (e.g., as a render target or vertex buffer).
+func (b *BufferHandle) GemHandle() uint32 {
+	if b.handle == nil {
+		return 0
+	}
+	return uint32(C.buffer_get_handle(b.handle))
 }
 
 // Destroy frees the buffer and releases GPU memory.
