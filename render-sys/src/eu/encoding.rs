@@ -75,6 +75,8 @@ pub enum ExecSize {
 }
 
 impl ExecSize {
+    /// Alias for Size1 (scalar execution)
+    pub const Scalar: ExecSize = ExecSize::Size1;
     /// Encode execution size to 3-bit value (bits 21-23 of DWord 0)
     pub fn encode(&self) -> u8 {
         *self as u8
@@ -202,6 +204,8 @@ pub struct SrcMod {
 
 impl SrcMod {
     pub const NONE: SrcMod = SrcMod { negate: false, absolute: false };
+    pub const NEGATE: SrcMod = SrcMod { negate: true, absolute: false };
+    pub const ABSOLUTE: SrcMod = SrcMod { negate: false, absolute: true };
     
     /// Encode source modifier to 2-bit value
     pub fn encode(&self) -> u8 {

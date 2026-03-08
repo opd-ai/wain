@@ -18,7 +18,7 @@ pub struct VirtualReg(pub u32);
 /// Physical EU GRF register
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PhysicalReg {
-    pub num: u8,      // GRF number (0-127)
+    pub grf_num: u8,  // GRF number (0-127)
     pub subreg: u8,   // Sub-register offset (0-31 bytes)
 }
 
@@ -28,6 +28,8 @@ pub struct RegAllocator {
     allocation: HashMap<VirtualReg, PhysicalReg>,
     /// Next available GRF register
     next_grf: u8,
+    /// Next virtual register ID
+    next_vreg: u32,
 }
 
 impl RegAllocator {
@@ -37,7 +39,23 @@ impl RegAllocator {
             allocation: HashMap::new(),
             // r0 and r1 are reserved for special purposes on Intel EU
             next_grf: 2,
+            next_vreg: 0,
         }
+    }
+    
+    /// Allocate a new virtual register
+    pub fn allocate_vreg(&mut self) -> VirtualReg {
+        let vreg = VirtualReg(self.next_vreg);
+        self.next_vreg += 1;
+        
+        // Immediately allocate a physical register for it
+        self.allocate(vreg);
+        vreg
+    }
+    
+    /// Get the physical register for a virtual register (alias for get)
+    pub fn get_physical(&self, vreg: VirtualReg) -> Option<PhysicalReg> {
+        self.get(vreg)
     }
 
     /// Allocate a physical register for a virtual register
@@ -55,7 +73,7 @@ impl RegAllocator {
         }
 
         let preg = PhysicalReg {
-            num: self.next_grf,
+            grf_num: self.next_grf,
             subreg: 0,
         };
 
@@ -73,6 +91,7 @@ impl RegAllocator {
     pub fn reset(&mut self) {
         self.allocation.clear();
         self.next_grf = 2;
+        self.next_vreg = 0;
     }
 }
 
@@ -96,12 +115,12 @@ mod tests {
         let p0 = allocator.allocate(v0).unwrap();
         let p1 = allocator.allocate(v1).unwrap();
         
-        assert_eq!(p0.num, 2);  // r0, r1 reserved
-        assert_eq!(p1.num, 3);
+        assert_eq!(p0.grf_num, 2);  // r0, r1 reserved
+        assert_eq!(p1.grf_num, 3);
         
         // Requesting same vreg returns same preg
         let p0_again = allocator.allocate(v0).unwrap();
-        assert_eq!(p0_again.num, p0.num);
+        assert_eq!(p0_again.grf_num, p0.grf_num);
     }
 
     #[test]
@@ -116,7 +135,7 @@ mod tests {
         assert!(allocator.get(v0).is_none());
         
         let p0 = allocator.allocate(v0).unwrap();
-        assert_eq!(p0.num, 2);
+        assert_eq!(p0.grf_num, 2);
     }
 
     #[test]

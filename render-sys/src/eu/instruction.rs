@@ -150,6 +150,53 @@ impl EUInstruction {
         self
     }
     
+    // Mutable setter methods for imperative instruction building
+    
+    /// Set destination register (mutable)
+    pub fn set_dst(&mut self, reg: Register) {
+        self.dst = Some(reg);
+    }
+    
+    /// Set source 0 register (mutable)
+    pub fn set_src0(&mut self, reg: Register) {
+        self.src0 = Some(reg);
+    }
+    
+    /// Set source 1 register (mutable)
+    pub fn set_src1(&mut self, reg: Register) {
+        self.src1 = Some(reg);
+    }
+    
+    /// Set execution size (mutable)
+    pub fn set_exec_size(&mut self, exec_size: ExecSize) {
+        self.exec_size = exec_size;
+    }
+    
+    /// Set destination data type (mutable)
+    pub fn set_dst_type(&mut self, dtype: DataType) {
+        self.dst_type = dtype;
+    }
+    
+    /// Set source 0 data type (mutable)
+    pub fn set_src0_type(&mut self, dtype: DataType) {
+        self.src0_type = dtype;
+    }
+    
+    /// Set source 1 data type (mutable)
+    pub fn set_src1_type(&mut self, dtype: DataType) {
+        self.src1_type = dtype;
+    }
+    
+    /// Set source 0 negate modifier (mutable)
+    pub fn set_src0_negate(&mut self, negate: bool) {
+        self.src0_mod = if negate { SrcMod::NEGATE } else { SrcMod::NONE };
+    }
+    
+    /// Set source 1 negate modifier (mutable)
+    pub fn set_src1_negate(&mut self, negate: bool) {
+        self.src1_mod = if negate { SrcMod::NEGATE } else { SrcMod::NONE };
+    }
+    
     /// Encode instruction to binary format
     ///
     /// Returns 16 bytes (128 bits) on Gen9+
