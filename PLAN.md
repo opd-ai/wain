@@ -358,8 +358,10 @@ described in ROADMAP.md Phases 9-10. Steps are ordered by dependency.
   EOF
   go build -o testapp .
   ldd testapp 2>&1 | grep -q "not a dynamic executable"
-  # Optional: if rebuilding Rust backend from source is needed:
-  # go run github.com/opd-ai/wain/cmd/wain-build@latest
+  # Optional: if rebuilding Rust backend from source is needed
+  # (run from project root):
+  # go install github.com/opd-ai/wain/cmd/wain-build@latest
+  # wain-build
   ```
 
 ### Step 19: Reference Application & Documentation

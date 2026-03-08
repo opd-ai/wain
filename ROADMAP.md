@@ -766,14 +766,15 @@ Go library — `go get github.com/opd-ai/wain` followed by a standard
 
 9.6  BUILD SYSTEM FOR GO-GET
      - Ensure `go get github.com/opd-ai/wain` works seamlessly:
-       (a) Prefer prebuilt or embedded Rust static libraries so that a
-           standard `go build` on a fresh clone does not need to run any
-           generators in the Go module cache.
+       (a) Ship pre-built Rust static libraries (.a) as part of tagged
+           releases so that a standard `go build` does not need to run
+           any generators in the Go module cache. The pre-built .a files
+           are downloaded automatically or bundled with the module.
        (b) For contributors or advanced users who want to rebuild the Rust
            backend from source, provide a small helper CLI
-           (e.g., `cmd/wain-build`) that runs in the consuming project
-           directory and writes its outputs there (never into the module
-           cache).
+           (e.g., `cmd/wain-build`) that runs from the consuming project
+           root and writes its outputs into the current working directory
+           (never into the module cache).
        (c) Document the one-time prerequisites for rebuilding from source:
            `cargo`, `musl-gcc`, `rustup target add <musl-target>`.
        (d) Provide pre-built static libraries (.a) as GitHub release assets
@@ -788,10 +789,10 @@ Go library — `go get github.com/opd-ai/wain` followed by a standard
      - The default developer experience must be:
          go get github.com/opd-ai/wain
          go build .                                 # produces static binary
-     - For rebuilding the Rust backend from source:
+     - For rebuilding the Rust backend from source (run from project root):
          go install github.com/opd-ai/wain/cmd/wain-build@latest
-         wain-build .                               # one-time, in-project
-         go build .                                 # now links rebuilt Rust
+         wain-build                                  # rebuilds Rust in cwd
+         go build .                                  # now links rebuilt Rust
      - Milestone: a fresh machine with Go can `go get` and `go build` a
        sample wain application from scratch, with an opt-in path to rebuild
        the Rust backend when the toolchain is installed.
