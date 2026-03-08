@@ -7,6 +7,7 @@ import (
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
+	presentpkg "github.com/opd-ai/wain/internal/render/present"
 	"github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
 	"github.com/opd-ai/wain/internal/x11/present"
@@ -144,35 +145,32 @@ func NewX11Pipeline(
 //
 // The method blocks until a framebuffer is available. Use context for timeout control.
 func (p *X11Pipeline) RenderAndPresent(ctx context.Context, dl *displaylist.DisplayList) error {
-	if p.closed {
-		return ErrPoolClosed
-	}
+	return presentpkg.RenderAndPresent(ctx, dl, &poolAdapter{p.pool}, p)
+}
 
-	fb, err := p.pool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("display: failed to acquire framebuffer: %w", err)
-	}
+// IsClosed implements presentpkg.PlatformPresenter.
+func (p *X11Pipeline) IsClosed() bool {
+	return p.closed
+}
 
-	if err := p.renderToFramebuffer(dl, fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+// RenderToFramebuffer implements presentpkg.PlatformPresenter.
+func (p *X11Pipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb interface{}) error {
+	return p.renderToFramebuffer(dl, fb.(*Framebuffer))
+}
 
-	if err := p.ensureX11Pixmap(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+// EnsurePlatformBuffer implements presentpkg.PlatformPresenter.
+func (p *X11Pipeline) EnsurePlatformBuffer(fb interface{}) error {
+	return p.ensureX11Pixmap(fb.(*Framebuffer))
+}
 
-	if err := p.presentPixmap(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+// PresentBuffer implements presentpkg.PlatformPresenter.
+func (p *X11Pipeline) PresentBuffer(fb interface{}) error {
+	return p.presentPixmap(fb.(*Framebuffer))
+}
 
-	if err := p.pool.MarkDisplaying(fb); err != nil {
-		return fmt.Errorf("display: mark displaying failed: %w", err)
-	}
-
-	return nil
+// ReleaseFramebuffer implements presentpkg.PlatformPresenter.
+func (p *X11Pipeline) ReleaseFramebuffer(fb interface{}) {
+	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 
 func (p *X11Pipeline) releaseFramebuffer(fb *Framebuffer) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
+	presentpkg "github.com/opd-ai/wain/internal/render/present"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
 )
@@ -79,35 +80,45 @@ func NewWaylandPipeline(surface *client.Surface, dmabufGlobal *dmabuf.Dmabuf, re
 //
 // The method blocks until a framebuffer is available. Use context for timeout control.
 func (p *WaylandPipeline) RenderAndPresent(ctx context.Context, dl *displaylist.DisplayList) error {
-	if p.closed {
-		return ErrPoolClosed
-	}
+	return presentpkg.RenderAndPresent(ctx, dl, &poolAdapter{p.pool}, p)
+}
 
-	fb, err := p.pool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("display: failed to acquire framebuffer: %w", err)
-	}
+// IsClosed implements presentpkg.PlatformPresenter.
+func (p *WaylandPipeline) IsClosed() bool {
+	return p.closed
+}
 
-	if err := p.renderToFramebuffer(dl, fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+// poolAdapter adapts *FramebufferPool to presentpkg.FramebufferPool interface.
+type poolAdapter struct {
+	pool *FramebufferPool
+}
 
-	if err := p.ensureWaylandBuffer(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+func (a *poolAdapter) Acquire(ctx context.Context) (interface{}, error) {
+	return a.pool.Acquire(ctx)
+}
 
-	if err := p.commitToSurface(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return err
-	}
+func (a *poolAdapter) MarkDisplaying(fb interface{}) error {
+	return a.pool.MarkDisplaying(fb.(*Framebuffer))
+}
 
-	if err := p.pool.MarkDisplaying(fb); err != nil {
-		return fmt.Errorf("display: mark displaying failed: %w", err)
-	}
+// RenderToFramebuffer implements presentpkg.PlatformPresenter.
+func (p *WaylandPipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb interface{}) error {
+	return p.renderToFramebuffer(dl, fb.(*Framebuffer))
+}
 
-	return nil
+// EnsurePlatformBuffer implements presentpkg.PlatformPresenter.
+func (p *WaylandPipeline) EnsurePlatformBuffer(fb interface{}) error {
+	return p.ensureWaylandBuffer(fb.(*Framebuffer))
+}
+
+// PresentBuffer implements presentpkg.PlatformPresenter.
+func (p *WaylandPipeline) PresentBuffer(fb interface{}) error {
+	return p.commitToSurface(fb.(*Framebuffer))
+}
+
+// ReleaseFramebuffer implements presentpkg.PlatformPresenter.
+func (p *WaylandPipeline) ReleaseFramebuffer(fb interface{}) {
+	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 
 func (p *WaylandPipeline) releaseFramebuffer(fb *Framebuffer) {
