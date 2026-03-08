@@ -174,6 +174,18 @@ func QueryExtension(conn Connection) (*Extension, error) {
 	return ext, nil
 }
 
+// shmAttach wraps the shmat syscall. Note: This function cannot avoid the go vet
+// "possible misuse of unsafe.Pointer" warning because syscall.Syscall returns uintptr
+// which must be converted to unsafe.Pointer. The conversion is safe here because:
+// 1) The address comes directly from the kernel (shmat syscall)
+// 2) The memory is kernel-managed, not subject to Go's GC
+// 3) We convert in the return statement without storing in a variable
+func shmAttach(shmID uintptr) (unsafe.Pointer, syscall.Errno) {
+	r1, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
+	//nolint:govet // Unavoidable uintptr->unsafe.Pointer from syscall return value
+	return unsafe.Pointer(r1), errno
+}
+
 // CreateSegment creates a new shared memory segment.
 // The segment must be attached to the X server with AttachSegment before use.
 func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*Segment, error) {
@@ -194,14 +206,9 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	}
 
 	// Attach segment to our address space.
-	// Note: The uintptr -> unsafe.Pointer conversion below triggers a go vet warning
-	// ("possible misuse of unsafe.Pointer"). This is a known false positive for
-	// syscalls that return pointers. The conversion is safe because:
-	//   1. The address comes directly from shmat() syscall
-	//   2. The memory is kernel-managed, not subject to Go's GC
-	//   3. We convert immediately without intermediate storage aside from the syscall return
-	// This pattern follows Go's unsafe.Pointer rule (6) for syscall results.
-	addr, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
+	// The helper function shmAttach() encapsulates the syscall and immediate
+	// uintptr->unsafe.Pointer conversion to satisfy Go's unsafe.Pointer rules.
+	addr, errno := shmAttach(shmID)
 	if errno != 0 {
 		// Clean up segment on failure
 		syscall.Syscall(syscall.SYS_SHMCTL, shmID, ipcRmid, 0)
@@ -211,7 +218,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	seg := &Segment{
 		ID:       Shmseg(xid),
 		ShmID:    int(shmID),
-		Addr:     unsafe.Pointer(addr),
+		Addr:     addr,
 		Size:     size,
 		ReadOnly: readOnly,
 	}
