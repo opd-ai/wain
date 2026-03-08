@@ -1302,8 +1302,19 @@ func (a *App) processWaylandEvents() error {
 		return ErrNoDisplay
 	}
 
-	// TODO: Implement Wayland event dispatch
-	// This will read from a.waylandConn and dispatch to event handlers
+	// Flush any pending outbound requests
+	if err := a.waylandConn.Flush(); err != nil {
+		return fmt.Errorf("flush wayland requests: %w", err)
+	}
+
+	// TODO: Implement full Wayland event reading and dispatch
+	// Current limitation: No inbound event processing yet
+	// Required additions:
+	//   1. Read events from socket with proper wire protocol parsing
+	//   2. Dispatch events to registered object handlers
+	//   3. Handle frame callbacks for proper rendering synchronization
+	// For now, this minimal implementation flushes outbound requests
+	// to prevent deadlock and returns immediately.
 	return nil
 }
 
