@@ -43,7 +43,6 @@ package dri3
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"syscall"
@@ -110,43 +109,27 @@ type Extension struct {
 // QueryExtension checks if DRI3 extension is available on the X server.
 // If available, it queries the extension version and capabilities.
 func QueryExtension(conn Connection) (*Extension, error) {
-	// Get extension opcode
-	baseOpcode, err := conn.ExtensionOpcode(ExtensionName)
+	// Query extension using common helper
+	info, err := wire.QueryExtensionVersion(conn, ExtensionName, DRI3QueryVersion, 1, 2)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrNotSupported, err)
+		// Wrap with DRI3-specific error if it's a basic not-supported error
+		if errors.Is(err, syscall.Errno(0)) || errors.Is(err, fmt.Errorf("")) {
+			return nil, fmt.Errorf("%w: %v", ErrNotSupported, err)
+		}
+		return nil, err
 	}
-
-	ext := &Extension{
-		baseOpcode: baseOpcode,
-		supported:  true,
-	}
-
-	// Query extension version
-	var buf bytes.Buffer
-	wire.EncodeRequestHeader(&buf, baseOpcode+DRI3QueryVersion, 0, 3)
-	// Client version: major=1, minor=2
-	wire.EncodeUint32(&buf, 1) // major version
-	wire.EncodeUint32(&buf, 2) // minor version
-
-	reply, err := conn.SendRequestAndReply(buf.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("dri3: QueryVersion failed: %w", err)
-	}
-
-	// Parse reply: type(1) + pad(1) + sequence(2) + length(4) + major(4) + minor(4) + pad(16)
-	if len(reply) < 32 {
-		return nil, fmt.Errorf("dri3: invalid QueryVersion reply (got %d bytes)", len(reply))
-	}
-
-	ext.majorVersion = binary.LittleEndian.Uint32(reply[8:12])
-	ext.minorVersion = binary.LittleEndian.Uint32(reply[12:16])
 
 	// Verify version is at least 1.0
-	if ext.majorVersion < 1 {
+	if info.MajorVersion < 1 {
 		return nil, ErrVersionTooOld
 	}
 
-	return ext, nil
+	return &Extension{
+		baseOpcode:   info.BaseOpcode,
+		supported:    true,
+		majorVersion: info.MajorVersion,
+		minorVersion: info.MinorVersion,
+	}, nil
 }
 
 // MajorVersion returns the negotiated DRI3 major version.

@@ -50,7 +50,7 @@ func (b *Buffer) DrawLine(x0, y0, x1, y1 int, width float64, c Color) {
 
 			pixelColor := Color{c.R, c.G, c.B, alpha}
 			idx := y*b.Stride + x*4
-			blendPixel(b.Pixels[idx:idx+4], pixelColor)
+			BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 		}
 	}
 }

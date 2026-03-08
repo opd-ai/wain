@@ -35,7 +35,7 @@ func (b *Buffer) FillRect(x, y, width, height int, c Color) {
 			offset := row * b.Stride
 			for col := x1; col < x2; col++ {
 				idx := offset + col*4
-				blendPixel(b.Pixels[idx:idx+4], c)
+				BlendPixel(b.Pixels[idx:idx+4], c)
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func (b *Buffer) FillRoundedRect(x, y, width, height int, radius float64, c Colo
 
 			pixelColor := Color{c.R, c.G, c.B, alpha}
 			idx := row*b.Stride + col*4
-			blendPixel(b.Pixels[idx:idx+4], pixelColor)
+			BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 		}
 	}
 }

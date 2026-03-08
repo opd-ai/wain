@@ -141,7 +141,7 @@ func (b *Buffer) Set(x, y int, c Color) {
 	}
 
 	idx := y*b.Stride + x*4
-	blendPixel(b.Pixels[idx:idx+4], c)
+	BlendPixel(b.Pixels[idx:idx+4], c)
 }
 
 // packColor converts a Color to ARGB8888 bytes (little-endian: B, G, R, A).
@@ -149,8 +149,9 @@ func packColor(c Color) [4]byte {
 	return [4]byte{c.B, c.G, c.R, c.A}
 }
 
-// blendPixel applies SrcOver compositing of src onto dst (4-byte ARGB8888 pixel).
-func blendPixel(dst []byte, src Color) {
+// BlendPixel applies SrcOver compositing of src onto dst (4-byte ARGB8888 pixel).
+// This is exported for use by other raster packages (e.g., curves, effects).
+func BlendPixel(dst []byte, src Color) {
 	if src.A == 255 {
 		dst[0] = src.B
 		dst[1] = src.G

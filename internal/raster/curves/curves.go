@@ -166,7 +166,7 @@ func FillArc(b *core.Buffer, cx, cy, rx, ry, startAngle, endAngle float64, c cor
 
 			pixelColor := core.Color{R: c.R, G: c.G, B: c.B, A: alpha}
 			idx := y*b.Stride + x*4
-			blendPixel(b.Pixels[idx:idx+4], pixelColor)
+			core.BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 		}
 	}
 }
@@ -329,39 +329,6 @@ func normalizeAngle(angle float64) float64 {
 		angle += 2 * math.Pi
 	}
 	return angle
-}
-
-// blendPixel applies SrcOver compositing (imported pattern from core package).
-func blendPixel(dst []byte, src core.Color) {
-	if src.A == 255 {
-		dst[0] = src.B
-		dst[1] = src.G
-		dst[2] = src.R
-		dst[3] = src.A
-		return
-	}
-
-	if src.A == 0 {
-		return
-	}
-
-	srcA := uint32(src.A)
-	invA := 255 - srcA
-
-	dstR := uint32(dst[2])
-	dstG := uint32(dst[1])
-	dstB := uint32(dst[0])
-	dstA := uint32(dst[3])
-
-	outR := (uint32(src.R)*srcA + dstR*invA) / 255
-	outG := (uint32(src.G)*srcA + dstG*invA) / 255
-	outB := (uint32(src.B)*srcA + dstB*invA) / 255
-	outA := srcA + (dstA*invA)/255
-
-	dst[0] = uint8(outB)
-	dst[1] = uint8(outG)
-	dst[2] = uint8(outR)
-	dst[3] = uint8(outA)
 }
 
 func clamp(v, lo, hi float64) float64 {

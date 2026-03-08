@@ -150,45 +150,25 @@ type Extension struct {
 // QueryExtension checks if Present extension is available on the X server.
 // If available, it queries the extension version and capabilities.
 func QueryExtension(conn Connection) (*Extension, error) {
-	// Get extension opcode
-	baseOpcode, err := conn.ExtensionOpcode(ExtensionName)
+	// Query extension using common helper
+	info, err := wire.QueryExtensionVersion(conn, ExtensionName, PresentQueryVersion, 1, 0)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrNotSupported, err)
+		return nil, err
 	}
-
-	ext := &Extension{
-		baseOpcode: baseOpcode,
-		supported:  true,
-		// Note: baseEvent would need to be queried from connection,
-		// but for now we'll handle events by opcode only
-	}
-
-	// Query extension version
-	var buf bytes.Buffer
-	wire.EncodeRequestHeader(&buf, baseOpcode+PresentQueryVersion, 0, 3)
-	// Client version: major=1, minor=0
-	wire.EncodeUint32(&buf, 1) // major version
-	wire.EncodeUint32(&buf, 0) // minor version
-
-	reply, err := conn.SendRequestAndReply(buf.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("present: QueryVersion failed: %w", err)
-	}
-
-	// Parse reply: type(1) + pad(1) + sequence(2) + length(4) + major(4) + minor(4) + pad(16)
-	if len(reply) < 32 {
-		return nil, fmt.Errorf("present: invalid QueryVersion reply (got %d bytes)", len(reply))
-	}
-
-	ext.majorVersion = binary.LittleEndian.Uint32(reply[8:12])
-	ext.minorVersion = binary.LittleEndian.Uint32(reply[12:16])
 
 	// Verify version is at least 1.0
-	if ext.majorVersion < 1 {
+	if info.MajorVersion < 1 {
 		return nil, ErrVersionTooOld
 	}
 
-	return ext, nil
+	return &Extension{
+		baseOpcode:   info.BaseOpcode,
+		supported:    true,
+		majorVersion: info.MajorVersion,
+		minorVersion: info.MinorVersion,
+		// Note: baseEvent would need to be queried from connection,
+		// but for now we'll handle events by opcode only
+	}, nil
 }
 
 // MajorVersion returns the negotiated Present major version.
