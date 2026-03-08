@@ -173,11 +173,105 @@ type PixmapFormat struct {
 	ScanlinePad  uint8
 }
 
+// decodeSetupFailure reads and handles a setup failure response.
+func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
+	reasonLen, _ := DecodeUint8(r)
+	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
+	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
+	failDataLen, _ := DecodeUint16(r)
+
+	if reasonLen > 0 {
+		reason := make([]byte, reasonLen)
+		io.ReadFull(r, reason)
+		return fmt.Errorf("%w: %s", ErrSetupFailed, string(reason))
+	}
+
+	if failDataLen > 0 {
+		io.CopyN(io.Discard, r, int64(failDataLen)*4)
+	}
+	return ErrSetupFailed
+}
+
+// decodePixmapFormats reads pixmap format entries.
+func decodePixmapFormats(r io.Reader, count int) ([]PixmapFormat, error) {
+	formats := make([]PixmapFormat, count)
+	for i := 0; i < count; i++ {
+		formats[i].Depth, _ = DecodeUint8(r)
+		formats[i].BitsPerPixel, _ = DecodeUint8(r)
+		formats[i].ScanlinePad, _ = DecodeUint8(r)
+		io.CopyN(io.Discard, r, 5)
+	}
+	return formats, nil
+}
+
+// decodeVisuals reads visual entries for a depth.
+func decodeVisuals(r io.Reader, count int) ([]Visual, error) {
+	visuals := make([]Visual, count)
+	for k := 0; k < count; k++ {
+		visuals[k].ID, _ = DecodeUint32(r)
+		class, _ := DecodeUint8(r)
+		visuals[k].Class = VisualClass(class)
+		visuals[k].BitsPerRGB, _ = DecodeUint8(r)
+		visuals[k].Colormap, _ = DecodeUint16(r)
+		visuals[k].RedMask, _ = DecodeUint32(r)
+		visuals[k].GreenMask, _ = DecodeUint32(r)
+		visuals[k].BlueMask, _ = DecodeUint32(r)
+		io.CopyN(io.Discard, r, 4)
+	}
+	return visuals, nil
+}
+
+// decodeDepths reads depth entries for a screen.
+func decodeDepths(r io.Reader, count int) ([]Depth, error) {
+	depths := make([]Depth, count)
+	for j := 0; j < count; j++ {
+		depths[j].Depth, _ = DecodeUint8(r)
+		io.CopyN(io.Discard, r, 1)
+		numVisuals, _ := DecodeUint16(r)
+		io.CopyN(io.Discard, r, 4)
+
+		visuals, err := decodeVisuals(r, int(numVisuals))
+		if err != nil {
+			return nil, err
+		}
+		depths[j].Visuals = visuals
+	}
+	return depths, nil
+}
+
+// decodeScreen reads a single screen entry.
+func decodeScreen(r io.Reader) (Screen, error) {
+	var screen Screen
+	screen.Root, _ = DecodeUint32(r)
+	screen.DefaultColormap, _ = DecodeUint32(r)
+	screen.WhitePixel, _ = DecodeUint32(r)
+	screen.BlackPixel, _ = DecodeUint32(r)
+	screen.CurrentMasks, _ = DecodeUint32(r)
+	screen.WidthPixels, _ = DecodeUint16(r)
+	screen.HeightPixels, _ = DecodeUint16(r)
+	screen.WidthMM, _ = DecodeUint16(r)
+	screen.HeightMM, _ = DecodeUint16(r)
+	screen.MinMaps, _ = DecodeUint16(r)
+	screen.MaxMaps, _ = DecodeUint16(r)
+	screen.RootVisual, _ = DecodeUint32(r)
+	screen.BackingStores, _ = DecodeUint8(r)
+	saveUnders, _ := DecodeUint8(r)
+	screen.SaveUnders = saveUnders != 0
+	screen.RootDepth, _ = DecodeUint8(r)
+	numDepths, _ := DecodeUint8(r)
+
+	depths, err := decodeDepths(r, int(numDepths))
+	if err != nil {
+		return screen, err
+	}
+	screen.Depths = depths
+	return screen, nil
+}
+
 // DecodeSetupReply reads the server's setup reply from r.
 func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	var reply SetupReply
 
-	// Read initial status byte
 	status, err := DecodeUint8(r)
 	if err != nil {
 		return reply, fmt.Errorf("%w: %v", ErrSetupFailed, err)
@@ -185,32 +279,14 @@ func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	reply.Status = SetupStatus(status)
 
 	if reply.Status == SetupStatusFailed {
-		// Read reason length and message
-		reasonLen, _ := DecodeUint8(r)
-		reply.ProtocolMajorVersion, _ = DecodeUint16(r)
-		reply.ProtocolMinorVersion, _ = DecodeUint16(r)
-		failDataLen, _ := DecodeUint16(r)
-
-		if reasonLen > 0 {
-			reason := make([]byte, reasonLen)
-			io.ReadFull(r, reason)
-			return reply, fmt.Errorf("%w: %s", ErrSetupFailed, string(reason))
-		}
-
-		// Consume additional data
-		if failDataLen > 0 {
-			io.CopyN(io.Discard, r, int64(failDataLen)*4)
-		}
-		return reply, ErrSetupFailed
+		return reply, decodeSetupFailure(r, &reply)
 	}
 
-	// Read success response
-	_, _ = DecodeUint8(r) // Unused byte
+	_, _ = DecodeUint8(r)
 	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
 	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
-	_, _ = DecodeUint16(r) // dataLen - we'll read all the data we need explicitly
+	_, _ = DecodeUint16(r)
 
-	// Read fixed portion (32 bytes after initial 8)
 	reply.ReleaseNumber, _ = DecodeUint32(r)
 	reply.ResourceIDBase, _ = DecodeUint32(r)
 	reply.ResourceIDMask, _ = DecodeUint32(r)
@@ -229,77 +305,33 @@ func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	reply.MinKeycode, _ = DecodeUint8(r)
 	reply.MaxKeycode, _ = DecodeUint8(r)
 
-	// Skip 4 bytes padding
 	io.CopyN(io.Discard, r, 4)
 
-	// Read vendor string
 	if vendorLen > 0 {
 		vendor := make([]byte, vendorLen)
 		io.ReadFull(r, vendor)
 		reply.Vendor = string(vendor)
 
-		// Skip padding
 		if pad := Pad(int(vendorLen)); pad > 0 {
 			io.CopyN(io.Discard, r, int64(pad))
 		}
 	}
 
-	// Read pixmap formats
-	reply.PixmapFormats = make([]PixmapFormat, numFormats)
-	for i := 0; i < int(numFormats); i++ {
-		reply.PixmapFormats[i].Depth, _ = DecodeUint8(r)
-		reply.PixmapFormats[i].BitsPerPixel, _ = DecodeUint8(r)
-		reply.PixmapFormats[i].ScanlinePad, _ = DecodeUint8(r)
-		io.CopyN(io.Discard, r, 5) // Padding
+	formats, err := decodePixmapFormats(r, int(numFormats))
+	if err != nil {
+		return reply, err
 	}
+	reply.PixmapFormats = formats
 
-	// Read screens
-	reply.Screens = make([]Screen, numScreens)
+	screens := make([]Screen, numScreens)
 	for i := 0; i < int(numScreens); i++ {
-		screen := &reply.Screens[i]
-		screen.Root, _ = DecodeUint32(r)
-		screen.DefaultColormap, _ = DecodeUint32(r)
-		screen.WhitePixel, _ = DecodeUint32(r)
-		screen.BlackPixel, _ = DecodeUint32(r)
-		screen.CurrentMasks, _ = DecodeUint32(r)
-		screen.WidthPixels, _ = DecodeUint16(r)
-		screen.HeightPixels, _ = DecodeUint16(r)
-		screen.WidthMM, _ = DecodeUint16(r)
-		screen.HeightMM, _ = DecodeUint16(r)
-		screen.MinMaps, _ = DecodeUint16(r)
-		screen.MaxMaps, _ = DecodeUint16(r)
-		screen.RootVisual, _ = DecodeUint32(r)
-		screen.BackingStores, _ = DecodeUint8(r)
-		saveUnders, _ := DecodeUint8(r)
-		screen.SaveUnders = saveUnders != 0
-		screen.RootDepth, _ = DecodeUint8(r)
-		numDepths, _ := DecodeUint8(r)
-
-		// Read depths
-		screen.Depths = make([]Depth, numDepths)
-		for j := 0; j < int(numDepths); j++ {
-			depth := &screen.Depths[j]
-			depth.Depth, _ = DecodeUint8(r)
-			io.CopyN(io.Discard, r, 1) // Padding
-			numVisuals, _ := DecodeUint16(r)
-			io.CopyN(io.Discard, r, 4) // Padding
-
-			// Read visuals
-			depth.Visuals = make([]Visual, numVisuals)
-			for k := 0; k < int(numVisuals); k++ {
-				visual := &depth.Visuals[k]
-				visual.ID, _ = DecodeUint32(r)
-				class, _ := DecodeUint8(r)
-				visual.Class = VisualClass(class)
-				visual.BitsPerRGB, _ = DecodeUint8(r)
-				visual.Colormap, _ = DecodeUint16(r)
-				visual.RedMask, _ = DecodeUint32(r)
-				visual.GreenMask, _ = DecodeUint32(r)
-				visual.BlueMask, _ = DecodeUint32(r)
-				io.CopyN(io.Discard, r, 4) // Padding
-			}
+		screen, err := decodeScreen(r)
+		if err != nil {
+			return reply, err
 		}
+		screens[i] = screen
 	}
+	reply.Screens = screens
 
 	return reply, nil
 }
