@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render"
 	"github.com/opd-ai/wain/internal/render/backend"
@@ -101,23 +102,23 @@ func createWorkload(rects, texts, shadows int) *displaylist.DisplayList {
 
 	// Add filled rectangles
 	for i := 0; i < rects; i++ {
-		x := float32(i*10) % 1920
-		y := float32((i * 7) % 1080)
-		dl.FillRect(x, y, 50, 30, [4]uint8{255, 128, 64, 255})
+		x := (i * 10) % 1920
+		y := (i * 7) % 1080
+		dl.AddFillRect(x, y, 50, 30, core.Color{R: 255, G: 128, B: 64, A: 255})
 	}
 
 	// Add text runs (simulated with small rects for now)
 	for i := 0; i < texts; i++ {
-		x := float32((i * 100) % 1920)
-		y := float32((i * 50) % 1080)
-		dl.FillRect(x, y, 80, 12, [4]uint8{0, 0, 0, 255})
+		x := (i * 100) % 1920
+		y := (i * 50) % 1080
+		dl.AddFillRect(x, y, 80, 12, core.Color{R: 0, G: 0, B: 0, A: 255})
 	}
 
 	// Add box shadows (rounded rects with blur)
 	for i := 0; i < shadows; i++ {
-		x := float32((i * 150) % 1920)
-		y := float32((i * 100) % 1080)
-		dl.FillRoundedRect(x, y, 100, 80, 8, [4]uint8{200, 200, 200, 128})
+		x := (i * 150) % 1920
+		y := (i * 100) % 1080
+		dl.AddFillRoundedRect(x, y, 100, 80, 8, core.Color{R: 200, G: 200, B: 200, A: 128})
 	}
 
 	return dl
