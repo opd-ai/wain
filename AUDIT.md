@@ -22,7 +22,7 @@
 
 **Findings by severity:**
 - CRITICAL: 0
-- HIGH: 2
+- HIGH: 1
 - MEDIUM: 5
 - LOW: 3
 
@@ -36,7 +36,6 @@
 
 **Key weaknesses:**
 - ⚠️ Package count discrepancies (README claims 7 Wayland packages, actual: 9)
-- ⚠️ `go vet` reports unsafe.Pointer misuse in `internal/x11/shm/shm.go:214`
 - ⚠️ Test coverage gaps in critical packages (x11/client: 0%, x11/shm: 8.9%, wayland/client: 15.3%)
 - ⚠️ Some demo binaries lack documentation/help flags
 - ⚠️ Coverage claim of "~70% average" is inflated (actual: 66.1% excluding cmd/ packages)
@@ -44,8 +43,6 @@
 ## Findings
 
 ### HIGH
-
-- [ ] **Unsafe pointer misuse in X11 SHM implementation** — internal/x11/shm/shm.go:214 — `go vet` reports "possible misuse of unsafe.Pointer" when assigning `addr` from `syscall.Shmat()` to `seg.Addr`. This is a type safety violation that could lead to runtime panics or memory corruption if the pointer arithmetic assumptions change. **Remediation:** Replace the direct assignment with proper `unsafe.Pointer` conversion using an intermediate `uintptr`. Change line 214 from `Addr: unsafe.Pointer(addr)` to `Addr: unsafe.Pointer(uintptr(addr))`. Verify with `go vet ./internal/x11/shm` (should report no issues). Add a comment explaining the conversion: `// Convert uintptr from Shmat to unsafe.Pointer for storage`.
 
 - [ ] **Critical X11 client package has 0% test coverage** — internal/x11/client/client.go:1 — The `internal/x11/client` package implements X11 connection setup, authentication, window creation, and extension queries but has no tests despite being foundational infrastructure. This creates undetected regression risk for all X11-based demos. **Remediation:** Create `internal/x11/client/client_test.go` with tests for: (1) `Connect()` with invalid display path (should return error), (2) `AllocXID()` XID uniqueness (100 sequential calls should produce unique values), (3) `ExtensionOpcode()` for known extensions (test "BIG-REQUESTS" returns non-zero). Validate with `go test -v ./internal/x11/client` (should show >30% coverage). Use table-driven tests for multiple display strings.
 
@@ -87,7 +84,7 @@
 | **Test coverage (Go)** | 66.1% | Average across library packages (excludes cmd/) |
 | **Test coverage (Rust)** | 97% | 255 passing / 263 total (8 ignored GPU tests) |
 | **Undocumented exports** | 9 | Most in internal/render/display |
-| **Vet issues** | 1 | unsafe.Pointer misuse in internal/x11/shm |
+| **Vet issues** | 0 | — |
 
 **Complexity distribution:**
 - Cyclomatic 1-5: 95% of functions
@@ -130,7 +127,7 @@ go-stats-generator analyze . --skip-tests --format json \
 # Test suite
 make test-go                  # All tests pass
 cargo test --manifest-path render-sys/Cargo.toml  # 255/263 pass (8 ignored)
-go vet ./...                  # 1 issue: internal/x11/shm/shm.go:214
+go vet ./...                  # No issues
 
 # Static linking verification
 make build
@@ -169,10 +166,9 @@ This audit finds **wain** to be a well-engineered project with accurate document
 
 **Primary risks:**
 1. **Test coverage gaps in protocol layers:** X11/Wayland client packages are foundational but undertested
-2. **Unsafe code with vet warnings:** One instance of unsafe.Pointer misuse could cause runtime failures
-3. **Inflated metrics claims:** Minor but detectable exaggerations in coverage and LOC counts
+2. **Inflated metrics claims:** Minor but detectable exaggerations in coverage and LOC counts
 
-**Recommendation:** Address HIGH findings before expanding public API surface. The unsafe.Pointer issue is the only genuine risk (could cause SHM-based X11 demos to crash under GC pressure). Test coverage gaps are acceptable for an early-stage project but should be addressed before Phase 5 (GPU rendering integration).
+**Recommendation:** Address HIGH findings before expanding public API surface. Test coverage gaps are acceptable for an early-stage project but should be addressed before Phase 5 (GPU rendering integration).
 
 ---
 
