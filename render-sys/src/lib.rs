@@ -19,6 +19,7 @@ use std::os::unix::io::RawFd;
 use drm::DrmDevice;
 use allocator::{BufferAllocator, Buffer, TilingFormat, DriverType};
 use detect::GpuGeneration;
+use i915::RelocationEntry;
 
 /// Add two 32-bit integers and return the result.
 ///
@@ -227,6 +228,154 @@ pub unsafe extern "C" fn buffer_destroy(allocator: *mut BufferAllocator, buffer:
     match alloc.deallocate(*buf) {
         Ok(()) => 0,
         Err(_) => -1,
+    }
+}
+
+/// Submit a batch buffer to the GPU and wait for completion (i915 driver).
+///
+/// # Arguments
+/// - path: Path to the DRM device (e.g., "/dev/dri/renderD128")
+/// - batch_handle: GEM buffer handle containing the command stream
+/// - batch_len_bytes: Length of the command stream in bytes
+/// - relocs: Array of relocation entries (null if relocs_count is 0)
+/// - relocs_count: Number of relocation entries
+/// - context_id: GPU context ID (0 for default context)
+///
+/// Returns 0 on success, -1 on error.
+///
+/// # Safety
+/// - path must be a valid null-terminated C string
+/// - relocs must be a valid array of RelocationEntry (or null if count is 0)
+/// - batch_handle must be a valid GEM buffer handle
+#[no_mangle]
+pub unsafe extern "C" fn render_submit_batch(
+    path: *const std::ffi::c_char,
+    batch_handle: u32,
+    batch_len_bytes: u32,
+    relocs: *const RelocationEntry,
+    relocs_count: usize,
+    context_id: u32,
+) -> i32 {
+    if path.is_null() {
+        return -1;
+    }
+
+    let c_str = match std::ffi::CStr::from_ptr(path).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    let device = match DrmDevice::open(c_str) {
+        Ok(d) => d,
+        Err(_) => return -1,
+    };
+
+    // Convert C array to Rust slice
+    let relocs_slice = if relocs.is_null() || relocs_count == 0 {
+        &[]
+    } else {
+        std::slice::from_raw_parts(relocs, relocs_count)
+    };
+
+    // Detect driver type and submit accordingly
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let dev = allocator.device();
+
+    match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => {
+            // Use i915 submission path
+            match dev.i915_submit_batch(batch_handle, batch_len_bytes, relocs_slice, context_id) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::Xe => {
+            // Use Xe submission path (simplified, no relocations)
+            // Note: batch_gpu_addr of 0 means kernel will assign the address
+            match dev.xe_submit_batch_simple(batch_handle, 0, batch_len_bytes as u64) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::Unknown => -1,
+    }
+}
+
+/// Create a GPU context and return its ID.
+///
+/// # Arguments
+/// - path: Path to the DRM device (e.g., "/dev/dri/renderD128")
+/// - out_context_id: Pointer to store the created context ID
+/// - out_vm_id: Pointer to store the VM ID (Xe only, can be null for i915)
+///
+/// Returns 0 on success, -1 on error.
+///
+/// # Safety
+/// - path must be a valid null-terminated C string
+/// - out_context_id must be a valid pointer
+/// - out_vm_id can be null if the caller doesn't need VM ID
+#[no_mangle]
+pub unsafe extern "C" fn render_create_context(
+    path: *const std::ffi::c_char,
+    out_context_id: *mut u32,
+    out_vm_id: *mut u32,
+) -> i32 {
+    if path.is_null() || out_context_id.is_null() {
+        return -1;
+    }
+
+    let c_str = match std::ffi::CStr::from_ptr(path).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    let device = match DrmDevice::open(c_str) {
+        Ok(d) => d,
+        Err(_) => return -1,
+    };
+
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let dev = allocator.device();
+
+    match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => {
+            // Use i915 context creation
+            match dev.i915_create_context() {
+                Ok(ctx_id) => {
+                    *out_context_id = ctx_id;
+                    // i915 doesn't have separate VM ID
+                    if !out_vm_id.is_null() {
+                        *out_vm_id = 0;
+                    }
+                    0
+                }
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::Xe => {
+            // Use Xe context creation (returns VM and exec queue)
+            match dev.xe_create_context() {
+                Ok((vm_id, exec_queue_id)) => {
+                    *out_context_id = exec_queue_id;
+                    if !out_vm_id.is_null() {
+                        *out_vm_id = vm_id;
+                    }
+                    0
+                }
+                Err(_) => -1,
+            }
+        }
+        GpuGeneration::Unknown => -1,
     }
 }
 

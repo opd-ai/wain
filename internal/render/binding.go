@@ -60,6 +60,31 @@ package render
 // int32_t render_add(int32_t a, int32_t b);
 // const char *render_version(void);
 // int32_t render_detect_gpu(const char *path);
+//
+// // Relocation entry for i915 batch submission
+// typedef struct {
+//     uint32_t target_handle;
+//     uint32_t delta;
+//     uint64_t offset;
+//     uint64_t presumed_offset;
+//     uint32_t read_domains;
+//     uint32_t write_domain;
+// } RelocationEntry;
+//
+// int32_t render_submit_batch(
+//     const char *path,
+//     uint32_t batch_handle,
+//     uint32_t batch_len_bytes,
+//     const RelocationEntry *relocs,
+//     size_t relocs_count,
+//     uint32_t context_id
+// );
+//
+// int32_t render_create_context(
+//     const char *path,
+//     uint32_t *out_context_id,
+//     uint32_t *out_vm_id
+// );
 import "C"
 
 import "unsafe"
@@ -130,4 +155,147 @@ func DetectGPU(path string) GpuGeneration {
 		return GpuUnknown
 	}
 	return GpuGeneration(result)
+}
+
+// Relocation represents a GPU address relocation entry for batch submission.
+//
+// When a batch buffer references another GPU buffer (e.g., a render target),
+// the kernel needs to patch the actual GPU virtual address at submission time.
+// Relocations tell the kernel where to patch these addresses.
+type Relocation struct {
+	TargetHandle   uint32 // GEM handle of the buffer being referenced
+	Delta          uint32 // Offset within the target buffer
+	Offset         uint64 // Offset in the batch buffer (bytes)
+	PresumedOffset uint64 // Expected GPU address (0 = unknown)
+	ReadDomains    uint32 // Cache read domains (I915_GEM_DOMAIN_*)
+	WriteDomain    uint32 // Cache write domain (I915_GEM_DOMAIN_*)
+}
+
+// Cache domain constants for relocations.
+const (
+	GemDomainRender      uint32 = 0x00000002
+	GemDomainInstruction uint32 = 0x00000010
+)
+
+// SubmitBatch submits a GPU batch buffer and waits for completion.
+//
+// This function submits a command stream to the GPU and blocks until execution
+// completes. It automatically detects the GPU type and uses the appropriate
+// driver interface (i915 or Xe).
+//
+// # Arguments
+//   - path: Path to the DRM device (e.g., "/dev/dri/renderD128")
+//   - batchHandle: GEM buffer handle containing the command stream
+//   - batchLenBytes: Length of the command stream in bytes
+//   - relocs: Slice of relocation entries (can be nil if no relocations needed)
+//   - contextID: GPU context ID (use 0 for default context)
+//
+// Returns an error if submission fails.
+//
+// Example:
+//
+//	err := render.SubmitBatch("/dev/dri/renderD128", batchHandle, 1024, nil, 0)
+//	if err != nil {
+//	    log.Fatalf("Batch submission failed: %v", err)
+//	}
+func SubmitBatch(path string, batchHandle uint32, batchLenBytes uint32, relocs []Relocation, contextID uint32) error {
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+
+	var crelocs *C.RelocationEntry
+	var relocsCount C.size_t
+
+	if len(relocs) > 0 {
+		// Convert Go slice to C array
+		cRelocs := make([]C.RelocationEntry, len(relocs))
+		for i, r := range relocs {
+			cRelocs[i].target_handle = C.uint32_t(r.TargetHandle)
+			cRelocs[i].delta = C.uint32_t(r.Delta)
+			cRelocs[i].offset = C.uint64_t(r.Offset)
+			cRelocs[i].presumed_offset = C.uint64_t(r.PresumedOffset)
+			cRelocs[i].read_domains = C.uint32_t(r.ReadDomains)
+			cRelocs[i].write_domain = C.uint32_t(r.WriteDomain)
+		}
+		crelocs = &cRelocs[0]
+		relocsCount = C.size_t(len(relocs))
+	}
+
+	result := C.render_submit_batch(
+		cpath,
+		C.uint32_t(batchHandle),
+		C.uint32_t(batchLenBytes),
+		crelocs,
+		relocsCount,
+		C.uint32_t(contextID),
+	)
+
+	if result < 0 {
+		return &SubmitError{path: path}
+	}
+	return nil
+}
+
+// SubmitError represents an error during batch submission.
+type SubmitError struct {
+	path string
+}
+
+func (e *SubmitError) Error() string {
+	return "batch submission failed for device " + e.path
+}
+
+// GpuContext represents a GPU context handle.
+//
+// Contexts isolate GPU state and allow multiple independent workloads.
+// For i915, only ContextID is used. For Xe, both ContextID (exec queue) and
+// VmID are used.
+type GpuContext struct {
+	ContextID uint32 // Context/exec queue ID
+	VmID      uint32 // VM ID (Xe only, 0 for i915)
+}
+
+// CreateContext creates a GPU context for command submission.
+//
+// A context isolates GPU state and allows multiple independent workloads to
+// execute concurrently. Most applications should create one context per
+// rendering thread or workload.
+//
+// For i915 GPUs, only the ContextID field is populated. For Xe GPUs, both
+// ContextID (exec queue) and VmID are populated.
+//
+// Returns a GpuContext on success, or an error if context creation fails.
+//
+// Example:
+//
+//	ctx, err := render.CreateContext("/dev/dri/renderD128")
+//	if err != nil {
+//	    log.Fatalf("Context creation failed: %v", err)
+//	}
+//	log.Printf("Created context ID: %d", ctx.ContextID)
+func CreateContext(path string) (*GpuContext, error) {
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+
+	var contextID C.uint32_t
+	var vmID C.uint32_t
+
+	result := C.render_create_context(cpath, &contextID, &vmID)
+
+	if result < 0 {
+		return nil, &ContextCreateError{path: path}
+	}
+
+	return &GpuContext{
+		ContextID: uint32(contextID),
+		VmID:      uint32(vmID),
+	}, nil
+}
+
+// ContextCreateError represents an error during context creation.
+type ContextCreateError struct {
+	path string
+}
+
+func (e *ContextCreateError) Error() string {
+	return "context creation failed for device " + e.path
 }
