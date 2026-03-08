@@ -15,6 +15,7 @@ pub mod batch;
 pub mod pipeline;
 pub mod surface;
 pub mod shader;
+pub mod shaders;
 pub mod eu;
 
 use std::os::unix::io::RawFd;
