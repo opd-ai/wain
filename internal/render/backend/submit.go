@@ -23,76 +23,84 @@ func (b *GPUBackend) submitBatchesWithScissor(batches []Batch, vertexData []byte
 		return nil
 	}
 
-	// Step 1: Write vertex data to vertex buffer via mmap
-	vertexOffset := uint32(0)
 	if len(vertexData) > 0 {
 		if err := b.writeVertexData(vertexData); err != nil {
 			return fmt.Errorf("write vertex data: %w", err)
 		}
 	}
 
-	// Step 2: Allocate and build a batch buffer
-	const batchSize = 64 * 1024 // 64KB for full pipeline state + draw calls
-	batchBuffer, err := b.allocator.Allocate(batchSize/4, 1, 32, render.TilingNone)
+	batchBuffer, err := b.allocateBatchBuffer()
 	if err != nil {
-		return fmt.Errorf("allocate batch buffer: %w", err)
+		return err
 	}
 	defer batchBuffer.Destroy()
 
-	// Build full GPU command stream with pipeline state and draw calls
-	batchData, relocs := b.buildBatchBuffer(batches, vertexOffset, len(vertexData)/20, scissorRects)
+	batchData, relocs := b.buildBatchBuffer(batches, 0, len(vertexData)/20, scissorRects)
 
-	// Write batch data to buffer via mmap
 	if err := b.writeBatchData(batchBuffer, batchData); err != nil {
 		return fmt.Errorf("write batch data: %w", err)
 	}
 
-	// Step 3: Submit batch to GPU
-	err = render.SubmitBatch(
+	return b.submitToGPU(batchBuffer, batchData, relocs)
+}
+
+func (b *GPUBackend) allocateBatchBuffer() (*render.BufferHandle, error) {
+	const batchSize = 64 * 1024
+	buffer, err := b.allocator.Allocate(batchSize/4, 1, 32, render.TilingNone)
+	if err != nil {
+		return nil, fmt.Errorf("allocate batch buffer: %w", err)
+	}
+	return buffer, nil
+}
+
+func (b *GPUBackend) submitToGPU(buffer *render.BufferHandle, data []byte, relocs []render.Relocation) error {
+	err := render.SubmitBatch(
 		b.drmPath,
-		batchBuffer.GemHandle(),
-		uint32(len(batchData)),
+		buffer.GemHandle(),
+		uint32(len(data)),
 		relocs,
 		b.ctx.ContextID,
 	)
 	if err != nil {
 		return fmt.Errorf("submit batch: %w", err)
 	}
-
 	return nil
 }
 
 // writeVertexData writes vertex data to the vertex buffer via mmap.
 func (b *GPUBackend) writeVertexData(data []byte) error {
+	return b.writeBufferData(b.vertexBuffer, data, "vertex")
+}
+
+// writeBatchData writes batch command data to a buffer via mmap.
+func (b *GPUBackend) writeBatchData(buffer *render.BufferHandle, data []byte) error {
+	return b.writeBufferData(buffer, data, "batch")
+}
+
+// writeBufferData writes data to a GPU buffer via mmap.
+func (b *GPUBackend) writeBufferData(buffer *render.BufferHandle, data []byte, bufferType string) error {
 	if len(data) == 0 {
 		return nil
 	}
 
-	// Calculate buffer size from dimensions
-	bufferSize := b.vertexBuffer.Stride * b.vertexBuffer.Height
-
+	bufferSize := buffer.Stride * buffer.Height
 	if uint32(len(data)) > bufferSize {
-		return fmt.Errorf("vertex data size %d exceeds buffer size %d", len(data), bufferSize)
+		return fmt.Errorf("%s data size %d exceeds buffer size %d", bufferType, len(data), bufferSize)
 	}
 
-	// Map the vertex buffer into CPU address space
-	offset := int64(0)
 	mem, err := syscall.Mmap(
-		-1, // Anonymous mapping (buffer already allocated by GPU)
-		offset,
+		-1,
+		0,
 		int(bufferSize),
 		syscall.PROT_READ|syscall.PROT_WRITE,
 		syscall.MAP_SHARED,
 	)
 	if err != nil {
-		return fmt.Errorf("mmap vertex buffer: %w", err)
+		return fmt.Errorf("mmap %s buffer: %w", bufferType, err)
 	}
 	defer syscall.Munmap(mem)
 
-	// Copy vertex data to mapped memory
 	copy(mem, data)
-
-	// No explicit flush needed - MAP_SHARED ensures writes are visible to GPU
 	return nil
 }
 
@@ -254,37 +262,4 @@ func (b *GPUBackend) encodePipelineState(commands []uint32, pipeline PipelineTyp
 	}
 
 	return commands
-}
-
-// writeBatchData writes batch command data to a buffer via mmap.
-func (b *GPUBackend) writeBatchData(buffer *render.BufferHandle, data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	// Calculate buffer size from dimensions
-	bufferSize := buffer.Stride * buffer.Height
-
-	if uint32(len(data)) > bufferSize {
-		return fmt.Errorf("batch data size %d exceeds buffer size %d", len(data), bufferSize)
-	}
-
-	// Map the batch buffer into CPU address space
-	offset := int64(0)
-	mem, err := syscall.Mmap(
-		-1,
-		offset,
-		int(bufferSize),
-		syscall.PROT_READ|syscall.PROT_WRITE,
-		syscall.MAP_SHARED,
-	)
-	if err != nil {
-		return fmt.Errorf("mmap batch buffer: %w", err)
-	}
-	defer syscall.Munmap(mem)
-
-	// Copy batch commands to mapped memory
-	copy(mem, data)
-
-	return nil
 }

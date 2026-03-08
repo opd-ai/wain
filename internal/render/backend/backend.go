@@ -68,48 +68,20 @@ func DefaultConfig() Config {
 
 // New creates a new GPU backend.
 func New(cfg Config) (*GPUBackend, error) {
-	if cfg.Width <= 0 || cfg.Height <= 0 {
-		return nil, fmt.Errorf("backend: invalid dimensions %dx%d", cfg.Width, cfg.Height)
+	if err := validateConfig(cfg); err != nil {
+		return nil, err
 	}
 
-	if cfg.VertexBufferSize <= 0 {
-		return nil, fmt.Errorf("backend: invalid vertex buffer size %d", cfg.VertexBufferSize)
-	}
-
-	// Detect GPU
-	gen := render.DetectGPU(cfg.DRMPath)
-	if gen < 0 {
-		return nil, ErrNoGPU
-	}
-
-	// Create allocator
-	allocator, err := render.NewAllocator(cfg.DRMPath)
+	allocator, ctx, err := initGPUResources(cfg.DRMPath)
 	if err != nil {
-		return nil, fmt.Errorf("backend: allocator creation failed: %w", err)
+		return nil, err
 	}
 
-	// Create GPU context
-	ctx, err := render.CreateContext(cfg.DRMPath)
+	vertexBuffer, renderTarget, err := allocateBuffers(allocator, cfg)
 	if err != nil {
+		render.DestroyContext(cfg.DRMPath, ctx)
 		allocator.Close()
-		return nil, fmt.Errorf("backend: context creation failed: %w", err)
-	}
-
-	// Allocate vertex buffer (1D buffer, so height=1)
-	// Width represents buffer size in pixels (each "pixel" is 4 bytes for alignment)
-	vertexWidthPx := uint32(cfg.VertexBufferSize / 4)
-	vertexBuffer, err := allocator.Allocate(vertexWidthPx, 1, 32, render.TilingNone)
-	if err != nil {
-		allocator.Close()
-		return nil, fmt.Errorf("backend: vertex buffer allocation failed: %w", err)
-	}
-
-	// Allocate render target with Y-tiling for better cache performance
-	renderTarget, err := allocator.Allocate(uint32(cfg.Width), uint32(cfg.Height), 32, render.TilingY)
-	if err != nil {
-		vertexBuffer.Destroy()
-		allocator.Close()
-		return nil, fmt.Errorf("backend: render target allocation failed: %w", err)
+		return nil, err
 	}
 
 	backend := &GPUBackend{
@@ -126,6 +98,52 @@ func New(cfg Config) (*GPUBackend, error) {
 	}
 
 	return backend, nil
+}
+
+func validateConfig(cfg Config) error {
+	if cfg.Width <= 0 || cfg.Height <= 0 {
+		return fmt.Errorf("backend: invalid dimensions %dx%d", cfg.Width, cfg.Height)
+	}
+	if cfg.VertexBufferSize <= 0 {
+		return fmt.Errorf("backend: invalid vertex buffer size %d", cfg.VertexBufferSize)
+	}
+	return nil
+}
+
+func initGPUResources(drmPath string) (*render.Allocator, *render.GpuContext, error) {
+	gen := render.DetectGPU(drmPath)
+	if gen < 0 {
+		return nil, nil, ErrNoGPU
+	}
+
+	allocator, err := render.NewAllocator(drmPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("backend: allocator creation failed: %w", err)
+	}
+
+	ctx, err := render.CreateContext(drmPath)
+	if err != nil {
+		allocator.Close()
+		return nil, nil, fmt.Errorf("backend: context creation failed: %w", err)
+	}
+
+	return allocator, ctx, nil
+}
+
+func allocateBuffers(allocator *render.Allocator, cfg Config) (*render.BufferHandle, *render.BufferHandle, error) {
+	vertexWidthPx := uint32(cfg.VertexBufferSize / 4)
+	vertexBuffer, err := allocator.Allocate(vertexWidthPx, 1, 32, render.TilingNone)
+	if err != nil {
+		return nil, nil, fmt.Errorf("backend: vertex buffer allocation failed: %w", err)
+	}
+
+	renderTarget, err := allocator.Allocate(uint32(cfg.Width), uint32(cfg.Height), 32, render.TilingY)
+	if err != nil {
+		vertexBuffer.Destroy()
+		return nil, nil, fmt.Errorf("backend: render target allocation failed: %w", err)
+	}
+
+	return vertexBuffer, renderTarget, nil
 }
 
 // Destroy frees all GPU resources.
@@ -157,58 +175,52 @@ func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []disp
 	if dl == nil {
 		return ErrNilDisplayList
 	}
-
 	if dl.Len() == 0 {
-		return nil // Nothing to render
+		return nil
 	}
 
-	// Begin frame profiling
 	b.profiler.BeginFrame()
 
-	// Phase 5.4: Filter commands by damage regions if provided
-	commands := dl.Commands()
-	scissorRects := []ScissorRect(nil)
-
-	if len(damage) > 0 {
-		// Filter commands to only those intersecting damage regions
-		commands = displaylist.FilterCommandsByDamage(commands, damage)
-
-		if len(commands) == 0 {
-			return nil // No commands intersect damage regions
-		}
-
-		// Convert damage regions to scissor rects
-		scissorRects = make([]ScissorRect, len(damage))
-		for i, rect := range damage {
-			scissorRects[i] = ClampScissorRect(
-				ScissorRectFromDamage(rect),
-				b.width,
-				b.height,
-			)
-		}
+	commands, scissorRects := b.processDamage(dl.Commands(), damage)
+	if len(commands) == 0 {
+		return nil
 	}
 
-	// Sort and batch commands by type to minimize state changes
 	batches := batchCommands(commands)
-
-	// Pack vertices for all batches
 	vertexData, err := b.packVertices(batches)
 	if err != nil {
 		return fmt.Errorf("backend: vertex packing failed: %w", err)
 	}
 
-	// Mark GPU submit point
 	b.profiler.MarkGPUSubmit()
 
-	// Build and submit GPU batch buffer with scissor state
 	if err := b.submitBatchesWithScissor(batches, vertexData, scissorRects); err != nil {
 		return fmt.Errorf("backend: batch submission failed: %w", err)
 	}
 
-	// End frame profiling
 	b.profiler.EndFrame()
-
 	return nil
+}
+
+func (b *GPUBackend) processDamage(commands []displaylist.DrawCommand, damage []displaylist.Rect) ([]displaylist.DrawCommand, []ScissorRect) {
+	if len(damage) == 0 {
+		return commands, nil
+	}
+
+	commands = displaylist.FilterCommandsByDamage(commands, damage)
+	if len(commands) == 0 {
+		return nil, nil
+	}
+
+	scissorRects := make([]ScissorRect, len(damage))
+	for i, rect := range damage {
+		scissorRects[i] = ClampScissorRect(
+			ScissorRectFromDamage(rect),
+			b.width,
+			b.height,
+		)
+	}
+	return commands, scissorRects
 }
 
 // RenderTarget returns the render target buffer for display.
