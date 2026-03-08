@@ -6,6 +6,7 @@
 
 - [Status](#status)
 - [Current Functionality](#current-functionality)
+- [Known Limitations](#known-limitations)
 - [Documentation](#documentation)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
@@ -17,7 +18,6 @@
 - [Project Structure](#project-structure)
 - [Manual Build](#manual-build-without-makefile)
 - [Font Atlas Generation](#font-atlas-generation)
-- [Known Limitations](#known-limitations)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -113,6 +113,28 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ All packages marked `internal/` (public API surface planned for later)
 
 **Not yet implemented:** Full GPU rendering pipeline integration (Phase 5+), advanced EU backend features (URB I/O, texture sampling, shader optimizations - Phase 4.3 cont'd), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, GPU command submission infrastructure exists, and basic shader compilation to EU binary is functional, but GPU rendering is not yet wired into the display pipeline.
+
+## Known Limitations
+
+**Integration status:**
+- ✅ Demonstration binaries showing protocol → rasterizer → display pipeline working
+- ✅ End-to-end integration tests verify full stack functionality
+- ⚠️ All packages marked `internal/` — no public API for external users yet
+- ⚠️ No platform abstraction layer (users must choose Wayland or X11 explicitly)
+- ⚠️ No production-ready event loop (demos have basic event handling only)
+
+**Rendering:**
+- ⚠️ CPU-only software rendering (GPU rendering pipeline not yet connected)
+- ⚠️ Single-threaded rasterizer (no tile-based threading)
+
+**Testing:**
+- ✅ Unit tests for all packages (57 test files)
+- ✅ End-to-end integration tests for DRI3, GPU, and Wayland subsystems
+- ✅ Fuzz tests for Wayland and X11 wire protocol encoding/decoding
+- ⚠️ No automated screenshot comparison tests
+
+**Future work (Phase 5+):**
+See [ROADMAP.md](ROADMAP.md) for planned GPU rendering backends, AMD support, and polish features.
 
 ## Documentation
 
@@ -473,28 +495,6 @@ make gen-atlas
 - Binary format: raw uint8 array + metadata (rune, position, metrics)
 
 You only need to regenerate the atlas if you change the supported character set, glyph size, atlas dimensions, or font rendering algorithm.
-
-## Known Limitations
-
-**Integration status:**
-- ✅ Demonstration binaries showing protocol → rasterizer → display pipeline working
-- ✅ End-to-end integration tests verify full stack functionality
-- ⚠️ All packages marked `internal/` — no public API for external users yet
-- ⚠️ No platform abstraction layer (users must choose Wayland or X11 explicitly)
-- ⚠️ No production-ready event loop (demos have basic event handling only)
-
-**Rendering:**
-- ⚠️ CPU-only software rendering (GPU rendering pipeline not yet connected)
-- ⚠️ Single-threaded rasterizer (no tile-based threading)
-
-**Testing:**
-- ✅ Unit tests for all packages (57 test files)
-- ✅ End-to-end integration tests for DRI3, GPU, and Wayland subsystems
-- ✅ Fuzz tests for Wayland and X11 wire protocol encoding/decoding
-- ⚠️ No automated screenshot comparison tests
-
-**Future work (Phase 5+):**
-See [ROADMAP.md](ROADMAP.md) for planned GPU rendering backends, AMD support, and polish features.
 
 ## Troubleshooting
 
