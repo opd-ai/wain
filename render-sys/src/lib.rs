@@ -12,6 +12,7 @@ pub mod slab;
 pub mod detect;
 pub mod cmd;
 pub mod batch;
+pub mod pipeline;
 
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
