@@ -1,11 +1,6 @@
 // Command double-buffer-demo demonstrates Phase 5.3 double/triple buffering
 // with Wayland compositor synchronization.
 //
-// NOTE: This demo is currently out of sync with the latest Wayland client API
-// and will be updated in a future commit. The underlying buffer ring and
-// synchronization infrastructure is fully functional and tested in
-// internal/buffer/ and internal/integration/.
-//
 // This binary showcases:
 //   - buffer.Ring for framebuffer management
 //   - buffer.Synchronizer for compositor event integration
@@ -21,17 +16,14 @@
 //   - Rendering to acquired buffers
 //   - Presenting to compositor
 //   - Synchronizing with compositor release events
-
-//go:build ignore
-
 package main
 
 import (
 	"context"
 	"fmt"
 	"log"
+	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/opd-ai/wain/internal/buffer"
 	"github.com/opd-ai/wain/internal/demo"
@@ -70,8 +62,9 @@ type demoContext struct {
 	surface    *client.Surface
 	ring       *buffer.Ring
 	sync       *buffer.Synchronizer
-	shmBuffers []*shm.Buffer
+	buffers    []*shm.Buffer
 	pools      []*shm.Pool
+	fds        []int
 }
 
 func runDemo() error {
@@ -112,13 +105,11 @@ func setup() (*demoContext, func(), error) {
 	fmt.Println("      ✓ Bound to wl_compositor, wl_shm, xdg_wm_base")
 
 	fmt.Println("\n[3/5] Creating window...")
-	surfaceID, err := wlCtx.Compositor.CreateSurface()
+	surface, err := wlCtx.Compositor.CreateSurface()
 	if err != nil {
 		conn.Close()
 		return nil, nil, fmt.Errorf("create surface: %w", err)
 	}
-	surface := client.NewSurface(conn, surfaceID)
-	conn.RegisterObject(surface)
 
 	xdgSurface, toplevel, err := demo.CreateXdgWindow(conn, wlCtx.WmBase, surface, "Double Buffering Demo")
 	if err != nil {
@@ -144,6 +135,7 @@ func setup() (*demoContext, func(), error) {
 		shmObj:     wlCtx.SHM,
 		wmBase:     wlCtx.WmBase,
 		surface:    surface,
+		fds:        make([]int, 0, bufferCount),
 	}
 
 	return demoCtx, cleanup, nil
@@ -160,48 +152,49 @@ func createBufferRing(demoCtx *demoContext) error {
 	demoCtx.sync = buffer.NewSynchronizer(ring)
 	fmt.Printf("      ✓ Ring created with %d slots\n", bufferCount)
 
-	demoCtx.shmBuffers = make([]*shm.Buffer, bufferCount)
+	demoCtx.buffers = make([]*shm.Buffer, bufferCount)
 	demoCtx.pools = make([]*shm.Pool, bufferCount)
 
-	stride := windowWidth * (bpp / 8)
+	stride := int32(windowWidth * 4)
 	size := stride * windowHeight
 
 	for i := 0; i < bufferCount; i++ {
-		// Create shared memory pool
-		pool, err := shm.CreatePool(size)
+		// Create memfd for shared memory
+		fd, err := shm.CreateMemfd(fmt.Sprintf("wain-buffer-%d", i))
+		if err != nil {
+			return fmt.Errorf("create memfd %d: %w", i, err)
+		}
+		demoCtx.fds = append(demoCtx.fds, fd)
+
+		if err := syscall.Ftruncate(fd, int64(size)); err != nil {
+			return fmt.Errorf("truncate memfd %d: %w", i, err)
+		}
+
+		// Create wl_shm_pool
+		pool, err := demoCtx.shmObj.CreatePool(fd, size)
 		if err != nil {
 			return fmt.Errorf("create pool %d: %w", i, err)
 		}
 		demoCtx.pools[i] = pool
 
-		// Create wl_shm_pool
-		poolID, err := demoCtx.shmObj.CreatePool(pool.FD(), int32(size))
-		if err != nil {
-			return fmt.Errorf("create wl_shm_pool %d: %w", i, err)
+		// Map the pool to access pixels
+		if err := pool.Map(); err != nil {
+			return fmt.Errorf("map pool %d: %w", i, err)
 		}
-		wlPool := shm.NewPool(demoCtx.conn, poolID, pool)
-		demoCtx.conn.RegisterObject(wlPool)
 
 		// Create wl_buffer
-		bufferID, err := wlPool.CreateBuffer(0, int32(windowWidth), int32(windowHeight), int32(stride), shm.FormatARGB8888)
+		buf, err := pool.CreateBuffer(0, int32(windowWidth), int32(windowHeight), stride, shm.FormatARGB8888)
 		if err != nil {
 			return fmt.Errorf("create buffer %d: %w", i, err)
 		}
-		wlBuffer := shm.NewBuffer(demoCtx.conn, bufferID)
-		demoCtx.conn.RegisterObject(wlBuffer)
-		demoCtx.shmBuffers[i] = wlBuffer
+		demoCtx.buffers[i] = buf
 
-		// Register buffer ID with synchronizer for future integration
-		// For this demo, we'll simulate release events manually
-		if err := demoCtx.sync.RegisterBuffer(wlBuffer.ID(), i); err != nil {
+		// Register buffer ID with synchronizer
+		if err := demoCtx.sync.RegisterBuffer(buf.ID(), i); err != nil {
 			return fmt.Errorf("register buffer %d: %w", i, err)
 		}
 
-		// Associate pool data with ring slot
-		slot := demoCtx.ring.GetSlot(i)
-		slot.UserData = pool
-
-		fmt.Printf("      ✓ Buffer %d created (wl_buffer ID=%d)\n", i, wlBuffer.ID())
+		fmt.Printf("      ✓ Buffer %d created (wl_buffer ID=%d)\n", i, buf.ID())
 	}
 
 	return nil
@@ -234,12 +227,13 @@ func renderSingleFrame(ctx context.Context, demoCtx *demoContext, frame int, cur
 		return fmt.Errorf("acquire slot for frame %d: %w", frame, err)
 	}
 
-	pool, ok := slot.UserData.(*shm.Pool)
-	if !ok {
-		return fmt.Errorf("slot %d has invalid UserData", slot.Index)
+	buf := demoCtx.buffers[slot.Index]
+	pixels := buf.Pixels()
+	if pixels == nil {
+		return fmt.Errorf("buffer %d has nil pixels (pool not mapped?)", slot.Index)
 	}
 
-	renderFrame(pool.Data(), frame)
+	renderFrame(pixels, frame)
 
 	if err := attachAndCommitBuffer(demoCtx, slot.Index); err != nil {
 		return err
@@ -250,17 +244,13 @@ func renderSingleFrame(ctx context.Context, demoCtx *demoContext, frame int, cur
 	}
 	currentlyDisplaying[slot.Index] = true
 
-	if err := demoCtx.conn.Dispatch(); err != nil {
-		return fmt.Errorf("dispatch events: %w", err)
-	}
-
 	simulateCompositorRelease(demoCtx, frame, slot.Index, currentlyDisplaying)
 	return nil
 }
 
 func attachAndCommitBuffer(demoCtx *demoContext, slotIndex int) error {
-	wlBuffer := demoCtx.shmBuffers[slotIndex]
-	if err := demoCtx.surface.Attach(wlBuffer.ID(), 0, 0); err != nil {
+	buf := demoCtx.buffers[slotIndex]
+	if err := demoCtx.surface.Attach(buf.ID(), 0, 0); err != nil {
 		return fmt.Errorf("attach buffer: %w", err)
 	}
 	if err := demoCtx.surface.Damage(0, 0, windowWidth, windowHeight); err != nil {
@@ -276,7 +266,7 @@ func simulateCompositorRelease(demoCtx *demoContext, frame, currentSlot int, cur
 	if frame > 0 {
 		prevSlot := (currentSlot - 1 + bufferCount) % bufferCount
 		if currentlyDisplaying[prevSlot] {
-			if err := demoCtx.sync.OnReleaseEvent(demoCtx.shmBuffers[prevSlot].ID()); err == nil {
+			if err := demoCtx.sync.OnReleaseEvent(demoCtx.buffers[prevSlot].ID()); err == nil {
 				delete(currentlyDisplaying, prevSlot)
 			}
 		}
@@ -284,56 +274,43 @@ func simulateCompositorRelease(demoCtx *demoContext, frame, currentSlot int, cur
 }
 
 func processRemainingEvents(conn *client.Connection) {
+	// Wait a bit for compositor to process final events
 	for i := 0; i < 10; i++ {
-		conn.Dispatch()
 		time.Sleep(10 * time.Millisecond)
 	}
 }
 
-func renderFrame(data []byte, frameNum int) {
-	// Create ARGB8888 image buffer
+func renderFrame(pixels []byte, frameNum int) {
+	// Create ARGB8888 buffer wrapper for core rasterizer
 	width := windowWidth
 	height := windowHeight
 	stride := width * 4
 
-	// Clear to background color
-	bgColor := uint32(0xFF2C3E50) // dark blue-gray
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			offset := y*stride + x*4
-			*(*uint32)(unsafe.Pointer(&data[offset])) = bgColor
-		}
+	buf := &core.Buffer{
+		Pixels: pixels,
+		Width:  width,
+		Height: height,
+		Stride: stride,
 	}
+
+	// Clear to background color (dark blue-gray)
+	bgColor := core.Color{R: 0x2C, G: 0x3E, B: 0x50, A: 0xFF}
+	buf.FillRect(0, 0, width, height, bgColor)
 
 	// Draw animated rectangle
 	rectSize := 60
 	rectX := 50 + (frameNum * 10 % (width - rectSize - 100))
 	rectY := height/2 - rectSize/2
 
-	// Render rectangle using software rasterizer
-	core.FillRect(data, stride, rectX, rectY, rectSize, rectSize, 0xFFE74C3C) // red
+	// Render rectangle using software rasterizer (red)
+	rectColor := core.Color{R: 0xE7, G: 0x4C, B: 0x3C, A: 0xFF}
+	buf.FillRect(rectX, rectY, rectSize, rectSize, rectColor)
 
-	// Draw frame counter text (simplified)
+	// Draw frame counter indicator (light gray bar)
 	textX := 10
 	textY := 10
-	drawFrameNumber(data, stride, textX, textY, frameNum)
-}
-
-func drawFrameNumber(data []byte, stride, x, y, frameNum int) {
-	// Simple 5x7 pixel font for digits
-	// Draw "Frame: NN" text
-	color := uint32(0xFFECF0F1) // light gray
-
-	// Very simplified - just draw a few pixels to indicate frame number
-	// In a real implementation, use internal/raster/text
-	for i := 0; i < 50; i++ {
-		for j := 0; j < 10; j++ {
-			offset := (y+j)*stride + (x+i)*4
-			if offset+3 < len(data) {
-				*(*uint32)(unsafe.Pointer(&data[offset])) = color
-			}
-		}
-	}
+	textColor := core.Color{R: 0xEC, G: 0xF0, B: 0xF1, A: 0xFF}
+	buf.FillRect(textX, textY, 50, 10, textColor)
 }
 
 func printSummary(demoCtx *demoContext) {
