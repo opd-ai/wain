@@ -57,7 +57,6 @@ func main() {
 		MaxWidth:  1920,
 		MaxHeight: 1080,
 	})
-
 	if err != nil {
 		log.Printf("Failed to create window: %v", err)
 		app.Quit()
