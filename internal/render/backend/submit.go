@@ -163,13 +163,13 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 
 		// 3DPRIMITIVE: Issue draw call
 		commands = append(commands,
-			0x7A000005, // Opcode: 3DPRIMITIVE, length=6 dwords
-			0x00000004, // Topology: Triangle list
+			0x7A000005,          // Opcode: 3DPRIMITIVE, length=6 dwords
+			0x00000004,          // Topology: Triangle list
 			uint32(vertexCount), // Vertex count
 			uint32(vertexStart), // Start vertex
-			0x00000001, // Instance count
-			0x00000000, // Start instance
-			0x00000000, // Base vertex location
+			0x00000001,          // Instance count
+			0x00000000,          // Start instance
+			0x00000000,          // Base vertex location
 		)
 
 		vertexStart += uint32(vertexCount)
@@ -235,7 +235,6 @@ func (b *GPUBackend) encodePipelineState(commands []uint32, pipeline PipelineTyp
 
 	return commands
 }
-
 
 // writeBatchData writes batch command data to a buffer via mmap.
 func (b *GPUBackend) writeBatchData(buffer *render.BufferHandle, data []byte) error {
