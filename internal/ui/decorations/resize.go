@@ -83,9 +83,14 @@ func (r *ResizeHandles) Resize(width, height int) {
 // HitTest determines which resize edge (if any) is at the given coordinates.
 // Coordinates are relative to the window frame (including decorations).
 func (r *ResizeHandles) HitTest(x, y int) ResizeEdge {
-	hw := r.handleWidth
+	if edge := r.checkCorner(x, y); edge != ResizeEdgeNone {
+		return edge
+	}
+	return r.checkEdge(x, y)
+}
 
-	// Check corners first (they take priority)
+func (r *ResizeHandles) checkCorner(x, y int) ResizeEdge {
+	hw := r.handleWidth
 	if x < hw && y < hw {
 		return ResizeEdgeTopLeft
 	}
@@ -98,8 +103,11 @@ func (r *ResizeHandles) HitTest(x, y int) ResizeEdge {
 	if x >= r.width-hw && y >= r.height-hw {
 		return ResizeEdgeBottomRight
 	}
+	return ResizeEdgeNone
+}
 
-	// Check edges
+func (r *ResizeHandles) checkEdge(x, y int) ResizeEdge {
+	hw := r.handleWidth
 	if y < hw {
 		return ResizeEdgeTop
 	}
@@ -112,7 +120,6 @@ func (r *ResizeHandles) HitTest(x, y int) ResizeEdge {
 	if x >= r.width-hw {
 		return ResizeEdgeRight
 	}
-
 	return ResizeEdgeNone
 }
 

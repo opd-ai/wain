@@ -65,10 +65,9 @@ func (b *WindowButton) HandlePointerUp(button uint32) {
 	b.state = widgets.PointerStateHover
 }
 
-// Draw renders the button to a buffer.
-func (b *WindowButton) Draw(buf *core.Buffer, x, y int) error {
-	bg := b.theme.ButtonBackgroundNormal
-	fg := b.theme.ButtonForegroundNormal
+func (b *WindowButton) getStateColors() (bg, fg core.Color) {
+	bg = b.theme.ButtonBackgroundNormal
+	fg = b.theme.ButtonForegroundNormal
 
 	switch b.state {
 	case widgets.PointerStateHover:
@@ -78,6 +77,12 @@ func (b *WindowButton) Draw(buf *core.Buffer, x, y int) error {
 		bg = b.theme.ButtonBackgroundPressed
 		fg = b.theme.ButtonForegroundPressed
 	}
+	return bg, fg
+}
+
+// Draw renders the button to a buffer.
+func (b *WindowButton) Draw(buf *core.Buffer, x, y int) error {
+	bg, fg := b.getStateColors()
 
 	// Draw background
 	buf.FillRect(x, y, b.size, b.size, bg)
@@ -109,17 +114,7 @@ func (b *WindowButton) Draw(buf *core.Buffer, x, y int) error {
 
 // RenderToDisplayList renders the button to a display list.
 func (b *WindowButton) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
-	bg := b.theme.ButtonBackgroundNormal
-	fg := b.theme.ButtonForegroundNormal
-
-	switch b.state {
-	case widgets.PointerStateHover:
-		bg = b.theme.ButtonBackgroundHover
-		fg = b.theme.ButtonForegroundHover
-	case widgets.PointerStatePressed:
-		bg = b.theme.ButtonBackgroundPressed
-		fg = b.theme.ButtonForegroundPressed
-	}
+	bg, fg := b.getStateColors()
 
 	// Background
 	dl.AddFillRect(x, y, b.size, b.size, bg)
@@ -238,6 +233,17 @@ func (t *TitleBar) StopDrag() {
 	t.dragStart = nil
 }
 
+func (t *TitleBar) buttonPositions() (minX, maxX, closeX int) {
+	buttonSize, _ := t.closeBtn.Bounds()
+	spacing := t.theme.ButtonSpacing
+	rightEdge := t.width - spacing
+
+	closeX = rightEdge - buttonSize
+	maxX = closeX - buttonSize - spacing
+	minX = maxX - buttonSize - spacing
+	return minX, maxX, closeX
+}
+
 // HitTest returns which button (if any) was hit at the given coordinates.
 func (t *TitleBar) HitTest(x, y int) *WindowButton {
 	if y < 0 || y >= t.height {
@@ -246,22 +252,19 @@ func (t *TitleBar) HitTest(x, y int) *WindowButton {
 
 	buttonSize, _ := t.closeBtn.Bounds()
 	spacing := t.theme.ButtonSpacing
-	rightEdge := t.width - spacing
+	minX, maxX, closeX := t.buttonPositions()
 
 	// Close button (rightmost)
-	closeX := rightEdge - buttonSize
-	if x >= closeX && x < rightEdge && y >= spacing && y < spacing+buttonSize {
+	if x >= closeX && x < t.width-spacing && y >= spacing && y < spacing+buttonSize {
 		return t.closeBtn
 	}
 
 	// Maximize button
-	maxX := closeX - buttonSize - spacing
 	if x >= maxX && x < closeX-spacing && y >= spacing && y < spacing+buttonSize {
 		return t.maxBtn
 	}
 
 	// Minimize button
-	minX := maxX - buttonSize - spacing
 	if x >= minX && x < maxX-spacing && y >= spacing && y < spacing+buttonSize {
 		return t.minBtn
 	}
@@ -286,13 +289,8 @@ func (t *TitleBar) Draw(buf *core.Buffer, x, y int) error {
 	}
 
 	// Draw buttons
-	buttonSize, _ := t.closeBtn.Bounds()
+	minX, maxX, closeX := t.buttonPositions()
 	spacing := t.theme.ButtonSpacing
-	rightEdge := t.width - spacing
-
-	closeX := rightEdge - buttonSize
-	maxX := closeX - buttonSize - spacing
-	minX := maxX - buttonSize - spacing
 
 	t.minBtn.Draw(buf, x+minX, y+spacing)
 	t.maxBtn.Draw(buf, x+maxX, y+spacing)
@@ -318,13 +316,8 @@ func (t *TitleBar) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 	}
 
 	// Buttons
-	buttonSize, _ := t.closeBtn.Bounds()
+	minX, maxX, closeX := t.buttonPositions()
 	spacing := t.theme.ButtonSpacing
-	rightEdge := t.width - spacing
-
-	closeX := rightEdge - buttonSize
-	maxX := closeX - buttonSize - spacing
-	minX := maxX - buttonSize - spacing
 
 	t.minBtn.RenderToDisplayList(dl, x+minX, y+spacing)
 	t.maxBtn.RenderToDisplayList(dl, x+maxX, y+spacing)
