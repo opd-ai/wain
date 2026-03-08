@@ -14,6 +14,7 @@ pub mod cmd;
 pub mod batch;
 pub mod pipeline;
 pub mod surface;
+pub mod shader;
 
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
