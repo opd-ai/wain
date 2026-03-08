@@ -22,7 +22,7 @@ type MemoryStats struct {
 	// TotalDeallocations is the cumulative number of deallocations.
 	TotalDeallocations atomic.Int64
 
-	mu             sync.Mutex
+	mu              sync.Mutex
 	allocationSizes map[uintptr]uint64 // tracks size of each allocation by handle address
 }
 

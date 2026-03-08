@@ -102,21 +102,21 @@ func createWorkload(rects, texts, shadows int) *displaylist.DisplayList {
 	// Add filled rectangles
 	for i := 0; i < rects; i++ {
 		x := float32(i*10) % 1920
-		y := float32((i*7)%1080)
+		y := float32((i * 7) % 1080)
 		dl.FillRect(x, y, 50, 30, [4]uint8{255, 128, 64, 255})
 	}
 
 	// Add text runs (simulated with small rects for now)
 	for i := 0; i < texts; i++ {
 		x := float32((i * 100) % 1920)
-		y := float32((i*50)%1080)
+		y := float32((i * 50) % 1080)
 		dl.FillRect(x, y, 80, 12, [4]uint8{0, 0, 0, 255})
 	}
 
 	// Add box shadows (rounded rects with blur)
 	for i := 0; i < shadows; i++ {
 		x := float32((i * 150) % 1920)
-		y := float32((i*100)%1080)
+		y := float32((i * 100) % 1080)
 		dl.FillRoundedRect(x, y, 100, 80, 8, [4]uint8{200, 200, 200, 128})
 	}
 

@@ -15,16 +15,16 @@ type FrameProfiler struct {
 	gpuSubmitTime  time.Time
 
 	// Accumulated statistics
-	totalFrames        int64
-	totalCPUTimeNs     int64
-	totalGPUTimeNs     int64
-	totalFrameTimeNs   int64
-	minFrameTimeNs     int64
-	maxFrameTimeNs     int64
-	minCPUTimeNs       int64
-	maxCPUTimeNs       int64
-	minGPUTimeNs       int64
-	maxGPUTimeNs       int64
+	totalFrames      int64
+	totalCPUTimeNs   int64
+	totalGPUTimeNs   int64
+	totalFrameTimeNs int64
+	minFrameTimeNs   int64
+	maxFrameTimeNs   int64
+	minCPUTimeNs     int64
+	maxCPUTimeNs     int64
+	minGPUTimeNs     int64
+	maxGPUTimeNs     int64
 
 	// Recent history (circular buffer for last 60 frames)
 	recentFrameTimes [60]int64
