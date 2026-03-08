@@ -27,23 +27,23 @@
 
 ### HIGH
 
-- [ ] **Phase 4.3 (Intel EU Backend) Partially Implemented** — render-sys/src/eu/ — README claims "🔧 In Progress" with "⚠️ Advanced features deferred". VERIFIED: Core compilation pipeline functional (~2,207 LOC) with register allocator, binary encoding, and arithmetic/math operations. **DEFERRED:** URB I/O (`emit_urb_write()` stub exists at lower.rs), texture SEND instructions (`emit_texture_sample()` stub), Sqrt/InverseSqrt/transcendental functions. Impact: Shaders requiring I/O or texture sampling cannot execute on GPU. Recommendation: Document specific deferred features in EU backend README with estimated completion timeline.
+- [ ] **Phase 4.3 (Intel EU Backend) Partially Implemented** — render-sys/src/eu/ — README claims "🔧 In Progress" with "⚠️ Advanced features deferred". VERIFIED: Core compilation pipeline functional (~2,207 LOC) with register allocator, binary encoding, and arithmetic/math operations. **DEFERRED:** URB I/O (`emit_urb_write()` stub exists at lower.rs), texture SEND instructions (`emit_texture_sample()` stub), Sqrt/InverseSqrt/transcendental functions. Impact: Shaders requiring I/O or texture sampling cannot execute on GPU. Recommendation: Complete the deferred EU backend features — implement URB I/O (`emit_urb_write()`), texture SEND instructions (`emit_texture_sample()`), and Sqrt/InverseSqrt/transcendental functions to enable full shader I/O and texture sampling on Intel GPUs.
 
-- [ ] **Phase 3 (GPU Command Submission) Incomplete for AMD GPUs** — render-sys/src/rdna/, cmd/amd-triangle-demo/ — README claims GPU command submission for Intel GPUs (✅ VERIFIED as functional), but AMD support is scaffolded only. AMD detection works, PM4 packet builder exists (18KB, 18 opcodes), RDNA shader compiler structure present (6 modules), but no actual RDNA shader execution or GPU command submission pipeline. AMD triangle demo allocates buffers but never renders via RDNA. Impact: AMD GPU owners cannot use GPU rendering features. Recommendation: Update README Phase 3 status to clarify "Intel i915/Xe complete, AMD in progress" or move AMD to separate phase.
+- [ ] **Phase 3 (GPU Command Submission) Incomplete for AMD GPUs** — render-sys/src/rdna/, cmd/amd-triangle-demo/ — README claims GPU command submission for Intel GPUs (✅ VERIFIED as functional), but AMD support is scaffolded only. AMD detection works, PM4 packet builder exists (18KB, 18 opcodes), RDNA shader compiler structure present (6 modules), but no actual RDNA shader execution or GPU command submission pipeline. AMD triangle demo allocates buffers but never renders via RDNA. Impact: AMD GPU owners cannot use GPU rendering features. Recommendation: Complete AMD RDNA GPU command submission pipeline with shader execution, PM4 command dispatch, and buffer rendering to reach feature parity with the Intel i915/Xe backend.
 
-- [ ] **GPU-to-Display Pipeline Integration Missing** — internal/render/, render-sys/src/ — GPU command submission infrastructure exists (batch buffers, pipeline states, surface states) and triangle demo proves GPU execution, but integration with display output pipeline is incomplete. Shaders can compile and submit, but rendered output cannot be presented to compositor/X server via GPU buffers. Impact: GPU rendering cannot replace software rasterizer in production UI. Recommendation: Add Phase 3.5 or Phase 5 milestone for "GPU framebuffer → DMA-BUF → compositor" integration.
+- [ ] **GPU-to-Display Pipeline Integration Missing** — internal/render/, render-sys/src/ — GPU command submission infrastructure exists (batch buffers, pipeline states, surface states) and triangle demo proves GPU execution, but integration with display output pipeline is incomplete. Shaders can compile and submit, but rendered output cannot be presented to compositor/X server via GPU buffers. Impact: GPU rendering cannot replace software rasterizer in production UI. Recommendation: Implement the GPU framebuffer → DMA-BUF → compositor integration pipeline to connect GPU-rendered output to Wayland/X11 display servers, enabling GPU rendering to replace the software rasterizer in production UI.
 
 ### MEDIUM
 
 - [ ] **13 Packages with Zero Package-Level Documentation** — internal/render/atlas/, internal/render/backend/, internal/x11/shm/, and 10 others — go-stats-generator reports 13 packages with `quality_score: 0` and `has_comment: false`. While individual functions are well-documented (98% coverage), packages lack package-level doc comments (e.g., `// Package atlas provides...`). This affects `go doc` output and package discoverability. Packages affected: atlas, backend, buffer, client (wayland), composite, consumer, core, curves, datadevice, decorations, demo, displaylist, shm. Impact: Developers using `go doc` or GoDoc websites see no package overview. Recommendation: Add package-level doc.go files with 2-3 sentence descriptions.
 
-- [ ] **Possible Misuse of unsafe.Pointer** — internal/x11/shm/shm.go:214 — `go vet` reports "possible misuse of unsafe.Pointer" when storing shmat() result (`addr := C.shmat(...)`) in struct field `Addr: unsafe.Pointer(addr)`. Code appears correct (storing mmap'd address for later munmap), but vet warning suggests potential GC safety issue. Impact: May cause memory corruption if GC moves/invalidates pointer (unlikely for C-allocated memory, but vet is conservative). Recommendation: Review unsafe.Pointer usage against go vet documentation, consider using uintptr with explicit conversion commentary, or suppress warning with documented justification.
+- [ ] **Possible Misuse of unsafe.Pointer** — internal/x11/shm/shm.go:214 — `go vet` reports "possible misuse of unsafe.Pointer" when storing shmat() result (`addr := C.shmat(...)`) in struct field `Addr: unsafe.Pointer(addr)`. Code appears correct (storing mmap'd address for later munmap), but vet warning suggests potential GC safety issue. Impact: May cause memory corruption if GC moves/invalidates pointer (unlikely for C-allocated memory, but vet is conservative). Recommendation: Fix the unsafe.Pointer usage to satisfy go vet by restructuring the shmat() return value handling to comply with Go's unsafe.Pointer safety rules.
 
 ### LOW
 
-- [ ] **Demo Binary Count Discrepancy** — README.md:320-336, cmd/ directory — README demonstration binaries table lists 14 binaries, but actual cmd/ directory contains 15 binaries. Missing from table: `double-buffer-demo` (exists in cmd/double-buffer-demo/ with Phase 5.3 annotation). All 14 listed binaries exist and match descriptions. Impact: Minor documentation inconsistency; users may miss double-buffer-demo binary. Recommendation: Add double-buffer-demo to README table or add note explaining its exclusion (marked with `//go:build ignore` due to API sync issues).
+- [ ] **Demo Binary Count Discrepancy** — README.md:320-336, cmd/ directory — README demonstration binaries table lists 14 binaries, but actual cmd/ directory contains 15 binaries. Missing from table: `double-buffer-demo` (exists in cmd/double-buffer-demo/ with Phase 5.3 annotation). All 14 listed binaries exist and match descriptions. Impact: Minor documentation inconsistency; users may miss double-buffer-demo binary. Recommendation: Add double-buffer-demo entry to the README demonstration binaries table to accurately reflect all cmd/ directory contents.
 
-- [ ] **Double-Buffer-Demo Out of Sync with Wayland API** — cmd/double-buffer-demo/main.go:4-7 — Demo source contains NOTE comment: "currently out of sync with the latest Wayland client API and will be updated in a future commit." Demo marked with `//go:build ignore` (line 25), preventing compilation. Underlying buffer ring and synchronization infrastructure verified as functional in internal/buffer/ with 97% test coverage. Impact: Users cannot run double-buffer demo despite infrastructure being ready. Recommendation: Update demo to current Wayland client API or remove from repository until API is stable.
+- [ ] **Double-Buffer-Demo Out of Sync with Wayland API** — cmd/double-buffer-demo/main.go:4-7 — Demo source contains NOTE comment: "currently out of sync with the latest Wayland client API and will be updated in a future commit." Demo marked with `//go:build ignore` (line 25), preventing compilation. Underlying buffer ring and synchronization infrastructure verified as functional in internal/buffer/ with 97% test coverage. Impact: Users cannot run double-buffer demo despite infrastructure being ready. Recommendation: Update cmd/double-buffer-demo to the current Wayland client API and remove the `//go:build ignore` tag to produce a functional, compilable demonstration binary.
 
 ## Metrics Snapshot
 
@@ -112,17 +112,17 @@ All README claims were verified against implementation:
 
 ## Recommendations
 
-1. **HIGH Priority:** Complete AMD GPU command submission (Phase 6) or update README to clarify Intel-only status for Phase 3.
+1. **HIGH Priority:** Complete AMD GPU command submission (Phase 6) with full RDNA shader execution and PM4 command dispatch to reach feature parity with the Intel i915/Xe backend.
 
-2. **HIGH Priority:** Document GPU-to-display integration timeline in ROADMAP.md (currently implicit gap between Phase 3 and Phase 5).
+2. **HIGH Priority:** Implement GPU-to-display integration pipeline (GPU framebuffer → DMA-BUF → compositor) to bridge the gap between GPU command submission (Phase 3) and production UI rendering (Phase 5).
 
 3. **MEDIUM Priority:** Add package-level documentation (doc.go files) to 13 packages with quality_score: 0.
 
-4. **MEDIUM Priority:** Address go vet unsafe.Pointer warning in internal/x11/shm/shm.go:214 with either fix or documented justification.
+4. **MEDIUM Priority:** Fix go vet unsafe.Pointer warning in internal/x11/shm/shm.go:214 by restructuring the shmat() return value handling to comply with Go's unsafe.Pointer safety rules.
 
-5. **LOW Priority:** Update README demo table to include double-buffer-demo or add exclusion note.
+5. **LOW Priority:** Add double-buffer-demo entry to the README demonstration binaries table to accurately reflect all cmd/ directory contents.
 
-6. **LOW Priority:** Update cmd/double-buffer-demo to current Wayland API or remove `//go:build ignore` tag.
+6. **LOW Priority:** Update cmd/double-buffer-demo to the current Wayland client API and remove the `//go:build ignore` tag to produce a functional demonstration binary.
 
 7. **OPTIONAL:** Increase test coverage for lower-coverage packages (render/backend at 13.5%, x11/shm at 8.9%) to improve regression detection.
 
