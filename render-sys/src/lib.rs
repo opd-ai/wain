@@ -11,6 +11,7 @@ pub mod allocator;
 pub mod slab;
 pub mod detect;
 pub mod cmd;
+pub mod batch;
 
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
