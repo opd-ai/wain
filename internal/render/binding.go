@@ -198,7 +198,7 @@ const (
 //	if err != nil {
 //	    log.Fatalf("Batch submission failed: %v", err)
 //	}
-func SubmitBatch(path string, batchHandle uint32, batchLenBytes uint32, relocs []Relocation, contextID uint32) error {
+func SubmitBatch(path string, batchHandle, batchLenBytes uint32, relocs []Relocation, contextID uint32) error {
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 
