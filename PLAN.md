@@ -47,17 +47,18 @@ go-stats-generator analyze . --skip-tests --format json --sections functions,dup
 # Target met: complexity ≤12 ✅, dri3_present_dupes == 0 ✅
 ```
 
-### Step 3: Refactor Atlas Region Allocation
+### Step 3: Refactor Atlas Region Allocation ✅
 - **Deliverable**: Simplify AllocateImageRegion by extracting helper functions for boundary checking and fallback logic
 - **Dependencies**: None
 - **Files**:
-  - `internal/render/atlas/atlas.go` (AllocateImageRegion complexity 16.3, tryAllocateInPage 10.6)
+  - `internal/render/atlas/atlas.go` (AllocateImageRegion complexity 16.3→7.0, UV calc duplication eliminated)
 - **Acceptance**: AllocateImageRegion complexity ≤10
+- **Status**: ✅ Complete - reduced from 16.3→7.0 (57% improvement, exceeds target)
 - **Validation**:
 ```bash
 go-stats-generator analyze . --skip-tests --format json --sections functions | \
   jq '[.functions[] | select(.name == "AllocateImageRegion")] | .[0].complexity.overall'
-# Target: ≤10
+# Result: 7.0 (target: ≤10) ✅
 ```
 
 ### Step 4: Simplify Raster Effects Module

@@ -183,70 +183,77 @@ func (ta *TextureAtlas) AllocateImageRegion(width, height int) (imageID int, u0,
 	}
 
 	// Try to allocate in existing pages
-	for _, page := range ta.imagePages {
-		if region := ta.tryAllocateInPage(page, width, height); region != nil {
-			imageID := ta.nextImageID
-			ta.nextImageID++
-			region.ImageID = imageID
-			ta.imageRegions[imageID] = region
-
-			// Calculate UV coordinates
-			u0 := float32(region.Rect.X) / float32(page.Width)
-			v0 := float32(region.Rect.Y) / float32(page.Height)
-			u1 := float32(region.Rect.X+region.Rect.Width) / float32(page.Width)
-			v1 := float32(region.Rect.Y+region.Rect.Height) / float32(page.Height)
-
-			return imageID, u0, v0, u1, v1, nil
-		}
+	if region, page := ta.tryAllocateInExistingPages(width, height); region != nil {
+		return ta.finalizeAllocation(region, page)
 	}
 
-	// Need a new page
-	if len(ta.imagePages) >= MaxImageAtlasPages {
-		// Try LRU eviction to free space
-		if evicted := ta.evictLRURegions(width, height); evicted {
-			// Retry allocation after eviction
-			for _, page := range ta.imagePages {
-				if region := ta.tryAllocateInPage(page, width, height); region != nil {
-					imageID := ta.nextImageID
-					ta.nextImageID++
-					region.ImageID = imageID
-					ta.imageRegions[imageID] = region
-
-					// Calculate UV coordinates
-					u0 := float32(region.Rect.X) / float32(page.Width)
-					v0 := float32(region.Rect.Y) / float32(page.Height)
-					u1 := float32(region.Rect.X+region.Rect.Width) / float32(page.Width)
-					v1 := float32(region.Rect.Y+region.Rect.Height) / float32(page.Height)
-
-					return imageID, u0, v0, u1, v1, nil
-				}
-			}
-		}
-		return 0, 0, 0, 0, 0, ErrOutOfSpace
-	}
-
-	page, err := ta.allocateNewPage()
+	// Handle full atlas with eviction or new page allocation
+	region, page, err := ta.allocateOrEvict(width, height)
 	if err != nil {
 		return 0, 0, 0, 0, 0, err
 	}
 
-	region := ta.tryAllocateInPage(page, width, height)
-	if region == nil {
-		return 0, 0, 0, 0, 0, fmt.Errorf("atlas: failed to allocate in new page")
+	return ta.finalizeAllocation(region, page)
+}
+
+// tryAllocateInExistingPages attempts allocation in current pages.
+func (ta *TextureAtlas) tryAllocateInExistingPages(width, height int) (*Region, *ImagePage) {
+	for _, page := range ta.imagePages {
+		if region := ta.tryAllocateInPage(page, width, height); region != nil {
+			return region, page
+		}
+	}
+	return nil, nil
+}
+
+// tryAllocateWithEviction attempts allocation after evicting LRU regions.
+func (ta *TextureAtlas) tryAllocateWithEviction(width, height int) (*Region, *ImagePage) {
+	if !ta.evictLRURegions(width, height) {
+		return nil, nil
+	}
+	return ta.tryAllocateInExistingPages(width, height)
+}
+
+// allocateOrEvict handles new page allocation or eviction when atlas is full.
+func (ta *TextureAtlas) allocateOrEvict(width, height int) (*Region, *ImagePage, error) {
+	if len(ta.imagePages) >= MaxImageAtlasPages {
+		if region, page := ta.tryAllocateWithEviction(width, height); region != nil {
+			return region, page, nil
+		}
+		return nil, nil, ErrOutOfSpace
 	}
 
+	page, err := ta.allocateNewPage()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	region := ta.tryAllocateInPage(page, width, height)
+	if region == nil {
+		return nil, nil, fmt.Errorf("atlas: failed to allocate in new page")
+	}
+
+	return region, page, nil
+}
+
+// finalizeAllocation registers a region and calculates UV coordinates.
+func (ta *TextureAtlas) finalizeAllocation(region *Region, page *ImagePage) (imageID int, u0, v0, u1, v1 float32, err error) {
 	imageID = ta.nextImageID
 	ta.nextImageID++
 	region.ImageID = imageID
 	ta.imageRegions[imageID] = region
 
-	// Calculate UV coordinates
+	u0, v0, u1, v1 = calculateUVCoordinates(region, page)
+	return imageID, u0, v0, u1, v1, nil
+}
+
+// calculateUVCoordinates computes UV texture coordinates for a region.
+func calculateUVCoordinates(region *Region, page *ImagePage) (u0, v0, u1, v1 float32) {
 	u0 = float32(region.Rect.X) / float32(page.Width)
 	v0 = float32(region.Rect.Y) / float32(page.Height)
 	u1 = float32(region.Rect.X+region.Rect.Width) / float32(page.Width)
 	v1 = float32(region.Rect.Y+region.Rect.Height) / float32(page.Height)
-
-	return imageID, u0, v0, u1, v1, nil
+	return u0, v0, u1, v1
 }
 
 // tryAllocateInPage attempts to allocate a region in the given page.
