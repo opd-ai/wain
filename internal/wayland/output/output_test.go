@@ -60,14 +60,14 @@ func TestHandleGeometryEvent(t *testing.T) {
 	output := New(10, conn, 3)
 
 	args := []wire.Argument{
-		{Type: wire.ArgTypeInt32, Value: int32(0)},      // x
-		{Type: wire.ArgTypeInt32, Value: int32(0)},      // y
-		{Type: wire.ArgTypeInt32, Value: int32(508)},    // physical_width
-		{Type: wire.ArgTypeInt32, Value: int32(285)},    // physical_height
+		{Type: wire.ArgTypeInt32, Value: int32(0)},              // x
+		{Type: wire.ArgTypeInt32, Value: int32(0)},              // y
+		{Type: wire.ArgTypeInt32, Value: int32(508)},            // physical_width
+		{Type: wire.ArgTypeInt32, Value: int32(285)},            // physical_height
 		{Type: wire.ArgTypeInt32, Value: SubpixelHorizontalRGB}, // subpixel
-		{Type: wire.ArgTypeString, Value: "Dell Inc."},  // make
-		{Type: wire.ArgTypeString, Value: "P2415Q"},     // model
-		{Type: wire.ArgTypeInt32, Value: TransformNormal}, // transform
+		{Type: wire.ArgTypeString, Value: "Dell Inc."},          // make
+		{Type: wire.ArgTypeString, Value: "P2415Q"},             // model
+		{Type: wire.ArgTypeInt32, Value: TransformNormal},       // transform
 	}
 
 	err := output.HandleEvent(outputEventGeometry, args)
@@ -96,8 +96,8 @@ func TestHandleModeEvent(t *testing.T) {
 
 	args := []wire.Argument{
 		{Type: wire.ArgTypeUint32, Value: ModeFlagCurrent | ModeFlagPreferred},
-		{Type: wire.ArgTypeInt32, Value: int32(3840)}, // width
-		{Type: wire.ArgTypeInt32, Value: int32(2160)}, // height
+		{Type: wire.ArgTypeInt32, Value: int32(3840)},  // width
+		{Type: wire.ArgTypeInt32, Value: int32(2160)},  // height
 		{Type: wire.ArgTypeInt32, Value: int32(60000)}, // refresh (60 Hz in mHz)
 	}
 

@@ -33,14 +33,14 @@ type Connection interface {
 
 // Geometry contains physical display properties.
 type Geometry struct {
-	X            int32  // X position in compositor space
-	Y            int32  // Y position in compositor space
-	PhysicalW    int32  // Width in millimeters
-	PhysicalH    int32  // Height in millimeters
-	Subpixel     int32  // Subpixel orientation
-	Make         string // Display manufacturer
-	Model        string // Display model
-	Transform    int32  // Output transform
+	X         int32  // X position in compositor space
+	Y         int32  // Y position in compositor space
+	PhysicalW int32  // Width in millimeters
+	PhysicalH int32  // Height in millimeters
+	Subpixel  int32  // Subpixel orientation
+	Make      string // Display manufacturer
+	Model     string // Display model
+	Transform int32  // Output transform
 }
 
 // Mode contains display mode information.
@@ -57,12 +57,12 @@ const (
 	ModeFlagPreferred uint32 = 0x2
 
 	// Subpixel orientations
-	SubpixelUnknown        int32 = 0
-	SubpixelNone           int32 = 1
-	SubpixelHorizontalRGB  int32 = 2
-	SubpixelHorizontalBGR  int32 = 3
-	SubpixelVerticalRGB    int32 = 4
-	SubpixelVerticalBGR    int32 = 5
+	SubpixelUnknown       int32 = 0
+	SubpixelNone          int32 = 1
+	SubpixelHorizontalRGB int32 = 2
+	SubpixelHorizontalBGR int32 = 3
+	SubpixelVerticalRGB   int32 = 4
+	SubpixelVerticalBGR   int32 = 5
 
 	// Transform values
 	TransformNormal     int32 = 0
