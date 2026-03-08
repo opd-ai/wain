@@ -58,7 +58,7 @@
   - Test coverage: 100% for public API
   - Complexity: All functions CC ≤ 3.1
 
-### Step 2: GPU Command Encoding Tables (Gen9-Gen12)
+### Step 2: GPU Command Encoding Tables (Gen9-Gen12) ✅ COMPLETE
 - **Deliverable**: Create `render-sys/src/cmd/` module with Rust structs for Intel 3D pipeline commands:
   - `MI_BATCH_BUFFER_START`, `PIPELINE_SELECT`, `STATE_BASE_ADDRESS`
   - `3DSTATE_VIEWPORT`, `3DSTATE_CLIP`, `3DSTATE_SF`, `3DSTATE_WM`, `3DSTATE_PS`
@@ -69,6 +69,16 @@
   ```bash
   cd render-sys && cargo test cmd:: -- --nocapture | grep -E "test.*ok"
   ```
+- **Status**: ✅ Implemented in this commit
+  - Created render-sys/src/cmd/ module with 4 submodules: mi.rs, pipeline.rs, state.rs, primitive.rs
+  - Implemented MI commands: MI_BATCH_BUFFER_START, MI_NOOP, PIPE_CONTROL
+  - Implemented pipeline commands: PIPELINE_SELECT, STATE_BASE_ADDRESS, 3DSTATE_VIEWPORT_STATE_POINTERS_CC
+  - Implemented state commands: 3DSTATE_CLIP, 3DSTATE_SF, 3DSTATE_WM, 3DSTATE_PS, 3DSTATE_VERTEX_BUFFERS, 3DSTATE_VERTEX_ELEMENTS
+  - Implemented primitive commands: 3DPRIMITIVE with all topology types
+  - All 30 cmd tests passing (60 total Rust tests, all Go tests passing)
+  - Test coverage: 100% for public API serialization methods
+  - Complexity: All functions CC ≤ 3
+  - Zero regressions in Go code metrics
 
 ### Step 3: Batch Buffer Builder
 - **Deliverable**: Create `render-sys/src/batch.rs` implementing `BatchBuilder` that:

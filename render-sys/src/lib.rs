@@ -10,6 +10,7 @@ pub mod xe;
 pub mod allocator;
 pub mod slab;
 pub mod detect;
+pub mod cmd;
 
 use std::os::unix::io::RawFd;
 use drm::DrmDevice;
