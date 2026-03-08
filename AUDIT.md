@@ -68,7 +68,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **Package documentation missing** — audit-baseline.json packages — All 34 packages have `quality_score: 0` and `has_comment: false`, indicating no package-level documentation (doc.go files or package comments). While all exported functions are documented, users have no high-level guidance on package purpose or architecture. **RESOLVED**: Created 36 doc.go files across all internal packages providing concise 1-2 sentence descriptions of each package's purpose and key responsibilities.
 
-- [ ] **Multiple HandleEvent high-complexity instances** — internal/wayland/datadevice/datadevice.go:41,35 — Beyond the CC=21 instance, two more `HandleEvent` functions in the same file have CC=16 and CC=14, indicating a pattern of complex event dispatch logic that should be refactored into smaller handler methods.
+- [x] **Multiple HandleEvent high-complexity instances** — internal/wayland/datadevice/datadevice.go:164,463 — Two more `HandleEvent` functions had CC=13 and CC=10, indicating a pattern of complex event dispatch logic. **RESOLVED**: Refactored both functions using dispatch pattern with separate handler methods. `Source.HandleEvent` CC reduced from 13→7, `Offer.HandleEvent` CC reduced from 10→4. All three HandleEvent functions in this file now have CC ≤ 7, well below threshold of 10.
 
 - [ ] **go test requires make wrapper** — README.md:419-422 — Running `go test ./...` directly fails with linker errors (verified in audit) because CGO_LDFLAGS are not set. While documented in Troubleshooting, this is a poor developer experience. The project should include a .envrc, Makefile.include, or go:generate directive to make testing discoverable.
 

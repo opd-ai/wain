@@ -163,48 +163,72 @@ func (s *Source) SetActions(actions uint32) error {
 // HandleEvent processes events from the compositor.
 func (s *Source) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
-	case 0: // target event
-		// Sent during drag-and-drop to indicate accepted MIME type
-		return nil
-	case 1: // send event
-		if len(args) != 2 {
-			return fmt.Errorf("send event: expected 2 arguments, got %d", len(args))
-		}
-		mimeType := args[0].Value.(string)
-		fd := int(args[1].Value.(int32))
-
-		select {
-		case s.sendRequests <- SendRequest{MimeType: mimeType, FD: fd}:
-		default:
-		}
-		return nil
-	case 2: // cancelled event
-		select {
-		case s.cancelled <- struct{}{}:
-		default:
-		}
-		return nil
-	case 3: // dnd_drop_performed event
-		select {
-		case s.dndDropPerform <- struct{}{}:
-		default:
-		}
-		return nil
-	case 4: // dnd_finished event
-		select {
-		case s.dndFinished <- struct{}{}:
-		default:
-		}
-		return nil
-	case 5: // action event
-		if len(args) != 1 {
-			return fmt.Errorf("action event: expected 1 argument, got %d", len(args))
-		}
-		s.dndAction = args[0].Value.(uint32)
-		return nil
+	case 0:
+		return s.handleTarget(args)
+	case 1:
+		return s.handleSend(args)
+	case 2:
+		return s.handleCancelled(args)
+	case 3:
+		return s.handleDndDropPerformed(args)
+	case 4:
+		return s.handleDndFinished(args)
+	case 5:
+		return s.handleAction(args)
 	default:
 		return fmt.Errorf("unknown wl_data_source event opcode: %d", opcode)
 	}
+}
+
+func (s *Source) handleTarget(args []wire.Argument) error {
+	// Sent during drag-and-drop to indicate accepted MIME type
+	return nil
+}
+
+func (s *Source) handleSend(args []wire.Argument) error {
+	if len(args) != 2 {
+		return fmt.Errorf("send event: expected 2 arguments, got %d", len(args))
+	}
+	mimeType := args[0].Value.(string)
+	fd := int(args[1].Value.(int32))
+
+	select {
+	case s.sendRequests <- SendRequest{MimeType: mimeType, FD: fd}:
+	default:
+	}
+	return nil
+}
+
+func (s *Source) handleCancelled(args []wire.Argument) error {
+	select {
+	case s.cancelled <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
+func (s *Source) handleDndDropPerformed(args []wire.Argument) error {
+	select {
+	case s.dndDropPerform <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
+func (s *Source) handleDndFinished(args []wire.Argument) error {
+	select {
+	case s.dndFinished <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
+func (s *Source) handleAction(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("action event: expected 1 argument, got %d", len(args))
+	}
+	s.dndAction = args[0].Value.(uint32)
+	return nil
 }
 
 // SendRequests returns the channel for send requests.
@@ -462,40 +486,52 @@ func (o *Offer) SetActions(actions, preferredAction uint32) error {
 // HandleEvent processes events from the compositor.
 func (o *Offer) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
-	case 0: // offer event
-		if len(args) != 1 {
-			return fmt.Errorf("offer event: expected 1 argument, got %d", len(args))
-		}
-		mimeType := args[0].Value.(string)
-		o.mimeTypes = append(o.mimeTypes, mimeType)
-		select {
-		case o.mimeTypeChan <- mimeType:
-		default:
-		}
-		return nil
-	case 1: // source_actions event
-		if len(args) != 1 {
-			return fmt.Errorf("source_actions event: expected 1 argument, got %d", len(args))
-		}
-		actions := args[0].Value.(uint32)
-		select {
-		case o.sourceChan <- actions:
-		default:
-		}
-		return nil
-	case 2: // action event
-		if len(args) != 1 {
-			return fmt.Errorf("action event: expected 1 argument, got %d", len(args))
-		}
-		action := args[0].Value.(uint32)
-		select {
-		case o.actionChan <- action:
-		default:
-		}
-		return nil
+	case 0:
+		return o.handleOffer(args)
+	case 1:
+		return o.handleSourceActions(args)
+	case 2:
+		return o.handleAction(args)
 	default:
 		return fmt.Errorf("unknown wl_data_offer event opcode: %d", opcode)
 	}
+}
+
+func (o *Offer) handleOffer(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("offer event: expected 1 argument, got %d", len(args))
+	}
+	mimeType := args[0].Value.(string)
+	o.mimeTypes = append(o.mimeTypes, mimeType)
+	select {
+	case o.mimeTypeChan <- mimeType:
+	default:
+	}
+	return nil
+}
+
+func (o *Offer) handleSourceActions(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("source_actions event: expected 1 argument, got %d", len(args))
+	}
+	actions := args[0].Value.(uint32)
+	select {
+	case o.sourceChan <- actions:
+	default:
+	}
+	return nil
+}
+
+func (o *Offer) handleAction(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("action event: expected 1 argument, got %d", len(args))
+	}
+	action := args[0].Value.(uint32)
+	select {
+	case o.actionChan <- action:
+	default:
+	}
+	return nil
 }
 
 // MimeTypes returns the list of MIME types offered.
