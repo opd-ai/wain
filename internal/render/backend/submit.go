@@ -132,8 +132,8 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 		// and emit 3DSTATE_SCISSOR_STATE_POINTERS with a relocation.
 		// For now, we emit a placeholder command to enable scissor test.
 		commands = append(commands,
-			0x780F0001,      // 3DSTATE_SCISSOR_STATE_POINTERS
-			0x00000001,      // Scissor enable flag (simplified)
+			0x780F0001, // 3DSTATE_SCISSOR_STATE_POINTERS
+			0x00000001, // Scissor enable flag (simplified)
 		)
 		_ = scissorData // Use scissor data in full implementation
 	}

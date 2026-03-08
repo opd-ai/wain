@@ -69,10 +69,10 @@ func TestScissorRectFromDamage(t *testing.T) {
 
 func TestClampScissorRect(t *testing.T) {
 	tests := []struct {
-		name      string
-		rect      ScissorRect
+		name       string
+		rect       ScissorRect
 		maxW, maxH int
-		expected  ScissorRect
+		expected   ScissorRect
 	}{
 		{
 			name:     "within bounds",
