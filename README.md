@@ -39,10 +39,10 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
 - ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
-- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap
+- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded QWERTY layout)
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (7 packages, ~5,683 LOC):
+**X11 Client** (7 packages, ~2,888 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -76,7 +76,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ naga 0.14 integrated as Rust dependency
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
-**Software 2D Rasterizer** (5 packages, ~5,282 LOC):
+**Software 2D Rasterizer** (5 packages, ~1,877 LOC):
 - ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
 - ✅ Curves: quadratic/cubic Bezier, arc fills
 - ✅ Text: SDF-based rendering with embedded glyph atlas
@@ -84,7 +84,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
 
 ### UI Framework (Phase 1.5) — ✅ Complete
-**Widget Layer** (3 packages, ~2,957 LOC):
+**Widget Layer** (3 packages, ~1,503 LOC):
 - ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
 - ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
 - ✅ Sizing: percentage-based dimensions with auto-layout
@@ -247,16 +247,16 @@ Provides Go wrappers for all Rust C ABI exports:
 ### 3. Protocol Layer (`internal/wayland/`, `internal/x11/`)
 
 ```
-Protocol Implementations (~12,671 LOC)
-├── Wayland Client (7 packages, ~6,988 LOC)
+Protocol Implementations (~6,280 LOC)
+├── Wayland Client (7 packages, ~3,392 LOC)
 │   ├── wire/        → Binary marshaling + fd passing
 │   ├── socket/      → Unix domain socket + SCM_RIGHTS
 │   ├── client/      → Display, Registry, Compositor, Surface
 │   ├── shm/         → Shared memory buffers (memfd)
 │   ├── xdg/         → Window management (xdg-shell)
-│   ├── input/       → Seat, Pointer, Keyboard, xkbcommon
+│   ├── input/       → Seat, Pointer, Keyboard (hardcoded QWERTY)
 │   └── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
-└── X11 Client (7 packages, ~5,683 LOC)
+└── X11 Client (7 packages, ~2,888 LOC)
     ├── wire/        → Request/reply/event encoding, extension queries
     ├── client/      → Connection, CreateWindow, MapWindow, extension support
     ├── events/      → KeyPress, Button, Motion events
@@ -269,7 +269,7 @@ Protocol Implementations (~12,671 LOC)
 ### 4. Rendering Layer (`internal/raster/`)
 
 ```
-Software 2D Rasterizer (~5,282 LOC)
+Software 2D Rasterizer (~1,877 LOC)
 ├── core/        → Rectangles, rounded rects, lines
 ├── curves/      → Quadratic/cubic Bezier, arc fills
 ├── composite/   → Alpha blending, image filtering
@@ -280,7 +280,7 @@ Software 2D Rasterizer (~5,282 LOC)
 ### 5. UI Framework (`internal/ui/`)
 
 ```
-Widget Layer (~2,957 LOC)
+Widget Layer (~1,503 LOC)
 ├── layout/      → Flexbox-like Row/Column layout
 ├── pctwidget/   → Percentage-based sizing
 └── widgets/     → Button, TextInput, ScrollContainer

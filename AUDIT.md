@@ -38,13 +38,13 @@ The codebase is generally well-structured with:
 
 - [x] **LOC Discrepancy: Wayland** — README.md:37 — Claims "~6,988 LOC" but actual is **3,392 LOC** (48.5% of claimed). This is a 2.06x inflation. Evidence: `find internal/wayland -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 3392 total lines.
 
-- [ ] **LOC Discrepancy: X11** — README.md:45 — Claims "~5,683 LOC" but actual is **2,888 LOC** (50.8% of claimed). This is a 1.97x inflation. Evidence: `find internal/x11 -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 2888 total lines.
+- [x] **LOC Discrepancy: X11** — README.md:45 — Claims "~5,683 LOC" but actual is **2,888 LOC** (50.8% of claimed). This is a 1.97x inflation. Evidence: `find internal/x11 -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 2888 total lines.
 
-- [ ] **LOC Discrepancy: Raster** — README.md:79 — Claims "~5,282 LOC" but actual is **1,877 LOC** (35.5% of claimed). This is a 2.81x inflation. Evidence: `find internal/raster -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 1877 total lines.
+- [x] **LOC Discrepancy: Raster** — README.md:79 — Claims "~5,282 LOC" but actual is **1,877 LOC** (35.5% of claimed). This is a 2.81x inflation. Evidence: `find internal/raster -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 1877 total lines.
 
-- [ ] **LOC Discrepancy: UI** — README.md:87 — Claims "~2,957 LOC" but actual is **1,503 LOC** (50.8% of claimed). This is a 1.97x inflation. Evidence: `find internal/ui -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 1503 total lines.
+- [x] **LOC Discrepancy: UI** — README.md:87 — Claims "~2,957 LOC" but actual is **1,503 LOC** (50.8% of claimed). This is a 1.97x inflation. Evidence: `find internal/ui -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 1503 total lines.
 
-- [ ] **Missing xkbcommon Integration** — README.md:42 — Claims "Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap" but implementation uses a hardcoded lookup table, NOT libxkbcommon. Evidence: internal/wayland/input/keymap.go:35-174 contains a minimal Keymap struct with hardcoded QWERTY mappings and does not link to or use libxkbcommon. The comment at line 37 explicitly states: "This is a minimal implementation that provides basic keycode to keysym translation without full XKB parsing."
+- [x] **Missing xkbcommon Integration** — README.md:42 — Claims "Input handling: wl_seat, wl_pointer, wl_keyboard with xkbcommon keymap" but implementation uses a hardcoded lookup table, NOT libxkbcommon. Evidence: internal/wayland/input/keymap.go:35-174 contains a minimal Keymap struct with hardcoded QWERTY mappings and does not link to or use libxkbcommon. The comment at line 37 explicitly states: "This is a minimal implementation that provides basic keycode to keysym translation without full XKB parsing."
 
 ### HIGH
 
