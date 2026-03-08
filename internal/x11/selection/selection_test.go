@@ -32,13 +32,13 @@ type propertyValue struct {
 
 func newMockConn() *mockConn {
 	return &mockConn{
-		nextXID: 1000,
+		nextXID:  1000,
 		requests: make([]mockRequest, 0),
 		atoms: map[string]uint32{
-			"CLIPBOARD":    69,
-			"UTF8_STRING":  100,
-			"TARGETS":      101,
-			"TEXT":         102,
+			"CLIPBOARD":       69,
+			"UTF8_STRING":     100,
+			"TARGETS":         101,
+			"TEXT":            102,
 			"_WAIN_SELECTION": 103,
 		},
 		properties: make(map[propertyKey]propertyValue),
@@ -74,7 +74,7 @@ func (m *mockConn) InternAtom(name string, onlyIfExists bool) (uint32, error) {
 	return 0, nil
 }
 
-func (m *mockConn) GetProperty(window, property, typ uint32, offset, length uint32, deleteFlag bool) ([]byte, uint32, error) {
+func (m *mockConn) GetProperty(window, property, typ, offset, length uint32, deleteFlag bool) ([]byte, uint32, error) {
 	key := propertyKey{window: window, property: property}
 	if prop, ok := m.properties[key]; ok {
 		if deleteFlag {
@@ -85,7 +85,7 @@ func (m *mockConn) GetProperty(window, property, typ uint32, offset, length uint
 	return nil, 0, nil
 }
 
-func (m *mockConn) ChangeProperty(window, property, typ uint32, format uint8, mode uint8, data []byte) error {
+func (m *mockConn) ChangeProperty(window, property, typ uint32, format, mode uint8, data []byte) error {
 	key := propertyKey{window: window, property: property}
 	m.properties[key] = propertyValue{data: data, typ: typ}
 	return nil

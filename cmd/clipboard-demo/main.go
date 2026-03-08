@@ -63,10 +63,10 @@ func demonstrateX11API() {
 	// Create mock connection
 	conn := &mockX11Conn{
 		atoms: map[string]uint32{
-			"CLIPBOARD":    69,
-			"UTF8_STRING":  100,
-			"TARGETS":      101,
-			"TEXT":         102,
+			"CLIPBOARD":   69,
+			"UTF8_STRING": 100,
+			"TARGETS":     101,
+			"TEXT":        102,
 		},
 	}
 
@@ -132,15 +132,14 @@ func (m *mockX11Conn) InternAtom(name string, onlyIfExists bool) (uint32, error)
 	return 0, nil
 }
 
-func (m *mockX11Conn) GetProperty(window, property, typ uint32, offset, length uint32, deleteFlag bool) ([]byte, uint32, error) {
+func (m *mockX11Conn) GetProperty(window, property, typ, offset, length uint32, deleteFlag bool) ([]byte, uint32, error) {
 	return nil, 0, nil
 }
 
-func (m *mockX11Conn) ChangeProperty(window, property, typ uint32, format uint8, mode uint8, data []byte) error {
+func (m *mockX11Conn) ChangeProperty(window, property, typ uint32, format, mode uint8, data []byte) error {
 	return nil
 }
 
 func (m *mockX11Conn) DeleteProperty(window, property uint32) error {
 	return nil
 }
-

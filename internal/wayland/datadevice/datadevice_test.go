@@ -8,9 +8,9 @@ import (
 
 // mockConn is a mock implementation of the Conn interface for testing.
 type mockConn struct {
-	nextID       uint32
-	requests     []mockRequest
-	objects      map[uint32]interface{}
+	nextID   uint32
+	requests []mockRequest
+	objects  map[uint32]interface{}
 }
 
 type mockRequest struct {

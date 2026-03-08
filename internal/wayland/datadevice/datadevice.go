@@ -433,7 +433,7 @@ func (o *Offer) Finish() error {
 }
 
 // SetActions sets the drag-and-drop actions we support.
-func (o *Offer) SetActions(actions uint32, preferredAction uint32) error {
+func (o *Offer) SetActions(actions, preferredAction uint32) error {
 	args := []wire.Argument{
 		{Type: wire.ArgTypeUint32, Value: actions},
 		{Type: wire.ArgTypeUint32, Value: preferredAction},

@@ -29,12 +29,12 @@ const (
 
 // Well-known target MIME types.
 const (
-	TargetUTF8String   = "UTF8_STRING"
-	TargetString       = "STRING"
-	TargetText         = "TEXT"
-	TargetTextPlain    = "text/plain"
-	TargetTargets      = "TARGETS"
-	TargetTimestamp    = "TIMESTAMP"
+	TargetUTF8String = "UTF8_STRING"
+	TargetString     = "STRING"
+	TargetText       = "TEXT"
+	TargetTextPlain  = "text/plain"
+	TargetTargets    = "TARGETS"
+	TargetTimestamp  = "TIMESTAMP"
 )
 
 // Conn represents the subset of X11 connection methods needed by selection handling.
@@ -43,23 +43,23 @@ type Conn interface {
 	SendRequest(opcode uint8, data []byte) error
 	SendRequestAndReply(opcode uint8, data []byte) ([]byte, error)
 	InternAtom(name string, onlyIfExists bool) (uint32, error)
-	GetProperty(window, property, typ uint32, offset, length uint32, delete bool) ([]byte, uint32, error)
-	ChangeProperty(window, property, typ uint32, format uint8, mode uint8, data []byte) error
+	GetProperty(window, property, typ, offset, length uint32, delete bool) ([]byte, uint32, error)
+	ChangeProperty(window, property, typ uint32, format, mode uint8, data []byte) error
 	DeleteProperty(window, property uint32) error
 }
 
 // Manager handles X11 selections (clipboard, primary, etc.).
 type Manager struct {
-	conn           Conn
-	window         uint32
-	clipboardAtom  uint32
-	utf8Atom       uint32
-	targetsAtom    uint32
-	textAtom       uint32
-	clipboardData  []byte
-	primaryData    []byte
-	ownsClipboard  bool
-	ownsPrimary    bool
+	conn          Conn
+	window        uint32
+	clipboardAtom uint32
+	utf8Atom      uint32
+	targetsAtom   uint32
+	textAtom      uint32
+	clipboardData []byte
+	primaryData   []byte
+	ownsClipboard bool
+	ownsPrimary   bool
 }
 
 // NewManager creates a selection manager for the given window.
@@ -167,7 +167,7 @@ func (m *Manager) getSelection(selection, target uint32) (string, error) {
 }
 
 // HandleSelectionRequest processes a SelectionRequest event.
-func (m *Manager) HandleSelectionRequest(requestor, selection, target, property uint32, timestamp uint32) error {
+func (m *Manager) HandleSelectionRequest(requestor, selection, target, property, timestamp uint32) error {
 	var data []byte
 	var actualType uint32
 
