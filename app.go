@@ -253,6 +253,9 @@ type Window struct {
 
 	// Root widget for hit-testing
 	rootWidget Widget
+
+	// Render bridge
+	renderBridge *RenderBridge
 }
 
 // NewWindow creates a new window with the specified configuration.
@@ -287,6 +290,8 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 	if err := win.initialize(); err != nil {
 		return nil, fmt.Errorf("failed to initialize window: %w", err)
 	}
+
+	win.renderBridge = NewRenderBridge(a.renderer)
 
 	a.windows = append(a.windows, win)
 	return win, nil
@@ -725,6 +730,43 @@ func (w *Window) SetRootWidget(widget Widget) {
 	if w.dispatcher != nil {
 		w.dispatcher.SetWidgetRoot(widget)
 	}
+	if w.renderBridge != nil {
+		w.renderBridge.MarkDirty()
+	}
+}
+
+// Redraw marks the entire window as needing a full redraw.
+func (w *Window) Redraw() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.renderBridge != nil {
+		w.renderBridge.MarkDirty()
+	}
+}
+
+// RedrawRegion marks a specific region as needing a redraw.
+func (w *Window) RedrawRegion(x, y, width, height int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.renderBridge != nil {
+		w.renderBridge.MarkRegionDirty(x, y, width, height)
+	}
+}
+
+// RenderFrame renders the current widget tree to the display.
+// This is called automatically by the event loop, but can be called
+// manually to force an immediate render.
+func (w *Window) RenderFrame() error {
+	w.mu.Lock()
+	rootWidget := w.rootWidget
+	renderBridge := w.renderBridge
+	w.mu.Unlock()
+
+	if renderBridge == nil {
+		return ErrNoRenderer
+	}
+
+	return renderBridge.Render(rootWidget)
 }
 
 // Dispatcher returns the window's event dispatcher.
@@ -868,6 +910,10 @@ func (w *Window) handleWindowResize(evt *WindowEvent) {
 
 	w.width = evt.Width()
 	w.height = evt.Height()
+
+	if w.renderBridge != nil {
+		w.renderBridge.MarkDirty()
+	}
 
 	if w.onResize != nil {
 		w.onResize(evt.Width(), evt.Height())
@@ -1246,6 +1292,11 @@ func (a *App) eventLoop() error {
 		if err := a.processEvents(); err != nil {
 			return err
 		}
+
+		// Render frames for all windows
+		if err := a.renderFrames(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -1315,6 +1366,21 @@ func (a *App) processWaylandEvents() error {
 	//   3. Handle frame callbacks for proper rendering synchronization
 	// For now, this minimal implementation flushes outbound requests
 	// to prevent deadlock and returns immediately.
+	return nil
+}
+
+// renderFrames renders frames for all dirty windows.
+func (a *App) renderFrames() error {
+	a.mu.Lock()
+	windows := a.windows
+	a.mu.Unlock()
+
+	for _, win := range windows {
+		if err := win.RenderFrame(); err != nil {
+			return fmt.Errorf("render frame: %w", err)
+		}
+	}
+
 	return nil
 }
 
