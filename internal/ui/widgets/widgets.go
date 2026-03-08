@@ -98,6 +98,9 @@ type Theme struct {
 	BorderPressed core.Color
 	BorderFocus   core.Color
 
+	// Scale factor for HiDPI displays (1.0 = normal, 2.0 = 2x)
+	Scale float32
+
 	// Border radius for rounded corners
 	BorderRadius int
 
@@ -137,6 +140,7 @@ func DefaultTheme() *Theme {
 		ShadowOffsetY: 2,
 
 		FontSize: 14.0,
+		Scale:    1.0, // Default to 1.0 scale
 	}
 }
 

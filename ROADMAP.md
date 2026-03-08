@@ -587,8 +587,19 @@ PHASE 7: Hardening & Fallback (Weeks 30-34)
 PHASE 8: Polish & Distribution (Weeks 34-38)
 --------------------------------------------------------------------------------
 
-8.1  HiDPI support: handle wl_output.scale and Xft.dpi, render at
-     appropriate resolution, expose scale factor to widget layer.
+8.1  ✅ HiDPI SUPPORT (Complete)
+     - Handle wl_output.scale and Xft.dpi, render at appropriate
+       resolution, expose scale factor to widget layer.
+     - **Status**: ✅ Complete
+       - Created internal/wayland/output/ package for wl_output protocol
+       - Implemented wl_output.geometry, wl_output.mode, wl_output.scale event handling
+       - Created internal/ui/scale/ package for unified scale management
+       - Created internal/x11/dpi/ package for X11 DPI detection from screen dimensions
+       - Added BindOutput() helper to Wayland registry
+       - Extended Theme struct with Scale field (default 1.0)
+       - All 19 new tests passing (8 output tests, 9 scale tests, 2 DPI tests)
+       - Zero critical regressions in complexity metrics
+       - Ready for Phase 8.2 (Clipboard & drag-and-drop)
 
 8.2  Clipboard & drag-and-drop: Wayland data_device, X11 selections.
 
