@@ -53,27 +53,33 @@ type dri3ConnectionAdapter struct {
 	*x11client.Connection
 }
 
+// AllocXID allocates an X11 resource ID and returns it as a DRI3 XID.
 func (a *dri3ConnectionAdapter) AllocXID() (dri3.XID, error) {
 	xid, err := a.Connection.AllocXID()
 	return dri3.XID(xid), err
 }
 
+// SendRequest forwards an X11 protocol request through the underlying connection.
 func (a *dri3ConnectionAdapter) SendRequest(buf []byte) error {
 	return a.Connection.SendRequest(buf)
 }
 
+// SendRequestAndReply sends an X11 request and waits for a reply.
 func (a *dri3ConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
 	return a.Connection.SendRequestAndReply(req)
 }
 
+// SendRequestWithFDs sends an X11 request with file descriptors attached.
 func (a *dri3ConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
 	return a.Connection.SendRequestWithFDs(req, fds)
 }
 
+// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and returns the reply and fds.
 func (a *dri3ConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
 	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
 }
 
+// ExtensionOpcode returns the major opcode for an X11 extension by name.
 func (a *dri3ConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
 	return a.Connection.ExtensionOpcode(name)
 }
@@ -82,27 +88,33 @@ type presentConnectionAdapter struct {
 	*x11client.Connection
 }
 
+// AllocXID allocates an X11 resource ID and returns it as a Present XID.
 func (a *presentConnectionAdapter) AllocXID() (present.XID, error) {
 	xid, err := a.Connection.AllocXID()
 	return present.XID(xid), err
 }
 
+// SendRequest forwards an X11 protocol request through the underlying connection.
 func (a *presentConnectionAdapter) SendRequest(buf []byte) error {
 	return a.Connection.SendRequest(buf)
 }
 
+// SendRequestAndReply sends an X11 request and waits for a reply.
 func (a *presentConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
 	return a.Connection.SendRequestAndReply(req)
 }
 
+// SendRequestWithFDs sends an X11 request with file descriptors attached.
 func (a *presentConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
 	return a.Connection.SendRequestWithFDs(req, fds)
 }
 
+// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and returns the reply and fds.
 func (a *presentConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
 	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
 }
 
+// ExtensionOpcode returns the major opcode for an X11 extension by name.
 func (a *presentConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
 	return a.Connection.ExtensionOpcode(name)
 }

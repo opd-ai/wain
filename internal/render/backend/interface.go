@@ -50,6 +50,7 @@ const (
 	BackendSoftware
 )
 
+// String returns a human-readable name for the backend type.
 func (bt BackendType) String() string {
 	switch bt {
 	case BackendIntelGPU:

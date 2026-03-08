@@ -97,13 +97,16 @@ type mockWaylandConn struct {
 	nextID uint32
 }
 
+// AllocID allocates and returns the next Wayland object ID.
 func (m *mockWaylandConn) AllocID() uint32 {
 	m.nextID++
 	return m.nextID
 }
 
+// RegisterObject registers a Wayland object with the connection (no-op for mock).
 func (m *mockWaylandConn) RegisterObject(obj interface{}) {}
 
+// SendRequest sends a Wayland protocol request (no-op for mock).
 func (m *mockWaylandConn) SendRequest(objectID uint32, opcode uint16, args []wire.Argument) error {
 	return nil
 }
@@ -113,18 +116,22 @@ type mockX11Conn struct {
 	atoms map[string]uint32
 }
 
+// AllocXID allocates and returns an X11 resource ID.
 func (m *mockX11Conn) AllocXID() uint32 {
 	return 1000
 }
 
+// SendRequest sends an X11 protocol request (no-op for mock).
 func (m *mockX11Conn) SendRequest(opcode uint8, data []byte) error {
 	return nil
 }
 
+// SendRequestAndReply sends an X11 request and waits for a reply (returns nil for mock).
 func (m *mockX11Conn) SendRequestAndReply(opcode uint8, data []byte) ([]byte, error) {
 	return nil, nil
 }
 
+// InternAtom looks up or creates an X11 atom by name.
 func (m *mockX11Conn) InternAtom(name string, onlyIfExists bool) (uint32, error) {
 	if atom, ok := m.atoms[name]; ok {
 		return atom, nil
@@ -132,14 +139,17 @@ func (m *mockX11Conn) InternAtom(name string, onlyIfExists bool) (uint32, error)
 	return 0, nil
 }
 
+// GetProperty retrieves a window property value (returns nil for mock).
 func (m *mockX11Conn) GetProperty(window, property, typ, offset, length uint32, deleteFlag bool) ([]byte, uint32, error) {
 	return nil, 0, nil
 }
 
+// ChangeProperty sets or modifies a window property (no-op for mock).
 func (m *mockX11Conn) ChangeProperty(window, property, typ uint32, format, mode uint8, data []byte) error {
 	return nil
 }
 
+// DeleteProperty removes a property from a window (no-op for mock).
 func (m *mockX11Conn) DeleteProperty(window, property uint32) error {
 	return nil
 }
