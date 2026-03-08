@@ -13,8 +13,8 @@ use std::io;
 /// value and converts a negative result into an `io::Error`. Callers must not
 /// ignore the returned `Result` — on failure the output fields of `arg` are
 /// left in an undefined state.
-pub(crate) fn checked_ioctl<T>(fd: RawFd, request: u64, arg: *mut T) -> io::Result<()> {
-    let ret = unsafe { nix::libc::ioctl(fd, request as nix::libc::c_ulong, arg) };
+pub(crate) fn checked_ioctl<T>(fd: RawFd, request: nix::libc::c_ulong, arg: *mut T) -> io::Result<()> {
+    let ret = unsafe { nix::libc::ioctl(fd, request, arg) };
     if ret < 0 {
         Err(io::Error::last_os_error())
     } else {
