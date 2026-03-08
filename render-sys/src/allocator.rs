@@ -339,8 +339,14 @@ impl Drop for MappedBuffer {
             nix::libc::munmap(self.ptr as *mut nix::libc::c_void, self.size)
         };
         if ret < 0 {
-            // Log warning but do not panic in Drop
-            eprintln!("MappedBuffer::drop: munmap failed: {}", std::io::Error::last_os_error());
+            // Log warning in debug builds but do not panic in Drop
+            #[cfg(debug_assertions)]
+            {
+                eprintln!(
+                    "MappedBuffer::drop: munmap failed: {}",
+                    std::io::Error::last_os_error()
+                );
+            }
         }
         self.ptr = std::ptr::null_mut();
     }
