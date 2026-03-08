@@ -589,13 +589,49 @@ impl DrmDevice {
         Ok(())
     }
 
+    /// Map a GEM buffer to GPU virtual address space.
+    ///
+    /// # Arguments
+    ///
+    /// * `handle` - GEM buffer handle
+    /// * `va_address` - GPU virtual address to map to
+    /// * `size` - Size of mapping in bytes
+    ///
+    /// # Returns
+    ///
+    /// Ok(()) on success, io::Error on failure.
+    pub fn map_buffer_to_va(
+        &self,
+        handle: u32,
+        va_address: u64,
+        size: u64,
+    ) -> io::Result<()> {
+        let mut req = GemVa::map(handle, va_address, size);
+        self.amdgpu_gem_va(&mut req)
+    }
+
+    /// Unmap a GPU virtual address.
+    ///
+    /// # Arguments
+    ///
+    /// * `va_address` - GPU virtual address to unmap
+    /// * `size` - Size of mapping in bytes
+    pub fn unmap_buffer_from_va(
+        &self,
+        va_address: u64,
+        size: u64,
+    ) -> io::Result<()> {
+        let mut req = GemVa::unmap(va_address, size);
+        self.amdgpu_gem_va(&mut req)
+    }
+
     /// Submit a batch buffer (PM4 commands) to the GPU and wait for completion.
     ///
     /// This is the high-level AMD equivalent of i915_submit_batch.
     ///
     /// # Arguments
     ///
-    /// * `batch_handle` - GEM handle of buffer containing PM4 commands
+    /// * `_batch_handle` - GEM handle (not used; buffer accessed via VA)
     /// * `batch_va` - GPU virtual address where batch buffer is mapped
     /// * `batch_len_bytes` - Length of PM4 command stream in bytes
     /// * `context_id` - AMD GPU context ID
@@ -607,11 +643,11 @@ impl DrmDevice {
     /// # Note
     ///
     /// This method assumes the batch buffer is already mapped to GPU virtual
-    /// address space via amdgpu_gem_va. For now, it uses a simple single-IB
-    /// submission without BO lists or dependencies.
+    /// address space via map_buffer_to_va(). Use amdgpu_submit_with_va() for
+    /// automatic VA management.
     pub fn amdgpu_submit_batch(
         &self,
-        batch_handle: u32,
+        _batch_handle: u32,
         batch_va: u64,
         batch_len_bytes: u32,
         context_id: u32,
@@ -647,20 +683,40 @@ impl DrmDevice {
         Ok(())
     }
 
-    /// Submit a batch buffer without explicit VA (simplified for testing).
+    /// Submit a batch buffer with automatic VA management.
     ///
-    /// This is a simplified version that assumes the kernel will handle VA mapping.
-    /// Used for basic smoke tests before full VA management is implemented.
-    pub fn amdgpu_submit_batch_simple(
+    /// Maps the buffer to VA, submits the batch, and unmaps on completion.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch_handle` - GEM handle of buffer containing PM4 commands
+    /// * `batch_size` - Size of batch buffer in bytes
+    /// * `batch_len_bytes` - Length of PM4 command stream in bytes (may be < batch_size)
+    /// * `context_id` - AMD GPU context ID
+    /// * `va_base` - Base virtual address for mapping (should be 4K-aligned)
+    pub fn amdgpu_submit_with_va(
         &self,
         batch_handle: u32,
+        batch_size: u64,
         batch_len_bytes: u32,
         context_id: u32,
+        va_base: u64,
     ) -> io::Result<()> {
-        // For testing, use the GEM handle as a placeholder VA
-        // In production, this should be a proper mapped VA from amdgpu_gem_va
-        let batch_va = (batch_handle as u64) << 12; // Simple mapping: handle * 4K
-        self.amdgpu_submit_batch(batch_handle, batch_va, batch_len_bytes, context_id)
+        // Map buffer to VA
+        self.map_buffer_to_va(batch_handle, va_base, batch_size)?;
+        
+        // Submit batch
+        let result = self.amdgpu_submit_batch(
+            batch_handle,
+            va_base,
+            batch_len_bytes,
+            context_id,
+        );
+        
+        // Unmap VA (always attempt cleanup, even if submission failed)
+        let _ = self.unmap_buffer_from_va(va_base, batch_size);
+        
+        result
     }
 
     /// Create an AMD GPU context and return its ID.
@@ -757,5 +813,39 @@ mod tests {
         );
         assert_eq!(req.query, AMDGPU_INFO_DEV_INFO);
         assert_eq!(req.return_size, 256);
+    }
+
+    #[test]
+    fn test_gem_va_with_offset() {
+        let va = GemVa::map(42, 0x1000_0000, 4096)
+            .with_offset(1024);
+        assert_eq!(va.handle, 42);
+        assert_eq!(va.offset_in_bo, 1024);
+        assert_eq!(va.va_address, 0x1000_0000);
+    }
+
+    #[test]
+    fn test_gem_va_with_flags() {
+        let va = GemVa::map(42, 0x1000_0000, 4096)
+            .with_flags(AMDGPU_VM_PAGE_READABLE);
+        assert_eq!(va.flags, AMDGPU_VM_PAGE_READABLE);
+    }
+
+    #[test]
+    fn test_gem_va_operations() {
+        // Test map operation
+        let map_req = GemVa::map(100, 0x2000_0000, 8192);
+        assert_eq!(map_req.handle, 100);
+        assert_eq!(map_req.operation, AMDGPU_VA_OP_MAP);
+        assert_eq!(map_req.va_address, 0x2000_0000);
+        assert_eq!(map_req.map_size, 8192);
+        assert!(map_req.flags & AMDGPU_VM_PAGE_READABLE != 0);
+        assert!(map_req.flags & AMDGPU_VM_PAGE_WRITEABLE != 0);
+
+        // Test unmap operation
+        let unmap_req = GemVa::unmap(0x2000_0000, 8192);
+        assert_eq!(unmap_req.operation, AMDGPU_VA_OP_UNMAP);
+        assert_eq!(unmap_req.va_address, 0x2000_0000);
+        assert_eq!(unmap_req.map_size, 8192);
     }
 }

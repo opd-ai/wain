@@ -328,9 +328,17 @@ pub unsafe extern "C" fn render_submit_batch(
             }
         }
         GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
-            // Use AMD submission path
-            // Note: batch_gpu_addr of 0 triggers simplified path with auto-VA
-            match dev.amdgpu_submit_batch_simple(batch_handle, batch_len_bytes, context_id) {
+            // Use AMD submission path with automatic VA management
+            // VA base address starts at 1GB (0x4000_0000) to avoid low memory
+            const AMD_VA_BASE: u64 = 0x4000_0000;
+            let batch_size = ((batch_len_bytes + 4095) / 4096 * 4096) as u64; // Round up to 4K
+            match dev.amdgpu_submit_with_va(
+                batch_handle,
+                batch_size,
+                batch_len_bytes,
+                context_id,
+                AMD_VA_BASE,
+            ) {
                 Ok(()) => 0,
                 Err(_) => -1,
             }
