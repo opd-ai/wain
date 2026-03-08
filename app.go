@@ -109,6 +109,9 @@ type App struct {
 	// Windows
 	windows []*Window
 
+	// Resource management
+	resources *ResourceManager
+
 	// State
 	running     bool
 	shouldQuit  bool
@@ -1262,6 +1265,13 @@ func (a *App) initRenderer() error {
 		log.Printf("wain: using %s rendering backend", backendType)
 	}
 
+	// Initialize resource manager (Phase 9.5)
+	// For now, texture atlas is nil (GPU atlas integration deferred)
+	a.resources = newResourceManager(nil)
+	if err := a.resources.initDefaultFont(); err != nil {
+		return fmt.Errorf("failed to initialize default font: %w", err)
+	}
+
 	return nil
 }
 
@@ -1388,6 +1398,12 @@ func (a *App) renderFrames() error {
 func (a *App) cleanup() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	// Clean up resource manager (Phase 9.5)
+	if a.resources != nil {
+		a.resources.cleanup()
+		a.resources = nil
+	}
 
 	if a.renderer != nil {
 		a.renderer.Destroy()
