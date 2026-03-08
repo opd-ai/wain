@@ -10,15 +10,15 @@ import (
 
 // mockRenderer is a test double for the backend.Renderer interface.
 type mockRenderer struct {
-	renderCalls          int
+	renderCalls           int
 	renderWithDamageCalls int
-	presentCalls         int
-	destroyCalls         int
-	lastDisplayList      *displaylist.DisplayList
-	lastDamage           []displaylist.Rect
-	renderError          error
-	presentError         error
-	presentFd            int
+	presentCalls          int
+	destroyCalls          int
+	lastDisplayList       *displaylist.DisplayList
+	lastDamage            []displaylist.Rect
+	renderError           error
+	presentError          error
+	presentFd             int
 }
 
 func (m *mockRenderer) Render(dl *displaylist.DisplayList) error {
@@ -51,9 +51,9 @@ func (m *mockRenderer) Destroy() error {
 // mockWidget is a test widget that implements the Widget interface.
 type mockWidget struct {
 	BaseWidget
-	children       []Widget
-	emitError      error
-	emitCalls      int
+	children        []Widget
+	emitError       error
+	emitCalls       int
 	emittedCommands int
 }
 
@@ -66,7 +66,7 @@ func (mw *mockWidget) EmitDisplayList(dl *displaylist.DisplayList) error {
 	if mw.emitError != nil {
 		return mw.emitError
 	}
-	
+
 	for i := 0; i < mw.emittedCommands; i++ {
 		dl.AddFillRect(10+i*10, 10, 50, 30, core.Color{R: 255, G: 0, B: 0, A: 255})
 	}
