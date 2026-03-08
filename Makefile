@@ -61,7 +61,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo
+.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo stats
 
 all: build
 
@@ -271,6 +271,25 @@ check-static: build
 		echo ""; \
 		exit 1; \
 	fi
+
+## ── Statistics ───────────────────────────────────────────────────────────────
+
+stats:
+	@echo "=== Lines of Code Summary ==="
+	@echo ""
+	@echo "Rust (render-sys/src):"
+	@RUST_TOTAL=$$(find render-sys/src -name "*.rs" -exec wc -l {} + | tail -1 | awk '{print $$1}'); \
+	RUST_CODE=$$(find render-sys/src -name "*.rs" -exec cat {} \; | grep -v '^\s*$$' | grep -v '^\s*//' | grep -v '^\s*/\*' | grep -v '^\s*\*' | wc -l); \
+	echo "  ~$${RUST_CODE} LOC (code only, excludes comments/blanks)"; \
+	echo "  ~$${RUST_TOTAL} LOC total (includes all lines)"
+	@echo ""
+	@echo "Go packages:"
+	@for pkg in wayland x11 raster ui render buffer; do \
+		if [ -d "internal/$$pkg" ]; then \
+			TOTAL=$$(find internal/$$pkg -name "*.go" ! -name "*_test.go" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $$1}' || echo "0"); \
+			echo "  internal/$$pkg: ~$${TOTAL} LOC"; \
+		fi; \
+	done
 
 ## ── Cleanup ──────────────────────────────────────────────────────────────────
 
