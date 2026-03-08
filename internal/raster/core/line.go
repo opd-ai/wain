@@ -71,35 +71,51 @@ func lineCoverage(px, py, x0, y0, dirX, dirY, perpX, perpY, length, halfWidth fl
 		return 0
 	}
 
-	var coverage float64 = 1.0
-
-	if perp > halfWidth-1 {
-		coverage = min2f(coverage, halfWidth+1-perp)
-	}
-
-	if parallel < 1 {
-		dist := math.Sqrt(dx*dx + dy*dy)
-		if dist > halfWidth+1 {
-			return 0
-		}
-		if dist > halfWidth-1 {
-			coverage = min2f(coverage, halfWidth+1-dist)
-		}
-	}
-
-	if parallel > length-1 {
-		dx2 := px - (x0 + dirX*length)
-		dy2 := py - (y0 + dirY*length)
-		dist := math.Sqrt(dx2*dx2 + dy2*dy2)
-		if dist > halfWidth+1 {
-			return 0
-		}
-		if dist > halfWidth-1 {
-			coverage = min2f(coverage, halfWidth+1-dist)
-		}
-	}
+	coverage := perpendicularCoverage(perp, halfWidth)
+	coverage = startCapCoverage(parallel, dx, dy, halfWidth, coverage)
+	coverage = endCapCoverage(parallel, px, py, x0, y0, dirX, dirY, length, halfWidth, coverage)
 
 	return clamp(coverage, 0, 1)
+}
+
+// perpendicularCoverage computes anti-aliased coverage based on perpendicular distance.
+func perpendicularCoverage(perp, halfWidth float64) float64 {
+	if perp > halfWidth-1 {
+		return halfWidth + 1 - perp
+	}
+	return 1.0
+}
+
+// startCapCoverage computes anti-aliased coverage for the line's start cap.
+func startCapCoverage(parallel, dx, dy, halfWidth, coverage float64) float64 {
+	if parallel >= 1 {
+		return coverage
+	}
+	dist := math.Sqrt(dx*dx + dy*dy)
+	if dist > halfWidth+1 {
+		return 0
+	}
+	if dist > halfWidth-1 {
+		return min2f(coverage, halfWidth+1-dist)
+	}
+	return coverage
+}
+
+// endCapCoverage computes anti-aliased coverage for the line's end cap.
+func endCapCoverage(parallel, px, py, x0, y0, dirX, dirY, length, halfWidth, coverage float64) float64 {
+	if parallel <= length-1 {
+		return coverage
+	}
+	dx2 := px - (x0 + dirX*length)
+	dy2 := py - (y0 + dirY*length)
+	dist := math.Sqrt(dx2*dx2 + dy2*dy2)
+	if dist > halfWidth+1 {
+		return 0
+	}
+	if dist > halfWidth-1 {
+		return min2f(coverage, halfWidth+1-dist)
+	}
+	return coverage
 }
 
 func min2f(a, b float64) float64 {

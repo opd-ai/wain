@@ -84,16 +84,21 @@
     jq '[.functions[] | select(.name == "FillRoundedRect")] | .[0].complexity.overall'
   ```
 
-### Step 3: Refactor lineCoverage Function
+### Step 3: Refactor lineCoverage Function ✅ COMPLETE
 - **Deliverable**: Simplify line coverage calculation by extracting slope-handling and pixel-iteration logic
 - **Dependencies**: None
-- **Files**: `internal/raster/core/line.go` (line 60, complexity 14.0)
-- **Acceptance**: `lineCoverage` complexity ≤9.0
+- **Files**: `internal/raster/core/line.go` (line 60, complexity 14.0 → 4.4)
+- **Acceptance**: `lineCoverage` complexity ≤9.0 ✅ (achieved 4.4)
+- **Implementation**: Extracted three helper functions:
+  - `perpendicularCoverage` (complexity 3.1)
+  - `startCapCoverage` (complexity 5.7)
+  - `endCapCoverage` (complexity 5.7)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '[.functions[] | select(.name == "lineCoverage")] | .[0].complexity.overall'
   ```
+  Result: 4.4 (68.6% improvement from baseline)
 
 ### Step 4: Deduplicate Demo Setup Patterns
 - **Deliverable**: Create shared demo setup helpers in `internal/demo/` to eliminate GPU triangle/dmabuf/perf demo duplication (25-34 line blocks)
