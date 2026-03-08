@@ -474,6 +474,106 @@ pub unsafe extern "C" fn buffer_munmap(ptr: *mut u8, size: usize) -> i32 {
     }
 }
 
+/// Compile a WGSL shader to Intel EU machine code.
+///
+/// Returns a pointer to the compiled binary and writes its size to out_size.
+/// The caller must free the returned pointer with render_shader_free.
+///
+/// # Arguments
+/// * wgsl_source - Null-terminated WGSL shader source code
+/// * gpu_gen - GPU generation (9 = Gen9, 11 = Gen11, 12 = Gen12)
+/// * is_fragment - 1 for fragment shader, 0 for vertex shader
+/// * out_size - Pointer to write the binary size
+///
+/// # Returns
+/// Pointer to binary data (must be freed), or null on error
+///
+/// # Safety
+/// - wgsl_source must be a valid null-terminated C string
+/// - out_size must be a valid pointer
+/// - The returned pointer must be freed with render_shader_free
+#[no_mangle]
+pub unsafe extern "C" fn render_compile_shader(
+    wgsl_source: *const std::ffi::c_char,
+    gpu_gen: i32,
+    is_fragment: i32,
+    out_size: *mut usize,
+) -> *mut u8 {
+    use shader::ShaderModule;
+    use eu::{EUCompiler, IntelGen};
+
+    if wgsl_source.is_null() || out_size.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    // Convert C string to Rust string
+    let source = match std::ffi::CStr::from_ptr(wgsl_source).to_str() {
+        Ok(s) => s,
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    // Parse GPU generation
+    let gen = match gpu_gen {
+        9 => IntelGen::Gen9,
+        11 => IntelGen::Gen11,
+        12 => IntelGen::Gen12,
+        _ => return std::ptr::null_mut(),
+    };
+
+    // Parse shader stage
+    let stage = if is_fragment != 0 {
+        naga::ShaderStage::Fragment
+    } else {
+        naga::ShaderStage::Vertex
+    };
+
+    // Compile WGSL to naga IR
+    let module = match ShaderModule::from_wgsl(source, stage) {
+        Ok(m) => m,
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    // Compile to EU binary
+    let compiler = EUCompiler::new(gen);
+    let kernel = match compiler.compile(&module) {
+        Ok(k) => k,
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    // Allocate heap memory for the binary
+    let binary_size = kernel.binary.len();
+    let layout = std::alloc::Layout::from_size_align(binary_size, 1).unwrap();
+    let ptr = std::alloc::alloc(layout);
+    
+    if ptr.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    // Copy binary data to allocated memory
+    std::ptr::copy_nonoverlapping(kernel.binary.as_ptr(), ptr, binary_size);
+    
+    // Write size to output parameter
+    *out_size = binary_size;
+    
+    ptr
+}
+
+/// Free shader binary allocated by render_compile_shader.
+///
+/// # Safety
+/// - ptr must be a pointer returned by render_compile_shader
+/// - size must be the size returned by render_compile_shader
+/// - ptr must not be used after this call
+#[no_mangle]
+pub unsafe extern "C" fn render_shader_free(ptr: *mut u8, size: usize) {
+    if ptr.is_null() {
+        return;
+    }
+    
+    let layout = std::alloc::Layout::from_size_align(size, 1).unwrap();
+    std::alloc::dealloc(ptr, layout);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
