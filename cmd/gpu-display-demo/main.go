@@ -224,7 +224,8 @@ func createWaylandPipeline(surface *client.Surface, dmabufObj *dmabuf.Dmabuf, re
 
 func renderFrameLoop(pipeline interface {
 	RenderAndPresent(context.Context, *displaylist.DisplayList) error
-}) error {
+},
+) error {
 	fmt.Printf("Rendering %d frames...\n", numFrames)
 	for i := 0; i < numFrames; i++ {
 		dl := createAnimatedDisplayList(i, numFrames)
