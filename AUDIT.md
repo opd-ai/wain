@@ -82,7 +82,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **Missing coverage targets** — README.md:312-316 — README documents `make coverage` and `make coverage-html` but these targets are not verified in the audit. The documentation should include expected coverage percentage or note if coverage reporting is best-effort only. **RESOLVED**: Verified both coverage targets work correctly. Updated README.md to document average coverage (~70% across 34 packages) with details on high/moderate/low coverage areas. Added note to coverage command showing average percentage. Coverage breakdown now documented in Test Suite Coverage section with ranges and explanations for lower coverage in hardware-dependent code.
 
-- [ ] **Shader README claim precision** — README.md:127 — Claim of "478-line README" is verified (exactly 478 lines), but this level of precision is unusual in documentation. This is a minor nitpick but suggests copy-paste from a line count command rather than natural technical writing.
+- [x] **Shader README claim precision** — README.md:127 — Claim of "478-line README" is verified (exactly 478 lines), but this level of precision is unusual in documentation. This is a minor nitpick but suggests copy-paste from a line count command rather than natural technical writing. **RESOLVED**: Changed "478-line README" to "detailed README with usage examples" which is more natural technical writing that focuses on content quality rather than exact line count. The documentation remains comprehensive without appearing copy-pasted from a wc command.
 
 ## Metrics Snapshot
 
