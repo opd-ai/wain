@@ -10,6 +10,7 @@
 - [Documentation](#documentation)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
+- [Using wain as a Dependency](#using-wain-as-a-dependency)
 - [Test](#test)
 - [Verify Static Linking](#verify-static-linking)
 - [Run](#run)
@@ -233,6 +234,52 @@ Example cross-compilation:
 ```bash
 make build CC=x86_64-linux-musl-gcc
 ```
+
+## Using wain as a Dependency
+
+### Standard Workflow (With Pre-built Libraries)
+
+When wain releases are tagged, they include pre-built static libraries for common platforms. This means you can use wain in your Go projects without needing Rust or musl toolchains:
+
+```bash
+# Add wain to your project
+go get github.com/opd-ai/wain
+
+# Build your application (uses pre-built libraries)
+go build .
+```
+
+The pre-built static libraries are bundled as GitHub release assets for:
+- `x86_64-unknown-linux-musl` (x86_64 Linux)
+- `aarch64-unknown-linux-musl` (ARM64 Linux)
+
+### Rebuilding from Source (Advanced)
+
+Contributors and advanced users can rebuild the Rust backend from source using the `wain-build` helper tool:
+
+```bash
+# Install the builder tool
+go install github.com/opd-ai/wain/cmd/wain-build@latest
+
+# Prerequisites (one-time setup)
+rustup target add x86_64-unknown-linux-musl  # or aarch64-unknown-linux-musl
+sudo apt-get install musl-tools              # or your distro's musl package
+
+# Rebuild Rust libraries in your project directory
+wain-build
+
+# Now build your application with rebuilt libraries
+go build .
+```
+
+The `wain-build` tool:
+1. Locates the wain module (in your project or Go module cache)
+2. Auto-detects your architecture
+3. Checks for required tools (cargo, musl-gcc, musl target)
+4. Builds the Rust library and musl stub
+5. Copies outputs to your working directory
+
+For more options, run `wain-build -h`.
 
 ## Test
 
