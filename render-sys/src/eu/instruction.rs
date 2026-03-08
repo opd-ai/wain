@@ -19,6 +19,12 @@ pub enum EUOpcode {
     Mov,
     Sel,  // Select (conditional move)
     
+    // Rounding operations
+    Rndd,  // Round down (floor)
+    Rndu,  // Round up (ceil)
+    Rnde,  // Round to nearest even
+    Rndz,  // Round toward zero (trunc)
+    
     // Logic operations
     And,
     Or,

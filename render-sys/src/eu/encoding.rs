@@ -27,6 +27,12 @@ pub fn encode_opcode(opcode: EUOpcode, gen: IntelGen) -> u8 {
         (EUOpcode::Mov, _) => 0x01,
         (EUOpcode::Sel, _) => 0x02,
         
+        // Rounding operations
+        (EUOpcode::Rndd, _) => 0x45,  // Round down (floor)
+        (EUOpcode::Rndu, _) => 0x46,  // Round up (ceil)
+        (EUOpcode::Rnde, _) => 0x44,  // Round to nearest even
+        (EUOpcode::Rndz, _) => 0x47,  // Round toward zero (trunc)
+        
         // Logic operations
         (EUOpcode::And, _) => 0x05,
         (EUOpcode::Or, _) => 0x06,
