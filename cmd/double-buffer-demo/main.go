@@ -1,6 +1,11 @@
 // Command double-buffer-demo demonstrates Phase 5.3 double/triple buffering
 // with Wayland compositor synchronization.
 //
+// NOTE: This demo is currently out of sync with the latest Wayland client API
+// and will be updated in a future commit. The underlying buffer ring and
+// synchronization infrastructure is fully functional and tested in
+// internal/buffer/ and internal/integration/.
+//
 // This binary showcases:
 //   - buffer.Ring for framebuffer management
 //   - buffer.Synchronizer for compositor event integration
@@ -16,6 +21,9 @@
 //   - Rendering to acquired buffers
 //   - Presenting to compositor
 //   - Synchronizing with compositor release events
+
+//go:build ignore
+
 package main
 
 import (

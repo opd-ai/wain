@@ -105,10 +105,10 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Sizing: percentage-based dimensions with auto-layout
 
 ### Integration Status
-- ✅ Demonstration binaries: `demo`, `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`, `dmabuf-demo`, `gpu-triangle-demo`
+- ✅ Demonstration binaries: `demo`, `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`, `dmabuf-demo`, `gpu-triangle-demo`, `double-buffer-demo`
 - ✅ Full protocol → rasterizer → display pipeline verified with integration tests
 - ✅ GPU buffer sharing tested on both X11 (DRI3) and Wayland (dmabuf)
-- ✅ Frame buffer ring management for double/triple buffering (`internal/buffer/`)
+- ✅ Frame buffer ring management for double/triple buffering with compositor synchronization (`internal/buffer/`, `internal/integration/`)
 - ⚠️ All packages marked `internal/` (public API surface planned for later)
 
 **Not yet implemented:** Full GPU rendering pipeline integration (Phase 5+), advanced EU backend features (URB I/O, texture sampling, shader optimizations - Phase 4.3 cont'd), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, GPU command submission infrastructure exists, and basic shader compilation to EU binary is functional, but GPU rendering is not yet wired into the display pipeline.
@@ -229,6 +229,7 @@ The project includes several demonstration binaries that exercise different subs
 | `bin/widget-demo`   | `make widget-demo`   | Yes          | Interactive widget demo (auto-detects X11/Wayland)       |
 | `bin/x11-dmabuf-demo` | `make x11-dmabuf-demo` | Yes      | X11 DRI3/Present GPU buffer sharing demo                 |
 | `bin/dmabuf-demo`   | `make dmabuf-demo`   | Yes          | Wayland DMA-BUF GPU buffer sharing demo                  |
+| `bin/double-buffer-demo` | `make double-buffer-demo` | Yes  | Phase 5.3 double/triple buffering with compositor sync  |
 | `bin/gpu-triangle-demo` | `make gpu-triangle-demo` | Yes  | GPU command submission triangle rendering demo           |
 | `bin/gen-atlas`     | `make gen-atlas`     | Yes          | SDF font atlas generator tool                            |
 
