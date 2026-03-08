@@ -30,16 +30,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/render/display"
-	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
-	"github.com/opd-ai/wain/internal/wayland/xdg"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
 	"github.com/opd-ai/wain/internal/x11/present"
+	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
 const (
@@ -109,36 +109,45 @@ func shouldUseWayland() (bool, error) {
 func runWaylandDemo() error {
 	fmt.Println("Initializing Wayland connection...")
 
-	conn, err := client.Connect()
+	conn, err := demo.ConnectToWayland()
 	if err != nil {
 		return fmt.Errorf("failed to connect to Wayland: %w", err)
 	}
 	defer conn.Close()
 
-	// Get compositor and create surface
-	compositor := conn.Registry().Compositor()
-	if compositor == nil {
-		return fmt.Errorf("compositor not available")
-	}
-
-	surface, err := compositor.CreateSurface()
+	// Set up globals
+	wlCtx, err := demo.SetupWaylandGlobals(conn)
 	if err != nil {
-		return fmt.Errorf("failed to create surface: %w", err)
+		return fmt.Errorf("failed to setup globals: %w", err)
 	}
 
-	// Get dmabuf global
-	dmabufGlobal := conn.Registry().Dmabuf()
+	// Bind to dmabuf (required for GPU rendering)
+	registry, err := conn.Display().GetRegistry()
+	if err != nil {
+		return fmt.Errorf("failed to get registry: %w", err)
+	}
+
+	dmabufGlobal := registry.FindGlobal("zwp_linux_dmabuf_v1")
 	if dmabufGlobal == nil {
 		return fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
 	}
 
-	// Get xdg shell and create toplevel window
-	xdgWmBase := conn.Registry().XdgWmBase()
-	if xdgWmBase == nil {
-		return fmt.Errorf("xdg_wm_base not available")
+	dmabufID, err := registry.BindDmabuf(dmabufGlobal)
+	if err != nil {
+		return fmt.Errorf("failed to bind dmabuf: %w", err)
 	}
 
-	xdgSurface, err := xdgWmBase.GetXdgSurface(surface)
+	dmabufObj := dmabuf.NewDmabuf(conn, dmabufID)
+	conn.RegisterObject(dmabufObj)
+
+	// Create surface
+	surface, err := wlCtx.Compositor.CreateSurface()
+	if err != nil {
+		return fmt.Errorf("failed to create surface: %w", err)
+	}
+
+	// Get xdg surface and toplevel
+	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
 	if err != nil {
 		return fmt.Errorf("failed to create xdg_surface: %w", err)
 	}
@@ -166,7 +175,7 @@ func runWaylandDemo() error {
 
 	// Create display pipeline
 	fmt.Println("Creating GPU→Wayland display pipeline...")
-	pipeline, err := display.NewWaylandPipeline(surface, dmabufGlobal, renderer)
+	pipeline, err := display.NewWaylandPipeline(surface, dmabufObj, renderer)
 	if err != nil {
 		return fmt.Errorf("failed to create display pipeline: %w", err)
 	}
@@ -183,11 +192,6 @@ func runWaylandDemo() error {
 			return fmt.Errorf("frame %d failed: %w", i, err)
 		}
 		cancel()
-
-		// Process Wayland events
-		if err := conn.Dispatch(); err != nil {
-			return fmt.Errorf("dispatch failed: %w", err)
-		}
 
 		time.Sleep(16 * time.Millisecond) // ~60 FPS
 	}
@@ -217,7 +221,22 @@ func runX11Demo() error {
 	}
 
 	// Create window
-	window, err := conn.CreateSimpleWindow(windowWidth, windowHeight, "wain GPU Display Demo (X11)")
+	fmt.Println("Creating window...")
+	root := conn.RootWindow()
+
+	const (
+		x           = 100
+		y           = 100
+		borderWidth = 0
+		windowClass = wire.WindowClassInputOutput
+		visual      = 0 // CopyFromParent
+		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress
+	)
+
+	mask := uint32(wire.CWEventMask)
+	attrs := []uint32{eventMask}
+
+	window, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
 		return fmt.Errorf("failed to create window: %w", err)
 	}
@@ -278,18 +297,14 @@ func createAnimatedDisplayList(frame, totalFrames int) *displaylist.DisplayList 
 		A: 255,
 	}
 
-	dl.Clear(bg)
+	// Fill background
+	dl.AddFillRect(0, 0, windowWidth, windowHeight, bg)
 
 	// Draw a rectangle that moves across the screen
 	x := int(progress * float32(windowWidth-200))
 	y := windowHeight/2 - 50
 
-	dl.FillRect(displaylist.Rect{
-		X:      x,
-		Y:      y,
-		Width:  200,
-		Height: 100,
-	}, core.Color{R: 255, G: 255, B: 255, A: 255})
+	dl.AddFillRect(x, y, 200, 100, core.Color{R: 255, G: 255, B: 255, A: 255})
 
 	return dl
 }
