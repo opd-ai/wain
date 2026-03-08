@@ -34,22 +34,27 @@ func (a *x11ConnectionAdapter) AllocXID() (dri3.XID, error) {
 	return dri3.XID(xid), err
 }
 
+// SendRequest sends an X11 protocol request without expecting a reply.
 func (a *x11ConnectionAdapter) SendRequest(buf []byte) error {
 	return a.conn.SendRequest(buf)
 }
 
+// SendRequestAndReply sends an X11 request and blocks until the reply arrives, returning the reply bytes or an error.
 func (a *x11ConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
 	return a.conn.SendRequestAndReply(req)
 }
 
+// SendRequestWithFDs sends an X11 protocol request with file descriptors without expecting a reply.
 func (a *x11ConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
 	return a.conn.SendRequestWithFDs(req, fds)
 }
 
+// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and blocks until the reply arrives, returning the reply bytes, reply file descriptors, or an error.
 func (a *x11ConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
 	return a.conn.SendRequestAndReplyWithFDs(req, fds)
 }
 
+// ExtensionOpcode returns the major opcode for a named X11 extension.
 func (a *x11ConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
 	return a.conn.ExtensionOpcode(name)
 }
