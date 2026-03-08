@@ -2,7 +2,7 @@
 PLAN: Statically-Compiled Go UI Toolkit with Hardware-Accelerated Rendering
 ================================================================================
 
-**Current Status:** Phases 0-2 complete. Phases 3-8 are planned.
+**Current Status:** Phases 0-8 complete. Phases 9-10 are planned (public API).
 
 Target: A single static Go binary that speaks X11/Wayland natively and renders
 UI via GPU using a custom minimal Rust driver (Intel first, then AMD).
@@ -675,6 +675,317 @@ PHASE 8: Polish & Distribution (Weeks 34-38)
        - Full integration: `go generate ./...` followed by `go build` works
 
 --------------------------------------------------------------------------------
+PHASE 9: Public API Infrastructure (Weeks 38-44)
+--------------------------------------------------------------------------------
+
+All code currently resides under internal/. Phase 9 builds the infrastructure
+required to expose a stable, go-gettable public API that feels like a native
+Go library — `go get github.com/opd-ai/wain` followed by a standard
+`go build` produces a fully static binary with GPU-accelerated UI.
+
+9.1  APPLICATION LIFECYCLE
+     - Create a top-level `wain` package at the module root that serves as
+       the primary public API entry point.
+     - Implement an `App` type that encapsulates:
+       (a) Display server auto-detection (Wayland preferred, X11 fallback).
+       (b) Renderer auto-detection (Intel GPU → AMD GPU → software fallback).
+       (c) Event loop management (single-goroutine event dispatch).
+       (d) Graceful shutdown and resource cleanup.
+     - The App must manage all platform and GPU lifecycle internally — the
+       application developer never sees Wayland/X11/DRM/GPU details.
+     - API sketch:
+         app := wain.NewApp()
+         app.Run()  // blocks until app.Quit() is called
+     - Milestone: `wain.NewApp().Run()` opens a blank window on both X11
+       and Wayland with auto-detected rendering backend.
+
+9.2  WINDOW ABSTRACTION
+     - Create a public `Window` type wrapping internal Wayland/X11 windows.
+     - Support window properties: title, initial size, min/max constraints,
+       fullscreen toggle, decorations (CSD with xdg-decoration negotiation).
+     - Expose window events: resize, close request, focus/unfocus, scale
+       change (HiDPI).
+     - Window dimensions specified as pixel defaults; the framework scales
+       them automatically for HiDPI via the existing scale/ package.
+     - API sketch:
+         win := app.NewWindow(wain.WindowConfig{
+             Title:  "My App",
+             Width:  800,
+             Height: 600,
+         })
+     - Milestone: application developer can create and display a titled
+       window with custom initial dimensions.
+
+9.3  UNIFIED EVENT SYSTEM
+     - Define public event types that abstract over Wayland/X11 input:
+       PointerEvent (move, button, scroll), KeyEvent (press, release,
+       repeat with resolved key symbol), TouchEvent, WindowEvent (resize,
+       close, focus), and a generic CustomEvent for application-defined
+       events injected via channel.
+     - Implement event dispatch: the event loop reads platform events,
+       translates them into public event types, and dispatches them to the
+       widget tree (hit-testing from root) then to registered callbacks.
+     - Support event consumption (widget marks event as handled to stop
+       propagation).
+     - Support keyboard focus management (tab order, explicit focus).
+     - API sketch:
+         win.OnKeyPress(func(e wain.KeyEvent) {
+             if e.Key == wain.KeyEscape { app.Quit() }
+         })
+     - Milestone: all existing input demos (pointer hover, click, keyboard,
+       scroll) work through the new public event types.
+
+9.4  RENDER INTEGRATION BRIDGE
+     - Create an internal bridge that connects the public widget tree to
+       the existing display list / backend pipeline:
+       (a) Widget tree → DisplayList emission (already implemented per-widget
+           via RenderToDisplayList).
+       (b) DisplayList → Renderer.Render() (GPU or software backend).
+       (c) Renderer.Present() → compositor buffer attachment.
+       (d) Damage tracking integration — only re-render changed widgets.
+     - The bridge manages the frame lifecycle:
+       1. Walk the widget tree, collect dirty widgets.
+       2. Emit DisplayList commands for dirty regions.
+       3. Submit to renderer with damage rects.
+       4. Present to compositor.
+     - Milestone: an application using the public API renders and presents
+       frames through the existing backend infrastructure with damage
+       tracking.
+
+9.5  RESOURCE MANAGEMENT
+     - Font loading: embed a default font (e.g., a small SDF atlas) so
+       that text rendering works out of the box. Allow loading custom fonts.
+     - Image loading: provide a simple API for loading images (PNG/JPEG
+       decode from Go stdlib, upload to GPU atlas).
+     - Automatic resource cleanup on App/Window destruction.
+     - API sketch:
+         font := wain.LoadFont("path/to/font.ttf", 14.0)
+         img := wain.LoadImage("path/to/icon.png")
+     - Milestone: text and images render correctly through the public API
+       without the developer touching any internal packages.
+
+9.6  BUILD SYSTEM FOR GO-GET
+     - Ensure `go get github.com/opd-ai/wain` works seamlessly:
+       (a) Ship pre-built Rust static libraries (.a) as part of tagged
+           releases so that a standard `go build` does not need to run
+           any generators in the Go module cache. The pre-built .a files
+           are downloaded automatically or bundled with the module.
+       (b) For contributors or advanced users who want to rebuild the Rust
+           backend from source, provide a small helper CLI
+           (e.g., `cmd/wain-build`) that runs from the consuming project
+           root and writes its outputs into the current working directory
+           (never into the module cache).
+       (c) Document the one-time prerequisites for rebuilding from source:
+           `cargo`, `musl-gcc`, `rustup target add <musl-target>`.
+       (d) Provide pre-built static libraries (.a) as GitHub release assets
+           for common platforms (x86_64-linux-musl, aarch64-linux-musl) so
+           that developers without a Rust toolchain can still `go build`
+           using the provided static libraries, without needing to set
+           CGO-specific build flags in the common case (advanced users may
+           override library paths via CGO_LDFLAGS if necessary).
+       (e) Verify that the final binary is fully static (ldd check) and
+           self-contained — no dynamic dependencies, no dlopen, no
+           runtime file requirements.
+     - The default developer experience must be:
+         go get github.com/opd-ai/wain
+         go build .                                 # produces static binary
+     - For rebuilding the Rust backend from source (run from project root):
+         go install github.com/opd-ai/wain/cmd/wain-build@latest
+         wain-build                                  # rebuilds Rust in cwd
+         go build .                                  # now links rebuilt Rust
+     - Milestone: a fresh machine with Go can `go get` and `go build` a
+       sample wain application from scratch, with an opt-in path to rebuild
+       the Rust backend when the toolchain is installed.
+
+--------------------------------------------------------------------------------
+PHASE 10: Public Widget API & Developer Experience (Weeks 44-52)
+--------------------------------------------------------------------------------
+
+Phase 10 exposes the widget layer as a public, ergonomic API that matches the
+UX of a pure-Go application. The percentage-based layout system from
+internal/ui/pctwidget/ is the cornerstone — developers express sizes as
+percentages of the parent container, and the framework handles all pixel math,
+HiDPI scaling, and resize adaptation automatically.
+
+Design principles:
+  - MINIMUM FRICTION: a "Hello World" app is <20 lines of Go.
+  - MAXIMUM EASE-OF-USE: percentage sizing eliminates manual coordinate math.
+  - PURE-GO FEEL: no CGO-specific build flags, no platform #ifdefs, no
+    shader management — the developer writes Go and only Go.
+  - IDENTICAL UX: the public API presents the same idioms (structs, methods,
+    interfaces, error returns) as Go stdlib packages like net/http.
+
+10.1  PUBLIC WIDGET INTERFACES
+      - Define a new public `wain.Widget` interface with a simplified,
+        stable contract that wraps the internal widget system (the internal
+        `widgets.Widget` interface has pointer-specific handlers and
+        `Draw(*core.Buffer, x, y) error` — the public interface abstracts
+        over those details):
+          type Widget interface {
+              Bounds() (width, height int)
+              HandleEvent(Event) bool
+              Draw(Canvas)
+          }
+      - Define `Container` interface for widgets that hold children:
+          type Container interface {
+              Widget
+              Add(child Widget)
+              Children() []Widget
+          }
+      - All public widget types embed unexported fields — developers
+        interact only through exported methods.
+      - Milestone: public Widget and Container interfaces compile and are
+        documented in godoc.
+
+10.2  PERCENT-BASED LAYOUT API
+      - Expose the percentage-based auto-layout engine as the primary
+        public layout mechanism, building on internal/ui/pctwidget/:
+          type Size struct {
+              Width  float64  // 0-100, percent of parent
+              Height float64  // 0-100, percent of parent
+          }
+      - All built-in containers accept children with percentage sizes.
+      - Layout is automatic and recursive — adding a child to a container
+        triggers layout recomputation on the next frame.
+      - Expose flow direction (Row / Column), padding, gap, and alignment
+        as container properties.
+      - Support manual position override for absolute placement when needed
+        (mirrors BaseWidget.SetPosition from pctwidget).
+      - API sketch:
+          sidebar := wain.NewPanel(wain.Size{Width: 25, Height: 100})
+          content := wain.NewPanel(wain.Size{Width: 75, Height: 100})
+          root := wain.NewRow()
+          root.Add(sidebar)
+          root.Add(content)
+          win.SetRoot(root)
+      - Milestone: a three-panel layout (header 100×10%, sidebar 25×90%,
+        content 75×90%) renders correctly and adapts on window resize.
+
+10.3  CONCRETE WIDGET TYPES
+      - Expose public concrete widgets, each using percentage-based sizing:
+        (a) Panel — styled rectangle container (from pctwidget.Panel).
+        (b) Button — clickable button with text, onClick callback.
+        (c) Label — static text display.
+        (d) TextInput — single-line editable text field with cursor.
+        (e) ScrollView — scrollable container for overflow content.
+        (f) Image — displays an image resource.
+        (g) Spacer — invisible widget that consumes percentage space for
+            layout alignment purposes.
+      - Each widget accepts a `wain.Size` for percentage-based dimensions
+        and an optional `wain.Style` for visual customization.
+      - API sketch:
+          btn := wain.NewButton("Submit", wain.Size{Width: 30, Height: 8})
+          btn.OnClick(func() { fmt.Println("clicked") })
+          panel.Add(btn)
+      - Milestone: all widget types render and interact correctly through
+        the public API on both X11 and Wayland.
+
+10.4  CONTAINER TYPES
+      - Row — arranges children horizontally (FlowRow), distributes width
+        by children's percentage widths. Height is the container's height.
+      - Column — arranges children vertically (FlowColumn), distributes
+        height by children's percentage heights.
+      - Stack — layers children on top of each other (for overlays,
+        modals, tooltips). Z-order determined by add order.
+      - Grid — arranges children in a fixed-column grid. Each cell is
+        evenly divided; children's percentage sizes are relative to their
+        cell. Column count is configurable.
+      - All containers support Padding, Gap, and cross-axis Align (Start,
+        Center, End, Stretch) from the existing layout engine.
+      - API sketch:
+          grid := wain.NewGrid(3)  // 3-column grid
+          for i := 0; i < 9; i++ {
+              grid.Add(wain.NewPanel(wain.Size{Width: 100, Height: 100}))
+          }
+      - Milestone: Row, Column, Stack, and Grid containers lay out children
+        correctly with percentage sizing, padding, and gap.
+
+10.5  THEMING & STYLING
+      - Expose a public `Theme` struct with colors, fonts, spacing, and
+        scale that can be applied application-wide or per-widget:
+          type Theme struct {
+              Background    Color
+              Foreground    Color
+              Accent        Color
+              Border        Color
+              FontSize      float64
+              Padding       int
+              Gap           int
+              BorderWidth   int
+              BorderRadius  int
+              Scale         float64  // HiDPI; auto-detected but overridable
+          }
+      - Provide built-in themes: DefaultDark (the existing RetroStyle),
+        DefaultLight, and HighContrast (for accessibility).
+      - Widgets inherit theme from their parent container unless overridden.
+      - For per-widget customization, provide a concrete `StyleOverride`
+        struct (not an interface — the internal `pctwidget.Style` interface
+        is kept internal; the public API exposes a simple config struct
+        for developer ergonomics):
+      - API sketch:
+          app.SetTheme(wain.DefaultDark())
+          panel.SetStyle(wain.StyleOverride{Background: wain.RGB(40, 40, 60)})
+      - Milestone: switching themes at runtime re-renders all widgets with
+        the new colors/fonts/spacing.
+
+10.6  STATE & CALLBACKS
+      - Provide simple callback-based state management (no reactive
+        framework — stay close to Go idioms):
+          btn.OnClick(func() { ... })
+          input.OnChange(func(text string) { ... })
+          scroll.OnScroll(func(offset int) { ... })
+      - Provide `wain.Notify()` to schedule a callback on the UI goroutine
+        from any goroutine (safe cross-goroutine communication):
+          go func() {
+              result := fetchData()
+              wain.Notify(func() { label.SetText(result) })
+          }()
+      - Milestone: cross-goroutine state updates render correctly without
+        data races.
+
+10.7  COMPLETE APPLICATION EXAMPLE
+      - Write a reference application demonstrating the full public API
+        in cmd/example-app/ (~100-150 lines of Go):
+        - Create App, create Window.
+        - Build a layout: header (Row with title Label and buttons),
+          sidebar (Column of navigation Panels), content area (ScrollView
+          with Panels), footer (Row with status Label).
+        - All sizing in percentages.
+        - Event handling for buttons, text input.
+        - Theme switching.
+        - Image display.
+      - The example should be copy-pasteable by a new developer — it must
+        compile and run with only `go generate && go build`.
+      - Milestone: the example app renders a complete multi-panel UI that
+        responds to input, adapts to window resize, and runs identically
+        on X11 and Wayland with GPU or software rendering.
+
+10.8  PUBLIC API DOCUMENTATION & STABILITY
+      - Ensure 100% godoc coverage for all public types and methods.
+      - Write a GETTING_STARTED.md with step-by-step instructions:
+        prerequisites, go get, first app, building, running.
+      - Write a WIDGETS.md reference with screenshots and code for each
+        widget type.
+      - Tag the first stable release (v0.1.0) with semver guarantees:
+        the public API will not break within a minor version.
+      - The go.mod module path `github.com/opd-ai/wain` is the canonical
+        import path. All internal details remain in internal/.
+      - Milestone: `go doc github.com/opd-ai/wain` displays complete
+        documentation for the public API surface.
+
+10.9  INTEGRATION TESTING
+      - Screenshot tests: render the example app on all backends (Intel
+        GPU, AMD GPU, software) and compare pixel output.
+      - API contract tests: verify that all public interfaces are
+        satisfied by all concrete widget types.
+      - Build tests: verify `go get` + `go generate` + `go build` works
+        on a clean environment (CI matrix: x86_64, aarch64).
+      - Accessibility baseline: verify keyboard-only navigation works
+        for all interactive widgets (tab order, Enter to activate).
+      - Milestone: CI passes for the public API on all supported
+        platforms and backends.
+
+--------------------------------------------------------------------------------
 KEY RISKS & MITIGATIONS
 --------------------------------------------------------------------------------
 
@@ -705,17 +1016,36 @@ RISK: Wayland protocol surface is large and compositor-specific quirks exist.
   → Test on wlroots-based compositors (sway) first — they're the most
     standards-compliant. Add mutter/kwin compat fixes as needed.
 
+RISK: Public API surface is too large or too leaky.
+  → Start with the smallest possible public surface: App, Window, Panel,
+    Button, Label, TextInput, ScrollView, Row, Column, Theme. Add types
+    only when real applications need them. Internal types stay internal —
+    do not expose GPU, protocol, or rasterization details.
+
+RISK: go-get build experience requires too many prerequisites.
+  → Provide pre-built static libraries for common platforms so developers
+    without Rust/musl can still build. Long-term, explore pure-Go
+    software-only mode that requires zero CGO (at the cost of no GPU
+    acceleration).
+
+RISK: Percentage layout model is insufficient for complex UIs.
+  → The percentage model covers 80%+ of layout needs. For the remaining
+    cases, support manual pixel positioning via SetPosition() and absolute
+    sizing. The flexbox-like layout engine (internal/ui/layout/) provides
+    grow/shrink semantics if needed in future phases.
+
 --------------------------------------------------------------------------------
 ESTIMATED TOTAL LOC
 --------------------------------------------------------------------------------
 
 Go (protocols + UI toolkit + software renderer):    ~30,000 - 50,000
+Go (public API, lifecycle, event bridge):           ~ 5,000 - 10,000
 Rust (Intel driver + EU compiler backend):          ~30,000 - 50,000
 Rust (AMD driver + RDNA compiler backend):          ~25,000 - 45,000
 Rust (naga integration, shared infra, C ABI):       ~ 5,000 - 10,000
 GLSL/WGSL shader sources:                          ~   500 -  1,000
                                                     ------------------
-Total:                                              ~90,000 - 156,000
+Total:                                              ~95,500 - 166,000
 
 --------------------------------------------------------------------------------
 AI AGENT TASK SUITABILITY GUIDE
@@ -728,12 +1058,19 @@ HIGHLY SUITABLE (mechanical, reference-heavy):
   - Translating Mesa's ISL (Intel Surface Layout) logic to Rust
   - Generating pipeline state setup from PRM documentation
   - Writing the GLSL/WGSL UI shaders (simple, well-understood patterns)
+  - Promoting internal types to public packages (Phase 9-10)
+  - Writing godoc comments and API documentation
+  - Generating example applications from existing demos
+  - Build system and go:generate integration
 
 MODERATELY SUITABLE (needs iteration and domain knowledge):
   - Naga IR → Intel EU binary backend (instruction selection, reg alloc)
   - Naga IR → AMD RDNA binary backend
   - Implementing the batch buffer builder with correct state ordering
   - Building the display list batcher/optimizer
+  - Designing the public API surface (naming, ergonomics, Go idioms)
+  - Event system bridging (platform events → public event types)
+  - Application lifecycle and window management abstraction
 
 LESS SUITABLE (requires hardware feedback loop):
   - Debugging GPU hangs and rendering corruption

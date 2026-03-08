@@ -2,7 +2,7 @@
 
 ## Project Context
 - **What it does**: A statically-compiled Go UI toolkit with GPU rendering via Rust (Intel + AMD backends)
-- **Current milestone**: All 8 roadmap phases complete — project ready for quality refinement
+- **Current milestone**: All 8 roadmap phases complete — project ready for quality refinement and public API (Phases 9-10)
 - **Estimated Scope**: Medium (15 complexity hotspots, 4% duplication, 90% doc coverage)
 
 ## Metrics Summary
@@ -174,6 +174,250 @@ These items from the roadmap are **not addressed** by this plan:
 2. **DPMS Handling** (Phase 7.2 deferred) — Requires compositor event integration
 3. **AT-SPI2 Accessibility** (Phase 8.4 documented) — Documented limitation, 6-week effort
 4. **GPU Backend Screenshot Tests** (screenshot_test.go TODO) — Requires Phase 5 GPU rendering maturity
+
+---
+
+## Public API Implementation Plan (Phases 9-10)
+
+This section defines the concrete implementation steps for the public API
+described in ROADMAP.md Phases 9-10. Steps are ordered by dependency.
+
+### Step 9: Create Public Package Structure
+- **Deliverable**: Create root-level Go package files that will form the public API surface. Create `wain.go`, `app.go`, `window.go`, `widget.go`, `event.go`, `theme.go`, `color.go` at the module root alongside `go.mod`. These files expose public types that delegate to `internal/` packages.
+- **Dependencies**: Steps 1-8 (code quality improvements reduce friction during promotion)
+- **Files**:
+  - `wain.go` (package doc, version)
+  - `app.go` (App type, NewApp, Run, Quit)
+  - `window.go` (Window type, WindowConfig)
+  - `widget.go` (Widget/Container interfaces, Size struct)
+  - `event.go` (public event types)
+  - `theme.go` (Theme struct, built-in themes)
+  - `color.go` (Color type, RGB/RGBA helpers)
+- **Acceptance**: `go doc github.com/opd-ai/wain` shows public types; package compiles with no internal/ leaks in public API signatures
+- **Validation**:
+  ```bash
+  go build github.com/opd-ai/wain
+  go doc github.com/opd-ai/wain | head -50
+  # Verify no internal/ types appear in the public API:
+  go doc github.com/opd-ai/wain 2>&1 | grep -c 'internal/' | xargs test 0 -eq
+  ```
+
+### Step 10: Implement App Lifecycle & Window Abstraction
+- **Deliverable**: Implement `App` struct with display-server auto-detection, event loop, and graceful shutdown. Implement `Window` struct wrapping internal Wayland/X11 windows with title, size, and close handling. Bridge to existing `internal/render/backend.NewRenderer()` for auto-detection.
+- **Dependencies**: Step 9
+- **Files**:
+  - `app.go` (App.Run event loop, platform detection)
+  - `window.go` (Window creation, resize, close)
+  - `internal/render/display/` (existing, consumed by bridge)
+  - `internal/wayland/client/` (existing, consumed by bridge)
+  - `internal/x11/` (existing, consumed by bridge)
+- **Acceptance**: `wain.NewApp()` successfully opens a window on both X11 and Wayland
+- **Validation**:
+  ```bash
+  go build ./cmd/example-app/
+  # Manual: run on Wayland and X11, verify window appears and closes cleanly
+  ```
+
+### Step 11: Implement Public Event System
+- **Deliverable**: Define public event types (`PointerEvent`, `KeyEvent`, `WindowEvent`, `TouchEvent`) and event dispatch from the internal Wayland/X11 event loops to public callbacks. Implement hit-testing to route pointer events to the correct widget. Implement keyboard focus management with tab-order traversal.
+- **Dependencies**: Step 10
+- **Files**:
+  - `event.go` (event type definitions)
+  - `app.go` (event dispatch integration)
+  - `widget.go` (hit-test routing, focus management)
+- **Acceptance**: Pointer and keyboard events dispatch correctly to widgets; tab key moves focus between interactive widgets
+- **Validation**:
+  ```bash
+  go test -run TestEventDispatch -v github.com/opd-ai/wain
+  go test -run TestKeyboardFocus -v github.com/opd-ai/wain
+  ```
+
+### Step 12: Implement Render Integration Bridge
+- **Deliverable**: Create internal bridge (`render_bridge.go`) that walks the public widget tree, emits DisplayList commands, submits to the Renderer (GPU or software), and presents to the compositor. Integrate damage tracking so only changed widgets are re-rendered. Manage frame lifecycle (acquire buffer → render → present → release).
+- **Dependencies**: Steps 10, 11
+- **Files**:
+  - `render_bridge.go` (new, internal bridge logic)
+  - `internal/render/backend/interface.go` (existing Renderer)
+  - `internal/raster/displaylist/` (existing DisplayList)
+  - `internal/buffer/ring.go` (existing buffer management)
+- **Acceptance**: Widgets render to screen through the display list pipeline with damage tracking
+- **Validation**:
+  ```bash
+  go test -run TestRenderBridge -v github.com/opd-ai/wain
+  # Verify damage tracking reduces redundant rendering:
+  go test -run TestDamageTracking -v github.com/opd-ai/wain
+  ```
+
+### Step 13: Implement Public Widget Types
+- **Deliverable**: Create public widget types wrapping internal implementations:
+  - `Panel` (wraps `pctwidget.Panel`) — styled container with percentage-based sizing
+  - `Button` (wraps `widgets.Button`) — clickable with text and OnClick
+  - `Label` — static text display (new, thin wrapper over text rendering)
+  - `TextInput` (wraps `widgets.TextInput`) — editable text field
+  - `ScrollView` (wraps `widgets.ScrollContainer`) — scrollable area
+  - `Image` — displays loaded image resources (new)
+  - `Spacer` — invisible layout spacer (new, trivial)
+- All widgets accept `wain.Size{Width, Height float64}` for percentage-based sizing.
+- **Dependencies**: Steps 9, 12
+- **Files**:
+  - `panel.go`, `button.go`, `label.go`, `text_input.go`, `scroll_view.go`, `image.go`, `spacer.go`
+- **Acceptance**: Each widget type renders correctly with percentage sizing; all satisfy the `Widget` interface
+- **Validation**:
+  ```bash
+  go test -run TestPanel -v github.com/opd-ai/wain
+  go test -run TestButton -v github.com/opd-ai/wain
+  go test -run TestWidgetInterface -v github.com/opd-ai/wain
+  ```
+
+### Step 14: Implement Container Types (Row, Column, Stack, Grid)
+- **Deliverable**: Create public container types that arrange children using percentage-based auto-layout:
+  - `Row` — horizontal flow (delegates to `AutoLayout` with `FlowRow`)
+  - `Column` — vertical flow (delegates to `AutoLayout` with `FlowColumn`)
+  - `Stack` — layered overlay (new, z-order by add order)
+  - `Grid` — fixed-column grid (new, divides space into equal cells)
+- Containers support `Padding`, `Gap`, and `Align` properties.
+- **Dependencies**: Step 13
+- **Files**:
+  - `row.go`, `column.go`, `stack.go`, `grid.go`
+  - `internal/ui/pctwidget/autolayout.go` (existing, consumed)
+  - `internal/ui/layout/layout.go` (existing, consumed for flex semantics)
+- **Acceptance**: Nested container layouts render correctly; percentage sizes resolve relative to parent container bounds
+- **Validation**:
+  ```bash
+  go test -run TestRow -v github.com/opd-ai/wain
+  go test -run TestColumn -v github.com/opd-ai/wain
+  go test -run TestGrid -v github.com/opd-ai/wain
+  go test -run TestNestedLayout -v github.com/opd-ai/wain
+  ```
+
+### Step 15: Implement Theming & Styling API
+- **Deliverable**: Create public `Theme` struct and built-in themes (DefaultDark, DefaultLight, HighContrast). Implement theme inheritance — widgets inherit from parent container unless overridden. Expose `Style` interface for per-widget customization. Bridge to existing `pctwidget.Style` and `widgets.Theme`.
+- **Dependencies**: Step 13
+- **Files**:
+  - `theme.go` (Theme struct, built-in themes, inheritance)
+  - `color.go` (Color type, RGB/RGBA/Hex constructors)
+  - `internal/ui/pctwidget/style.go` (existing, bridged)
+  - `internal/ui/widgets/widgets.go` (existing Theme, bridged)
+- **Acceptance**: Changing the app theme re-renders all widgets with new colors; per-widget style override works
+- **Validation**:
+  ```bash
+  go test -run TestThemeInheritance -v github.com/opd-ai/wain
+  go test -run TestStyleOverride -v github.com/opd-ai/wain
+  go test -run TestBuiltInThemes -v github.com/opd-ai/wain
+  ```
+
+### Step 16: Implement Resource Management
+- **Deliverable**: Implement font loading (LoadFont wrapping SDF atlas generation), image loading (LoadImage wrapping PNG/JPEG decode + GPU atlas upload), and embedded default font. All resources are reference-counted and freed on App destruction.
+- **Dependencies**: Steps 10, 12
+- **Files**:
+  - `font.go` (LoadFont, default font embedding)
+  - `image.go` (LoadImage, image resource type — note: distinct from Image widget)
+  - `internal/render/atlas/` (existing atlas management)
+  - `internal/raster/text/` (existing SDF text rendering)
+- **Acceptance**: Text renders with default font without any developer setup; custom fonts load from file path
+- **Validation**:
+  ```bash
+  go test -run TestDefaultFont -v github.com/opd-ai/wain
+  go test -run TestLoadFont -v github.com/opd-ai/wain
+  go test -run TestLoadImage -v github.com/opd-ai/wain
+  ```
+
+### Step 17: Implement State & Callback System
+- **Deliverable**: Implement callback registration for all interactive widgets (OnClick, OnChange, OnScroll, etc.). Implement `wain.Notify()` for safe cross-goroutine UI updates via a channel read in the event loop. Ensure all callbacks execute on the UI goroutine.
+- **Dependencies**: Steps 11, 13
+- **Files**:
+  - `app.go` (Notify channel integration in event loop)
+  - `button.go`, `text_input.go`, `scroll_view.go` (callback registration)
+- **Acceptance**: Callbacks fire on the UI goroutine; `Notify()` from a background goroutine updates UI without races
+- **Validation**:
+  ```bash
+  go test -run TestCallbacks -v github.com/opd-ai/wain
+  go test -run TestNotifyCrossGoroutine -v -race github.com/opd-ai/wain
+  ```
+
+### Step 18: Build & Distribution Verification
+- **Deliverable**: Verify the full `go get` → `go build` pipeline works from scratch using pre-built Rust artifacts (no `go generate` required in consumer modules). Add CI jobs for clean-environment builds. Create and publish pre-built release assets for the Rust static library. Provide a separate generator tool (e.g., `cmd/wain-build`) that can be invoked from within a consuming project when regeneration is needed. Update README.md with getting-started instructions for the public API and clear guidance on when/how to run the generator.
+- **Dependencies**: All previous steps
+- **Files**:
+  - `scripts/build-rust.sh` (existing, verify)
+  - `internal/render/generate.go` (existing go:generate, used only in this repo / generator tool, not via `go generate github.com/opd-ai/wain/...`)
+  - `cmd/wain-build/main.go` (new, optional Rust rebuild tool for consumers)
+  - `.github/workflows/ci.yml` (add public API build test)
+  - `README.md` (update with public API getting-started and generator usage)
+- **Acceptance**: `go get github.com/opd-ai/wain && go build ./...` succeeds on a clean x86_64 Linux environment without requiring `go generate` on the `github.com/opd-ai/wain/...` import path; documentation shows how to optionally run the generator tool from a consumer module.
+- **Validation**:
+  ```bash
+  # CI job verifies clean build from a fresh consumer module:
+  mkdir /tmp/test-app && cd /tmp/test-app
+  go mod init testapp
+  go get github.com/opd-ai/wain
+  cat > main.go << 'EOF'
+  package main
+  import "github.com/opd-ai/wain"
+  func main() { wain.NewApp().Run() }
+  EOF
+  go build -o testapp .
+  ldd testapp 2>&1 | grep -q "not a dynamic executable"
+  # Optional: if rebuilding Rust backend from source is needed
+  # (run from project root):
+  # go install github.com/opd-ai/wain/cmd/wain-build@latest
+  # wain-build
+  ```
+
+### Step 19: Reference Application & Documentation
+- **Deliverable**: Create `cmd/example-app/` demonstrating the full public API: multi-panel layout with header/sidebar/content/footer, buttons, text input, scroll view, theme switching, image display. Write GETTING_STARTED.md and WIDGETS.md documentation. Ensure 100% godoc coverage for all public types.
+- **Dependencies**: All previous steps
+- **Files**:
+  - `cmd/example-app/main.go` (reference application, ~100-150 LOC)
+  - `GETTING_STARTED.md` (new)
+  - `WIDGETS.md` (new)
+  - All public API files (godoc coverage)
+- **Acceptance**: Example app compiles, runs, and demonstrates all public widget types on both X11 and Wayland; godoc shows complete documentation
+- **Validation**:
+  ```bash
+  go build ./cmd/example-app/
+  go doc github.com/opd-ai/wain | wc -l  # Should be substantial
+  # Verify godoc coverage:
+  go doc github.com/opd-ai/wain.App
+  go doc github.com/opd-ai/wain.Window
+  go doc github.com/opd-ai/wain.Widget
+  go doc github.com/opd-ai/wain.Panel
+  go doc github.com/opd-ai/wain.Button
+  go doc github.com/opd-ai/wain.Row
+  go doc github.com/opd-ai/wain.Theme
+  ```
+
+### Step 20: Integration Testing & v0.1.0 Tag
+- **Deliverable**: Screenshot comparison tests for the reference application across all backends. API contract tests verifying all widgets satisfy public interfaces. Build pipeline tests on CI matrix (x86_64, aarch64). Keyboard navigation tests. Tag v0.1.0 release.
+- **Dependencies**: Step 19
+- **Files**:
+  - `wain_test.go` (API contract tests)
+  - `internal/integration/public_api_test.go` (screenshot comparisons)
+  - `.github/workflows/ci.yml` (matrix build tests)
+- **Acceptance**: All tests pass; v0.1.0 tagged; `go get github.com/opd-ai/wain@v0.1.0` resolves
+- **Validation**:
+  ```bash
+  go test -v github.com/opd-ai/wain/...
+  make test-go
+  git tag v0.1.0
+  ```
+
+---
+
+## Public API Success Criteria
+
+| Metric | Target | Validation |
+|--------|--------|------------|
+| Public types with godoc | 100% | `go doc` shows all types |
+| Hello World LOC | ≤20 lines | Manual review of minimal example |
+| `go get` + `go build` works | ✅ | CI clean-build job |
+| Binary is fully static | ✅ | `ldd` reports "not a dynamic executable" |
+| X11 + Wayland parity | ✅ | Screenshot comparison tests |
+| GPU + Software parity | ✅ | Screenshot comparison tests |
+| No internal/ in public API | 0 references | `go doc` grep check |
+| Widget types available | ≥7 | Panel, Button, Label, TextInput, ScrollView, Image, Spacer |
+| Container types available | ≥4 | Row, Column, Stack, Grid |
+| Built-in themes | ≥3 | DefaultDark, DefaultLight, HighContrast |
 
 ---
 
