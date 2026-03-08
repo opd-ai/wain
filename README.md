@@ -106,7 +106,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Sizing: percentage-based dimensions with auto-layout
 
 ### Integration Status
-- ✅ Demonstration binaries: `demo`, `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`, `dmabuf-demo`, `gpu-triangle-demo`, `double-buffer-demo`
+- ✅ Demonstration binaries: `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`, `dmabuf-demo`, `gpu-triangle-demo`, `double-buffer-demo`
 - ✅ Full protocol → rasterizer → display pipeline verified with integration tests
 - ✅ GPU buffer sharing tested on both X11 (DRI3) and Wayland (dmabuf)
 - ✅ Frame buffer ring management for double/triple buffering with compositor synchronization (`internal/buffer/`, `internal/integration/`)
