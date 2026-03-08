@@ -42,3 +42,12 @@ coverage.txt
 coverage.html
 cpu.prof
 mem.prof
+
+# Object files and stub outputs
+*.o
+*.a
+
+# Editor swap files
+*.swp
+*.swo
+*~
