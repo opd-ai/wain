@@ -242,19 +242,7 @@ func decodeDepths(r io.Reader, count int) ([]Depth, error) {
 // decodeScreen reads a single screen entry.
 func decodeScreen(r io.Reader) (Screen, error) {
 	var screen Screen
-	screen.Root, _ = DecodeUint32(r)
-	screen.DefaultColormap, _ = DecodeUint32(r)
-	screen.WhitePixel, _ = DecodeUint32(r)
-	screen.BlackPixel, _ = DecodeUint32(r)
-	screen.CurrentMasks, _ = DecodeUint32(r)
-	screen.WidthPixels, _ = DecodeUint16(r)
-	screen.HeightPixels, _ = DecodeUint16(r)
-	screen.WidthMM, _ = DecodeUint16(r)
-	screen.HeightMM, _ = DecodeUint16(r)
-	screen.MinMaps, _ = DecodeUint16(r)
-	screen.MaxMaps, _ = DecodeUint16(r)
-	screen.RootVisual, _ = DecodeUint32(r)
-	screen.BackingStores, _ = DecodeUint8(r)
+	decodeScreenFields(r, &screen)
 	saveUnders, _ := DecodeUint8(r)
 	screen.SaveUnders = saveUnders != 0
 	screen.RootDepth, _ = DecodeUint8(r)
@@ -268,53 +256,59 @@ func decodeScreen(r io.Reader) (Screen, error) {
 	return screen, nil
 }
 
+// decodeScreenFields reads basic screen fields, ignoring errors for performance.
+func decodeScreenFields(r io.Reader, s *Screen) {
+	decode5Uint32(r, &s.Root, &s.DefaultColormap, &s.WhitePixel, &s.BlackPixel, &s.CurrentMasks)
+	decode6Uint16(r, &s.WidthPixels, &s.HeightPixels, &s.WidthMM, &s.HeightMM, &s.MinMaps, &s.MaxMaps)
+	s.RootVisual, _ = DecodeUint32(r)
+	s.BackingStores, _ = DecodeUint8(r)
+}
+
+// decode5Uint32 reads 5 consecutive uint32 values.
+func decode5Uint32(r io.Reader, v1, v2, v3, v4, v5 *uint32) {
+	*v1, _ = DecodeUint32(r)
+	*v2, _ = DecodeUint32(r)
+	*v3, _ = DecodeUint32(r)
+	*v4, _ = DecodeUint32(r)
+	*v5, _ = DecodeUint32(r)
+}
+
+// decode6Uint16 reads 6 consecutive uint16 values.
+func decode6Uint16(r io.Reader, v1, v2, v3, v4, v5, v6 *uint16) {
+	*v1, _ = DecodeUint16(r)
+	*v2, _ = DecodeUint16(r)
+	*v3, _ = DecodeUint16(r)
+	*v4, _ = DecodeUint16(r)
+	*v5, _ = DecodeUint16(r)
+	*v6, _ = DecodeUint16(r)
+}
+
+// decode6Uint8 reads 6 consecutive uint8 values.
+func decode6Uint8(r io.Reader, v1, v2, v3, v4, v5, v6 *uint8) {
+	*v1, _ = DecodeUint8(r)
+	*v2, _ = DecodeUint8(r)
+	*v3, _ = DecodeUint8(r)
+	*v4, _ = DecodeUint8(r)
+	*v5, _ = DecodeUint8(r)
+	*v6, _ = DecodeUint8(r)
+}
+
 // DecodeSetupReply reads the server's setup reply from r.
 func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	var reply SetupReply
 
-	status, err := DecodeUint8(r)
-	if err != nil {
-		return reply, fmt.Errorf("%w: %v", ErrSetupFailed, err)
+	if err := decodeSetupHeader(r, &reply); err != nil {
+		return reply, err
 	}
-	reply.Status = SetupStatus(status)
 
 	if reply.Status == SetupStatusFailed {
 		return reply, decodeSetupFailure(r, &reply)
 	}
 
-	_, _ = DecodeUint8(r)
-	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
-	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
-	_, _ = DecodeUint16(r)
+	vendorLen, numScreens, numFormats := decodeSetupBody(r, &reply)
 
-	reply.ReleaseNumber, _ = DecodeUint32(r)
-	reply.ResourceIDBase, _ = DecodeUint32(r)
-	reply.ResourceIDMask, _ = DecodeUint32(r)
-	reply.MotionBufferSize, _ = DecodeUint32(r)
-
-	vendorLen, _ := DecodeUint16(r)
-	reply.MaxRequestLength, _ = DecodeUint16(r)
-
-	numScreens, _ := DecodeUint8(r)
-	numFormats, _ := DecodeUint8(r)
-
-	reply.ImageByteOrder, _ = DecodeUint8(r)
-	reply.BitmapBitOrder, _ = DecodeUint8(r)
-	reply.BitmapScanlineUnit, _ = DecodeUint8(r)
-	reply.BitmapScanlinePad, _ = DecodeUint8(r)
-	reply.MinKeycode, _ = DecodeUint8(r)
-	reply.MaxKeycode, _ = DecodeUint8(r)
-
-	io.CopyN(io.Discard, r, 4)
-
-	if vendorLen > 0 {
-		vendor := make([]byte, vendorLen)
-		io.ReadFull(r, vendor)
-		reply.Vendor = string(vendor)
-
-		if pad := Pad(int(vendorLen)); pad > 0 {
-			io.CopyN(io.Discard, r, int64(pad))
-		}
+	if err := decodeVendorString(r, &reply, vendorLen); err != nil {
+		return reply, err
 	}
 
 	formats, err := decodePixmapFormats(r, int(numFormats))
@@ -336,59 +330,148 @@ func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	return reply, nil
 }
 
+// decodeSetupHeader reads and validates the initial setup response.
+func decodeSetupHeader(r io.Reader, reply *SetupReply) error {
+	status, err := DecodeUint8(r)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrSetupFailed, err)
+	}
+	reply.Status = SetupStatus(status)
+	return nil
+}
+
+// decodeSetupBody reads the main setup reply fields, returning vendor/screen/format counts.
+func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8) {
+	_, _ = DecodeUint8(r)
+	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
+	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
+	_, _ = DecodeUint16(r)
+
+	reply.ReleaseNumber, _ = DecodeUint32(r)
+	reply.ResourceIDBase, _ = DecodeUint32(r)
+	reply.ResourceIDMask, _ = DecodeUint32(r)
+	reply.MotionBufferSize, _ = DecodeUint32(r)
+
+	vendorLen, _ = DecodeUint16(r)
+	reply.MaxRequestLength, _ = DecodeUint16(r)
+
+	numScreens, _ = DecodeUint8(r)
+	numFormats, _ = DecodeUint8(r)
+
+	decode6Uint8(r, &reply.ImageByteOrder, &reply.BitmapBitOrder, &reply.BitmapScanlineUnit,
+		&reply.BitmapScanlinePad, &reply.MinKeycode, &reply.MaxKeycode)
+
+	io.CopyN(io.Discard, r, 4)
+	return
+}
+
+// decodeVendorString reads the vendor string if present.
+func decodeVendorString(r io.Reader, reply *SetupReply, vendorLen uint16) error {
+	if vendorLen > 0 {
+		vendor := make([]byte, vendorLen)
+		io.ReadFull(r, vendor)
+		reply.Vendor = string(vendor)
+
+		if pad := Pad(int(vendorLen)); pad > 0 {
+			io.CopyN(io.Discard, r, int64(pad))
+		}
+	}
+	return nil
+}
+
 // ReadAuthority reads the MIT-MAGIC-COOKIE-1 from .Xauthority file.
 func ReadAuthority(display string) (string, []byte, error) {
-	home, err := os.UserHomeDir()
+	authFile, err := openAuthFile()
 	if err != nil {
-		return "", nil, fmt.Errorf("wire: cannot determine home directory: %w", err)
+		return "", nil, err
 	}
-
-	authFile := filepath.Join(home, ".Xauthority")
-	f, err := os.Open(authFile)
-	if err != nil {
-		return "", nil, fmt.Errorf("wire: cannot open %s: %w", authFile, err)
-	}
-	defer f.Close()
+	defer authFile.Close()
 
 	for {
-		// Read family
-		var family uint16
-		if err := binary.Read(f, binary.BigEndian, &family); err != nil {
+		entry, err := readAuthEntry(authFile)
+		if err != nil {
 			if err == io.EOF {
 				break
 			}
 			return "", nil, fmt.Errorf("wire: error reading authority: %w", err)
 		}
 
-		// Read address
-		var addrLen uint16
-		binary.Read(f, binary.BigEndian, &addrLen)
-		addr := make([]byte, addrLen)
-		io.ReadFull(f, addr)
-
-		// Read display number
-		var dispLen uint16
-		binary.Read(f, binary.BigEndian, &dispLen)
-		disp := make([]byte, dispLen)
-		io.ReadFull(f, disp)
-
-		// Read auth name
-		var nameLen uint16
-		binary.Read(f, binary.BigEndian, &nameLen)
-		name := make([]byte, nameLen)
-		io.ReadFull(f, name)
-
-		// Read auth data
-		var dataLen uint16
-		binary.Read(f, binary.BigEndian, &dataLen)
-		data := make([]byte, dataLen)
-		io.ReadFull(f, data)
-
-		// Check if this entry matches our display
-		if string(disp) == display && string(name) == "MIT-MAGIC-COOKIE-1" {
-			return string(name), data, nil
+		if entry.display == display && entry.name == "MIT-MAGIC-COOKIE-1" {
+			return entry.name, entry.data, nil
 		}
 	}
 
 	return "", nil, fmt.Errorf("%w: no authority found for display %s", ErrAuthFailed, display)
+}
+
+// openAuthFile opens the .Xauthority file.
+func openAuthFile() (*os.File, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("wire: cannot determine home directory: %w", err)
+	}
+
+	authFile := filepath.Join(home, ".Xauthority")
+	f, err := os.Open(authFile)
+	if err != nil {
+		return nil, fmt.Errorf("wire: cannot open %s: %w", authFile, err)
+	}
+	return f, nil
+}
+
+// authEntry represents a single .Xauthority entry.
+type authEntry struct {
+	display string
+	name    string
+	data    []byte
+}
+
+// readAuthEntry reads a single authority entry from the file.
+func readAuthEntry(f *os.File) (authEntry, error) {
+	var entry authEntry
+	var family uint16
+	if err := binary.Read(f, binary.BigEndian, &family); err != nil {
+		return entry, err
+	}
+
+	_, err := readLengthPrefixedBytes(f)
+	if err != nil {
+		return entry, err
+	}
+
+	disp, err := readLengthPrefixedBytes(f)
+	if err != nil {
+		return entry, err
+	}
+	entry.display = string(disp)
+
+	name, err := readLengthPrefixedBytes(f)
+	if err != nil {
+		return entry, err
+	}
+	entry.name = string(name)
+
+	data, err := readLengthPrefixedBytes(f)
+	if err != nil {
+		return entry, err
+	}
+	entry.data = data
+
+	return entry, nil
+}
+
+// readLengthPrefixedBytes reads a uint16 length followed by that many bytes.
+func readLengthPrefixedBytes(f *os.File) ([]byte, error) {
+	var length uint16
+	if err := binary.Read(f, binary.BigEndian, &length); err != nil {
+		return nil, err
+	}
+	if length == 0 {
+		return nil, nil
+	}
+	buf := make([]byte, length)
+	if _, err := io.ReadFull(f, buf); err != nil {
+		return nil, err
+	}
+	return buf, nil
 }

@@ -186,7 +186,32 @@ func EncodeFixed(w io.Writer, v float64) error {
 	return EncodeInt32(w, int32(v*256.0))
 }
 
+// readPadding reads padding bytes to align to 4-byte boundary.
+func readPadding(r io.Reader, length uint32) error {
+	padding := (4 - (length % 4)) % 4
+	if padding > 0 {
+		var pad [3]byte
+		if _, err := io.ReadFull(r, pad[:padding]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// writePadding writes padding bytes to align to 4-byte boundary.
+func writePadding(w io.Writer, length uint32) error {
+	padding := (4 - (length % 4)) % 4
+	if padding > 0 {
+		var pad [3]byte
+		if _, err := w.Write(pad[:padding]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // DecodeString reads a null-terminated UTF-8 string with length prefix.
+// The length includes the null terminator. Empty strings are encoded as length 0.
 // Strings are padded to 4-byte alignment.
 func DecodeString(r io.Reader) (string, error) {
 	length, err := DecodeUint32(r)
@@ -203,18 +228,12 @@ func DecodeString(r io.Reader) (string, error) {
 		return "", fmt.Errorf("%w: string data: %v", ErrInvalidArgument, err)
 	}
 
-	// Strings include null terminator in length
 	if buf[length-1] != 0 {
 		return "", fmt.Errorf("%w: string not null-terminated", ErrInvalidArgument)
 	}
 
-	// Read padding to 4-byte alignment
-	padding := (4 - (length % 4)) % 4
-	if padding > 0 {
-		var pad [3]byte
-		if _, err := io.ReadFull(r, pad[:padding]); err != nil {
-			return "", fmt.Errorf("%w: string padding: %v", ErrInvalidArgument, err)
-		}
+	if err := readPadding(r, length); err != nil {
+		return "", fmt.Errorf("%w: string padding: %v", ErrInvalidArgument, err)
 	}
 
 	return string(buf[:length-1]), nil
@@ -224,7 +243,6 @@ func DecodeString(r io.Reader) (string, error) {
 // Strings are padded to 4-byte alignment.
 func EncodeString(w io.Writer, s string) error {
 	if len(s) == 0 {
-		// Empty string is encoded as length 0
 		return EncodeUint32(w, 0)
 	}
 
@@ -237,17 +255,12 @@ func EncodeString(w io.Writer, s string) error {
 		return fmt.Errorf("wire: encode string data: %w", err)
 	}
 
-	nullTerm := []byte{0}
-	if _, err := w.Write(nullTerm); err != nil {
+	if _, err := w.Write([]byte{0}); err != nil {
 		return fmt.Errorf("wire: encode string null: %w", err)
 	}
 
-	padding := (4 - (length % 4)) % 4
-	if padding > 0 {
-		var pad [3]byte
-		if _, err := w.Write(pad[:padding]); err != nil {
-			return fmt.Errorf("wire: encode string padding: %w", err)
-		}
+	if err := writePadding(w, length); err != nil {
+		return fmt.Errorf("wire: encode string padding: %w", err)
 	}
 
 	return nil
@@ -270,12 +283,8 @@ func DecodeArray(r io.Reader) ([]byte, error) {
 		return nil, fmt.Errorf("%w: array data: %v", ErrInvalidArgument, err)
 	}
 
-	padding := (4 - (length % 4)) % 4
-	if padding > 0 {
-		var pad [3]byte
-		if _, err := io.ReadFull(r, pad[:padding]); err != nil {
-			return nil, fmt.Errorf("%w: array padding: %v", ErrInvalidArgument, err)
-		}
+	if err := readPadding(r, length); err != nil {
+		return nil, fmt.Errorf("%w: array padding: %v", ErrInvalidArgument, err)
 	}
 
 	return buf, nil
@@ -294,12 +303,8 @@ func EncodeArray(w io.Writer, data []byte) error {
 			return fmt.Errorf("wire: encode array data: %w", err)
 		}
 
-		padding := (4 - (length % 4)) % 4
-		if padding > 0 {
-			var pad [3]byte
-			if _, err := w.Write(pad[:padding]); err != nil {
-				return fmt.Errorf("wire: encode array padding: %w", err)
-			}
+		if err := writePadding(w, length); err != nil {
+			return fmt.Errorf("wire: encode array padding: %w", err)
 		}
 	}
 
@@ -371,6 +376,8 @@ func encodeArguments(w io.Writer, args []Argument) ([]int, error) {
 }
 
 // encodeArgument encodes a single argument, returning any file descriptor or -1.
+// encodeArgument encodes a single argument to the writer.
+// Returns the file descriptor index if arg is a fd type, otherwise -1.
 func encodeArgument(w io.Writer, arg *Argument) (int, error) {
 	switch arg.Type {
 	case ArgTypeInt32:
