@@ -321,7 +321,8 @@ func translateX11ButtonPressEvent(e events.ButtonPressEvent) Event {
 	}
 	// X11 button mapping: 1=left, 2=middle, 3=right, 4/5=scroll
 	if e.Detail <= 3 {
-		pe.button = PointerButton(0x110 + e.Detail - 1)
+		// Map X11 button to Linux input event code
+		pe.button = PointerButton(0x110 + uint32(e.Detail) - 1)
 	} else if e.Detail == 4 {
 		pe.eventType = PointerScroll
 		pe.axis = ScrollAxisVertical
@@ -344,7 +345,7 @@ func translateX11ButtonReleaseEvent(e events.ButtonReleaseEvent) Event {
 		eventType: PointerButtonRelease,
 		x:         float64(e.EventX),
 		y:         float64(e.EventY),
-		button:    PointerButton(0x110 + e.Detail - 1),
+		button:    PointerButton(0x110 + uint32(e.Detail) - 1),
 	}
 }
 
@@ -357,44 +358,12 @@ func translateX11MotionNotifyEvent(e events.MotionNotifyEvent) *PointerEvent {
 	}
 }
 
-func translateX11EnterNotifyEvent(e events.EnterNotifyEvent) *PointerEvent {
-	return &PointerEvent{
-		baseEvent: baseEvent{timestamp: time.Now()},
-		eventType: PointerEnter,
-		x:         float64(e.EventX),
-		y:         float64(e.EventY),
-	}
-}
-
-func translateX11LeaveNotifyEvent(e events.LeaveNotifyEvent) *PointerEvent {
-	return &PointerEvent{
-		baseEvent: baseEvent{timestamp: time.Now()},
-		eventType: PointerLeave,
-		x:         float64(e.EventX),
-		y:         float64(e.EventY),
-	}
-}
-
 func translateX11ConfigureNotifyEvent(e events.ConfigureNotifyEvent) *WindowEvent {
 	return &WindowEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
 		eventType: WindowResize,
 		width:     int(e.Width),
 		height:    int(e.Height),
-	}
-}
-
-func translateX11FocusInEvent(e events.FocusInEvent) *WindowEvent {
-	return &WindowEvent{
-		baseEvent: baseEvent{timestamp: time.Now()},
-		eventType: WindowFocus,
-	}
-}
-
-func translateX11FocusOutEvent(e events.FocusOutEvent) *WindowEvent {
-	return &WindowEvent{
-		baseEvent: baseEvent{timestamp: time.Now()},
-		eventType: WindowUnfocus,
 	}
 }
 

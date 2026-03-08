@@ -120,27 +120,45 @@ func (d *EventDispatcher) dispatchKey(evt *KeyEvent) {
 	defer d.mu.RUnlock()
 
 	// Handle Tab navigation for focus
-	if evt.eventType == KeyPress {
-		if evt.key == KeyTab {
-			if evt.modifiers&ModShift != 0 {
-				d.focusManager.FocusPrev()
-			} else {
-				d.focusManager.FocusNext()
-			}
-			evt.Consume()
-			return
-		}
+	if d.handleTabNavigation(evt) {
+		return
 	}
 
 	// Dispatch to focused widget first
-	if focused := d.focusManager.Focused(); focused != nil {
-		focused.HandleKey(evt)
-		if evt.Consumed() {
-			return
-		}
+	if d.dispatchToFocusedWidget(evt) {
+		return
 	}
 
 	// Dispatch to registered handlers
+	d.dispatchToKeyHandlers(evt)
+}
+
+// handleTabNavigation processes Tab key for focus navigation.
+func (d *EventDispatcher) handleTabNavigation(evt *KeyEvent) bool {
+	if evt.eventType != KeyPress || evt.key != KeyTab {
+		return false
+	}
+
+	if evt.modifiers&ModShift != 0 {
+		d.focusManager.FocusPrev()
+	} else {
+		d.focusManager.FocusNext()
+	}
+	evt.Consume()
+	return true
+}
+
+// dispatchToFocusedWidget sends key event to the focused widget.
+func (d *EventDispatcher) dispatchToFocusedWidget(evt *KeyEvent) bool {
+	if focused := d.focusManager.Focused(); focused != nil {
+		focused.HandleKey(evt)
+		return evt.Consumed()
+	}
+	return false
+}
+
+// dispatchToKeyHandlers sends key event to registered handlers.
+func (d *EventDispatcher) dispatchToKeyHandlers(evt *KeyEvent) {
 	for _, handler := range d.keyHandlers {
 		if evt.Consumed() {
 			return
