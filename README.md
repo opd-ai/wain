@@ -6,6 +6,7 @@
 
 - [Status](#status)
 - [Current Functionality](#current-functionality)
+- [Documentation](#documentation)
 - [Prerequisites](#prerequisites)
 - [Build](#build)
 - [Test](#test)
@@ -112,6 +113,22 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ All packages marked `internal/` (public API surface planned for later)
 
 **Not yet implemented:** Full GPU rendering pipeline integration (Phase 5+), advanced EU backend features (URB I/O, texture sampling, shader optimizations - Phase 4.3 cont'd), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, GPU command submission infrastructure exists, and basic shader compilation to EU binary is functional, but GPU rendering is not yet wired into the display pipeline.
+
+## Documentation
+
+**Comprehensive documentation is available in the following files:**
+
+- **[API.md](API.md)** — Complete API reference for all internal packages (rendering, protocols, UI widgets, integration)
+- **[HARDWARE.md](HARDWARE.md)** — Supported hardware matrix (Intel/AMD GPUs, kernel versions, display servers, testing matrix)
+- **[ROADMAP.md](ROADMAP.md)** — 8-phase implementation plan with detailed milestones (Phases 0-8)
+- **[ACCESSIBILITY.md](ACCESSIBILITY.md)** — Accessibility support documentation and future AT-SPI2 implementation path
+- **[RECOMMENDED_LIBRARIES.md](RECOMMENDED_LIBRARIES.md)** — Library selection rationale and design constraints
+
+**Quick links:**
+- GPU Support: See [HARDWARE.md § GPU Support](HARDWARE.md#gpu-support)
+- Build Instructions: See [Build](#build) section below
+- Architecture Overview: See [Architecture](#architecture) section below
+- Code Examples: See [Demonstration Binaries](#demonstration-binaries) and `cmd/` directory
 
 ## Prerequisites
 
