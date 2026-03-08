@@ -21,6 +21,7 @@ import "C"
 
 import (
 	"fmt"
+	"sync"
 	"unsafe"
 )
 
@@ -37,12 +38,18 @@ const (
 )
 
 // Allocator manages GPU buffer allocation and export.
+// It is safe to call Close from multiple goroutines; only the first call
+// has any effect (destroy-once semantics).
 type Allocator struct {
+	mu     sync.Mutex
 	handle C.BufferAllocator
 }
 
 // BufferHandle represents an allocated GPU buffer.
+// It is safe to call Destroy from multiple goroutines; only the first call
+// has any effect (destroy-once semantics).
 type BufferHandle struct {
+	mu        sync.Mutex
 	handle    C.Buffer
 	allocator *Allocator
 	Width     uint32
@@ -65,11 +72,15 @@ func NewAllocator(path string) (*Allocator, error) {
 }
 
 // Close destroys the allocator and releases resources.
+// It is safe to call Close more than once; only the first call has any effect.
 func (a *Allocator) Close() {
-	if a.handle != nil {
-		C.buffer_allocator_destroy(a.handle)
-		a.handle = nil
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.handle == nil {
+		return
 	}
+	C.buffer_allocator_destroy(a.handle)
+	a.handle = nil
 }
 
 // Allocate creates a new GPU buffer with the specified dimensions and format.
@@ -79,6 +90,8 @@ func (a *Allocator) Close() {
 //   - bpp: bits per pixel (typically 32 for ARGB8888)
 //   - tiling: tiling format (TilingNone, TilingX, TilingY)
 func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*BufferHandle, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.handle == nil {
 		return nil, fmt.Errorf("allocator is closed")
 	}
@@ -112,14 +125,21 @@ func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*B
 // ExportDmabuf exports the buffer as a DMA-BUF file descriptor.
 // The caller owns the fd and must close it when done (using syscall.Close).
 func (a *Allocator) ExportDmabuf(buffer *BufferHandle) (int, error) {
-	if a.handle == nil {
+	a.mu.Lock()
+	allocHandle := a.handle
+	a.mu.Unlock()
+	if allocHandle == nil {
 		return -1, fmt.Errorf("allocator is closed")
 	}
-	if buffer.handle == nil {
+
+	buffer.mu.Lock()
+	bufHandle := buffer.handle
+	buffer.mu.Unlock()
+	if bufHandle == nil {
 		return -1, fmt.Errorf("buffer is destroyed")
 	}
 
-	fd := C.buffer_export_dmabuf(a.handle, buffer.handle)
+	fd := C.buffer_export_dmabuf(allocHandle, bufHandle)
 	if fd < 0 {
 		return -1, fmt.Errorf("failed to export buffer as dmabuf")
 	}
@@ -132,6 +152,8 @@ func (a *Allocator) ExportDmabuf(buffer *BufferHandle) (int, error) {
 // This handle can be used with render.SubmitBatch to reference the buffer
 // in GPU commands (e.g., as a render target or vertex buffer).
 func (b *BufferHandle) GemHandle() uint32 {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.handle == nil {
 		return 0
 	}
@@ -139,18 +161,26 @@ func (b *BufferHandle) GemHandle() uint32 {
 }
 
 // Destroy frees the buffer and releases GPU memory.
+// It is safe to call Destroy more than once; only the first call has any effect.
 func (b *BufferHandle) Destroy() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.handle == nil {
 		return nil // already destroyed
 	}
-	if b.allocator.handle == nil {
+
+	b.allocator.mu.Lock()
+	allocHandle := b.allocator.handle
+	b.allocator.mu.Unlock()
+	if allocHandle == nil {
+		b.handle = nil
 		return fmt.Errorf("allocator is closed")
 	}
 
 	// Track deallocation before destroying
 	globalMemStats.RecordDeallocation(uintptr(unsafe.Pointer(b.handle)))
 
-	if C.buffer_destroy(b.allocator.handle, b.handle) != 0 {
+	if C.buffer_destroy(allocHandle, b.handle) != 0 {
 		return fmt.Errorf("failed to destroy buffer")
 	}
 
@@ -173,15 +203,22 @@ func (b *BufferHandle) Destroy() error {
 //	// Write to data...
 //	copy(data, pixels)
 func (b *BufferHandle) Mmap() ([]byte, error) {
-	if b.handle == nil {
+	b.mu.Lock()
+	bufHandle := b.handle
+	b.mu.Unlock()
+	if bufHandle == nil {
 		return nil, fmt.Errorf("buffer is destroyed")
 	}
-	if b.allocator.handle == nil {
+
+	b.allocator.mu.Lock()
+	allocHandle := b.allocator.handle
+	b.allocator.mu.Unlock()
+	if allocHandle == nil {
 		return nil, fmt.Errorf("allocator is closed")
 	}
 
 	var size C.size_t
-	ptr := C.buffer_mmap(b.allocator.handle, b.handle, &size)
+	ptr := C.buffer_mmap(allocHandle, bufHandle, &size)
 	if ptr == nil {
 		return nil, fmt.Errorf("failed to mmap buffer")
 	}

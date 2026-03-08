@@ -30,6 +30,10 @@ use allocator::{BufferAllocator, Buffer, TilingFormat, DriverType};
 use detect::GpuGeneration;
 use i915::RelocationEntry;
 
+/// Maximum shader source size (1 MB). Inputs larger than this are rejected
+/// before parsing to prevent compiler resource exhaustion.
+const MAX_SHADER_SOURCE_SIZE: usize = 1_048_576;
+
 /// Add two 32-bit integers and return the result.
 ///
 /// # Safety
@@ -600,6 +604,11 @@ pub unsafe extern "C" fn render_compile_shader(
         Ok(s) => s,
         Err(_) => return std::ptr::null_mut(),
     };
+
+    // Reject oversized inputs before parsing to prevent resource exhaustion
+    if source.len() > MAX_SHADER_SOURCE_SIZE {
+        return std::ptr::null_mut();
+    }
 
     // Parse GPU generation
     let gen = match gpu_gen {

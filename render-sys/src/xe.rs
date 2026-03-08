@@ -7,7 +7,7 @@
 /// though the GPU programming model above this layer remains similar.
 
 use std::io;
-use crate::drm::DrmDevice;
+use crate::drm::{DrmDevice, checked_ioctl};
 
 /// DRM_IOCTL_XE_DEVICE_QUERY: Query device capabilities.
 ///
@@ -354,66 +354,42 @@ const DRM_XE_EXEC_QUEUE_DESTROY: nix::libc::Ioctl = nix::request_code_readwrite!
 impl DrmDevice {
     /// Query device capabilities (Xe-specific).
     pub fn xe_device_query(&self, req: &mut DeviceQuery) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_DEVICE_QUERY as _, req as *mut DeviceQuery)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_DEVICE_QUERY as u64, req as *mut DeviceQuery)
     }
 
     /// Allocate a GEM buffer (Xe-specific).
     pub fn xe_gem_create(&self, req: &mut GemCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_GEM_CREATE as _, req as *mut GemCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_GEM_CREATE as u64, req as *mut GemCreate)
     }
 
     /// Create a GPU virtual memory context (Xe-specific).
     pub fn xe_vm_create(&self, req: &mut VmCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_VM_CREATE as _, req as *mut VmCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_VM_CREATE as u64, req as *mut VmCreate)
     }
 
     /// Destroy a GPU virtual memory context (Xe-specific).
     pub fn xe_vm_destroy(&self, req: &mut VmDestroy) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_VM_DESTROY as _, req as *mut VmDestroy)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_VM_DESTROY as u64, req as *mut VmDestroy)
     }
 
     /// Bind a GEM buffer to a VM address (Xe-specific).
     pub fn xe_vm_bind(&self, req: &mut VmBind) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_VM_BIND as _, req as *mut VmBind)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_VM_BIND as u64, req as *mut VmBind)
     }
 
     /// Submit execution queue (Xe-specific).
     pub fn xe_exec(&self, req: &mut Exec) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_EXEC as _, req as *mut Exec)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_EXEC as u64, req as *mut Exec)
     }
 
     /// Create an execution queue (Xe-specific).
     pub fn xe_exec_queue_create(&self, req: &mut ExecQueueCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_EXEC_QUEUE_CREATE as _, req as *mut ExecQueueCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_EXEC_QUEUE_CREATE as u64, req as *mut ExecQueueCreate)
     }
 
     /// Destroy an execution queue (Xe-specific).
     pub fn xe_exec_queue_destroy(&self, req: &mut ExecQueueDestroy) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_XE_EXEC_QUEUE_DESTROY as _, req as *mut ExecQueueDestroy)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_XE_EXEC_QUEUE_DESTROY as u64, req as *mut ExecQueueDestroy)
     }
 }
 

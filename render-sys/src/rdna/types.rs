@@ -56,14 +56,24 @@ impl RegisterFile {
     }
 
     /// Allocate a new VGPR
+    ///
+    /// # Panics
+    ///
+    /// Panics if all 255 VGPRs have already been allocated (overflow guard).
     pub fn alloc_vgpr(&mut self) -> VGPR {
+        assert!(self.next_vgpr < 255, "VGPR exhausted: cannot allocate more than 255 VGPRs");
         let vgpr = VGPR::new(self.next_vgpr);
         self.next_vgpr += 1;
         vgpr
     }
 
     /// Allocate a new SGPR
+    ///
+    /// # Panics
+    ///
+    /// Panics if all 255 SGPRs have already been allocated (overflow guard).
     pub fn alloc_sgpr(&mut self) -> SGPR {
+        assert!(self.next_sgpr < 255, "SGPR exhausted: cannot allocate more than 255 SGPRs");
         let sgpr = SGPR::new(self.next_sgpr);
         self.next_sgpr += 1;
         sgpr

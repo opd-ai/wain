@@ -8,6 +8,13 @@
 /// - Mesa src/amd/common/sid.h and src/amd/vulkan/ (RADV)
 /// - PM4 Type 3 packets are the primary command format
 
+// PM4 command streams are arrays of u32 values interpreted byte-by-byte by
+// the AMD GPU, which is always little-endian. Reinterpreting those u32s as
+// raw bytes (via slice::from_raw_parts in PM4Builder::as_bytes) only produces
+// the correct byte order on a little-endian host.
+#[cfg(not(target_endian = "little"))]
+compile_error!("PM4 command streams require little-endian architecture");
+
 use std::io;
 
 /// PM4 packet types.

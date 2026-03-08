@@ -4,7 +4,7 @@
 /// for GEM buffer management and GPU command submission.
 
 use std::io;
-use crate::drm::DrmDevice;
+use crate::drm::{DrmDevice, checked_ioctl};
 
 /// I915_GEM_CREATE: Allocate a GEM buffer object.
 #[repr(C)]
@@ -338,67 +338,43 @@ const I915_GEM_EXECBUFFER2: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_
 impl DrmDevice {
     /// Allocate a GEM buffer (i915-specific).
     pub fn i915_gem_create(&self, req: &mut GemCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_CREATE as _, req as *mut GemCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_CREATE as u64, req as *mut GemCreate)
     }
 
     /// Get mmap offset for a GEM buffer (i915-specific).
     pub fn i915_gem_mmap_offset(&self, req: &mut GemMmapOffset) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_MMAP_OFFSET as _, req as *mut GemMmapOffset)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_MMAP_OFFSET as u64, req as *mut GemMmapOffset)
     }
 
     /// Set tiling mode for a GEM buffer (i915-specific).
     pub fn i915_gem_set_tiling(&self, handle: u32, tiling_mode: u32, stride: u32) -> io::Result<()> {
         let mut req = GemSetTiling::new(handle, tiling_mode, stride);
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_SET_TILING as _, &mut req as *mut GemSetTiling)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_SET_TILING as u64, &mut req as *mut GemSetTiling)
     }
 
     /// Wait for a GEM buffer to become idle (i915-specific).
     pub fn i915_gem_wait(&self, req: &mut GemWait) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_WAIT as _, req as *mut GemWait)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_WAIT as u64, req as *mut GemWait)
     }
 
     /// Create a GPU execution context (i915-specific).
     pub fn i915_context_create(&self, req: &mut ContextCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_CREATE as _, req as *mut ContextCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_CONTEXT_CREATE as u64, req as *mut ContextCreate)
     }
 
     /// Destroy a GPU execution context (i915-specific).
     pub fn i915_context_destroy(&self, req: &mut ContextDestroy) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_CONTEXT_DESTROY as _, req as *mut ContextDestroy)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_CONTEXT_DESTROY as u64, req as *mut ContextDestroy)
     }
 
     /// Query device parameters (i915-specific).
     pub fn i915_getparam(&self, req: &mut GetParam) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GETPARAM as _, req as *mut GetParam)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GETPARAM as u64, req as *mut GetParam)
     }
 
     /// Submit command buffer for execution (i915-specific).
     pub fn i915_execbuffer2(&self, req: &mut ExecBuffer2) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), I915_GEM_EXECBUFFER2 as _, req as *mut ExecBuffer2)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), I915_GEM_EXECBUFFER2 as u64, req as *mut ExecBuffer2)
     }
 
     /// Submit a batch buffer with relocations and wait for completion.

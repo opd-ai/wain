@@ -45,6 +45,7 @@ const (
 // Conn wraps a Unix domain socket connection with file descriptor passing support.
 type Conn struct {
 	conn *net.UnixConn
+	file *os.File
 	fd   int
 }
 
@@ -73,7 +74,7 @@ func Dial(path string) (*Conn, error) {
 
 // NewConn creates a Conn from an existing net.UnixConn.
 // Note: conn.File() creates a duplicate fd, which we use for low-level syscalls.
-// The original connection is kept for normal I/O operations.
+// The *os.File is stored to prevent the GC from closing the duplicate fd.
 func NewConn(conn *net.UnixConn) (*Conn, error) {
 	file, err := conn.File()
 	if err != nil {
@@ -82,6 +83,7 @@ func NewConn(conn *net.UnixConn) (*Conn, error) {
 
 	return &Conn{
 		conn: conn,
+		file: file,
 		fd:   int(file.Fd()),
 	}, nil
 }
@@ -210,9 +212,15 @@ func (c *Conn) RecvFD(data []byte) (n, fd int, err error) {
 	return n, fds[0], nil
 }
 
-// Close closes the underlying socket connection.
+// Close closes the underlying socket connection and the duplicated file.
 func (c *Conn) Close() error {
-	return c.conn.Close()
+	err := c.conn.Close()
+	if c.file != nil {
+		if ferr := c.file.Close(); ferr != nil && err == nil {
+			err = ferr
+		}
+	}
+	return err
 }
 
 // Fd returns the underlying file descriptor.
