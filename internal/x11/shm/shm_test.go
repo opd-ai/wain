@@ -212,8 +212,8 @@ func TestQueryExtension(t *testing.T) {
 			extensionOpcode: 130,
 			reply: func() []byte {
 				buf := make([]byte, 32)
-				buf[0] = 1 // reply type
-				buf[1] = 1 // shared pixmaps = true
+				buf[0] = 1                                   // reply type
+				buf[1] = 1                                   // shared pixmaps = true
 				binary.LittleEndian.PutUint16(buf[8:10], 1)  // major version = 1
 				binary.LittleEndian.PutUint16(buf[10:12], 2) // minor version = 2
 				buf[16] = ShmPixmapFormatZ                   // pixmap format
@@ -230,8 +230,8 @@ func TestQueryExtension(t *testing.T) {
 			extensionOpcode: 130,
 			reply: func() []byte {
 				buf := make([]byte, 32)
-				buf[0] = 1 // reply type
-				buf[1] = 0 // shared pixmaps = false
+				buf[0] = 1                                   // reply type
+				buf[1] = 0                                   // shared pixmaps = false
 				binary.LittleEndian.PutUint16(buf[8:10], 1)  // major version = 1
 				binary.LittleEndian.PutUint16(buf[10:12], 0) // minor version = 0
 				buf[16] = ShmPixmapFormatXY                  // pixmap format
