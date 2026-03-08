@@ -640,8 +640,17 @@ PHASE 8: Polish & Distribution (Weeks 34-38)
         - Zero critical regressions, 50 complexity improvements
         - Static linking verified
 
-8.4  Accessibility: expose the widget tree via AT-SPI2 over D-Bus if
+8.4  ✅ Accessibility: expose the widget tree via AT-SPI2 over D-Bus if
      feasible, or document the limitation.
+     - **Status**: ✅ Complete (documented limitation)
+       - Created comprehensive ACCESSIBILITY.md documentation
+       - Analyzed AT-SPI2 requirements and D-Bus integration complexity
+       - Documented technical constraints for static binary architecture
+       - Provided workarounds: high-contrast themes, keyboard navigation, widget tree export
+       - Outlined future implementation path (6-week effort estimate)
+       - Decision: Document limitation per task's "if feasible" clause
+       - AT-SPI2 requires 2-3 weeks MVP implementation vs static binary design goals
+       - Full documentation enables future contributors to implement if prioritized
 
 8.5  Documentation: API docs, build instructions, supported hardware
      matrix, architecture overview.
