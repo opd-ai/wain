@@ -85,6 +85,15 @@ package render
 //     uint32_t *out_context_id,
 //     uint32_t *out_vm_id
 // );
+//
+// // Buffer mmap/munmap functions
+// uint8_t *buffer_mmap(
+//     void *allocator,
+//     void *buffer,
+//     size_t *out_size
+// );
+//
+// int32_t buffer_munmap(uint8_t *ptr, size_t size);
 import "C"
 
 import "unsafe"

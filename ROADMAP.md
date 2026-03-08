@@ -304,10 +304,19 @@ PHASE 5: Rendering Backend Integration (Weeks 18-22)
        - ✅ Present() method for exporting render target as DMA-BUF
        - End-to-end pipeline complete: display list → batches → GPU submission → present
 
-5.2  TEXTURE ATLAS MANAGEMENT
+5.2  ✅ TEXTURE ATLAS MANAGEMENT (Complete)
      - Font glyphs: maintain an SDF glyph atlas texture, rasterize new
        glyphs on CPU (Go side), upload dirty regions to GPU.
      - UI images: pack into atlas pages, manage eviction.
+     - **Status**: ✅ Implemented
+       - Added buffer_mmap/buffer_munmap C ABI functions in Rust (lib.rs)
+       - Added BufferHandle.Mmap() and Munmap() methods in Go (dmabuf.go)
+       - Implemented UploadFontAtlas() with mmap upload to GPU (atlas.go)
+       - Implemented UploadImageData() with row-by-row mmap upload (atlas.go)
+       - Implemented LRU eviction algorithm (evictLRURegions) (atlas.go)
+       - Implemented shelf space reuse (removeRegionFromShelf) (atlas.go)
+       - All 9 atlas tests passing, all Rust tests passing
+       - Ready for Phase 5.3 (Double/Triple Buffering)
 
 5.3  DOUBLE/TRIPLE BUFFERING
      - Manage a ring of framebuffers. Synchronize with the compositor

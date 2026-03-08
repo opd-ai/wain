@@ -398,6 +398,82 @@ pub unsafe extern "C" fn render_create_context(
     }
 }
 
+/// Map a GPU buffer into CPU address space for reading/writing.
+///
+/// Returns a pointer to the mapped memory or null on error.
+/// The caller must call buffer_munmap when done.
+///
+/// # Arguments
+/// - allocator: Allocator that created the buffer
+/// - buffer: Buffer to map
+/// - out_size: Output parameter for the mapped region size in bytes
+///
+/// # Safety
+/// - allocator must be a valid pointer returned by buffer_allocator_create
+/// - buffer must be a valid pointer returned by buffer_allocate
+/// - out_size must be a valid pointer
+/// - The returned pointer must be unmapped with buffer_munmap
+#[no_mangle]
+pub unsafe extern "C" fn buffer_mmap(
+    allocator: *mut BufferAllocator,
+    buffer: *mut Buffer,
+    out_size: *mut usize,
+) -> *mut u8 {
+    if allocator.is_null() || buffer.is_null() || out_size.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let alloc = &*allocator;
+    let buf = &*buffer;
+    let dev = alloc.device();
+
+    // Get mmap offset using i915_gem_mmap_offset
+    let mut mmap_req = i915::GemMmapOffset::new(buf.handle, i915::I915_MMAP_OFFSET_WB);
+    if dev.i915_gem_mmap_offset(&mut mmap_req).is_err() {
+        return std::ptr::null_mut();
+    }
+
+    // Calculate buffer size
+    let size = (buf.stride * buf.height) as usize;
+    *out_size = size;
+
+    // Map the buffer into userspace using libc mmap
+    let ptr = nix::libc::mmap(
+        std::ptr::null_mut(),
+        size,
+        nix::libc::PROT_READ | nix::libc::PROT_WRITE,
+        nix::libc::MAP_SHARED,
+        dev.fd(),
+        mmap_req.offset as i64,
+    );
+
+    if ptr == nix::libc::MAP_FAILED {
+        return std::ptr::null_mut();
+    }
+
+    ptr as *mut u8
+}
+
+/// Unmap a previously mapped GPU buffer.
+///
+/// # Safety
+/// - ptr must be a valid pointer returned by buffer_mmap
+/// - size must be the size returned by buffer_mmap
+/// - ptr must not be used after this call
+#[no_mangle]
+pub unsafe extern "C" fn buffer_munmap(ptr: *mut u8, size: usize) -> i32 {
+    if ptr.is_null() {
+        return -1;
+    }
+
+    let result = nix::libc::munmap(ptr as *mut nix::libc::c_void, size);
+    if result == 0 {
+        0
+    } else {
+        -1
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

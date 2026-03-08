@@ -15,6 +15,8 @@ package render
 // int32_t buffer_get_info(Buffer buffer, uint32_t* out_width, uint32_t* out_height, uint32_t* out_stride);
 // uint32_t buffer_get_handle(Buffer buffer);
 // int32_t buffer_destroy(BufferAllocator allocator, Buffer buffer);
+// uint8_t* buffer_mmap(BufferAllocator allocator, Buffer buffer, size_t* out_size);
+// int32_t buffer_munmap(uint8_t* ptr, size_t size);
 import "C"
 
 import (
@@ -146,3 +148,56 @@ func (b *BufferHandle) Destroy() error {
 	b.handle = nil
 	return nil
 }
+
+// Mmap maps the buffer into CPU address space for reading/writing.
+//
+// Returns a byte slice pointing to the mapped memory. The caller must call
+// Munmap when done to avoid leaking memory mappings.
+//
+// Example:
+//
+//	data, err := buffer.Mmap()
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer buffer.Munmap(data)
+//	// Write to data...
+//	copy(data, pixels)
+func (b *BufferHandle) Mmap() ([]byte, error) {
+	if b.handle == nil {
+		return nil, fmt.Errorf("buffer is destroyed")
+	}
+	if b.allocator.handle == nil {
+		return nil, fmt.Errorf("allocator is closed")
+	}
+
+	var size C.size_t
+	ptr := C.buffer_mmap(b.allocator.handle, b.handle, &size)
+	if ptr == nil {
+		return nil, fmt.Errorf("failed to mmap buffer")
+	}
+
+	// Convert C pointer to Go slice
+	// Note: This creates a slice that points to mmap'd memory
+	return unsafe.Slice((*byte)(ptr), int(size)), nil
+}
+
+// Munmap unmaps a previously mapped buffer.
+//
+// The data slice must be the one returned by Mmap. After calling Munmap,
+// the data slice must not be used.
+func (b *BufferHandle) Munmap(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	ptr := (*C.uint8_t)(unsafe.Pointer(&data[0]))
+	size := C.size_t(len(data))
+
+	if C.buffer_munmap(ptr, size) != 0 {
+		return fmt.Errorf("failed to munmap buffer")
+	}
+
+	return nil
+}
+

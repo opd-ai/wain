@@ -138,8 +138,20 @@ func (ta *TextureAtlas) UploadFontAtlas(sdfData []uint8, width, height int) erro
 	ta.fontDirty = true
 	ta.fontDirtyRect = Rect{X: 0, Y: 0, Width: width, Height: height}
 
-	// TODO: Upload sdfData to GPU buffer via mmap
-	// This will be implemented when mmap bindings are added to render package
+	// Upload SDF data to GPU buffer via mmap
+	data, err := buf.Mmap()
+	if err != nil {
+		return fmt.Errorf("atlas: failed to mmap font atlas buffer: %w", err)
+	}
+	defer buf.Munmap(data)
+
+	// Copy SDF data to mapped GPU memory
+	if len(sdfData) > len(data) {
+		return fmt.Errorf("atlas: SDF data size %d exceeds buffer size %d", len(sdfData), len(data))
+	}
+	copy(data, sdfData)
+
+	// Munmap automatically syncs changes to GPU
 
 	return nil
 }
@@ -190,7 +202,26 @@ func (ta *TextureAtlas) AllocateImageRegion(width, height int) (imageID int, u0,
 
 	// Need a new page
 	if len(ta.imagePages) >= MaxImageAtlasPages {
-		// TODO: Implement LRU eviction
+		// Try LRU eviction to free space
+		if evicted := ta.evictLRURegions(width, height); evicted {
+			// Retry allocation after eviction
+			for _, page := range ta.imagePages {
+				if region := ta.tryAllocateInPage(page, width, height); region != nil {
+					imageID := ta.nextImageID
+					ta.nextImageID++
+					region.ImageID = imageID
+					ta.imageRegions[imageID] = region
+
+					// Calculate UV coordinates
+					u0 := float32(region.Rect.X) / float32(page.Width)
+					v0 := float32(region.Rect.Y) / float32(page.Height)
+					u1 := float32(region.Rect.X+region.Rect.Width) / float32(page.Width)
+					v1 := float32(region.Rect.Y+region.Rect.Height) / float32(page.Height)
+
+					return imageID, u0, v0, u1, v1, nil
+				}
+			}
+		}
 		return 0, 0, 0, 0, 0, ErrOutOfSpace
 	}
 
@@ -332,13 +363,85 @@ func (ta *TextureAtlas) UploadImageData(imageID int, pixels []uint8, width, heig
 		return fmt.Errorf("atlas: image dimensions mismatch")
 	}
 
-	// TODO: Upload pixels to GPU buffer via mmap
-	// This will be implemented when mmap bindings are added to render package
+	// Get the image page
+	page := ta.GetImagePage(region.PageID)
+	if page == nil {
+		return fmt.Errorf("atlas: page %d not found", region.PageID)
+	}
+
+	// Upload pixels to GPU buffer via mmap
+	data, err := page.Buffer.Mmap()
+	if err != nil {
+		return fmt.Errorf("atlas: failed to mmap image page buffer: %w", err)
+	}
+	defer page.Buffer.Munmap(data)
+
+	// Calculate destination offset and copy pixels row by row
+	pageStride := page.Width * 4 // 4 bytes per pixel (RGBA)
+	srcStride := width * 4
+
+	for y := 0; y < height; y++ {
+		dstOffset := (region.Rect.Y+y)*pageStride + region.Rect.X*4
+		srcOffset := y * srcStride
+		copy(data[dstOffset:dstOffset+srcStride], pixels[srcOffset:srcOffset+srcStride])
+	}
+
+	// Munmap automatically syncs changes to GPU
 
 	// Update LRU counter
 	region.LRUCounter++
 
 	return nil
+}
+
+// evictLRURegions evicts least-recently-used regions to free space.
+//
+// Attempts to evict enough regions to allocate a region of the given size.
+// Returns true if eviction was successful and space may be available.
+func (ta *TextureAtlas) evictLRURegions(neededWidth, neededHeight int) bool {
+	if len(ta.imageRegions) == 0 {
+		return false
+	}
+
+	// Get regions sorted by LRU (least recently used first)
+	sortedIDs := ta.getRegionsSortedByLRU()
+	
+	// Evict 25% of regions as heuristic
+	evictCount := max(1, len(sortedIDs)/4)
+
+	for i := 0; i < evictCount && i < len(sortedIDs); i++ {
+		ta.FreeImageRegion(sortedIDs[i])
+	}
+
+	return true
+}
+
+// getRegionsSortedByLRU returns region IDs sorted by LRU counter (ascending).
+func (ta *TextureAtlas) getRegionsSortedByLRU() []int {
+	type regionWithID struct {
+		id      int
+		counter uint64
+	}
+	
+	regions := make([]regionWithID, 0, len(ta.imageRegions))
+	for id, region := range ta.imageRegions {
+		regions = append(regions, regionWithID{id: id, counter: region.LRUCounter})
+	}
+
+	// Simple bubble sort by LRU counter
+	for i := 0; i < len(regions); i++ {
+		for j := i + 1; j < len(regions); j++ {
+			if regions[i].counter > regions[j].counter {
+				regions[i], regions[j] = regions[j], regions[i]
+			}
+		}
+	}
+
+	ids := make([]int, len(regions))
+	for i, r := range regions {
+		ids[i] = r.id
+	}
+	return ids
 }
 
 // FreeImageRegion frees a previously allocated image region.
@@ -349,12 +452,25 @@ func (ta *TextureAtlas) FreeImageRegion(imageID int) error {
 	}
 
 	delete(ta.imageRegions, imageID)
-
-	// TODO: Mark shelf space as free for reuse
-	// For now, we leak the space until page compaction is implemented
-
-	_ = region
+	ta.removeRegionFromShelf(region.PageID, imageID)
 	return nil
+}
+
+// removeRegionFromShelf removes a region from its shelf for potential reuse.
+func (ta *TextureAtlas) removeRegionFromShelf(pageID, imageID int) {
+	page := ta.GetImagePage(pageID)
+	if page == nil {
+		return
+	}
+
+	for _, shelf := range page.Shelves {
+		for i, r := range shelf.Regions {
+			if r.ImageID == imageID {
+				shelf.Regions = append(shelf.Regions[:i], shelf.Regions[i+1:]...)
+				return
+			}
+		}
+	}
 }
 
 // GetImagePage returns the image page for a given page ID.
