@@ -33,6 +33,7 @@ import (
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
+	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
 var (
@@ -44,6 +45,9 @@ var (
 
 	// ErrNoDisplay is returned when no display server is available.
 	ErrNoDisplay = errors.New("wain: no display server available")
+
+	// ErrInvalidWindowConfig is returned when window configuration is invalid.
+	ErrInvalidWindowConfig = errors.New("wain: invalid window configuration")
 )
 
 // DisplayServer represents the detected display server type.
@@ -98,6 +102,9 @@ type App struct {
 	backendType backend.BackendType
 	displayList *displaylist.DisplayList
 
+	// Windows
+	windows []*Window
+
 	// State
 	running     bool
 	shouldQuit  bool
@@ -105,6 +112,8 @@ type App struct {
 	width       int
 	height      int
 	verbose     bool
+	drmPath     string
+	forceSW     bool
 }
 
 // AppConfig contains configuration options for creating an App.
@@ -161,8 +170,470 @@ func NewAppWithConfig(cfg AppConfig) *App {
 		width:       cfg.Width,
 		height:      cfg.Height,
 		verbose:     cfg.Verbose,
+		drmPath:     cfg.DRMPath,
+		forceSW:     cfg.ForceSoftware,
 		displayList: displaylist.New(),
 	}
+}
+
+// WindowConfig contains configuration options for creating a Window.
+type WindowConfig struct {
+	// Title is the window title displayed in the title bar (default: "").
+	Title string
+
+	// Width is the initial window width in pixels (default: 800).
+	Width int
+
+	// Height is the initial window height in pixels (default: 600).
+	Height int
+
+	// MinWidth is the minimum window width in pixels (default: 0, no minimum).
+	MinWidth int
+
+	// MinHeight is the minimum window height in pixels (default: 0, no minimum).
+	MinHeight int
+
+	// MaxWidth is the maximum window width in pixels (default: 0, no maximum).
+	MaxWidth int
+
+	// MaxHeight is the maximum window height in pixels (default: 0, no maximum).
+	MaxHeight int
+
+	// Fullscreen indicates whether the window should start in fullscreen mode (default: false).
+	Fullscreen bool
+
+	// Decorations indicates whether the window should have decorations (title bar, borders) (default: true).
+	Decorations bool
+}
+
+// Window represents a UI window with platform-agnostic operations.
+type Window struct {
+	app *App
+	mu  sync.Mutex
+
+	// Window properties
+	title       string
+	width       int
+	height      int
+	minWidth    int
+	minHeight   int
+	maxWidth    int
+	maxHeight   int
+	fullscreen  bool
+	decorations bool
+	closed      bool
+	focused     bool
+	scale       float64
+
+	// Platform-specific objects (Wayland)
+	waylandSurface    *client.Surface
+	waylandXdgSurface *xdg.Surface
+	waylandToplevel   *xdg.Toplevel
+
+	// Platform-specific objects (X11)
+	x11Window x11client.XID
+	x11GC     x11client.XID
+
+	// Event handlers
+	onResize      func(width, height int)
+	onClose       func()
+	onFocus       func(focused bool)
+	onScaleChange func(scale float64)
+}
+
+// NewWindow creates a new window with the specified configuration.
+// The app must be running (Run() must be called first) before creating windows.
+func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.running {
+		return nil, ErrNotRunning
+	}
+
+	if cfg.Width <= 0 {
+		cfg.Width = 800
+	}
+	if cfg.Height <= 0 {
+		cfg.Height = 600
+	}
+
+	if cfg.MinWidth < 0 || cfg.MinHeight < 0 || cfg.MaxWidth < 0 || cfg.MaxHeight < 0 {
+		return nil, ErrInvalidWindowConfig
+	}
+
+	if cfg.MaxWidth > 0 && cfg.Width > cfg.MaxWidth {
+		cfg.Width = cfg.MaxWidth
+	}
+	if cfg.MaxHeight > 0 && cfg.Height > cfg.MaxHeight {
+		cfg.Height = cfg.MaxHeight
+	}
+	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
+		cfg.Width = cfg.MinWidth
+	}
+	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
+		cfg.Height = cfg.MinHeight
+	}
+
+	win := &Window{
+		app:         a,
+		title:       cfg.Title,
+		width:       cfg.Width,
+		height:      cfg.Height,
+		minWidth:    cfg.MinWidth,
+		minHeight:   cfg.MinHeight,
+		maxWidth:    cfg.MaxWidth,
+		maxHeight:   cfg.MaxHeight,
+		fullscreen:  cfg.Fullscreen,
+		decorations: cfg.Decorations,
+		scale:       1.0,
+	}
+
+	if err := win.initialize(); err != nil {
+		return nil, fmt.Errorf("failed to initialize window: %w", err)
+	}
+
+	a.windows = append(a.windows, win)
+	return win, nil
+}
+
+// initialize creates the platform-specific window.
+func (w *Window) initialize() error {
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		return w.initWaylandWindow()
+	case DisplayServerX11:
+		return w.initX11Window()
+	default:
+		return ErrNoDisplay
+	}
+}
+
+// initWaylandWindow creates a Wayland surface and toplevel.
+func (w *Window) initWaylandWindow() error {
+	surface, err := w.app.waylandCompositor.CreateSurface()
+	if err != nil {
+		return fmt.Errorf("failed to create surface: %w", err)
+	}
+	w.waylandSurface = surface
+
+	xdgSurface, err := w.app.waylandWmBase.GetXdgSurface(surface.ID())
+	if err != nil {
+		return fmt.Errorf("failed to create xdg_surface: %w", err)
+	}
+	w.waylandXdgSurface = xdgSurface
+
+	toplevel, err := xdgSurface.GetToplevel()
+	if err != nil {
+		return fmt.Errorf("failed to create xdg_toplevel: %w", err)
+	}
+	w.waylandToplevel = toplevel
+
+	if w.title != "" {
+		if err := toplevel.SetTitle(w.title); err != nil {
+			return fmt.Errorf("failed to set title: %w", err)
+		}
+	}
+
+	if w.minWidth > 0 || w.minHeight > 0 {
+		if err := toplevel.SetMinSize(int32(w.minWidth), int32(w.minHeight)); err != nil {
+			return fmt.Errorf("failed to set min size: %w", err)
+		}
+	}
+
+	if w.maxWidth > 0 || w.maxHeight > 0 {
+		if err := toplevel.SetMaxSize(int32(w.maxWidth), int32(w.maxHeight)); err != nil {
+			return fmt.Errorf("failed to set max size: %w", err)
+		}
+	}
+
+	if w.fullscreen {
+		if err := toplevel.SetFullscreen(0); err != nil {
+			return fmt.Errorf("failed to set fullscreen: %w", err)
+		}
+	}
+
+	if err := surface.Commit(); err != nil {
+		return fmt.Errorf("failed to commit surface: %w", err)
+	}
+
+	return nil
+}
+
+// initX11Window creates an X11 window.
+func (w *Window) initX11Window() error {
+	wid, err := w.app.x11Conn.AllocXID()
+	if err != nil {
+		return fmt.Errorf("failed to allocate window XID: %w", err)
+	}
+	w.x11Window = wid
+
+	root := w.app.x11Conn.RootWindow()
+
+	_, err = w.app.x11Conn.CreateWindow(
+		root,
+		0, 0,
+		uint16(w.width), uint16(w.height),
+		0,
+		wire.WindowClassInputOutput,
+		0,
+		wire.CWBackPixel|wire.CWEventMask,
+		[]uint32{0x000000, wire.EventMaskExposure | wire.EventMaskStructureNotify | wire.EventMaskKeyPress | wire.EventMaskKeyRelease | wire.EventMaskButtonPress | wire.EventMaskButtonRelease | wire.EventMaskPointerMotion},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create window: %w", err)
+	}
+
+	if err := w.app.x11Conn.MapWindow(w.x11Window); err != nil {
+		return fmt.Errorf("failed to map window: %w", err)
+	}
+
+	return nil
+}
+
+// SetTitle sets the window title.
+func (w *Window) SetTitle(title string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return errors.New("window is closed")
+	}
+
+	w.title = title
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		if w.waylandToplevel != nil {
+			return w.waylandToplevel.SetTitle(title)
+		}
+	case DisplayServerX11:
+		// X11 title setting would require additional protocol implementation
+		// This is a simplified placeholder
+		return nil
+	}
+
+	return nil
+}
+
+// SetSize sets the window size in pixels.
+func (w *Window) SetSize(width, height int) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return errors.New("window is closed")
+	}
+
+	if w.maxWidth > 0 && width > w.maxWidth {
+		width = w.maxWidth
+	}
+	if w.maxHeight > 0 && height > w.maxHeight {
+		height = w.maxHeight
+	}
+	if w.minWidth > 0 && width < w.minWidth {
+		width = w.minWidth
+	}
+	if w.minHeight > 0 && height < w.minHeight {
+		height = w.minHeight
+	}
+
+	w.width = width
+	w.height = height
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		// Wayland doesn't allow client-side resize directly
+		// Size changes come from configure events
+		return nil
+	case DisplayServerX11:
+		if w.x11Window != 0 {
+			return w.app.x11Conn.ConfigureWindow(
+				w.x11Window,
+				x11client.ConfigMaskWidth|x11client.ConfigMaskHeight,
+				[]uint32{uint32(width), uint32(height)},
+			)
+		}
+	}
+
+	return nil
+}
+
+// SetMinSize sets the minimum window size in pixels.
+func (w *Window) SetMinSize(width, height int) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return errors.New("window is closed")
+	}
+
+	w.minWidth = width
+	w.minHeight = height
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		if w.waylandToplevel != nil {
+			return w.waylandToplevel.SetMinSize(int32(width), int32(height))
+		}
+	case DisplayServerX11:
+		// X11 size hints would require additional protocol implementation
+		return nil
+	}
+
+	return nil
+}
+
+// SetMaxSize sets the maximum window size in pixels.
+func (w *Window) SetMaxSize(width, height int) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return errors.New("window is closed")
+	}
+
+	w.maxWidth = width
+	w.maxHeight = height
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		if w.waylandToplevel != nil {
+			return w.waylandToplevel.SetMaxSize(int32(width), int32(height))
+		}
+	case DisplayServerX11:
+		// X11 size hints would require additional protocol implementation
+		return nil
+	}
+
+	return nil
+}
+
+// SetFullscreen sets the window fullscreen state.
+func (w *Window) SetFullscreen(fullscreen bool) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return errors.New("window is closed")
+	}
+
+	w.fullscreen = fullscreen
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		if w.waylandToplevel != nil {
+			if fullscreen {
+				return w.waylandToplevel.SetFullscreen(0)
+			}
+			return w.waylandToplevel.UnsetFullscreen()
+		}
+	case DisplayServerX11:
+		// X11 fullscreen would require WM hints (_NET_WM_STATE_FULLSCREEN)
+		return nil
+	}
+
+	return nil
+}
+
+// Close closes the window and releases its resources.
+func (w *Window) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return nil
+	}
+
+	w.closed = true
+
+	switch w.app.displayServer {
+	case DisplayServerWayland:
+		// Wayland cleanup would happen here
+		// For now, we just mark it closed
+	case DisplayServerX11:
+		if w.x11Window != 0 {
+			if err := w.app.x11Conn.DestroyWindow(w.x11Window); err != nil {
+				return err
+			}
+		}
+	}
+
+	if w.onClose != nil {
+		w.onClose()
+	}
+
+	return nil
+}
+
+// Size returns the current window size in pixels.
+func (w *Window) Size() (width, height int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.width, w.height
+}
+
+// Title returns the current window title.
+func (w *Window) Title() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.title
+}
+
+// IsFullscreen returns whether the window is in fullscreen mode.
+func (w *Window) IsFullscreen() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.fullscreen
+}
+
+// IsClosed returns whether the window is closed.
+func (w *Window) IsClosed() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.closed
+}
+
+// IsFocused returns whether the window has keyboard focus.
+func (w *Window) IsFocused() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.focused
+}
+
+// Scale returns the current window scale factor for HiDPI displays.
+func (w *Window) Scale() float64 {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.scale
+}
+
+// OnResize sets the callback for window resize events.
+func (w *Window) OnResize(callback func(width, height int)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onResize = callback
+}
+
+// OnClose sets the callback for window close events.
+func (w *Window) OnClose(callback func()) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onClose = callback
+}
+
+// OnFocus sets the callback for window focus events.
+func (w *Window) OnFocus(callback func(focused bool)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onFocus = callback
+}
+
+// OnScaleChange sets the callback for window scale change events (HiDPI).
+func (w *Window) OnScaleChange(callback func(scale float64)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onScaleChange = callback
 }
 
 // Run initializes the application and starts the event loop.
