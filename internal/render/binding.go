@@ -240,6 +240,7 @@ type SubmitError struct {
 	path string
 }
 
+// Error returns the error message for a batch submission failure.
 func (e *SubmitError) Error() string {
 	return "batch submission failed for device " + e.path
 }
@@ -296,6 +297,7 @@ type ContextCreateError struct {
 	path string
 }
 
+// Error returns the error message for a context creation failure.
 func (e *ContextCreateError) Error() string {
 	return "context creation failed for device " + e.path
 }
