@@ -172,12 +172,12 @@ func (p *WaylandPipeline) createWaylandBuffer(fb *Framebuffer) (uint32, error) {
 
 	// Add the DMA-BUF plane (single plane for ARGB8888)
 	if err := params.Add(
-		int32(fb.Fd),      // DMA-BUF file descriptor
-		0,                  // plane index (0 for single-plane)
-		0,                  // offset
-		fb.Stride,          // stride in bytes
-		0,                  // modifier high (linear)
-		0,                  // modifier low (linear)
+		int32(fb.Fd), // DMA-BUF file descriptor
+		0,            // plane index (0 for single-plane)
+		0,            // offset
+		fb.Stride,    // stride in bytes
+		0,            // modifier high (linear)
+		0,            // modifier low (linear)
 	); err != nil {
 		return 0, fmt.Errorf("add plane failed: %w", err)
 	}
@@ -208,7 +208,7 @@ func (p *WaylandPipeline) WaitFrameCallback(ctx context.Context) (uint32, error)
 	if p.callback == nil {
 		return 0, errors.New("display: no active frame callback")
 	}
-	
+
 	select {
 	case timestamp := <-p.callback.Done():
 		return timestamp, nil

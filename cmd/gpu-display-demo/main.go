@@ -34,12 +34,12 @@ import (
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/render/display"
-	x11client "github.com/opd-ai/wain/internal/x11/client"
-	"github.com/opd-ai/wain/internal/x11/dri3"
-	"github.com/opd-ai/wain/internal/x11/present"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
+	x11client "github.com/opd-ai/wain/internal/x11/client"
+	"github.com/opd-ai/wain/internal/x11/dri3"
+	"github.com/opd-ai/wain/internal/x11/present"
 )
 
 const (
