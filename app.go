@@ -1123,11 +1123,9 @@ func (a *App) eventLoop() error {
 func (a *App) processEvents() error {
 	switch a.displayServer {
 	case DisplayServerWayland:
-		// Simple polling for now - just keep event loop running
-		return nil
+		return a.processWaylandEvents()
 	case DisplayServerX11:
-		// Simple polling for now
-		return nil
+		return a.processX11Events()
 	default:
 		return ErrNoDisplay
 	}
