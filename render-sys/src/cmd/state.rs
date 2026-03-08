@@ -235,6 +235,181 @@ impl GpuCommand for State3DPS {
     }
 }
 
+/// 3DSTATE_BLEND_STATE - Blending and color write configuration
+///
+/// Configures alpha blending, logic operations, and color write masks
+/// for up to 8 render targets.
+///
+/// Gen9-Gen12 format:
+/// - Pointer to BLEND_STATE structure in dynamic state heap
+/// - Each render target uses 2 DWords in the state structure
+#[derive(Debug, Clone)]
+pub struct State3DBlendState {
+    /// Pointer to BLEND_STATE structure (64-byte aligned)
+    pub blend_state_pointer: u64,
+}
+
+impl State3DBlendState {
+    /// Create a new 3DSTATE_BLEND_STATE command.
+    ///
+    /// # Arguments
+    ///
+    /// * `pointer` - GPU address of BLEND_STATE structure (must be 64-byte aligned)
+    pub fn new(pointer: u64) -> Self {
+        assert_eq!(pointer & 0x3F, 0, "BLEND_STATE pointer must be 64-byte aligned");
+        Self {
+            blend_state_pointer: pointer,
+        }
+    }
+}
+
+impl GpuCommand for State3DBlendState {
+    fn serialize(&self) -> Vec<u32> {
+        let opcode = 0x781D; // 3DSTATE_BLEND_STATE_POINTERS opcode
+        let length = 1; // 2 DWords total
+
+        let dw0 = (CommandType::State3D.opcode_type() << 29) | (opcode << 16) | length;
+        let dw1 = (self.blend_state_pointer & !0x3F) as u32; // Low 32 bits, enforce alignment
+
+        vec![dw0, dw1]
+    }
+}
+
+/// BLEND_STATE structure for render target blending configuration
+///
+/// This structure lives in the dynamic state heap and is referenced
+/// by 3DSTATE_BLEND_STATE_POINTERS.
+#[derive(Debug, Clone)]
+pub struct BlendState {
+    /// Per-render-target blend configurations (up to 8)
+    pub render_targets: Vec<RenderTargetBlend>,
+}
+
+/// Blend configuration for a single render target
+#[derive(Debug, Clone)]
+pub struct RenderTargetBlend {
+    /// Enable alpha blending
+    pub blend_enable: bool,
+    /// Source blend factor for color
+    pub src_color_blend: BlendFactor,
+    /// Destination blend factor for color
+    pub dst_color_blend: BlendFactor,
+    /// Color blend operation
+    pub color_blend_op: BlendOp,
+    /// Source blend factor for alpha
+    pub src_alpha_blend: BlendFactor,
+    /// Destination blend factor for alpha
+    pub dst_alpha_blend: BlendFactor,
+    /// Alpha blend operation
+    pub alpha_blend_op: BlendOp,
+    /// Color write mask (RGBA bits)
+    pub write_mask: u8,
+}
+
+/// Blend factor enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+pub enum BlendFactor {
+    Zero = 0,
+    One = 1,
+    SrcColor = 2,
+    OneMinusSrcColor = 3,
+    DstColor = 4,
+    OneMinusDstColor = 5,
+    SrcAlpha = 6,
+    OneMinusSrcAlpha = 7,
+    DstAlpha = 8,
+    OneMinusDstAlpha = 9,
+    ConstantColor = 10,
+    OneMinusConstantColor = 11,
+    ConstantAlpha = 12,
+    OneMinusConstantAlpha = 13,
+    SrcAlphaSaturate = 14,
+}
+
+/// Blend operation enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+pub enum BlendOp {
+    Add = 0,
+    Subtract = 1,
+    ReverseSubtract = 2,
+    Min = 3,
+    Max = 4,
+}
+
+impl RenderTargetBlend {
+    /// Create default blend configuration (no blending, all writes enabled)
+    pub fn opaque() -> Self {
+        Self {
+            blend_enable: false,
+            src_color_blend: BlendFactor::One,
+            dst_color_blend: BlendFactor::Zero,
+            color_blend_op: BlendOp::Add,
+            src_alpha_blend: BlendFactor::One,
+            dst_alpha_blend: BlendFactor::Zero,
+            alpha_blend_op: BlendOp::Add,
+            write_mask: 0xF, // RGBA all enabled
+        }
+    }
+
+    /// Create alpha blending configuration (standard Porter-Duff SrcOver)
+    pub fn alpha_blend() -> Self {
+        Self {
+            blend_enable: true,
+            src_color_blend: BlendFactor::SrcAlpha,
+            dst_color_blend: BlendFactor::OneMinusSrcAlpha,
+            color_blend_op: BlendOp::Add,
+            src_alpha_blend: BlendFactor::One,
+            dst_alpha_blend: BlendFactor::OneMinusSrcAlpha,
+            alpha_blend_op: BlendOp::Add,
+            write_mask: 0xF,
+        }
+    }
+
+    /// Serialize to 2 DWords per Intel PRM format
+    pub fn serialize(&self) -> [u32; 2] {
+        let dw0 = if self.blend_enable { 1 << 31 } else { 0 }
+            | ((self.src_color_blend as u32) << 26)
+            | ((self.dst_color_blend as u32) << 21)
+            | ((self.color_blend_op as u32) << 18)
+            | ((self.src_alpha_blend as u32) << 13)
+            | ((self.dst_alpha_blend as u32) << 8)
+            | ((self.alpha_blend_op as u32) << 5);
+
+        let dw1 = (self.write_mask as u32) << 27;
+
+        [dw0, dw1]
+    }
+}
+
+impl BlendState {
+    /// Create blend state with a single render target (opaque)
+    pub fn opaque() -> Self {
+        Self {
+            render_targets: vec![RenderTargetBlend::opaque()],
+        }
+    }
+
+    /// Create blend state with a single render target (alpha blending)
+    pub fn alpha_blend() -> Self {
+        Self {
+            render_targets: vec![RenderTargetBlend::alpha_blend()],
+        }
+    }
+
+    /// Serialize to DWords for upload to dynamic state heap
+    pub fn serialize(&self) -> Vec<u32> {
+        let mut result = Vec::new();
+        for rt in &self.render_targets {
+            let [dw0, dw1] = rt.serialize();
+            result.push(dw0);
+            result.push(dw1);
+        }
+        result
+    }
+}
+
 /// 3DSTATE_VERTEX_BUFFERS - Vertex buffer configuration
 ///
 /// Defines the layout and location of vertex buffers in GPU memory.
@@ -440,5 +615,55 @@ mod tests {
         
         assert_eq!(dwords.len(), 3); // Header + 2 DWords per element
         assert_eq!(dwords[2], 0x123); // Format
+    }
+
+    #[test]
+    fn state_3d_blend_state_pointer() {
+        let cmd = State3DBlendState::new(0x1000);
+        let dwords = cmd.serialize();
+        
+        assert_eq!(dwords.len(), 2);
+        assert_eq!(dwords[1], 0x1000); // Pointer
+    }
+
+    #[test]
+    #[should_panic(expected = "64-byte aligned")]
+    fn state_3d_blend_state_alignment() {
+        State3DBlendState::new(0x1001); // Not 64-byte aligned
+    }
+
+    #[test]
+    fn blend_state_opaque() {
+        let state = BlendState::opaque();
+        let dwords = state.serialize();
+        
+        assert_eq!(dwords.len(), 2); // 1 RT × 2 DWords
+        assert_eq!(dwords[0] & (1 << 31), 0); // Blend disabled
+        assert_eq!(dwords[1] >> 27, 0xF); // All color channels writable
+    }
+
+    #[test]
+    fn blend_state_alpha() {
+        let state = BlendState::alpha_blend();
+        let dwords = state.serialize();
+        
+        assert_eq!(dwords.len(), 2);
+        assert_ne!(dwords[0] & (1 << 31), 0); // Blend enabled
+        
+        // Extract blend factors from DWord 0
+        let src_color = (dwords[0] >> 26) & 0x1F;
+        let dst_color = (dwords[0] >> 21) & 0x1F;
+        
+        assert_eq!(src_color, BlendFactor::SrcAlpha as u32);
+        assert_eq!(dst_color, BlendFactor::OneMinusSrcAlpha as u32);
+    }
+
+    #[test]
+    fn render_target_blend_serialize() {
+        let rt = RenderTargetBlend::alpha_blend();
+        let [dw0, dw1] = rt.serialize();
+        
+        assert_ne!(dw0 & (1 << 31), 0); // Blend enabled
+        assert_eq!(dw1 >> 27, 0xF); // RGBA write mask
     }
 }

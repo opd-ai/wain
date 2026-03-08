@@ -127,15 +127,23 @@ Phase 3 builds on Phase 2's buffer infrastructure to submit rendering commands
 to the GPU. The focus is Intel GPUs (Gen9-Gen12), targeting both i915 and Xe
 kernel drivers.
 
-3.1  HARDWARE DETECTION
+3.1  ✅ HARDWARE DETECTION (Complete)
      - Query GPU generation from i915/Xe kernel params.
      - Load the appropriate command encoding tables. Target Gen9 (Skylake)
        through Gen12 (Tiger Lake / Alder Lake) initially.
      - Reference: Mesa's genxml XML files describe every GPU command per
        generation. Translate these into Rust structs/builders. AI is very
        effective at this mechanical translation.
+     - **Status**: ✅ Implemented
+       - GpuGeneration enum in render-sys/src/detect.rs with Gen9, Gen11, Gen12, Xe variants
+       - DrmDevice::detect_gpu_generation() queries chipset ID via I915_GETPARAM/XE_DEVICE_QUERY
+       - Chipset ID mapping for Skylake/Kaby Lake/Coffee Lake (Gen9), Ice Lake (Gen11),
+         Tiger Lake/Rocket Lake/Alder Lake (Gen12)
+       - CommandEncoder with generation-specific variant support
+       - 8 unit tests validating chipset ID mapping
+       - All Rust tests passing
 
-3.2  BATCH BUFFER CONSTRUCTION
+3.2  ✅ BATCH BUFFER CONSTRUCTION (Complete)
      - Implement a batch buffer builder that emits Intel GPU commands as
        dwords into a GEM buffer object.
      - Required 3D pipeline commands: MI_BATCH_BUFFER_START,
@@ -145,8 +153,19 @@ kernel drivers.
        3DSTATE_VERTEX_ELEMENTS, 3DPRIMITIVE, PIPE_CONTROL.
      - Reference: Intel PRMs Volume 2 (Command Reference). Mesa's iris
        driver (src/gallium/drivers/iris/) for usage patterns.
+     - **Status**: ✅ Implemented
+       - BatchBuilder in render-sys/src/batch.rs with emit(), emit_reloc(), finalize()
+       - All 13 required GPU commands implemented in render-sys/src/cmd/
+       - MI commands (mi.rs): MI_BATCH_BUFFER_START, PIPE_CONTROL
+       - Pipeline commands (pipeline.rs): PIPELINE_SELECT, STATE_BASE_ADDRESS, 3DSTATE_VIEWPORT
+       - State commands (state.rs): 3DSTATE_CLIP, 3DSTATE_SF, 3DSTATE_WM, 3DSTATE_PS, 
+         3DSTATE_BLEND_STATE, 3DSTATE_VERTEX_BUFFERS, 3DSTATE_VERTEX_ELEMENTS
+       - Primitive commands (primitive.rs): 3DPRIMITIVE
+       - BlendState with alpha blending (Porter-Duff SrcOver) and opaque modes
+       - All 196 Rust tests passing, all Go tests passing
+       - Ready for Phase 3.5 (First Triangle)
 
-3.3  PIPELINE STATE OBJECTS
+3.3  ✅ PIPELINE STATE OBJECTS (Complete)
      - Create pre-baked pipeline state configurations for each draw type
        your UI needs:
        (a) Solid color fill
@@ -155,12 +174,29 @@ kernel drivers.
        (d) Box shadow (separable blur, two-pass)
        (e) Rounded rect clip (SDF-based discard)
        (f) Linear/radial gradient
+     - **Status**: ✅ Implemented
+       - 7 pipeline types in render-sys/src/pipeline.rs:
+         SolidColorPipeline, TexturedQuadPipeline, SDFTextPipeline, BoxShadowPipeline,
+         RoundedRectPipeline, LinearGradientPipeline, RadialGradientPipeline
+       - Each emits full state: PipelineSelect → State3DClip → State3DSF → State3DWM → State3DPS
+       - Vertex formats defined: position (8B), position+UV (16B), position+UV+scale (20B)
+       - 11 tests verifying creation and Gen9/Gen12 compatibility
+       - All Rust tests passing
 
-3.4  SURFACE STATE & SAMPLER STATE
+3.4  ✅ SURFACE STATE & SAMPLER STATE (Complete)
      - Encode RENDER_SURFACE_STATE entries for render targets and texture
        sources.
      - Encode SAMPLER_STATE for bilinear/nearest filtering.
      - Manage a binding table in the surface state heap.
+     - **Status**: ✅ Implemented
+       - RENDER_SURFACE_STATE in render-sys/src/surface.rs (16 DWords, 64 bytes)
+       - Formats: R8G8B8A8_UNORM, B8G8R8A8_UNORM, R8_UNORM, R16G16B16A16_FLOAT
+       - Types: 1D, 2D, 3D, Cube, Buffer
+       - Tiling: Linear, TileX, TileY, TileYf
+       - SAMPLER_STATE: bilinear/nearest filters, repeat/clamp/mirror address modes (4 DWords)
+       - BindingTable: maps shader bindings to surface state offsets with 64-byte alignment
+       - 8 tests for serialization and validation
+       - All Rust tests passing
 
 3.5  FIRST TRIANGLE (with placeholder shader — see Phase 4)
      - If Phase 4.1-4.3 is done in parallel, use a real compiled shader.
