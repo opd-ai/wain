@@ -124,22 +124,24 @@ func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*B
 
 // ExportDmabuf exports the buffer as a DMA-BUF file descriptor.
 // The caller owns the fd and must close it when done (using syscall.Close).
+//
+// Lock order: Allocator.mu then BufferHandle.mu (consistent across all methods).
 func (a *Allocator) ExportDmabuf(buffer *BufferHandle) (int, error) {
+	// Hold allocator lock for the full FFI call to prevent concurrent Close().
 	a.mu.Lock()
-	allocHandle := a.handle
-	a.mu.Unlock()
-	if allocHandle == nil {
+	defer a.mu.Unlock()
+	if a.handle == nil {
 		return -1, fmt.Errorf("allocator is closed")
 	}
 
+	// Hold buffer lock for the full FFI call to prevent concurrent Destroy().
 	buffer.mu.Lock()
-	bufHandle := buffer.handle
-	buffer.mu.Unlock()
-	if bufHandle == nil {
+	defer buffer.mu.Unlock()
+	if buffer.handle == nil {
 		return -1, fmt.Errorf("buffer is destroyed")
 	}
 
-	fd := C.buffer_export_dmabuf(allocHandle, bufHandle)
+	fd := C.buffer_export_dmabuf(a.handle, buffer.handle)
 	if fd < 0 {
 		return -1, fmt.Errorf("failed to export buffer as dmabuf")
 	}
@@ -162,24 +164,29 @@ func (b *BufferHandle) GemHandle() uint32 {
 
 // Destroy frees the buffer and releases GPU memory.
 // It is safe to call Destroy more than once; only the first call has any effect.
+//
+// Lock order: Allocator.mu then BufferHandle.mu (consistent across all methods).
 func (b *BufferHandle) Destroy() error {
+	// Lock allocator first (consistent ordering: Allocator before Buffer) to
+	// prevent concurrent Allocator.Close() from freeing the allocator handle
+	// while buffer_destroy is in progress.
+	b.allocator.mu.Lock()
+	defer b.allocator.mu.Unlock()
+
 	b.mu.Lock()
 	defer b.mu.Unlock()
+
 	if b.handle == nil {
 		return nil // already destroyed
 	}
-
-	b.allocator.mu.Lock()
-	allocHandle := b.allocator.handle
-	b.allocator.mu.Unlock()
-	if allocHandle == nil {
+	if b.allocator.handle == nil {
 		return fmt.Errorf("allocator is closed")
 	}
 
 	// Track deallocation before destroying
 	globalMemStats.RecordDeallocation(uintptr(unsafe.Pointer(b.handle)))
 
-	if C.buffer_destroy(allocHandle, b.handle) != 0 {
+	if C.buffer_destroy(b.allocator.handle, b.handle) != 0 {
 		return fmt.Errorf("failed to destroy buffer")
 	}
 
@@ -192,6 +199,8 @@ func (b *BufferHandle) Destroy() error {
 // Returns a byte slice pointing to the mapped memory. The caller must call
 // Munmap when done to avoid leaking memory mappings.
 //
+// Lock order: Allocator.mu then BufferHandle.mu (consistent across all methods).
+//
 // Example:
 //
 //	data, err := buffer.Mmap()
@@ -202,22 +211,23 @@ func (b *BufferHandle) Destroy() error {
 //	// Write to data...
 //	copy(data, pixels)
 func (b *BufferHandle) Mmap() ([]byte, error) {
-	b.mu.Lock()
-	bufHandle := b.handle
-	b.mu.Unlock()
-	if bufHandle == nil {
-		return nil, fmt.Errorf("buffer is destroyed")
-	}
-
+	// Lock allocator first (consistent ordering: Allocator before Buffer) to
+	// prevent concurrent Allocator.Close() from freeing the allocator handle
+	// while buffer_mmap is in progress.
 	b.allocator.mu.Lock()
-	allocHandle := b.allocator.handle
-	b.allocator.mu.Unlock()
-	if allocHandle == nil {
+	defer b.allocator.mu.Unlock()
+	if b.allocator.handle == nil {
 		return nil, fmt.Errorf("allocator is closed")
 	}
 
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.handle == nil {
+		return nil, fmt.Errorf("buffer is destroyed")
+	}
+
 	var size C.size_t
-	ptr := C.buffer_mmap(allocHandle, bufHandle, &size)
+	ptr := C.buffer_mmap(b.allocator.handle, b.handle, &size)
 	if ptr == nil {
 		return nil, fmt.Errorf("failed to mmap buffer")
 	}
