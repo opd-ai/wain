@@ -752,7 +752,7 @@ func (w *Window) handleX11Event(eventType x11events.EventType, eventBuf []byte) 
 	if err != nil {
 		return fmt.Errorf("decode event header: %w", err)
 	}
-	
+
 	switch eventType {
 	case x11events.EventTypeKeyPress:
 		return w.handleX11KeyPress(header, data)
@@ -767,7 +767,7 @@ func (w *Window) handleX11Event(eventType x11events.EventType, eventBuf []byte) 
 	case x11events.EventTypeConfigureNotify:
 		return w.handleX11Configure(header, data)
 	}
-	
+
 	return nil
 }
 
@@ -845,7 +845,7 @@ func (w *Window) dispatchEvent(evt Event) {
 	if w.dispatcher != nil {
 		w.dispatcher.Dispatch(evt)
 	}
-	
+
 	// Also call legacy callbacks
 	switch e := evt.(type) {
 	case *PointerEvent:
@@ -865,10 +865,10 @@ func (w *Window) dispatchEvent(evt Event) {
 func (w *Window) handleWindowResize(evt *WindowEvent) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	w.width = evt.Width()
 	w.height = evt.Height()
-	
+
 	if w.onResize != nil {
 		w.onResize(evt.Width(), evt.Height())
 	}
@@ -1267,7 +1267,7 @@ func (a *App) processX11Events() error {
 	if a.x11Conn == nil {
 		return ErrNoDisplay
 	}
-	
+
 	eventBuf, err := a.x11Conn.ReadEvent()
 	if err != nil {
 		return fmt.Errorf("read X11 event: %w", err)
@@ -1275,24 +1275,24 @@ func (a *App) processX11Events() error {
 	if eventBuf == nil {
 		return nil
 	}
-	
+
 	return a.dispatchX11Event(eventBuf)
 }
 
 // dispatchX11Event parses and dispatches a single X11 event.
 func (a *App) dispatchX11Event(eventBuf []byte) error {
 	eventType := x11events.EventType(eventBuf[0] & 0x7F)
-	
+
 	a.mu.Lock()
 	windows := a.windows
 	a.mu.Unlock()
-	
+
 	for _, win := range windows {
 		if err := win.handleX11Event(eventType, eventBuf); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -1301,7 +1301,7 @@ func (a *App) processWaylandEvents() error {
 	if a.waylandConn == nil {
 		return ErrNoDisplay
 	}
-	
+
 	// TODO: Implement Wayland event dispatch
 	// This will read from a.waylandConn and dispatch to event handlers
 	return nil

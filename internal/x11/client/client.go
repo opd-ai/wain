@@ -523,16 +523,16 @@ func (c *Connection) ReadEvent() ([]byte, error) {
 	if c.closed {
 		return nil, ErrClosed
 	}
-	
+
 	event := make([]byte, 32)
 	n, err := c.conn.Read(event)
 	if err != nil {
 		return nil, fmt.Errorf("client: failed to read event: %w", err)
 	}
-	
+
 	if n != 32 {
 		return nil, fmt.Errorf("client: incomplete event read (%d bytes)", n)
 	}
-	
+
 	return event, nil
 }
