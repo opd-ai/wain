@@ -30,6 +30,9 @@ pub enum EUOpcode {
     Or,
     Xor,
     Not,
+    Shl,  // Shift left
+    Shr,  // Shift right (arithmetic)
+    Asr,  // Arithmetic shift right
     
     // Comparison
     Cmp,

@@ -353,4 +353,180 @@ mod tests {
         // Binary should contain SEND instruction for texture sampling (16 bytes) + EOT (16 bytes)
         assert!(kernel.binary.len() >= 32, "Binary too small for texture sampling: {} bytes", kernel.binary.len());
     }
+
+    // Phase 4.5: Shader Testing - EU Binary Generation Tests
+    // These tests verify that all UI shaders compile to valid EU binaries
+
+    #[test]
+    fn test_eu_compile_all_ui_shaders() {
+        use crate::shaders::UI_SHADERS;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen9);
+        
+        for (name, source) in UI_SHADERS.iter() {
+            // Compile vertex shader
+            let vs_module = ShaderModule::from_wgsl(source, ShaderStage::Vertex)
+                .expect(&format!("Failed to parse {} vertex shader", name));
+            let vs_result = compiler.compile(&vs_module);
+            assert!(vs_result.is_ok(), 
+                "Failed to compile {} vertex shader to EU binary: {:?}", 
+                name, vs_result.err());
+            
+            let vs_kernel = vs_result.unwrap();
+            assert_eq!(vs_kernel.stage, ShaderStage::Vertex);
+            assert!(vs_kernel.binary.len() >= 16, 
+                "{} vertex binary too small: {} bytes", name, vs_kernel.binary.len());
+            
+            // Compile fragment shader
+            let fs_module = ShaderModule::from_wgsl(source, ShaderStage::Fragment)
+                .expect(&format!("Failed to parse {} fragment shader", name));
+            let fs_result = compiler.compile(&fs_module);
+            assert!(fs_result.is_ok(), 
+                "Failed to compile {} fragment shader to EU binary: {:?}", 
+                name, fs_result.err());
+            
+            let fs_kernel = fs_result.unwrap();
+            assert_eq!(fs_kernel.stage, ShaderStage::Fragment);
+            assert!(fs_kernel.binary.len() >= 16, 
+                "{} fragment binary too small: {} bytes", name, fs_kernel.binary.len());
+        }
+    }
+
+    #[test]
+    fn test_eu_binary_alignment() {
+        use crate::shaders::SOLID_FILL_WGSL;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen9);
+        let module = ShaderModule::from_wgsl(SOLID_FILL_WGSL, ShaderStage::Vertex).unwrap();
+        let kernel = compiler.compile(&module).unwrap();
+        
+        // EU instructions are 128 bits (16 bytes), binary should be aligned
+        assert_eq!(kernel.binary.len() % 16, 0, 
+            "Binary size {} is not 128-bit aligned", kernel.binary.len());
+    }
+
+    #[test]
+    fn test_eu_binary_size_reasonable() {
+        use crate::shaders::UI_SHADERS;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen9);
+        
+        for (name, source) in UI_SHADERS.iter() {
+            let vs_module = ShaderModule::from_wgsl(source, ShaderStage::Vertex).unwrap();
+            let vs_kernel = compiler.compile(&vs_module).unwrap();
+            
+            // Sanity check: UI shaders should be <10KB binary
+            assert!(vs_kernel.binary.len() < 10 * 1024, 
+                "{} vertex binary too large: {} bytes", name, vs_kernel.binary.len());
+            
+            let fs_module = ShaderModule::from_wgsl(source, ShaderStage::Fragment).unwrap();
+            let fs_kernel = compiler.compile(&fs_module).unwrap();
+            
+            assert!(fs_kernel.binary.len() < 10 * 1024, 
+                "{} fragment binary too large: {} bytes", name, fs_kernel.binary.len());
+        }
+    }
+
+    #[test]
+    fn test_eu_compile_solid_fill() {
+        use crate::shaders::SOLID_FILL_WGSL;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen12);
+        
+        let vs = ShaderModule::from_wgsl(SOLID_FILL_WGSL, ShaderStage::Vertex).unwrap();
+        let fs = ShaderModule::from_wgsl(SOLID_FILL_WGSL, ShaderStage::Fragment).unwrap();
+        
+        let vs_kernel = compiler.compile(&vs).expect("solid_fill VS should compile");
+        let fs_kernel = compiler.compile(&fs).expect("solid_fill FS should compile");
+        
+        assert_eq!(vs_kernel.gen, IntelGen::Gen12);
+        assert_eq!(fs_kernel.gen, IntelGen::Gen12);
+        assert!(vs_kernel.binary.len() >= 16);
+        assert!(fs_kernel.binary.len() >= 16);
+    }
+
+    #[test]
+    fn test_eu_compile_textured_quad() {
+        use crate::shaders::TEXTURED_QUAD_WGSL;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen11);
+        
+        let vs = ShaderModule::from_wgsl(TEXTURED_QUAD_WGSL, ShaderStage::Vertex).unwrap();
+        let fs = ShaderModule::from_wgsl(TEXTURED_QUAD_WGSL, ShaderStage::Fragment).unwrap();
+        
+        let vs_kernel = compiler.compile(&vs).expect("textured_quad VS should compile");
+        let fs_kernel = compiler.compile(&fs).expect("textured_quad FS should compile");
+        
+        // Fragment shader should be larger due to texture sampling
+        assert!(fs_kernel.binary.len() >= 32, 
+            "Textured quad FS should contain texture SEND: {} bytes", fs_kernel.binary.len());
+    }
+
+    #[test]
+    fn test_eu_compile_sdf_text() {
+        use crate::shaders::SDF_TEXT_WGSL;
+        
+        let compiler = EUCompiler::new(IntelGen::Gen9);
+        
+        let vs = ShaderModule::from_wgsl(SDF_TEXT_WGSL, ShaderStage::Vertex).unwrap();
+        let fs = ShaderModule::from_wgsl(SDF_TEXT_WGSL, ShaderStage::Fragment).unwrap();
+        
+        let vs_kernel = compiler.compile(&vs).expect("sdf_text VS should compile");
+        let fs_kernel = compiler.compile(&fs).expect("sdf_text FS should compile");
+        
+        assert!(vs_kernel.binary.len() >= 16);
+        assert!(fs_kernel.binary.len() >= 32); // SDF math + texture sampling
+    }
+
+    #[test]
+    fn test_eu_compile_gradients() {
+        use crate::shaders::{LINEAR_GRADIENT_WGSL, RADIAL_GRADIENT_WGSL};
+        
+        let compiler = EUCompiler::new(IntelGen::Gen12);
+        
+        // Linear gradient
+        let lin_vs = ShaderModule::from_wgsl(LINEAR_GRADIENT_WGSL, ShaderStage::Vertex).unwrap();
+        let lin_fs = ShaderModule::from_wgsl(LINEAR_GRADIENT_WGSL, ShaderStage::Fragment).unwrap();
+        
+        let lin_vs_kernel = compiler.compile(&lin_vs).expect("linear_gradient VS should compile");
+        let lin_fs_kernel = compiler.compile(&lin_fs).expect("linear_gradient FS should compile");
+        
+        assert!(lin_vs_kernel.binary.len() >= 16);
+        assert!(lin_fs_kernel.binary.len() >= 16);
+        
+        // Radial gradient
+        let rad_vs = ShaderModule::from_wgsl(RADIAL_GRADIENT_WGSL, ShaderStage::Vertex).unwrap();
+        let rad_fs = ShaderModule::from_wgsl(RADIAL_GRADIENT_WGSL, ShaderStage::Fragment).unwrap();
+        
+        let rad_vs_kernel = compiler.compile(&rad_vs).expect("radial_gradient VS should compile");
+        let rad_fs_kernel = compiler.compile(&rad_fs).expect("radial_gradient FS should compile");
+        
+        assert!(rad_vs_kernel.binary.len() >= 16);
+        assert!(rad_fs_kernel.binary.len() >= 16);
+    }
+
+    #[test]
+    fn test_eu_multiple_generations() {
+        use crate::shaders::SOLID_FILL_WGSL;
+        
+        let module = ShaderModule::from_wgsl(SOLID_FILL_WGSL, ShaderStage::Vertex).unwrap();
+        
+        // Compile for different GPU generations
+        let gen9_compiler = EUCompiler::new(IntelGen::Gen9);
+        let gen11_compiler = EUCompiler::new(IntelGen::Gen11);
+        let gen12_compiler = EUCompiler::new(IntelGen::Gen12);
+        
+        let gen9_kernel = gen9_compiler.compile(&module).expect("Gen9 compile should succeed");
+        let gen11_kernel = gen11_compiler.compile(&module).expect("Gen11 compile should succeed");
+        let gen12_kernel = gen12_compiler.compile(&module).expect("Gen12 compile should succeed");
+        
+        assert_eq!(gen9_kernel.gen, IntelGen::Gen9);
+        assert_eq!(gen11_kernel.gen, IntelGen::Gen11);
+        assert_eq!(gen12_kernel.gen, IntelGen::Gen12);
+        
+        // All should produce valid binaries (size may vary due to ISA differences)
+        assert!(gen9_kernel.binary.len() >= 16);
+        assert!(gen11_kernel.binary.len() >= 16);
+        assert!(gen12_kernel.binary.len() >= 16);
+    }
 }

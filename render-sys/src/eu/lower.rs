@@ -124,6 +124,11 @@ impl<'a> LoweringContext<'a> {
                     "Division lowering not yet implemented"
                 ));
             }
+            BinaryOperator::And | BinaryOperator::LogicalAnd => EUOpcode::And,
+            BinaryOperator::InclusiveOr | BinaryOperator::LogicalOr => EUOpcode::Or,
+            BinaryOperator::ExclusiveOr => EUOpcode::Xor,
+            BinaryOperator::ShiftLeft => EUOpcode::Shl,
+            BinaryOperator::ShiftRight => EUOpcode::Shr,
             _ => {
                 return Err(EUCompileError::from(format!(
                     "Unsupported binary operator: {:?}",

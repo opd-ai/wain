@@ -38,6 +38,9 @@ pub fn encode_opcode(opcode: EUOpcode, gen: IntelGen) -> u8 {
         (EUOpcode::Or, _) => 0x06,
         (EUOpcode::Xor, _) => 0x07,
         (EUOpcode::Not, _) => 0x08,
+        (EUOpcode::Shl, _) => 0x09,  // Shift left
+        (EUOpcode::Shr, _) => 0x0A,  // Shift right
+        (EUOpcode::Asr, _) => 0x0C,  // Arithmetic shift right
         
         // Comparison
         (EUOpcode::Cmp, _) => 0x10,
