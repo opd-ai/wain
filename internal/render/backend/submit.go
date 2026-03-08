@@ -116,36 +116,15 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 	// PIPELINE_SELECT: Select 3D pipeline mode
 	commands = append(commands, 0x69040000)
 
-	// STATE_BASE_ADDRESS: Configure base pointers for surface/dynamic/instruction state
-	// This is a complex command - simplified version for now
-	commands = append(commands,
-		0x61010009, // Opcode: STATE_BASE_ADDRESS, length=10 dwords
-		0x00000000, // General State Base Address (unused)
-		0x00000000, // Surface State Base Address (will add relocation in Phase 5.2)
-		0x00000000, // Dynamic State Base Address
-		0x00000000, // Indirect Object Base Address
-		0x00000000, // Instruction Base Address
-		0x00000000, // General State Base Address Modify Enable
-		0x00000000, // Surface State Base Address Modify Enable
-		0x00000000, // Dynamic State Base Address Modify Enable
-		0x00000000, // Indirect Object Base Address Modify Enable
-		0x00000000, // Instruction Base Address Modify Enable
-	)
+	// STATE_BASE_ADDRESS: Configure base pointers
+	commands = encodeStateBaseAddress(commands)
 
 	// 3DSTATE_VF_STATISTICS: Enable vertex fetch statistics
 	commands = append(commands, 0x780B0000)
 
 	// Phase 5.4: Encode scissor state if damage tracking is active
 	if len(scissorRects) > 0 {
-		scissorData := buildScissorStateBuffer(scissorRects)
-		// In a full implementation, we would allocate a state buffer for scissor data
-		// and emit 3DSTATE_SCISSOR_STATE_POINTERS with a relocation.
-		// For now, we emit a placeholder command to enable scissor test.
-		commands = append(commands,
-			0x780F0001, // 3DSTATE_SCISSOR_STATE_POINTERS
-			0x00000001, // Scissor enable flag (simplified)
-		)
-		_ = scissorData // Use scissor data in full implementation
+		commands = encodeScissorCommands(commands, scissorRects)
 	}
 
 	// Encode pipeline state and draw calls for each batch
@@ -153,54 +132,17 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 	for _, batch := range batches {
 		vertexCount := len(batch.Commands) * 6 // 6 vertices per quad
 
-		// 3DSTATE_VERTEX_BUFFERS: Define vertex buffer layout
-		commands = append(commands,
-			0x78080003, // Opcode, length=4 dwords
-			0x00000000, // VB0: Binding 0, stride=20 bytes
-			0x00000014, // Stride: 20 bytes (5 floats/bytes)
-		)
-		// Add relocation for vertex buffer address (will be filled by kernel)
-		bufferAddrOffset := uint64(len(commands) * 4)
-		relocs = append(relocs, render.Relocation{
-			Offset:       bufferAddrOffset,
-			TargetHandle: b.vertexHandle,
-			Delta:        0,
-		})
-		commands = append(commands,
-			0x00000000, // Buffer address (relocation)
-			0x00000000, // Buffer size
-		)
+		// Configure vertex buffers and add relocations
+		commands, relocs = b.encodeVertexBuffers(commands, relocs)
 
-		// 3DSTATE_VERTEX_ELEMENTS: Define vertex attribute layout
-		// Element 0: Position (x, y) - 2 floats at offset 0
-		// Element 1: UV (u, v) - 2 floats at offset 8
-		// Element 2: Color (r, g, b, a) - 4 bytes at offset 16
-		commands = append(commands,
-			0x78090005, // Opcode, length=6 dwords
-			// Element 0: Position
-			0x00000000, // Buffer 0, offset 0, format R32G32_FLOAT
-			0x00000000, // Component 0,1 from input, 0,1 to output
-			// Element 1: UV
-			0x00080001, // Buffer 0, offset 8, format R32G32_FLOAT
-			0x00000000, // Component 0,1 from input, 2,3 to output
-			// Element 2: Color
-			0x00100002, // Buffer 0, offset 16, format R8G8B8A8_UNORM
-			0x00000000, // Component 0,1,2,3 from input, 4,5,6,7 to output
-		)
+		// Define vertex attribute layout
+		commands = encodeVertexElements(commands)
 
 		// Encode minimal pipeline state (detailed state in Phase 5.2)
 		commands = b.encodePipelineState(commands, batch.Pipeline)
 
-		// 3DPRIMITIVE: Issue draw call
-		commands = append(commands,
-			0x7A000005,          // Opcode: 3DPRIMITIVE, length=6 dwords
-			0x00000004,          // Topology: Triangle list
-			uint32(vertexCount), // Vertex count
-			uint32(vertexStart), // Start vertex
-			0x00000001,          // Instance count
-			0x00000000,          // Start instance
-			0x00000000,          // Base vertex location
-		)
+		// Issue draw call
+		commands = encodePrimitive(commands, uint32(vertexCount), vertexStart)
 
 		vertexStart += uint32(vertexCount)
 	}
@@ -225,6 +167,87 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 	}
 
 	return data, relocs
+}
+
+// encodeStateBaseAddress configures GPU base pointers for state buffers.
+func encodeStateBaseAddress(commands []uint32) []uint32 {
+	return append(commands,
+		0x61010009, // Opcode: STATE_BASE_ADDRESS, length=10 dwords
+		0x00000000, // General State Base Address (unused)
+		0x00000000, // Surface State Base Address (will add relocation in Phase 5.2)
+		0x00000000, // Dynamic State Base Address
+		0x00000000, // Indirect Object Base Address
+		0x00000000, // Instruction Base Address
+		0x00000000, // General State Base Address Modify Enable
+		0x00000000, // Surface State Base Address Modify Enable
+		0x00000000, // Dynamic State Base Address Modify Enable
+		0x00000000, // Indirect Object Base Address Modify Enable
+		0x00000000, // Instruction Base Address Modify Enable
+	)
+}
+
+// encodeScissorCommands emits GPU commands for scissor rectangle clipping.
+func encodeScissorCommands(commands []uint32, scissorRects []ScissorRect) []uint32 {
+	scissorData := buildScissorStateBuffer(scissorRects)
+	// In a full implementation, we would allocate a state buffer for scissor data
+	// and emit 3DSTATE_SCISSOR_STATE_POINTERS with a relocation.
+	// For now, we emit a placeholder command to enable scissor test.
+	commands = append(commands,
+		0x780F0001, // 3DSTATE_SCISSOR_STATE_POINTERS
+		0x00000001, // Scissor enable flag (simplified)
+	)
+	_ = scissorData // Use scissor data in full implementation
+	return commands
+}
+
+// encodeVertexBuffers emits vertex buffer configuration and adds relocations.
+func (b *GPUBackend) encodeVertexBuffers(commands []uint32, relocs []render.Relocation) ([]uint32, []render.Relocation) {
+	commands = append(commands,
+		0x78080003, // Opcode: 3DSTATE_VERTEX_BUFFERS, length=4 dwords
+		0x00000000, // VB0: Binding 0, stride=20 bytes
+		0x00000014, // Stride: 20 bytes (5 floats/bytes)
+	)
+	// Add relocation for vertex buffer address (will be filled by kernel)
+	bufferAddrOffset := uint64(len(commands) * 4)
+	relocs = append(relocs, render.Relocation{
+		Offset:       bufferAddrOffset,
+		TargetHandle: b.vertexHandle,
+		Delta:        0,
+	})
+	commands = append(commands,
+		0x00000000, // Buffer address (relocation)
+		0x00000000, // Buffer size
+	)
+	return commands, relocs
+}
+
+// encodeVertexElements defines the vertex attribute layout for the shader.
+func encodeVertexElements(commands []uint32) []uint32 {
+	return append(commands,
+		0x78090005, // Opcode: 3DSTATE_VERTEX_ELEMENTS, length=6 dwords
+		// Element 0: Position (x, y) - 2 floats at offset 0
+		0x00000000, // Buffer 0, offset 0, format R32G32_FLOAT
+		0x00000000, // Component 0,1 from input, 0,1 to output
+		// Element 1: UV (u, v) - 2 floats at offset 8
+		0x00080001, // Buffer 0, offset 8, format R32G32_FLOAT
+		0x00000000, // Component 0,1 from input, 2,3 to output
+		// Element 2: Color (r, g, b, a) - 4 bytes at offset 16
+		0x00100002, // Buffer 0, offset 16, format R8G8B8A8_UNORM
+		0x00000000, // Component 0,1,2,3 from input, 4,5,6,7 to output
+	)
+}
+
+// encodePrimitive emits a 3DPRIMITIVE command to issue a draw call.
+func encodePrimitive(commands []uint32, vertexCount, vertexStart uint32) []uint32 {
+	return append(commands,
+		0x7A000005,          // Opcode: 3DPRIMITIVE, length=6 dwords
+		0x00000004,          // Topology: Triangle list
+		uint32(vertexCount), // Vertex count
+		uint32(vertexStart), // Start vertex
+		0x00000001,          // Instance count
+		0x00000000,          // Start instance
+		0x00000000,          // Base vertex location
+	)
 }
 
 // encodePipelineState emits pipeline-specific state commands.
