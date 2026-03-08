@@ -45,7 +45,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **Test count discrepancy** — README.md:432 — README claims "33 test files" but actual count is 57 test files (`find . -name "*_test.go" | wc -l`). This is a 73% overcount in actual vs. documented tests, suggesting documentation was not updated after test additions in recent development phases.
 
-- [ ] **Shader test count mismatch** — README.md:126 — README claims "14 shader tests passing" but `cargo test shader` shows 22 passing shader tests (with 7 ignored GPU tests). The claim is outdated by 57% and does not account for recent shader validation additions.
+- [x] **Shader test count mismatch** — README.md:126 — README claims "14 shader tests passing" but `cargo test shader` shows 22 passing shader tests (with 7 ignored GPU tests). The claim is outdated by 57% and does not account for recent shader validation additions.
 
 - [ ] **Unsafe pointer misuse warnings** — internal/x11/shm/shm.go:204,57,67 — `go vet` reports "possible misuse of unsafe.Pointer" at three locations in the X11 shared memory implementation. While tests pass, this indicates potential undefined behavior that could manifest on different architectures or future Go versions.
 

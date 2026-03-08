@@ -78,7 +78,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 
 ### UI Shaders (Phase 4.2) — ✅ Complete
 - ✅ 7 WGSL shaders authored in `render-sys/shaders/`
-- ✅ All shaders validated with naga (14 shader tests passing)
+- ✅ All shaders validated with naga (22 shader tests passing, 7 GPU tests ignored)
 - ✅ Comprehensive shader documentation (478-line README)
 - ✅ Shaders: solid_fill, textured_quad, sdf_text, box_shadow, rounded_rect, linear_gradient, radial_gradient
 
