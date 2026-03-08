@@ -94,15 +94,15 @@ func (b *GPUBackend) writeVertexData(data []byte) error {
 // buildMinimalBatch creates a minimal GPU command stream for validation.
 //
 // This batch contains:
-//  - PIPELINE_SELECT (3D mode)
-//  - PIPE_CONTROL (full flush for synchronization)
-//  - MI_BATCH_BUFFER_END
+//   - PIPELINE_SELECT (3D mode)
+//   - PIPE_CONTROL (full flush for synchronization)
+//   - MI_BATCH_BUFFER_END
 //
 // Phase 5.2 will expand this to include:
-//  - STATE_BASE_ADDRESS
-//  - 3DSTATE_VERTEX_BUFFERS / 3DSTATE_VERTEX_ELEMENTS
-//  - Pipeline state per batch
-//  - 3DPRIMITIVE draw calls
+//   - STATE_BASE_ADDRESS
+//   - 3DSTATE_VERTEX_BUFFERS / 3DSTATE_VERTEX_ELEMENTS
+//   - Pipeline state per batch
+//   - 3DPRIMITIVE draw calls
 func (b *GPUBackend) buildMinimalBatch(batches []Batch) []byte {
 	_ = batches // Batch information will be used in Phase 5.2
 
