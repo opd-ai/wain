@@ -33,6 +33,12 @@ pub fn encode_opcode(opcode: EUOpcode, gen: IntelGen) -> u8 {
         (EUOpcode::Rnde, _) => 0x44,  // Round to nearest even
         (EUOpcode::Rndz, _) => 0x47,  // Round toward zero (trunc)
         
+        // Vector operations
+        (EUOpcode::Dp2, _) => 0x54,  // Dot product 2D
+        (EUOpcode::Dp3, _) => 0x55,  // Dot product 3D
+        (EUOpcode::Dp4, _) => 0x56,  // Dot product 4D
+        (EUOpcode::Dph, _) => 0x57,  // Dot product homogeneous
+        
         // Logic operations
         (EUOpcode::And, _) => 0x05,
         (EUOpcode::Or, _) => 0x06,

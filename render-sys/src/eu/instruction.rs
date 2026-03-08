@@ -25,6 +25,12 @@ pub enum EUOpcode {
     Rnde,  // Round to nearest even
     Rndz,  // Round toward zero (trunc)
     
+    // Vector operations
+    Dp2,   // Dot product 2D
+    Dp3,   // Dot product 3D
+    Dp4,   // Dot product 4D
+    Dph,   // Dot product homogeneous
+    
     // Logic operations
     And,
     Or,
@@ -158,6 +164,11 @@ impl EUInstruction {
             predicate_inverse: false,
             send_descriptor: None,
         }
+    }
+    
+    /// Get the opcode of this instruction
+    pub fn opcode(&self) -> EUOpcode {
+        self.opcode
     }
     
     /// Set destination register

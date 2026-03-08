@@ -1476,6 +1476,376 @@ impl<'a> LoweringContext<'a> {
         self.expr_to_reg.insert(expr, vreg);
         Ok(vreg)
     }
+
+    /// Lower vector splat operation (broadcast scalar to all components)
+    ///
+    /// Generates MOV instruction with scalar source and vector destination
+    pub fn lower_splat(
+        &mut self,
+        scalar: naga::Handle<Expression>,
+        size: naga::VectorSize,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        use naga::VectorSize;
+
+        let scalar_reg = self.get_or_alloc_reg(scalar)?;
+        let dst_reg = self.alloc_reg(result)?;
+
+        let scalar_phys = self.reg_alloc.get_physical(scalar_reg)
+            .ok_or_else(|| EUCompileError::from("Scalar operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+
+        let src = Register {
+            file: RegFile::GRF,
+            num: scalar_phys.grf_num,
+            subreg: 0,
+        };
+        let dst = Register {
+            file: RegFile::GRF,
+            num: dst_phys.grf_num,
+            subreg: 0,
+        };
+
+        let exec_size = match size {
+            VectorSize::Bi => ExecSize::Size2,
+            VectorSize::Tri | VectorSize::Quad => ExecSize::Size4,
+        };
+
+        let mut mov = EUInstruction::new(EUOpcode::Mov);
+        mov.set_dst(dst);
+        mov.set_dst_type(DataType::F);
+        mov.set_src0(src);
+        mov.set_src0_type(DataType::F);
+        mov.set_exec_size(exec_size);
+        self.instructions.push(mov);
+
+        Ok(())
+    }
+
+    /// Lower vector swizzle operation
+    ///
+    /// Extracts and rearranges vector components using MOV with region addressing
+    pub fn lower_swizzle(
+        &mut self,
+        vector: naga::Handle<Expression>,
+        pattern: &[naga::SwizzleComponent; 4],
+        size: naga::VectorSize,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        use naga::{SwizzleComponent, VectorSize};
+
+        let vec_reg = self.get_or_alloc_reg(vector)?;
+        let dst_reg = self.alloc_reg(result)?;
+
+        let vec_phys = self.reg_alloc.get_physical(vec_reg)
+            .ok_or_else(|| EUCompileError::from("Vector operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+
+        let num_components = match size {
+            VectorSize::Bi => 2,
+            VectorSize::Tri => 3,
+            VectorSize::Quad => 4,
+        };
+
+        // For simple swizzles, we can use a single MOV with swizzle control
+        // For complex swizzles, we need multiple MOV instructions
+        // TODO: Implement swizzle control bits in instruction encoding
+        // For now, implement component-wise with multiple MOVs
+
+        for i in 0..num_components {
+            let component_idx = match pattern[i] {
+                SwizzleComponent::X => 0,
+                SwizzleComponent::Y => 1,
+                SwizzleComponent::Z => 2,
+                SwizzleComponent::W => 3,
+            };
+
+            let src = Register {
+                file: RegFile::GRF,
+                num: vec_phys.grf_num,
+                subreg: (component_idx * 4) as u8, // Each float component is 4 bytes
+            };
+            let dst = Register {
+                file: RegFile::GRF,
+                num: dst_phys.grf_num,
+                subreg: (i * 4) as u8,
+            };
+
+            let mut mov = EUInstruction::new(EUOpcode::Mov);
+            mov.set_dst(dst);
+            mov.set_dst_type(DataType::F);
+            mov.set_src0(src);
+            mov.set_src0_type(DataType::F);
+            mov.set_exec_size(ExecSize::Scalar);
+            self.instructions.push(mov);
+        }
+
+        Ok(())
+    }
+
+    /// Lower dot product operation
+    ///
+    /// Uses DP2, DP3, or DP4 instructions based on vector size
+    pub fn lower_dot(
+        &mut self,
+        left: naga::Handle<Expression>,
+        right: naga::Handle<Expression>,
+        size: naga::VectorSize,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        use naga::VectorSize;
+
+        let left_reg = self.get_or_alloc_reg(left)?;
+        let right_reg = self.get_or_alloc_reg(right)?;
+        let dst_reg = self.alloc_reg(result)?;
+
+        let left_phys = self.reg_alloc.get_physical(left_reg)
+            .ok_or_else(|| EUCompileError::from("Left operand not allocated"))?;
+        let right_phys = self.reg_alloc.get_physical(right_reg)
+            .ok_or_else(|| EUCompileError::from("Right operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+
+        let dst = Register {
+            file: RegFile::GRF,
+            num: dst_phys.grf_num,
+            subreg: 0,
+        };
+        let src0 = Register {
+            file: RegFile::GRF,
+            num: left_phys.grf_num,
+            subreg: 0,
+        };
+        let src1 = Register {
+            file: RegFile::GRF,
+            num: right_phys.grf_num,
+            subreg: 0,
+        };
+
+        // Use DP2, DP3, or DP4 instruction based on vector size
+        let opcode = match size {
+            VectorSize::Bi => EUOpcode::Dp2,
+            VectorSize::Tri => EUOpcode::Dp3,
+            VectorSize::Quad => EUOpcode::Dp4,
+        };
+
+        let mut dp = EUInstruction::new(opcode);
+        dp.set_dst(dst);
+        dp.set_dst_type(DataType::F);
+        dp.set_src0(src0);
+        dp.set_src0_type(DataType::F);
+        dp.set_src1(src1);
+        dp.set_src1_type(DataType::F);
+        dp.set_exec_size(ExecSize::Scalar); // Dot product result is scalar
+        self.instructions.push(dp);
+
+        Ok(())
+    }
+
+    /// Lower cross product operation (vec3 only)
+    ///
+    /// Cross product: (a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x)
+    pub fn lower_cross(
+        &mut self,
+        left: naga::Handle<Expression>,
+        right: naga::Handle<Expression>,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        let left_reg = self.get_or_alloc_reg(left)?;
+        let right_reg = self.get_or_alloc_reg(right)?;
+        let dst_reg = self.alloc_reg(result)?;
+
+        let left_phys = self.reg_alloc.get_physical(left_reg)
+            .ok_or_else(|| EUCompileError::from("Left operand not allocated"))?;
+        let right_phys = self.reg_alloc.get_physical(right_reg)
+            .ok_or_else(|| EUCompileError::from("Right operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+
+        // Allocate temporary registers for intermediate results
+        let temp1_vreg = self.reg_alloc.allocate_vreg();
+        let temp2_vreg = self.reg_alloc.allocate_vreg();
+        let temp1_phys = self.reg_alloc.get_physical(temp1_vreg)
+            .ok_or_else(|| EUCompileError::from("Temp1 not allocated"))?;
+        let temp2_phys = self.reg_alloc.get_physical(temp2_vreg)
+            .ok_or_else(|| EUCompileError::from("Temp2 not allocated"))?;
+
+        // Compute each component of the cross product
+        // x = a.y * b.z - a.z * b.y
+        // y = a.z * b.x - a.x * b.z
+        // z = a.x * b.y - a.y * b.x
+
+        for i in 0..3 {
+            let (idx1, idx2) = match i {
+                0 => (1, 2), // x: a.y, a.z
+                1 => (2, 0), // y: a.z, a.x
+                2 => (0, 1), // z: a.x, a.y
+                _ => unreachable!(),
+            };
+
+            // temp1 = a[idx1] * b[idx2]
+            let mut mul1 = EUInstruction::new(EUOpcode::Mul);
+            mul1.set_dst(Register {
+                file: RegFile::GRF,
+                num: temp1_phys.grf_num,
+                subreg: 0,
+            });
+            mul1.set_dst_type(DataType::F);
+            mul1.set_src0(Register {
+                file: RegFile::GRF,
+                num: left_phys.grf_num,
+                subreg: (idx1 * 4) as u8,
+            });
+            mul1.set_src0_type(DataType::F);
+            mul1.set_src1(Register {
+                file: RegFile::GRF,
+                num: right_phys.grf_num,
+                subreg: (idx2 * 4) as u8,
+            });
+            mul1.set_src1_type(DataType::F);
+            mul1.set_exec_size(ExecSize::Scalar);
+            self.instructions.push(mul1);
+
+            // temp2 = a[idx2] * b[idx1]
+            let mut mul2 = EUInstruction::new(EUOpcode::Mul);
+            mul2.set_dst(Register {
+                file: RegFile::GRF,
+                num: temp2_phys.grf_num,
+                subreg: 0,
+            });
+            mul2.set_dst_type(DataType::F);
+            mul2.set_src0(Register {
+                file: RegFile::GRF,
+                num: left_phys.grf_num,
+                subreg: (idx2 * 4) as u8,
+            });
+            mul2.set_src0_type(DataType::F);
+            mul2.set_src1(Register {
+                file: RegFile::GRF,
+                num: right_phys.grf_num,
+                subreg: (idx1 * 4) as u8,
+            });
+            mul2.set_src1_type(DataType::F);
+            mul2.set_exec_size(ExecSize::Scalar);
+            self.instructions.push(mul2);
+
+            // dst[i] = temp1 - temp2
+            let mut add = EUInstruction::new(EUOpcode::Add);
+            add.set_dst(Register {
+                file: RegFile::GRF,
+                num: dst_phys.grf_num,
+                subreg: (i * 4) as u8,
+            });
+            add.set_dst_type(DataType::F);
+            add.set_src0(Register {
+                file: RegFile::GRF,
+                num: temp1_phys.grf_num,
+                subreg: 0,
+            });
+            add.set_src0_type(DataType::F);
+            add.set_src1(Register {
+                file: RegFile::GRF,
+                num: temp2_phys.grf_num,
+                subreg: 0,
+            });
+            add.set_src1_type(DataType::F);
+            add.set_src1_negate(true); // Negate src1 to perform subtraction
+            add.set_exec_size(ExecSize::Scalar);
+            self.instructions.push(add);
+        }
+
+        Ok(())
+    }
+
+    /// Lower vector arithmetic with proper execution size
+    ///
+    /// Similar to lower_binary_arith but handles vector execution sizes
+    pub fn lower_vector_arith(
+        &mut self,
+        op: BinaryOperator,
+        left: naga::Handle<Expression>,
+        right: naga::Handle<Expression>,
+        size: naga::VectorSize,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        use naga::VectorSize;
+
+        let left_reg = self.get_or_alloc_reg(left)?;
+        let right_reg = self.get_or_alloc_reg(right)?;
+        let dst_reg = self.alloc_reg(result)?;
+
+        let left_phys = self.reg_alloc.get_physical(left_reg)
+            .ok_or_else(|| EUCompileError::from("Left operand not allocated"))?;
+        let right_phys = self.reg_alloc.get_physical(right_reg)
+            .ok_or_else(|| EUCompileError::from("Right operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+
+        let dst = Register {
+            file: RegFile::GRF,
+            num: dst_phys.grf_num,
+            subreg: 0,
+        };
+        let src0 = Register {
+            file: RegFile::GRF,
+            num: left_phys.grf_num,
+            subreg: 0,
+        };
+        let src1 = Register {
+            file: RegFile::GRF,
+            num: right_phys.grf_num,
+            subreg: 0,
+        };
+
+        let exec_size = match size {
+            VectorSize::Bi => ExecSize::Size2,
+            VectorSize::Tri | VectorSize::Quad => ExecSize::Size4,
+        };
+
+        let opcode = match op {
+            BinaryOperator::Add => EUOpcode::Add,
+            BinaryOperator::Multiply => EUOpcode::Mul,
+            BinaryOperator::Subtract => {
+                // Subtract implemented as Add with negated source
+                let mut add = EUInstruction::new(EUOpcode::Add);
+                add.set_dst(dst);
+                add.set_dst_type(DataType::F);
+                add.set_src0(src0);
+                add.set_src0_type(DataType::F);
+                add.set_src1(src1);
+                add.set_src1_type(DataType::F);
+                add.set_src1_negate(true);
+                add.set_exec_size(exec_size);
+                self.instructions.push(add);
+                return Ok(());
+            }
+            BinaryOperator::Divide => {
+                return Err(EUCompileError::from(
+                    "Vector division requires SEND instruction (deferred)"
+                ));
+            }
+            _ => {
+                return Err(EUCompileError::from(format!(
+                    "Unsupported vector binary operation: {:?}",
+                    op
+                )));
+            }
+        };
+
+        let mut inst = EUInstruction::new(opcode);
+        inst.set_dst(dst);
+        inst.set_dst_type(DataType::F);
+        inst.set_src0(src0);
+        inst.set_src0_type(DataType::F);
+        inst.set_src1(src1);
+        inst.set_src1_type(DataType::F);
+        inst.set_exec_size(exec_size);
+        self.instructions.push(inst);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -1873,6 +2243,232 @@ mod tests {
         let res = ctx.lower_divide(left, right, result);
         assert!(res.is_err(), "Divide should return error (deferred)");
         assert!(res.unwrap_err().to_string().contains("SEND instruction"));
+    }
+
+    #[test]
+    fn test_lower_vector_splat() {
+        let mut module = naga::Module::default();
+        
+        let scalar = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(5.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Splat {
+            size: naga::VectorSize::Quad,
+            value: scalar,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_splat(scalar, naga::VectorSize::Quad, result);
+        assert!(res.is_ok(), "Splat lowering should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        // Verify it's a MOV instruction with vec4 execution size
+        assert_eq!(instructions[0].opcode(), EUOpcode::Mov);
+    }
+
+    #[test]
+    fn test_lower_dot_product_vec2() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(2.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Add,  // Placeholder, actual dot product in naga is MathFunction
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_dot(left, right, naga::VectorSize::Bi, result);
+        assert!(res.is_ok(), "Dot product lowering should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].opcode(), EUOpcode::Dp2);
+    }
+
+    #[test]
+    fn test_lower_dot_product_vec3() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(2.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Add,
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_dot(left, right, naga::VectorSize::Tri, result);
+        assert!(res.is_ok(), "Dot product vec3 lowering should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].opcode(), EUOpcode::Dp3);
+    }
+
+    #[test]
+    fn test_lower_dot_product_vec4() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(2.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Add,
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_dot(left, right, naga::VectorSize::Quad, result);
+        assert!(res.is_ok(), "Dot product vec4 lowering should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].opcode(), EUOpcode::Dp4);
+    }
+
+    #[test]
+    fn test_lower_cross_product() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(2.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Add,
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_cross(left, right, result);
+        assert!(res.is_ok(), "Cross product lowering should succeed");
+
+        let instructions = ctx.instructions();
+        // Cross product generates 9 instructions: 3 * (mul, mul, add)
+        assert_eq!(instructions.len(), 9);
+    }
+
+    #[test]
+    fn test_lower_vector_add() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(2.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Add,
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_vector_arith(
+            BinaryOperator::Add,
+            left,
+            right,
+            naga::VectorSize::Quad,
+            result
+        );
+        assert!(res.is_ok(), "Vector add should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].opcode(), EUOpcode::Add);
+    }
+
+    #[test]
+    fn test_lower_vector_multiply() {
+        let mut module = naga::Module::default();
+        
+        let left = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(3.0)
+        ), Default::default());
+        let right = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(4.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Binary {
+            op: BinaryOperator::Multiply,
+            left,
+            right,
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_vector_arith(
+            BinaryOperator::Multiply,
+            left,
+            right,
+            naga::VectorSize::Tri,
+            result
+        );
+        assert!(res.is_ok(), "Vector multiply should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+        assert_eq!(instructions[0].opcode(), EUOpcode::Mul);
+    }
+
+    #[test]
+    fn test_lower_swizzle() {
+        use naga::SwizzleComponent;
+        
+        let mut module = naga::Module::default();
+        
+        let vector = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(1.0)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Swizzle {
+            size: naga::VectorSize::Quad,
+            vector,
+            pattern: [
+                SwizzleComponent::X,
+                SwizzleComponent::Y,
+                SwizzleComponent::Z,
+                SwizzleComponent::W,
+            ],
+        }, Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let pattern = [
+            SwizzleComponent::Z,
+            SwizzleComponent::Y,
+            SwizzleComponent::X,
+            SwizzleComponent::W,
+        ];
+        let res = ctx.lower_swizzle(vector, &pattern, naga::VectorSize::Quad, result);
+        assert!(res.is_ok(), "Swizzle lowering should succeed");
+
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 4); // 4 MOV instructions for vec4 swizzle
     }
 
     #[test]
