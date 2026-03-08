@@ -36,7 +36,7 @@ The codebase is generally well-structured with:
 
 ### CRITICAL
 
-- [ ] **LOC Discrepancy: Wayland** — README.md:37 — Claims "~6,988 LOC" but actual is **3,392 LOC** (48.5% of claimed). This is a 2.06x inflation. Evidence: `find internal/wayland -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 3392 total lines.
+- [x] **LOC Discrepancy: Wayland** — README.md:37 — Claims "~6,988 LOC" but actual is **3,392 LOC** (48.5% of claimed). This is a 2.06x inflation. Evidence: `find internal/wayland -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 3392 total lines.
 
 - [ ] **LOC Discrepancy: X11** — README.md:45 — Claims "~5,683 LOC" but actual is **2,888 LOC** (50.8% of claimed). This is a 1.97x inflation. Evidence: `find internal/x11 -name '*.go' -not -name '*_test.go' -exec wc -l {} +` yields 2888 total lines.
 
