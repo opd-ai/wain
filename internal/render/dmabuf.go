@@ -94,13 +94,19 @@ func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*B
 		return nil, fmt.Errorf("failed to get buffer info")
 	}
 
-	return &BufferHandle{
+	bufHandle := &BufferHandle{
 		handle:    handle,
 		allocator: a,
 		Width:     uint32(w),
 		Height:    uint32(h),
 		Stride:    uint32(stride),
-	}, nil
+	}
+
+	// Track allocation in global statistics
+	sizeBytes := uint64(stride) * uint64(h)
+	globalMemStats.RecordAllocation(uintptr(unsafe.Pointer(handle)), sizeBytes)
+
+	return bufHandle, nil
 }
 
 // ExportDmabuf exports the buffer as a DMA-BUF file descriptor.
@@ -140,6 +146,9 @@ func (b *BufferHandle) Destroy() error {
 	if b.allocator.handle == nil {
 		return fmt.Errorf("allocator is closed")
 	}
+
+	// Track deallocation before destroying
+	globalMemStats.RecordDeallocation(uintptr(unsafe.Pointer(b.handle)))
 
 	if C.buffer_destroy(b.allocator.handle, b.handle) != 0 {
 		return fmt.Errorf("failed to destroy buffer")

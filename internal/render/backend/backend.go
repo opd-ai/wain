@@ -36,6 +36,9 @@ type GPUBackend struct {
 	targetHandle uint32
 	width        int
 	height       int
+
+	// Frame profiler for performance metrics
+	profiler *FrameProfiler
 }
 
 // Config contains configuration for the GPU backend.
@@ -119,6 +122,7 @@ func New(cfg Config) (*GPUBackend, error) {
 		targetHandle: renderTarget.GemHandle(),
 		width:        cfg.Width,
 		height:       cfg.Height,
+		profiler:     NewFrameProfiler(),
 	}
 
 	return backend, nil
@@ -158,6 +162,9 @@ func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []disp
 		return nil // Nothing to render
 	}
 
+	// Begin frame profiling
+	b.profiler.BeginFrame()
+
 	// Phase 5.4: Filter commands by damage regions if provided
 	commands := dl.Commands()
 	scissorRects := []ScissorRect(nil)
@@ -190,10 +197,16 @@ func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []disp
 		return fmt.Errorf("backend: vertex packing failed: %w", err)
 	}
 
+	// Mark GPU submit point
+	b.profiler.MarkGPUSubmit()
+
 	// Build and submit GPU batch buffer with scissor state
 	if err := b.submitBatchesWithScissor(batches, vertexData, scissorRects); err != nil {
 		return fmt.Errorf("backend: batch submission failed: %w", err)
 	}
+
+	// End frame profiling
+	b.profiler.EndFrame()
 
 	return nil
 }
@@ -201,6 +214,16 @@ func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []disp
 // RenderTarget returns the render target buffer for display.
 func (b *GPUBackend) RenderTarget() *render.BufferHandle {
 	return b.renderTarget
+}
+
+// GetFrameStats returns current frame profiling statistics.
+func (b *GPUBackend) GetFrameStats() FrameStats {
+	return b.profiler.GetStats()
+}
+
+// ResetFrameStats resets frame profiling statistics.
+func (b *GPUBackend) ResetFrameStats() {
+	b.profiler.Reset()
 }
 
 // Dimensions returns the render target dimensions.
