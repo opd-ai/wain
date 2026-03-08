@@ -61,17 +61,19 @@ go-stats-generator analyze . --skip-tests --format json --sections functions | \
 # Result: 7.0 (target: ≤10) ✅
 ```
 
-### Step 4: Simplify Raster Effects Module
+### Step 4: Simplify Raster Effects Module ✅
 - **Deliverable**: Refactor LinearGradient and blur functions to reduce branching and nesting
 - **Dependencies**: None
 - **Files**:
-  - `internal/raster/effects/effects.go` (LinearGradient 15.0, blurHorizontal 11.1, blurVertical 11.1)
+  - `internal/raster/effects/effects.go` (LinearGradient 15.0→8.8, blurHorizontal 11.1→1.3, blurVertical 11.1→1.3)
 - **Acceptance**: LinearGradient complexity ≤10, blur functions ≤8
+- **Status**: ✅ Complete - reduced all target functions below thresholds
 - **Validation**:
 ```bash
 go-stats-generator analyze . --skip-tests --format json --sections functions | \
   jq '[.functions[] | select(.package == "effects" and .complexity.overall > 9.0)] | length'
 # Target: 0
+# Result: 0 (LinearGradient: 8.8, blurHorizontal: 1.3, blurVertical: 1.3) ✅
 ```
 
 ### Step 5: Reduce Widget Drawing Complexity

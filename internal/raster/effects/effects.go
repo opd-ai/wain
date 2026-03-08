@@ -137,35 +137,16 @@ func applyShadowToBuffer(buf *core.Buffer, mask []uint8, maskWidth, maskHeight, 
 
 // blurHorizontal applies a horizontal box blur to the mask.
 func blurHorizontal(mask []uint8, width, height, radius int) {
-	if radius <= 0 {
-		return
-	}
-
-	temp := make([]uint8, width*height)
-	copy(temp, mask)
-
-	for row := 0; row < height; row++ {
-		for col := 0; col < width; col++ {
-			sum := uint32(0)
-			count := 0
-
-			for dx := -radius; dx <= radius; dx++ {
-				x := col + dx
-				if x >= 0 && x < width {
-					sum += uint32(temp[row*width+x])
-					count++
-				}
-			}
-
-			if count > 0 {
-				mask[row*width+col] = uint8(sum / uint32(count))
-			}
-		}
-	}
+	blur1D(mask, width, height, radius, true)
 }
 
 // blurVertical applies a vertical box blur to the mask.
 func blurVertical(mask []uint8, width, height, radius int) {
+	blur1D(mask, width, height, radius, false)
+}
+
+// blur1D applies a 1D box blur along horizontal (isHorizontal=true) or vertical axis.
+func blur1D(mask []uint8, width, height, radius int, isHorizontal bool) {
 	if radius <= 0 {
 		return
 	}
@@ -173,22 +154,50 @@ func blurVertical(mask []uint8, width, height, radius int) {
 	temp := make([]uint8, width*height)
 	copy(temp, mask)
 
-	for col := 0; col < width; col++ {
+	if isHorizontal {
 		for row := 0; row < height; row++ {
-			sum := uint32(0)
-			count := 0
+			blurRow(mask, temp, row, width, radius)
+		}
+	} else {
+		for col := 0; col < width; col++ {
+			blurColumn(mask, temp, col, width, height, radius)
+		}
+	}
+}
 
-			for dy := -radius; dy <= radius; dy++ {
-				y := row + dy
-				if y >= 0 && y < height {
-					sum += uint32(temp[y*width+col])
-					count++
-				}
+// blurRow applies box blur to a single row.
+func blurRow(mask, temp []uint8, row, width, radius int) {
+	offset := row * width
+	for col := 0; col < width; col++ {
+		sum := uint32(0)
+		count := 0
+		for dx := -radius; dx <= radius; dx++ {
+			x := col + dx
+			if x >= 0 && x < width {
+				sum += uint32(temp[offset+x])
+				count++
 			}
+		}
+		if count > 0 {
+			mask[offset+col] = uint8(sum / uint32(count))
+		}
+	}
+}
 
-			if count > 0 {
-				mask[row*width+col] = uint8(sum / uint32(count))
+// blurColumn applies box blur to a single column.
+func blurColumn(mask, temp []uint8, col, width, height, radius int) {
+	for row := 0; row < height; row++ {
+		sum := uint32(0)
+		count := 0
+		for dy := -radius; dy <= radius; dy++ {
+			y := row + dy
+			if y >= 0 && y < height {
+				sum += uint32(temp[y*width+col])
+				count++
 			}
+		}
+		if count > 0 {
+			mask[row*width+col] = uint8(sum / uint32(count))
 		}
 	}
 }
@@ -205,54 +214,63 @@ func LinearGradient(buf *core.Buffer, x, y, width, height int,
 		return
 	}
 
-	// Clip to buffer bounds
-	x1 := max(0, x)
-	y1 := max(0, y)
-	x2 := min(buf.Width, x+width)
-	y2 := min(buf.Height, y+height)
-
+	x1, y1, x2, y2 := clipRectToBounds(buf, x, y, width, height)
 	if x1 >= x2 || y1 >= y2 {
 		return
 	}
 
-	// Compute gradient vector
 	dx := float64(endX - startX)
 	dy := float64(endY - startY)
 	length := math.Sqrt(dx*dx + dy*dy)
 
 	if length < 0.001 {
-		// Degenerate gradient, fill with start color
-		for row := y1; row < y2; row++ {
-			for col := x1; col < x2; col++ {
-				setPixel(buf, col, row, startColor)
-			}
-		}
+		fillSolidRect(buf, x1, y1, x2, y2, startColor)
 		return
 	}
 
-	// Normalize gradient vector
 	dx /= length
 	dy /= length
 
 	for row := y1; row < y2; row++ {
 		for col := x1; col < x2; col++ {
-			// Project point onto gradient line
-			px := float64(col - startX)
-			py := float64(row - startY)
-			t := (px*dx + py*dy) / length
-
-			// Clamp t to [0, 1]
-			if t < 0 {
-				t = 0
-			} else if t > 1 {
-				t = 1
-			}
-
-			// Interpolate color
+			t := computeGradientPosition(col, row, startX, startY, dx, dy, length)
 			color := interpolateColor(startColor, endColor, t)
 			setPixel(buf, col, row, color)
 		}
 	}
+}
+
+// clipRectToBounds clips a rectangle to buffer bounds.
+func clipRectToBounds(buf *core.Buffer, x, y, width, height int) (x1, y1, x2, y2 int) {
+	x1 = max(0, x)
+	y1 = max(0, y)
+	x2 = min(buf.Width, x+width)
+	y2 = min(buf.Height, y+height)
+	return
+}
+
+// fillSolidRect fills a rectangle with a solid color.
+func fillSolidRect(buf *core.Buffer, x1, y1, x2, y2 int, color core.Color) {
+	for row := y1; row < y2; row++ {
+		for col := x1; col < x2; col++ {
+			setPixel(buf, col, row, color)
+		}
+	}
+}
+
+// computeGradientPosition computes and clamps the gradient position t ∈ [0,1].
+func computeGradientPosition(x, y, startX, startY int, dx, dy, length float64) float64 {
+	px := float64(x - startX)
+	py := float64(y - startY)
+	t := (px*dx + py*dy) / length
+
+	if t < 0 {
+		return 0
+	}
+	if t > 1 {
+		return 1
+	}
+	return t
 }
 
 // RadialGradient fills a rectangular region with a radial gradient.
@@ -267,12 +285,7 @@ func RadialGradient(buf *core.Buffer, x, y, width, height int,
 		return
 	}
 
-	// Clip to buffer bounds
-	x1 := max(0, x)
-	y1 := max(0, y)
-	x2 := min(buf.Width, x+width)
-	y2 := min(buf.Height, y+height)
-
+	x1, y1, x2, y2 := clipRectToBounds(buf, x, y, width, height)
 	if x1 >= x2 || y1 >= y2 {
 		return
 	}
@@ -281,18 +294,15 @@ func RadialGradient(buf *core.Buffer, x, y, width, height int,
 
 	for row := y1; row < y2; row++ {
 		for col := x1; col < x2; col++ {
-			// Compute distance from center
 			dx := float64(col - centerX)
 			dy := float64(row - centerY)
 			dist := math.Sqrt(dx*dx + dy*dy)
 
-			// Normalize distance to [0, 1]
 			t := dist / radiusF
 			if t > 1 {
 				t = 1
 			}
 
-			// Interpolate color
 			color := interpolateColor(centerColor, edgeColor, t)
 			setPixel(buf, col, row, color)
 		}
