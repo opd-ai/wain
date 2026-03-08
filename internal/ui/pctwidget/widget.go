@@ -136,29 +136,33 @@ func (p *Panel) Draw(buf *core.Buffer) error {
 		return nil
 	}
 	s := p.EffectiveStyle()
-	// Background fill.
 	buf.FillRect(p.x, p.y, p.width, p.height, s.Background())
-	// Border (drawn as four lines on the edges).
+	p.drawBorder(buf, s)
+	return p.drawChildren(buf)
+}
+
+// drawBorder renders the panel border if border width is non-zero.
+func (p *Panel) drawBorder(buf *core.Buffer, s Style) {
 	bw := s.BorderWidth()
-	if bw > 0 && p.width > 0 && p.height > 0 {
-		// Clamp border width so it doesn't exceed half the panel dimension.
-		if bw > p.width/2 {
-			bw = p.width / 2
-		}
-		if bw > p.height/2 {
-			bw = p.height / 2
-		}
-		bc := s.Border()
-		// top
-		buf.FillRect(p.x, p.y, p.width, bw, bc)
-		// bottom
-		buf.FillRect(p.x, p.y+p.height-bw, p.width, bw, bc)
-		// left
-		buf.FillRect(p.x, p.y, bw, p.height, bc)
-		// right
-		buf.FillRect(p.x+p.width-bw, p.y, bw, p.height, bc)
+	if bw <= 0 || p.width <= 0 || p.height <= 0 {
+		return
 	}
-	// Draw children.
+	// Clamp border width so it doesn't exceed half the panel dimension.
+	if bw > p.width/2 {
+		bw = p.width / 2
+	}
+	if bw > p.height/2 {
+		bw = p.height / 2
+	}
+	bc := s.Border()
+	buf.FillRect(p.x, p.y, p.width, bw, bc)                       // top
+	buf.FillRect(p.x, p.y+p.height-bw, p.width, bw, bc)           // bottom
+	buf.FillRect(p.x, p.y, bw, p.height, bc)                      // left
+	buf.FillRect(p.x+p.width-bw, p.y, bw, p.height, bc)           // right
+}
+
+// drawChildren renders all child panels recursively.
+func (p *Panel) drawChildren(buf *core.Buffer) error {
 	for _, c := range p.children {
 		if err := c.Draw(buf); err != nil {
 			return err

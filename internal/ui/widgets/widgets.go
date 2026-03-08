@@ -228,30 +228,52 @@ func (b *Button) HandlePointerUp(button uint32) {
 	}
 }
 
+// buttonColors holds the color scheme for a button in its current state.
+type buttonColors struct {
+	background core.Color
+	text       core.Color
+	border     core.Color
+}
+
+// getButtonColors returns the appropriate colors based on button state.
+func (b *Button) getButtonColors() buttonColors {
+	if !b.enabled {
+		return buttonColors{
+			background: b.theme.BackgroundDisabled,
+			text:       b.theme.TextDisabled,
+			border:     b.theme.BorderNormal,
+		}
+	}
+	switch b.state {
+	case PointerStatePressed:
+		return buttonColors{
+			background: b.theme.BackgroundPressed,
+			text:       b.theme.TextPressed,
+			border:     b.theme.BorderPressed,
+		}
+	case PointerStateHover:
+		return buttonColors{
+			background: b.theme.BackgroundHover,
+			text:       b.theme.TextHover,
+			border:     b.theme.BorderHover,
+		}
+	default:
+		return buttonColors{
+			background: b.theme.BackgroundNormal,
+			text:       b.theme.TextNormal,
+			border:     b.theme.BorderNormal,
+		}
+	}
+}
+
+// Draw renders the button to the buffer at the specified position.
 // Draw renders the button to the buffer at the specified position.
 func (b *Button) Draw(buf *core.Buffer, x, y int) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
 
-	// Select colors based on state
-	var bgColor, textColor core.Color
-	if !b.enabled {
-		bgColor = b.theme.BackgroundDisabled
-		textColor = b.theme.TextDisabled
-	} else {
-		switch b.state {
-		case PointerStatePressed:
-			bgColor = b.theme.BackgroundPressed
-			textColor = b.theme.TextPressed
-		case PointerStateHover:
-			bgColor = b.theme.BackgroundHover
-			textColor = b.theme.TextHover
-		default:
-			bgColor = b.theme.BackgroundNormal
-			textColor = b.theme.TextNormal
-		}
-	}
+	colors := b.getButtonColors()
 
 	// Draw shadow if enabled
 	if b.enabled && b.theme.ShadowBlur > 0 {
@@ -262,26 +284,17 @@ func (b *Button) Draw(buf *core.Buffer, x, y int) error {
 	}
 
 	// Draw background with rounded corners
-	buf.FillRoundedRect(x, y, b.width, b.height, float64(b.theme.BorderRadius), bgColor)
+	buf.FillRoundedRect(x, y, b.width, b.height, float64(b.theme.BorderRadius), colors.background)
 
 	// Draw border
-	borderColor := b.theme.BorderNormal
-	if b.enabled {
-		switch b.state {
-		case PointerStatePressed:
-			borderColor = b.theme.BorderPressed
-		case PointerStateHover:
-			borderColor = b.theme.BorderHover
-		}
-	}
-	drawRectBorder(buf, x, y, b.width, b.height, 1, borderColor)
+	drawRectBorder(buf, x, y, b.width, b.height, 1, colors.border)
 
 	// Draw text centered
 	if b.atlas != nil && b.text != "" {
 		textWidth := b.measureTextWidth(b.text)
 		textX := float64(x) + float64(b.width-textWidth)/2
 		textY := float64(y) + float64(b.height)/2 + b.theme.FontSize/3
-		text.DrawText(buf, b.text, textX, textY, b.theme.FontSize, textColor, b.atlas)
+		text.DrawText(buf, b.text, textX, textY, b.theme.FontSize, colors.text, b.atlas)
 	}
 
 	return nil
@@ -293,24 +306,7 @@ func (b *Button) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 		return
 	}
 
-	// Select colors based on state
-	var bgColor, textColor core.Color
-	if !b.enabled {
-		bgColor = b.theme.BackgroundDisabled
-		textColor = b.theme.TextDisabled
-	} else {
-		switch b.state {
-		case PointerStatePressed:
-			bgColor = b.theme.BackgroundPressed
-			textColor = b.theme.TextPressed
-		case PointerStateHover:
-			bgColor = b.theme.BackgroundHover
-			textColor = b.theme.TextHover
-		default:
-			bgColor = b.theme.BackgroundNormal
-			textColor = b.theme.TextNormal
-		}
-	}
+	colors := b.getButtonColors()
 
 	// Emit shadow command if enabled
 	if b.enabled && b.theme.ShadowBlur > 0 {
@@ -321,26 +317,17 @@ func (b *Button) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 	}
 
 	// Emit background with rounded corners
-	dl.AddFillRoundedRect(x, y, b.width, b.height, b.theme.BorderRadius, bgColor)
+	dl.AddFillRoundedRect(x, y, b.width, b.height, b.theme.BorderRadius, colors.background)
 
 	// Emit border
-	borderColor := b.theme.BorderNormal
-	if b.enabled {
-		switch b.state {
-		case PointerStatePressed:
-			borderColor = b.theme.BorderPressed
-		case PointerStateHover:
-			borderColor = b.theme.BorderHover
-		}
-	}
-	emitRectBorder(dl, x, y, b.width, b.height, 1, borderColor)
+	emitRectBorder(dl, x, y, b.width, b.height, 1, colors.border)
 
 	// Emit text centered
 	if b.atlas != nil && b.text != "" {
 		textWidth := b.measureTextWidth(b.text)
 		textX := x + (b.width-textWidth)/2
 		textY := y + b.height/2 + int(b.theme.FontSize/3)
-		dl.AddDrawText(b.text, textX, textY, int(b.theme.FontSize), textColor, 0)
+		dl.AddDrawText(b.text, textX, textY, int(b.theme.FontSize), colors.text, 0)
 	}
 }
 
@@ -529,44 +516,66 @@ func (t *TextInput) HandleCursorMove(delta int) {
 	}
 }
 
+// textInputDisplay holds the display text and color for rendering.
+type textInputDisplay struct {
+	text  string
+	color core.Color
+}
+
+// getDisplayText returns the text to display and its color.
+func (t *TextInput) getDisplayText() textInputDisplay {
+	if t.text != "" {
+		color := t.theme.TextNormal
+		if !t.enabled {
+			color = t.theme.TextDisabled
+		}
+		return textInputDisplay{text: t.text, color: color}
+	}
+	if t.placeholder != "" {
+		return textInputDisplay{
+			text:  t.placeholder,
+			color: core.Color{R: 150, G: 150, B: 150, A: 255},
+		}
+	}
+	return textInputDisplay{text: "", color: t.theme.TextNormal}
+}
+
+// getBackgroundColor returns the background color based on enabled state.
+func (t *TextInput) getBackgroundColor() core.Color {
+	if t.enabled {
+		return t.theme.BackgroundNormal
+	}
+	return t.theme.BackgroundDisabled
+}
+
+// getBorderColor returns the border color based on focus state.
+func (t *TextInput) getBorderColor() core.Color {
+	if t.focused {
+		return t.theme.BorderFocus
+	}
+	return t.theme.BorderNormal
+}
+
+// Draw renders the text input to the buffer at the specified position.
 // Draw renders the text input to the buffer at the specified position.
 func (t *TextInput) Draw(buf *core.Buffer, x, y int) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
 
-	// Background color
-	bgColor := t.theme.BackgroundNormal
-	if !t.enabled {
-		bgColor = t.theme.BackgroundDisabled
-	}
-
 	// Draw background
-	buf.FillRoundedRect(x, y, t.width, t.height, float64(t.theme.BorderRadius), bgColor)
+	buf.FillRoundedRect(x, y, t.width, t.height, float64(t.theme.BorderRadius), t.getBackgroundColor())
 
 	// Draw border
-	borderColor := t.theme.BorderNormal
-	if t.focused {
-		borderColor = t.theme.BorderFocus
-	}
-	drawRectBorder(buf, x, y, t.width, t.height, 1, borderColor)
+	drawRectBorder(buf, x, y, t.width, t.height, 1, t.getBorderColor())
 
 	// Draw text or placeholder
-	displayText := t.text
-	textColor := t.theme.TextNormal
-	if displayText == "" && t.placeholder != "" {
-		displayText = t.placeholder
-		textColor = core.Color{R: 150, G: 150, B: 150, A: 255}
-	}
-	if !t.enabled {
-		textColor = t.theme.TextDisabled
-	}
-
-	if t.atlas != nil && displayText != "" {
+	display := t.getDisplayText()
+	if t.atlas != nil && display.text != "" {
 		padding := 8
 		textX := float64(x + padding)
 		textY := float64(y) + float64(t.height)/2 + t.theme.FontSize/3
-		text.DrawText(buf, displayText, textX, textY, t.theme.FontSize, textColor, t.atlas)
+		text.DrawText(buf, display.text, textX, textY, t.theme.FontSize, display.color, t.atlas)
 	}
 
 	// Draw cursor if focused
@@ -586,38 +595,19 @@ func (t *TextInput) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 		return
 	}
 
-	// Background color
-	bgColor := t.theme.BackgroundNormal
-	if !t.enabled {
-		bgColor = t.theme.BackgroundDisabled
-	}
-
 	// Emit background
-	dl.AddFillRoundedRect(x, y, t.width, t.height, t.theme.BorderRadius, bgColor)
+	dl.AddFillRoundedRect(x, y, t.width, t.height, t.theme.BorderRadius, t.getBackgroundColor())
 
 	// Emit border
-	borderColor := t.theme.BorderNormal
-	if t.focused {
-		borderColor = t.theme.BorderFocus
-	}
-	emitRectBorder(dl, x, y, t.width, t.height, 1, borderColor)
+	emitRectBorder(dl, x, y, t.width, t.height, 1, t.getBorderColor())
 
 	// Emit text or placeholder
-	displayText := t.text
-	textColor := t.theme.TextNormal
-	if displayText == "" && t.placeholder != "" {
-		displayText = t.placeholder
-		textColor = core.Color{R: 150, G: 150, B: 150, A: 255}
-	}
-	if !t.enabled {
-		textColor = t.theme.TextDisabled
-	}
-
-	if t.atlas != nil && displayText != "" {
+	display := t.getDisplayText()
+	if t.atlas != nil && display.text != "" {
 		padding := 8
 		textX := x + padding
 		textY := y + t.height/2 + int(t.theme.FontSize/3)
-		dl.AddDrawText(displayText, textX, textY, int(t.theme.FontSize), textColor, 0)
+		dl.AddDrawText(display.text, textX, textY, int(t.theme.FontSize), display.color, 0)
 	}
 
 	// Emit cursor if focused

@@ -26,27 +26,8 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 	if style == nil {
 		style = DefaultStyle()
 	}
-	pad := style.Padding()
-	if pad < 0 {
-		pad = 0
-	}
-	gap := style.Gap()
-	if gap < 0 {
-		gap = 0
-	}
-
-	// Content area after padding.
-	cx := parentX + pad
-	cy := parentY + pad
-	cw := parentW - 2*pad
-	ch := parentH - 2*pad
-	if cw < 0 {
-		cw = 0
-	}
-	if ch < 0 {
-		ch = 0
-	}
-
+	cx, cy, cw, ch := computeContentArea(parentX, parentY, parentW, parentH, style)
+	gap := clampToZero(style.Gap())
 	cursor := 0 // running offset along the main axis
 
 	for _, p := range panels {
@@ -68,25 +49,49 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 			p.height = 0
 		}
 
-		switch dir {
-		case FlowColumn:
-			p.x = cx
-			p.y = cy + cursor
-			cursor += p.height + gap
-		case FlowRow:
-			p.x = cx + cursor
-			p.y = cy
-			cursor += p.width + gap
-		default:
-			// Treat unknown FlowDirection values as FlowColumn.
-			p.x = cx
-			p.y = cy + cursor
-			cursor += p.height + gap
-		}
+		cursor = placePanel(p, cx, cy, cursor, gap, dir)
 
 		// Recurse into children.
 		layoutChildren(p, p.width, p.height, dir, style)
 	}
+}
+
+// computeContentArea calculates the content area after applying padding.
+func computeContentArea(parentX, parentY, parentW, parentH int, style Style) (cx, cy, cw, ch int) {
+	pad := clampToZero(style.Padding())
+	cx = parentX + pad
+	cy = parentY + pad
+	cw = parentW - 2*pad
+	ch = parentH - 2*pad
+	if cw < 0 {
+		cw = 0
+	}
+	if ch < 0 {
+		ch = 0
+	}
+	return
+}
+
+// placePanel positions a panel based on flow direction and returns the updated cursor.
+func placePanel(p *Panel, cx, cy, cursor, gap int, dir FlowDirection) int {
+	switch dir {
+	case FlowRow:
+		p.x = cx + cursor
+		p.y = cy
+		return cursor + p.width + gap
+	default: // FlowColumn or unknown
+		p.x = cx
+		p.y = cy + cursor
+		return cursor + p.height + gap
+	}
+}
+
+// clampToZero returns max(value, 0).
+func clampToZero(value int) int {
+	if value < 0 {
+		return 0
+	}
+	return value
 }
 
 // layoutChildren is a helper that runs AutoLayout on a panel's children using
