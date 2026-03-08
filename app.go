@@ -20,6 +20,7 @@
 package wain
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -34,6 +35,7 @@ import (
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
+	x11events "github.com/opd-ai/wain/internal/x11/events"
 	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
@@ -743,6 +745,135 @@ func (w *Window) SendCustomEvent(data interface{}) {
 	}
 }
 
+// handleX11Event processes an X11 event for this window.
+func (w *Window) handleX11Event(eventType x11events.EventType, eventBuf []byte) error {
+	reader := bytes.NewReader(eventBuf)
+	header, data, err := wire.DecodeEventHeader(reader)
+	if err != nil {
+		return fmt.Errorf("decode event header: %w", err)
+	}
+	
+	switch eventType {
+	case x11events.EventTypeKeyPress:
+		return w.handleX11KeyPress(header, data)
+	case x11events.EventTypeKeyRelease:
+		return w.handleX11KeyRelease(header, data)
+	case x11events.EventTypeButtonPress:
+		return w.handleX11ButtonPress(header, data)
+	case x11events.EventTypeButtonRelease:
+		return w.handleX11ButtonRelease(header, data)
+	case x11events.EventTypeMotionNotify:
+		return w.handleX11Motion(header, data)
+	case x11events.EventTypeConfigureNotify:
+		return w.handleX11Configure(header, data)
+	}
+	
+	return nil
+}
+
+// handleX11KeyPress processes an X11 KeyPress event.
+func (w *Window) handleX11KeyPress(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseKeyPressEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11KeyPressEvent(e)
+	w.dispatchEvent(evt)
+	return nil
+}
+
+// handleX11KeyRelease processes an X11 KeyRelease event.
+func (w *Window) handleX11KeyRelease(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseKeyReleaseEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11KeyReleaseEvent(e)
+	w.dispatchEvent(evt)
+	return nil
+}
+
+// handleX11ButtonPress processes an X11 ButtonPress event.
+func (w *Window) handleX11ButtonPress(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseButtonPressEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11ButtonPressEvent(e)
+	w.dispatchEvent(evt)
+	return nil
+}
+
+// handleX11ButtonRelease processes an X11 ButtonRelease event.
+func (w *Window) handleX11ButtonRelease(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseButtonReleaseEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11ButtonReleaseEvent(e)
+	if evt != nil {
+		w.dispatchEvent(evt)
+	}
+	return nil
+}
+
+// handleX11Motion processes an X11 MotionNotify event.
+func (w *Window) handleX11Motion(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseMotionNotifyEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11MotionNotifyEvent(e)
+	w.dispatchEvent(evt)
+	return nil
+}
+
+// handleX11Configure processes an X11 ConfigureNotify event.
+func (w *Window) handleX11Configure(header wire.EventHeader, data []byte) error {
+	e, err := x11events.ParseConfigureNotifyEvent(header, data)
+	if err != nil {
+		return err
+	}
+	evt := translateX11ConfigureNotifyEvent(e)
+	w.handleWindowResize(evt)
+	w.dispatchEvent(evt)
+	return nil
+}
+
+// dispatchEvent dispatches an event to the window's dispatcher and callbacks.
+func (w *Window) dispatchEvent(evt Event) {
+	if w.dispatcher != nil {
+		w.dispatcher.Dispatch(evt)
+	}
+	
+	// Also call legacy callbacks
+	switch e := evt.(type) {
+	case *PointerEvent:
+		if w.onPointer != nil {
+			w.onPointer(e)
+		}
+	case *KeyEvent:
+		if e.EventType() == KeyPress && w.onKeyPress != nil {
+			w.onKeyPress(e)
+		} else if e.EventType() == KeyRelease && w.onKeyRelease != nil {
+			w.onKeyRelease(e)
+		}
+	}
+}
+
+// handleWindowResize updates window dimensions from a resize event.
+func (w *Window) handleWindowResize(evt *WindowEvent) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	
+	w.width = evt.Width()
+	w.height = evt.Height()
+	
+	if w.onResize != nil {
+		w.onResize(evt.Width(), evt.Height())
+	}
+}
+
 // Run initializes the application and starts the event loop.
 // This method blocks until Quit() is called.
 func (a *App) Run() error {
@@ -1129,6 +1260,51 @@ func (a *App) processEvents() error {
 	default:
 		return ErrNoDisplay
 	}
+}
+
+// processX11Events reads and processes pending X11 events.
+func (a *App) processX11Events() error {
+	if a.x11Conn == nil {
+		return ErrNoDisplay
+	}
+	
+	eventBuf, err := a.x11Conn.ReadEvent()
+	if err != nil {
+		return fmt.Errorf("read X11 event: %w", err)
+	}
+	if eventBuf == nil {
+		return nil
+	}
+	
+	return a.dispatchX11Event(eventBuf)
+}
+
+// dispatchX11Event parses and dispatches a single X11 event.
+func (a *App) dispatchX11Event(eventBuf []byte) error {
+	eventType := x11events.EventType(eventBuf[0] & 0x7F)
+	
+	a.mu.Lock()
+	windows := a.windows
+	a.mu.Unlock()
+	
+	for _, win := range windows {
+		if err := win.handleX11Event(eventType, eventBuf); err != nil {
+			return err
+		}
+	}
+	
+	return nil
+}
+
+// processWaylandEvents reads and processes pending Wayland events.
+func (a *App) processWaylandEvents() error {
+	if a.waylandConn == nil {
+		return ErrNoDisplay
+	}
+	
+	// TODO: Implement Wayland event dispatch
+	// This will read from a.waylandConn and dispatch to event handlers
+	return nil
 }
 
 // cleanup releases all resources.
