@@ -17,7 +17,7 @@ PHASE 0: Foundation & Toolchain Setup (Week 1-2) ✅ COMPLETE
 0.1  ✅ Set up a Go module with CGO_ENABLED=1 linking a static Rust .a archive.
      Confirm the final binary is fully static (ldd reports "not a dynamic
      executable"). Use `cargo build --release` producing a staticlib crate,
-     link it via `#cgo LDFLAGS: path/to/librender.a`.
+     link it via `#cgo LDFLAGS: path/to/librender_sys.a`.
 
 0.2  ✅ Define the C ABI boundary between Go and Rust. Start with a trivial
      function (e.g., add two ints) to validate the full build pipeline.

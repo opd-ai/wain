@@ -54,7 +54,7 @@ go generate ./...
 
 ### Output artifacts
 
-- `render-sys/target/<arch>-unknown-linux-musl/release/librender.a` – Rust static library
+- `render-sys/target/<arch>-unknown-linux-musl/release/librender_sys.a` – Rust static library
 - `internal/render/dl_find_object_stub.o` – musl compatibility stub
 
 These artifacts are automatically linked by Go's CGO when building the final binary.

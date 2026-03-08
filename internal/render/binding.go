@@ -16,7 +16,7 @@
 //
 //	# 3. Build the Go binary against musl
 //	#    CC defaults to musl-gcc; override for cross toolchains (see below).
-//	MUSL_LIB=render-sys/target/x86_64-unknown-linux-musl/release/librender.a
+//	MUSL_LIB=render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a
 //	CC=musl-gcc CGO_ENABLED=1 \
 //	  CGO_LDFLAGS="${MUSL_LIB} -ldl -lm -lpthread" \
 //	  CGO_LDFLAGS_ALLOW=".*" \
@@ -40,7 +40,7 @@
 // The Rust musl target and the CGO_LDFLAGS archive path are auto-detected by
 // `make build` via `rustc -vV`. To build manually on non-x86_64 hosts:
 //
-//	MUSL_LIB=render-sys/target/aarch64-unknown-linux-musl/release/librender.a
+//	MUSL_LIB=render-sys/target/aarch64-unknown-linux-musl/release/librender_sys.a
 //	CGO_ENABLED=1 CGO_LDFLAGS="${MUSL_LIB} -ldl -lm -lpthread" \
 //	  CGO_LDFLAGS_ALLOW=".*" CC=aarch64-linux-musl-gcc \
 //	  go build -ldflags "-extldflags '-static'" ./...
@@ -50,7 +50,7 @@ package render
 // depends on the host architecture and the musl Rust target. CGO_LDFLAGS must
 // be set by the build system (Makefile / CI) to point at the correct archive:
 //
-//	CGO_LDFLAGS="<path>/librender.a -ldl -lm -lpthread" CGO_LDFLAGS_ALLOW=".*"
+//	CGO_LDFLAGS="<path>/librender_sys.a -ldl -lm -lpthread" CGO_LDFLAGS_ALLOW=".*"
 //
 // Use `make build` or `make test-go` which set CGO_LDFLAGS automatically.
 

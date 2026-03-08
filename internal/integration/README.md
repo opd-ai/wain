@@ -32,7 +32,7 @@ make test-go
 make rust
 
 # Set CGO flags
-export CGO_LDFLAGS="$(pwd)/render-sys/target/x86_64-unknown-linux-musl/release/librender.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread"
+export CGO_LDFLAGS="$(pwd)/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread"
 export CGO_LDFLAGS_ALLOW=".*"
 
 # Run tests

@@ -60,7 +60,7 @@ jobs:
           CGO_ENABLED: "1"
           CGO_LDFLAGS_ALLOW: ".*"
         run: |
-          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
             go build \
               -ldflags "-extldflags '-static'" \
               -o bin/wain \
@@ -72,7 +72,7 @@ jobs:
           CGO_ENABLED: "1"
           CGO_LDFLAGS_ALLOW: ".*"
         run: |
-          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender.a -ldl -lm -lpthread" \
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
             go test ./...
 
       - name: Smoke-test binary

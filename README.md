@@ -208,7 +208,7 @@ go generate ./...
 
 # Step 2: Build the Go binary
 CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
+  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender_sys.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
   CGO_LDFLAGS_ALLOW=".*" \
   go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
 ```
@@ -217,7 +217,7 @@ The `go generate` step:
 1. Checks for required tools (musl-gcc, cargo, rustup)
 2. Auto-detects host architecture
 3. Installs musl Rust target if missing
-4. Builds the Rust static library (`librender.a`)
+4. Builds the Rust static library (`librender_sys.a` per Cargo naming)
 5. Compiles the musl compatibility stub
 
 **Recommendation:** Use `make build` for simplicity. The `go generate` workflow is provided for integration with Go-native build systems and CI pipelines that prefer Go tooling over Make.
@@ -472,7 +472,7 @@ musl-gcc -c -o internal/render/dl_find_object_stub.o \
   internal/render/dl_find_object_stub.c
 
 # 3. Build the Go binary
-RUST_LIB="render-sys/target/x86_64-unknown-linux-musl/release/librender.a"
+RUST_LIB="render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a"
 DL_STUB="internal/render/dl_find_object_stub.o"
 CC=musl-gcc CGO_ENABLED=1 \
   CGO_LDFLAGS="${PWD}/${RUST_LIB} ${PWD}/${DL_STUB} -ldl -lm -lpthread" \

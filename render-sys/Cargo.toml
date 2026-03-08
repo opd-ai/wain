@@ -6,7 +6,7 @@ description = "Static Rust rendering library for the wain Go UI toolkit"
 license = "MIT"
 
 [lib]
-name = "render"
+name = "render_sys"
 crate-type = ["staticlib"]
 
 [dependencies]

@@ -5,7 +5,7 @@
 // Instead, use: make test-go
 //
 // The `make test-go` target sets the required CGO_LDFLAGS environment variable
-// pointing to the Rust static library (librender.a) and its dependencies.
+// pointing to the Rust static library (librender_sys.a) and its dependencies.
 //
 // Direct `go test` will fail with linker errors:
 //

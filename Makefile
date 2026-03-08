@@ -50,7 +50,7 @@ HOST_ARCH        := $(firstword $(subst -, ,$(RUST_HOST)))
 RUST_MUSL_TARGET := $(HOST_ARCH)-unknown-linux-musl
 
 RUST_DIR  := render-sys
-RUST_LIB  := $(RUST_DIR)/target/$(RUST_MUSL_TARGET)/release/librender.a
+RUST_LIB  := $(RUST_DIR)/target/$(RUST_MUSL_TARGET)/release/librender_sys.a
 
 # Stub object for _dl_find_object (GCC 14+ with musl compatibility)
 DL_STUB_SRC := internal/render/dl_find_object_stub.c

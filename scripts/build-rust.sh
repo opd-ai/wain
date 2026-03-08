@@ -7,7 +7,7 @@
 # 1. Checks for required tools (musl-gcc, cargo, rustup)
 # 2. Detects the host architecture and musl Rust target
 # 3. Ensures the musl Rust target is installed
-# 4. Builds the Rust static library (librender.a)
+# 4. Builds the Rust static library (librender_sys.a)
 # 5. Compiles the musl compatibility stub (dl_find_object_stub.o)
 #
 # Exit codes:
@@ -135,7 +135,7 @@ fi
 echo ""
 echo "Building Rust static library..."
 
-RUST_LIB="${RUST_DIR}/target/${RUST_MUSL_TARGET}/release/librender.a"
+RUST_LIB="${RUST_DIR}/target/${RUST_MUSL_TARGET}/release/librender_sys.a"
 
 cargo build --release \
     --manifest-path "${RUST_DIR}/Cargo.toml" \
