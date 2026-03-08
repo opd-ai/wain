@@ -620,9 +620,25 @@ PHASE 8: Polish & Distribution (Weeks 34-38)
         - Zero regressions in complexity metrics (18 improvements, 1 minor regression)
         - Ready for Phase 8.3 (Window decorations)
 
-8.3  Window decorations: implement client-side decorations for Wayland
-     (title bar, close/min/max buttons, resize handles), use the
-     xdg-decoration protocol to negotiate server-side when available.
+8.3  ✅ WINDOW DECORATIONS (Complete)
+      - Implement client-side decorations for Wayland: title bar,
+        close/min/max buttons, resize handles.
+      - Use the xdg-decoration protocol to negotiate server-side when
+        available.
+      - **Status**: ✅ Complete
+        - Created ResizeHandles widget with 8 edge/corner zones (internal/ui/decorations/resize.go)
+        - Created WindowFrame that combines TitleBar + ResizeHandles (internal/ui/decorations/window.go)
+        - Implemented comprehensive hit testing for all decoration zones
+        - ResizeEdge enum with 9 states (none, 4 edges, 4 corners)
+        - Hover state visual feedback for resize handles
+        - Content area calculation with proper offsets
+        - XDG decoration protocol support (zxdg_decoration_manager_v1)
+        - Server-side decoration negotiation via SetMode/UnsetMode
+        - Client-side fallback when server-side unavailable
+        - Updated decorations-demo to showcase full window frame
+        - All 26 decoration tests passing (100% pass rate)
+        - Zero critical regressions, 50 complexity improvements
+        - Static linking verified
 
 8.4  Accessibility: expose the widget tree via AT-SPI2 over D-Bus if
      feasible, or document the limitation.

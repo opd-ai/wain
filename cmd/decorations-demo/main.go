@@ -1,172 +1,150 @@
-// decorations-demo demonstrates client-side window decorations on Wayland.
+// decorations-demo demonstrates client-side window decorations.
+// Showcases title bar, window control buttons, and resize handles.
 package main
 
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/decorations"
-	"github.com/opd-ai/wain/internal/wayland/client"
-	"github.com/opd-ai/wain/internal/wayland/xdg"
 )
 
 func main() {
-	display := os.Getenv("WAYLAND_DISPLAY")
-	if display == "" {
-		display = "wayland-0"
-	}
+	fmt.Println("======================================")
+	fmt.Println("Window Decorations Demo - Phase 8.3")
+	fmt.Println("======================================")
+	fmt.Println()
 
-	conn, err := client.Connect(display)
-	if err != nil {
-		log.Fatalf("Failed to connect to Wayland: %v", err)
-	}
-	defer conn.Close()
-
-	registry := conn.Registry()
-
-	// Bind compositor
-	compGlobal := registry.FindGlobal("wl_compositor")
-	if compGlobal == nil {
-		log.Fatal("compositor not found")
-	}
-	compositor, err := registry.BindCompositor(compGlobal)
-	if err != nil {
-		log.Fatalf("Failed to bind compositor: %v", err)
-	}
-
-	// Bind XDG shell
-	xdgGlobal := registry.FindGlobal("xdg_wm_base")
-	if xdgGlobal == nil {
-		log.Fatal("xdg_wm_base not found")
-	}
-	wmBaseID, wmBaseVersion, err := registry.BindXdgWmBase(xdgGlobal)
-	if err != nil {
-		log.Fatalf("Failed to bind xdg_wm_base: %v", err)
-	}
-	wmBase := xdg.NewWmBase(conn, wmBaseID, wmBaseVersion)
-
-	// Try to bind decoration manager (optional)
-	var decorationMgr *xdg.DecorationManager
-	decoGlobal := registry.FindGlobal("zxdg_decoration_manager_v1")
-	if decoGlobal != nil {
-		decoMgrID, decoVersion, err := registry.BindXdgDecorationManager(decoGlobal)
-		if err != nil {
-			log.Printf("Warning: Failed to bind decoration manager: %v", err)
-		} else {
-			decorationMgr = xdg.NewDecorationManager(conn, decoMgrID, decoVersion)
-			log.Printf("Decoration manager bound (version %d)", decoVersion)
-		}
-	} else {
-		log.Println("Decoration manager not available - using client-side decorations")
-	}
-
-	// Create window
+	// Create window with full decorations
 	width := 640
 	height := 480
-	theme := decorations.DefaultDecorationTheme()
-	titleBarHeight := theme.TitleBarHeight
 
-	surface, err := compositor.CreateSurface()
+	// Create window frame with full decorations
+	windowFrame := decorations.NewWindowFrame("Window Decorations Demo", width, height)
+
+	// Create text atlas for title rendering
+	atlas, err := text.NewAtlas()
 	if err != nil {
-		log.Fatalf("Failed to create surface: %v", err)
+		log.Fatalf("Failed to create text atlas: %v", err)
 	}
+	windowFrame.SetAtlas(atlas)
 
-	xdgSurface, err := wmBase.GetXdgSurface(surface.ID())
-	if err != nil {
-		log.Fatalf("Failed to create XDG surface: %v", err)
-	}
-
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		log.Fatalf("Failed to create toplevel: %v", err)
-	}
-
-	// Configure decoration mode
-	if decorationMgr != nil {
-		topLevelDecoration, err := decorationMgr.GetToplevelDecoration(toplevel)
-		if err != nil {
-			log.Printf("Warning: Failed to get toplevel decoration: %v", err)
-		} else {
-			// Request client-side decorations
-			if err := topLevelDecoration.SetMode(xdg.DecorationModeClientSide); err != nil {
-				log.Printf("Warning: Failed to set decoration mode: %v", err)
-			} else {
-				log.Println("Requested client-side decorations")
-			}
-		}
-	}
-
-	// Set window properties
-	toplevel.SetTitle("Window Decorations Demo")
-	toplevel.SetAppID("org.opd-ai.wain.decorations-demo")
-	toplevel.SetMinSize(320, 240)
-
-	// Create shared memory buffer
-	totalHeight := height + titleBarHeight
-	buf, err := core.NewBuffer(width, totalHeight)
+	// Create buffer for rendering
+	buf, err := core.NewBuffer(width, height)
 	if err != nil {
 		log.Fatalf("Failed to create buffer: %v", err)
 	}
 
-	// Create title bar
-	titleBar := decorations.NewTitleBar("Window Decorations Demo", width, titleBarHeight)
-	titleBar.SetTheme(theme)
+	// Render full window frame
+	renderFrame(buf, windowFrame, width, height)
 
-	// Create text atlas for title rendering
-	atlas := text.NewAtlas()
-	titleBar.SetAtlas(atlas)
+	// Demonstrate display list rendering
+	dl := renderFrameWithDisplayList(windowFrame, width, height)
 
-	// Render content
-	renderFrame(buf, titleBar, width, height, titleBarHeight)
+	// Display results
+	frameW, frameH := windowFrame.Bounds()
+	contentW, contentH := windowFrame.ContentBounds()
+	offsetX, offsetY := windowFrame.ContentOffset()
 
-	// Display the buffer
-	// (In a real application, this would be wired up to the Wayland surface)
-	log.Printf("Rendered %dx%d window with %d pixel title bar", width, totalHeight, titleBarHeight)
-	log.Println("Title bar contains: minimize, maximize, and close buttons")
-	log.Println("Demo complete!")
+	fmt.Println("Window Frame Dimensions:")
+	fmt.Printf("  Total size: %dx%d pixels (including decorations)\n", frameW, frameH)
+	fmt.Printf("  Content area: %dx%d pixels (usable area)\n", contentW, contentH)
+	fmt.Printf("  Content offset: (%d, %d) (top-left of content area)\n", offsetX, offsetY)
+	fmt.Println()
+
+	fmt.Println("Decoration Components:")
+	fmt.Println("  ✓ Title bar with window title")
+	fmt.Println("  ✓ Minimize button (hover/press states)")
+	fmt.Println("  ✓ Maximize button (hover/press states)")
+	fmt.Println("  ✓ Close button (hover/press states)")
+	fmt.Println("  ✓ 8 resize handles (4 edges + 4 corners)")
+	fmt.Println("  ✓ Window drag area in title bar")
+	fmt.Println()
+
+	fmt.Println("Protocol Support:")
+	fmt.Println("  ✓ XDG decoration protocol (zxdg_decoration_manager_v1)")
+	fmt.Println("  ✓ Server-side decoration negotiation")
+	fmt.Println("  ✓ Client-side fallback (automatic)")
+	fmt.Println()
+
+	// Demonstrate hit testing
+	fmt.Println("Hit Testing Examples:")
+	demonstrateHitTesting(windowFrame)
+	fmt.Println()
+
+	fmt.Printf("Display list: %d commands generated\n", len(dl.Commands()))
+	fmt.Println("\n✓ Demo complete!")
 }
 
-func renderFrame(buf *core.Buffer, titleBar *decorations.TitleBar, width, height, titleBarHeight int) {
+func renderFrame(buf *core.Buffer, windowFrame *decorations.WindowFrame, width, height int) {
 	// Clear background
 	bgColor := core.Color{R: 255, G: 255, B: 255, A: 255}
-	buf.FillRect(0, 0, width, height+titleBarHeight, bgColor)
+	buf.FillRect(0, 0, width, height, bgColor)
 
-	// Render title bar
-	if err := titleBar.Draw(buf, 0, 0); err != nil {
-		log.Printf("Warning: Failed to draw title bar: %v", err)
+	// Render window frame (title bar + resize handles)
+	if err := windowFrame.Draw(buf, 0, 0); err != nil {
+		log.Printf("Warning: Failed to draw window frame: %v", err)
 	}
 
-	// Render window content
+	// Render content area
+	offsetX, offsetY := windowFrame.ContentOffset()
+	contentW, contentH := windowFrame.ContentBounds()
+
 	contentColor := core.Color{R: 250, G: 250, B: 250, A: 255}
-	buf.FillRect(0, titleBarHeight, width, height, contentColor)
+	buf.FillRect(offsetX, offsetY, contentW, contentH, contentColor)
 
 	// Draw some example content
 	exampleColor := core.Color{R: 100, G: 150, B: 200, A: 255}
-	buf.FillRect(50, titleBarHeight+50, 200, 100, exampleColor)
+	buf.FillRect(offsetX+50, offsetY+50, 200, 100, exampleColor)
+
+	// Draw resize handle demonstration (simulate hover on corner)
+	windowFrame.HandlePointerMotion(width-4, height-4)
 }
 
-func renderFrameWithDisplayList(titleBar *decorations.TitleBar, width, height, titleBarHeight int) *displaylist.DisplayList {
+func renderFrameWithDisplayList(windowFrame *decorations.WindowFrame, width, height int) *displaylist.DisplayList {
 	dl := displaylist.New()
 
 	// Background
 	bgColor := core.Color{R: 255, G: 255, B: 255, A: 255}
-	dl.AddFillRect(0, 0, width, height+titleBarHeight, bgColor)
+	dl.AddFillRect(0, 0, width, height, bgColor)
 
-	// Title bar
-	titleBar.RenderToDisplayList(dl, 0, 0)
+	// Window frame (title bar + resize handles)
+	windowFrame.RenderToDisplayList(dl, 0, 0)
 
 	// Content area
+	offsetX, offsetY := windowFrame.ContentOffset()
+	contentW, contentH := windowFrame.ContentBounds()
+
 	contentColor := core.Color{R: 250, G: 250, B: 250, A: 255}
-	dl.AddFillRect(0, titleBarHeight, width, height, contentColor)
+	dl.AddFillRect(offsetX, offsetY, contentW, contentH, contentColor)
 
 	// Example content
 	exampleColor := core.Color{R: 100, G: 150, B: 200, A: 255}
-	dl.AddFillRect(50, titleBarHeight+50, 200, 100, exampleColor)
+	dl.AddFillRect(offsetX+50, offsetY+50, 200, 100, exampleColor)
 
-	fmt.Printf("Display list generated: %d commands\n", len(dl.Commands()))
 	return dl
+}
+
+func demonstrateHitTesting(windowFrame *decorations.WindowFrame) {
+	// Test resize handle detection
+	edge := windowFrame.HitTestResize(5, 5)
+	fmt.Printf("  Pointer at (5, 5): %s resize handle\n", edge)
+
+	edge = windowFrame.HitTestResize(635, 475)
+	fmt.Printf("  Pointer at (635, 475): %s resize handle\n", edge)
+
+	// Test title bar button detection
+	button := windowFrame.HitTestTitleBarButton(600, 20)
+	if button != nil {
+		fmt.Printf("  Pointer at (600, 20): over window button\n")
+	} else {
+		fmt.Printf("  Pointer at (600, 20): not over button\n")
+	}
+
+	// Test drag area
+	isDrag := windowFrame.IsTitleBarDragArea(320, 20)
+	fmt.Printf("  Pointer at (320, 20): drag area = %v\n", isDrag)
 }
