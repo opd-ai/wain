@@ -60,8 +60,6 @@ type demoContext struct {
 	window     x11client.XID
 }
 
-
-
 func runDemo() error {
 	ctx, cleanup, err := setupX11AndGPU()
 	if err != nil {
