@@ -217,8 +217,12 @@ to GPU machine code entirely within Rust.
        ✅ (a) Map naga's IR types to EU register file (GRF allocation).
        ✅ (b) Lower arithmetic ops to EU ALU instructions (encoded as Rust
            structs that serialize to the binary instruction format).
-       ⚠️ (c) Lower texture samples to EU SEND instructions targeting the
-           sampler shared function. (Deferred - basic infrastructure exists)
+       ✅ (c) Lower texture samples to EU SEND instructions targeting the
+           sampler shared function. **Status: COMPLETE**
+           - Implemented ImageSample expression lowering in eu/mod.rs
+           - Updated textured_quad, sdf_text, and box_shadow shaders to use textureSample
+           - Added test_eu_compile_texture_sampling test
+           - All 169 Rust tests passing, all Go tests passing
        ⚠️ (d) Handle input/output via URB reads/writes (vertex shader) and
            render target writes (fragment shader). (Deferred)
        ✅ (e) Implement a simple linear-scan register allocator.
@@ -233,8 +237,10 @@ to GPU machine code entirely within Rust.
        - Register allocator functional (regalloc.rs - 151 LOC)
        - Instruction encoding complete (instruction.rs - 378 LOC, encoding.rs - 288 LOC)
        - IR lowering operational (lower.rs - 1,245 LOC)
-       - All 153 Rust tests passing, basic shader compilation validated
-       - **Next work**: URB I/O, texture SEND instructions, optimizations
+       - ✅ Texture sampling support implemented (SEND to sampler shared function)
+       - All 169 Rust tests passing (including test_eu_compile_texture_sampling)
+       - All Go tests passing, zero regressions in complexity metrics
+       - **Next work**: URB I/O for vertex input/fragment output, optimizations
 
 4.4  ✅ COMPILE SHADERS AT BUILD TIME
      - Run the shader compiler as a build.rs step in Cargo. The compiled

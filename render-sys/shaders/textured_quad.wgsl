@@ -1,6 +1,10 @@
 // Textured Quad Shader - renders a quad with a texture
 // Phase 4.2 - UI Shader Authoring
 
+// Texture and sampler bindings
+@group(0) @binding(0) var tex: texture_2d<f32>;
+@group(0) @binding(1) var samp: sampler;
+
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) uv: vec2<f32>,
@@ -24,6 +28,6 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    // Texture sampling - will be added in next iteration
-    return vec4<f32>(in.uv.x, in.uv.y, 0.0, 1.0);
+    // Sample the texture with bilinear filtering
+    return textureSample(tex, samp, in.uv);
 }

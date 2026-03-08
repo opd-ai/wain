@@ -251,6 +251,15 @@ impl EUCompiler {
                 ctx.lower_select(*condition, *accept, *reject, expr_handle)?;
                 Ok(())
             }
+            ImageSample { image, sampler, gather, coordinate, .. } => {
+                // Lower texture sampling operation to SEND instruction
+                // gather parameter indicates if this is a textureGather operation (not supported yet)
+                if gather.is_some() {
+                    return Err(EUCompileError::from("textureGather not supported yet"));
+                }
+                ctx.lower_image_sample(*image, *sampler, *coordinate, expr_handle)?;
+                Ok(())
+            }
             // Constants and other simple expressions don't need lowering
             Constant(_) | LocalVariable(_) | GlobalVariable(_) | FunctionArgument(_) => {
                 Ok(())
@@ -307,5 +316,33 @@ mod tests {
         assert_eq!(kernel.stage, ShaderStage::Vertex);
         // Binary should contain at least the EOT marker (16 bytes)
         assert!(kernel.binary.len() >= 16, "Binary too small: {} bytes", kernel.binary.len());
+    }
+
+    #[test]
+    fn test_eu_compile_texture_sampling() {
+        // Test that we can compile a shader with texture sampling
+        let compiler = EUCompiler::new(IntelGen::Gen9);
+        
+        let shader_source = r#"
+            @group(0) @binding(0) var tex: texture_2d<f32>;
+            @group(0) @binding(1) var samp: sampler;
+            
+            @fragment
+            fn main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
+                return textureSample(tex, samp, uv);
+            }
+        "#;
+        
+        let module = ShaderModule::from_wgsl(shader_source, ShaderStage::Fragment).unwrap();
+        let result = compiler.compile(&module);
+        
+        // Should compile successfully with texture sampling support
+        assert!(result.is_ok(), "Expected successful compilation of texture sampling shader, got: {:?}", result.err());
+        
+        let kernel = result.unwrap();
+        assert_eq!(kernel.gen, IntelGen::Gen9);
+        assert_eq!(kernel.stage, ShaderStage::Fragment);
+        // Binary should contain SEND instruction for texture sampling (16 bytes) + EOT (16 bytes)
+        assert!(kernel.binary.len() >= 32, "Binary too small for texture sampling: {} bytes", kernel.binary.len());
     }
 }
