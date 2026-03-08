@@ -86,7 +86,7 @@ func clipRectToBounds(x, y, width, height, bufWidth, bufHeight int) (x1, y1, x2,
 	y1 = max(0, y)
 	x2 = min(bufWidth, x+width)
 	y2 = min(bufHeight, y+height)
-	return
+	return x1, y1, x2, y2
 }
 
 // fillRoundedRectPixel renders a single pixel with anti-aliased rounded corners.
