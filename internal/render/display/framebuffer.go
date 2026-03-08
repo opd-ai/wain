@@ -148,38 +148,55 @@ func NewFramebufferPool(size int) (*FramebufferPool, error) {
 // Returns ErrPoolClosed if the pool is closed.
 func (p *FramebufferPool) Acquire(ctx context.Context) (*Framebuffer, error) {
 	for {
-		p.mu.Lock()
-		if p.closed {
-			p.mu.Unlock()
-			return nil, ErrPoolClosed
+		fb, err := p.tryAcquire()
+		if err != nil {
+			return nil, err
+		}
+		if fb != nil {
+			return fb, nil
 		}
 
-		// Find the oldest released framebuffer
-		var oldest *Framebuffer
-		var oldestTime time.Time
-		for _, fb := range p.framebuffers {
-			if fb.State() == FramebufferAvailable {
-				if oldest == nil || fb.releasedAt.Before(oldestTime) {
-					oldest = fb
-					oldestTime = fb.releasedAt
-				}
+		if err := p.waitForRelease(ctx); err != nil {
+			return nil, err
+		}
+	}
+}
+
+func (p *FramebufferPool) tryAcquire() (*Framebuffer, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.closed {
+		return nil, ErrPoolClosed
+	}
+
+	oldest := p.findOldestAvailable()
+	if oldest != nil {
+		oldest.setState(FramebufferRendering)
+	}
+	return oldest, nil
+}
+
+func (p *FramebufferPool) findOldestAvailable() *Framebuffer {
+	var oldest *Framebuffer
+	var oldestTime time.Time
+	for _, fb := range p.framebuffers {
+		if fb.State() == FramebufferAvailable {
+			if oldest == nil || fb.releasedAt.Before(oldestTime) {
+				oldest = fb
+				oldestTime = fb.releasedAt
 			}
 		}
+	}
+	return oldest
+}
 
-		if oldest != nil {
-			oldest.setState(FramebufferRendering)
-			p.mu.Unlock()
-			return oldest, nil
-		}
-		p.mu.Unlock()
-
-		// Wait for any framebuffer to be released
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(10 * time.Millisecond):
-			// Retry
-		}
+func (p *FramebufferPool) waitForRelease(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(10 * time.Millisecond):
+		return nil
 	}
 }
 

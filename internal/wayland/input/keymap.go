@@ -120,41 +120,20 @@ func (km *Keymap) KeycodeToKeysym(keycode uint32, modifiers ModifierState) Keysy
 // Handles digits (2-11), QWERTY rows (16-25, 30-38, 44-50), space (57), and common punctuation.
 // Returns KeysymInvalid for unmapped keycodes.
 func (km *Keymap) keycodeToAlphanumeric(keycode uint32, shifted bool) Keysym {
-	// Keycode 2 = '1', 3 = '2', ..., 10 = '9', 11 = '0'
 	if keycode >= 2 && keycode <= 11 {
-		if !shifted {
-			if keycode == 11 {
-				return Keysym('0')
-			}
-			return Keysym('0' + (keycode - 1))
-		}
-		// Shifted: 1→!, 2→@, 3→#, 4→$, 5→%, 6→^, 7→&, 8→*, 9→(, 0→)
-		shiftedDigits := "!@#$%^&*()"
-		return Keysym(shiftedDigits[keycode-2])
+		return mapDigitKeycode(keycode, shifted)
 	}
 
 	if keycode >= 16 && keycode <= 25 {
-		chars := "qwertyuiop"
-		if shifted {
-			return Keysym(chars[keycode-16] - 32)
-		}
-		return Keysym(chars[keycode-16])
+		return mapQwertyRow(keycode, shifted)
 	}
 
 	if keycode >= 30 && keycode <= 38 {
-		chars := "asdfghjkl"
-		if shifted {
-			return Keysym(chars[keycode-30] - 32)
-		}
-		return Keysym(chars[keycode-30])
+		return mapHomeRow(keycode, shifted)
 	}
 
 	if keycode >= 44 && keycode <= 50 {
-		chars := "zxcvbnm"
-		if shifted {
-			return Keysym(chars[keycode-44] - 32)
-		}
-		return Keysym(chars[keycode-44])
+		return mapBottomRow(keycode, shifted)
 	}
 
 	if keycode == 57 {
@@ -162,6 +141,37 @@ func (km *Keymap) keycodeToAlphanumeric(keycode uint32, shifted bool) Keysym {
 	}
 
 	return 0
+}
+
+func mapDigitKeycode(keycode uint32, shifted bool) Keysym {
+	if !shifted {
+		if keycode == 11 {
+			return Keysym('0')
+		}
+		return Keysym('0' + (keycode - 1))
+	}
+	shiftedDigits := "!@#$%^&*()"
+	return Keysym(shiftedDigits[keycode-2])
+}
+
+func mapQwertyRow(keycode uint32, shifted bool) Keysym {
+	return mapLetterRange("qwertyuiop", keycode, 16, shifted)
+}
+
+func mapHomeRow(keycode uint32, shifted bool) Keysym {
+	return mapLetterRange("asdfghjkl", keycode, 30, shifted)
+}
+
+func mapBottomRow(keycode uint32, shifted bool) Keysym {
+	return mapLetterRange("zxcvbnm", keycode, 44, shifted)
+}
+
+func mapLetterRange(chars string, keycode, offset uint32, shifted bool) Keysym {
+	char := chars[keycode-offset]
+	if shifted {
+		return Keysym(char - 32)
+	}
+	return Keysym(char)
 }
 
 // Close releases resources associated with the keymap.
