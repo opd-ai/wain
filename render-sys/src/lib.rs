@@ -8,6 +8,7 @@ pub mod drm;
 pub mod i915;
 pub mod xe;
 pub mod amd;
+pub mod pm4;
 pub mod allocator;
 pub mod slab;
 pub mod detect;

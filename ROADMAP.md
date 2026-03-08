@@ -444,11 +444,21 @@ PHASE 6: AMD GPU Support (Weeks 22-30)
        - All Go tests passing
        - Ready for Phase 6.2 (PM4 command buffer implementation)
 
-6.2  COMMAND BUFFER (PM4 PACKETS)
+6.2  ✅ COMMAND BUFFER (PM4 PACKETS) — COMPLETE
      - AMD GPUs use PM4 packet format for command submission.
      - Implement the subset needed: SET_CONTEXT_REG, DRAW_INDEX_AUTO,
        EVENT_WRITE, SURFACE_SYNC, etc.
      - Reference: AMD's publicly available register databases and RADV.
+     - **Status**: ✅ Complete
+       - Created render-sys/src/pm4.rs with comprehensive PM4 packet builder (~640 LOC)
+       - Implemented PM4Builder with Type 3 packet encoding
+       - Core packets implemented: NOP, SET_CONTEXT_REG, SET_SH_REG, SET_UCONFIG_REG,
+         DRAW_INDEX_AUTO, EVENT_WRITE, SURFACE_SYNC, ACQUIRE_MEM, RELEASE_MEM, CLEAR_STATE
+       - Coherency control and GCR flags for cache management
+       - PrimitiveType enum for topology specification
+       - All 14 PM4 packet tests passing (100% pass rate)
+       - Total test suite: 215 Rust tests passing, all Go tests passing
+       - Ready for Phase 6.3 (AMD ISA Backend)
 
 6.3  AMD ISA BACKEND IN NAGA PIPELINE (Rust)
      - Write a second compiler backend that lowers naga's IR to AMD
