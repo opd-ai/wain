@@ -30,6 +30,7 @@ import (
 	"errors"
 
 	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/effects"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -282,6 +283,64 @@ func (b *Button) Draw(buf *core.Buffer, x, y int) error {
 	return nil
 }
 
+// RenderToDisplayList emits draw commands for the button to a display list.
+func (b *Button) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
+	if dl == nil {
+		return
+	}
+
+	// Select colors based on state
+	var bgColor, textColor core.Color
+	if !b.enabled {
+		bgColor = b.theme.BackgroundDisabled
+		textColor = b.theme.TextDisabled
+	} else {
+		switch b.state {
+		case PointerStatePressed:
+			bgColor = b.theme.BackgroundPressed
+			textColor = b.theme.TextPressed
+		case PointerStateHover:
+			bgColor = b.theme.BackgroundHover
+			textColor = b.theme.TextHover
+		default:
+			bgColor = b.theme.BackgroundNormal
+			textColor = b.theme.TextNormal
+		}
+	}
+
+	// Emit shadow command if enabled
+	if b.enabled && b.theme.ShadowBlur > 0 {
+		shadowX := x + b.theme.ShadowOffsetX
+		shadowY := y + b.theme.ShadowOffsetY
+		dl.AddBoxShadow(shadowX, shadowY, b.width, b.height,
+			b.theme.ShadowBlur, 0, b.theme.ShadowColor)
+	}
+
+	// Emit background with rounded corners
+	dl.AddFillRoundedRect(x, y, b.width, b.height, b.theme.BorderRadius, bgColor)
+
+	// Emit border
+	borderColor := b.theme.BorderNormal
+	if b.enabled {
+		switch b.state {
+		case PointerStatePressed:
+			borderColor = b.theme.BorderPressed
+		case PointerStateHover:
+			borderColor = b.theme.BorderHover
+		}
+	}
+	emitRectBorder(dl, x, y, b.width, b.height, 1, borderColor)
+
+	// Emit text centered
+	if b.atlas != nil && b.text != "" {
+		textWidth := b.measureTextWidth(b.text)
+		textX := x + (b.width-textWidth)/2
+		textY := y + b.height/2 + int(b.theme.FontSize/3)
+		dl.AddDrawText(b.text, textX, textY, int(b.theme.FontSize), textColor, 0)
+	}
+}
+
+
 // measureTextWidth estimates the width of text in pixels.
 func (b *Button) measureTextWidth(s string) int {
 	if b.atlas == nil {
@@ -309,6 +368,19 @@ func drawRectBorder(buf *core.Buffer, x, y, width, height, lineWidth int, color 
 	// Left edge
 	buf.DrawLine(x, y+height, x, y, w, color)
 }
+
+// emitRectBorder emits border draw commands to a display list.
+func emitRectBorder(dl *displaylist.DisplayList, x, y, width, height, lineWidth int, color core.Color) {
+	// Top edge
+	dl.AddDrawLine(x, y, x+width, y, lineWidth, color)
+	// Right edge
+	dl.AddDrawLine(x+width, y, x+width, y+height, lineWidth, color)
+	// Bottom edge
+	dl.AddDrawLine(x+width, y+height, x, y+height, lineWidth, color)
+	// Left edge
+	dl.AddDrawLine(x, y+height, x, y, lineWidth, color)
+}
+
 
 // TextInput represents a single-line text input field.
 type TextInput struct {
@@ -506,6 +578,56 @@ func (t *TextInput) Draw(buf *core.Buffer, x, y int) error {
 	return nil
 }
 
+// RenderToDisplayList emits draw commands for the text input to a display list.
+func (t *TextInput) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
+	if dl == nil {
+		return
+	}
+
+	// Background color
+	bgColor := t.theme.BackgroundNormal
+	if !t.enabled {
+		bgColor = t.theme.BackgroundDisabled
+	}
+
+	// Emit background
+	dl.AddFillRoundedRect(x, y, t.width, t.height, t.theme.BorderRadius, bgColor)
+
+	// Emit border
+	borderColor := t.theme.BorderNormal
+	if t.focused {
+		borderColor = t.theme.BorderFocus
+	}
+	emitRectBorder(dl, x, y, t.width, t.height, 1, borderColor)
+
+	// Emit text or placeholder
+	displayText := t.text
+	textColor := t.theme.TextNormal
+	if displayText == "" && t.placeholder != "" {
+		displayText = t.placeholder
+		textColor = core.Color{R: 150, G: 150, B: 150, A: 255}
+	}
+	if !t.enabled {
+		textColor = t.theme.TextDisabled
+	}
+
+	if t.atlas != nil && displayText != "" {
+		padding := 8
+		textX := x + padding
+		textY := y + t.height/2 + int(t.theme.FontSize/3)
+		dl.AddDrawText(displayText, textX, textY, int(t.theme.FontSize), textColor, 0)
+	}
+
+	// Emit cursor if focused
+	if t.focused && t.enabled {
+		cursorX := t.getCursorX(x)
+		cursorY0 := y + 4
+		cursorY1 := y + t.height - 4
+		dl.AddDrawLine(cursorX, cursorY0, cursorX, cursorY1, 1, t.theme.TextNormal)
+	}
+}
+
+
 // getCursorX calculates the X position of the cursor.
 func (t *TextInput) getCursorX(baseX int) int {
 	if t.atlas == nil {
@@ -666,3 +788,65 @@ func (s *ScrollContainer) drawScrollbar(buf *core.Buffer, x, y int) {
 	thumbColor := core.Color{R: 180, G: 180, B: 180, A: 255}
 	buf.FillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4.0, thumbColor)
 }
+
+// RenderToDisplayList emits draw commands for the scroll container to a display list.
+func (s *ScrollContainer) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
+	if dl == nil {
+		return
+	}
+
+	// Emit background
+	bgColor := s.theme.BackgroundNormal
+	dl.AddFillRect(x, y, s.width, s.height, bgColor)
+
+	// Emit border
+	emitRectBorder(dl, x, y, s.width, s.height, 1, s.theme.BorderNormal)
+
+	// Emit children with offset
+	childY := y - s.scrollOffset
+	for _, child := range s.children {
+		_, h := child.Bounds()
+
+		// Only emit if visible
+		if childY+h > y && childY < y+s.height {
+			// Check if child supports RenderToDisplayList
+			if renderer, ok := child.(interface {
+				RenderToDisplayList(*displaylist.DisplayList, int, int)
+			}); ok {
+				renderer.RenderToDisplayList(dl, x, childY)
+			}
+		}
+
+		childY += h
+	}
+
+	// Emit scrollbar if content overflows
+	if s.contentHeight > s.height {
+		s.emitScrollbar(dl, x, y)
+	}
+}
+
+// emitScrollbar emits scrollbar draw commands to a display list.
+func (s *ScrollContainer) emitScrollbar(dl *displaylist.DisplayList, x, y int) {
+	barWidth := 8
+	barX := x + s.width - barWidth - 2
+
+	// Calculate scrollbar thumb size and position
+	thumbRatio := float64(s.height) / float64(s.contentHeight)
+	thumbHeight := int(float64(s.height) * thumbRatio)
+	if thumbHeight < 20 {
+		thumbHeight = 20
+	}
+
+	scrollRatio := float64(s.scrollOffset) / float64(s.contentHeight-s.height)
+	thumbY := y + int(scrollRatio*float64(s.height-thumbHeight))
+
+	// Emit scrollbar track
+	trackColor := core.Color{R: 230, G: 230, B: 230, A: 255}
+	dl.AddFillRect(barX, y, barWidth, s.height, trackColor)
+
+	// Emit scrollbar thumb
+	thumbColor := core.Color{R: 180, G: 180, B: 180, A: 255}
+	dl.AddFillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4, thumbColor)
+}
+
