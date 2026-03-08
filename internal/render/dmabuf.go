@@ -173,7 +173,6 @@ func (b *BufferHandle) Destroy() error {
 	allocHandle := b.allocator.handle
 	b.allocator.mu.Unlock()
 	if allocHandle == nil {
-		b.handle = nil
 		return fmt.Errorf("allocator is closed")
 	}
 

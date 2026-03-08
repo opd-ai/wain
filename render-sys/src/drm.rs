@@ -126,9 +126,6 @@ impl DrmDevice {
             fd: -1,
         };
         checked_ioctl(self.fd(), DRM_IOCTL_PRIME_HANDLE_TO_FD as u64, &mut req as *mut PrimeHandleToFd)?;
-        if req.fd < 0 {
-            return Err(io::Error::last_os_error());
-        }
         Ok(req.fd)
     }
 }
