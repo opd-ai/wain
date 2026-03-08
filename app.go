@@ -263,28 +263,8 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 		return nil, ErrNotRunning
 	}
 
-	if cfg.Width <= 0 {
-		cfg.Width = 800
-	}
-	if cfg.Height <= 0 {
-		cfg.Height = 600
-	}
-
-	if cfg.MinWidth < 0 || cfg.MinHeight < 0 || cfg.MaxWidth < 0 || cfg.MaxHeight < 0 {
-		return nil, ErrInvalidWindowConfig
-	}
-
-	if cfg.MaxWidth > 0 && cfg.Width > cfg.MaxWidth {
-		cfg.Width = cfg.MaxWidth
-	}
-	if cfg.MaxHeight > 0 && cfg.Height > cfg.MaxHeight {
-		cfg.Height = cfg.MaxHeight
-	}
-	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
-		cfg.Width = cfg.MinWidth
-	}
-	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
-		cfg.Height = cfg.MinHeight
+	if err := validateAndNormalizeConfig(&cfg); err != nil {
+		return nil, err
 	}
 
 	win := &Window{
@@ -310,6 +290,35 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 	return win, nil
 }
 
+// validateAndNormalizeConfig validates and normalizes window configuration.
+func validateAndNormalizeConfig(cfg *WindowConfig) error {
+	if cfg.Width <= 0 {
+		cfg.Width = 800
+	}
+	if cfg.Height <= 0 {
+		cfg.Height = 600
+	}
+
+	if cfg.MinWidth < 0 || cfg.MinHeight < 0 || cfg.MaxWidth < 0 || cfg.MaxHeight < 0 {
+		return ErrInvalidWindowConfig
+	}
+
+	if cfg.MaxWidth > 0 && cfg.Width > cfg.MaxWidth {
+		cfg.Width = cfg.MaxWidth
+	}
+	if cfg.MaxHeight > 0 && cfg.Height > cfg.MaxHeight {
+		cfg.Height = cfg.MaxHeight
+	}
+	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
+		cfg.Width = cfg.MinWidth
+	}
+	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
+		cfg.Height = cfg.MinHeight
+	}
+
+	return nil
+}
+
 // initialize creates the platform-specific window.
 func (w *Window) initialize() error {
 	switch w.app.displayServer {
@@ -324,6 +333,23 @@ func (w *Window) initialize() error {
 
 // initWaylandWindow creates a Wayland surface and toplevel.
 func (w *Window) initWaylandWindow() error {
+	if err := w.createWaylandSurface(); err != nil {
+		return err
+	}
+
+	if err := w.configureWaylandToplevel(); err != nil {
+		return err
+	}
+
+	if err := w.waylandSurface.Commit(); err != nil {
+		return fmt.Errorf("failed to commit surface: %w", err)
+	}
+
+	return nil
+}
+
+// createWaylandSurface creates the Wayland surface and toplevel objects.
+func (w *Window) createWaylandSurface() error {
 	surface, err := w.app.waylandCompositor.CreateSurface()
 	if err != nil {
 		return fmt.Errorf("failed to create surface: %w", err)
@@ -342,12 +368,34 @@ func (w *Window) initWaylandWindow() error {
 	}
 	w.waylandToplevel = toplevel
 
+	return nil
+}
+
+// configureWaylandToplevel configures window properties on the Wayland toplevel.
+func (w *Window) configureWaylandToplevel() error {
+	toplevel := w.waylandToplevel
+
 	if w.title != "" {
 		if err := toplevel.SetTitle(w.title); err != nil {
 			return fmt.Errorf("failed to set title: %w", err)
 		}
 	}
 
+	if err := w.setWaylandSizeLimits(toplevel); err != nil {
+		return err
+	}
+
+	if w.fullscreen {
+		if err := toplevel.SetFullscreen(0); err != nil {
+			return fmt.Errorf("failed to set fullscreen: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// setWaylandSizeLimits sets min/max size constraints on a Wayland toplevel.
+func (w *Window) setWaylandSizeLimits(toplevel *xdg.Toplevel) error {
 	if w.minWidth > 0 || w.minHeight > 0 {
 		if err := toplevel.SetMinSize(int32(w.minWidth), int32(w.minHeight)); err != nil {
 			return fmt.Errorf("failed to set min size: %w", err)
@@ -358,16 +406,6 @@ func (w *Window) initWaylandWindow() error {
 		if err := toplevel.SetMaxSize(int32(w.maxWidth), int32(w.maxHeight)); err != nil {
 			return fmt.Errorf("failed to set max size: %w", err)
 		}
-	}
-
-	if w.fullscreen {
-		if err := toplevel.SetFullscreen(0); err != nil {
-			return fmt.Errorf("failed to set fullscreen: %w", err)
-		}
-	}
-
-	if err := surface.Commit(); err != nil {
-		return fmt.Errorf("failed to commit surface: %w", err)
 	}
 
 	return nil
@@ -875,6 +913,15 @@ func (a *App) connectWayland(path string) error {
 	}
 	a.waylandRegistry = registry
 
+	if err := a.bindWaylandGlobals(registry); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// bindWaylandGlobals binds required Wayland global objects.
+func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	// Bind compositor
 	compositorGlobal := registry.FindGlobal("wl_compositor")
 	if compositorGlobal == nil {
@@ -895,8 +942,8 @@ func (a *App) connectWayland(path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to bind shm: %w", err)
 	}
-	shmObj := shm.NewSHM(conn, shmID)
-	conn.RegisterObject(shmObj)
+	shmObj := shm.NewSHM(a.waylandConn, shmID)
+	a.waylandConn.RegisterObject(shmObj)
 	a.waylandShm = shmObj
 
 	// Bind xdg_wm_base
@@ -908,8 +955,8 @@ func (a *App) connectWayland(path string) error {
 	if err != nil {
 		return fmt.Errorf("failed to bind xdg_wm_base: %w", err)
 	}
-	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
-	conn.RegisterObject(wmBase)
+	wmBase := xdg.NewWmBase(a.waylandConn, wmBaseID, xdgGlobal.Version)
+	a.waylandConn.RegisterObject(wmBase)
 	a.waylandWmBase = wmBase
 
 	return nil
