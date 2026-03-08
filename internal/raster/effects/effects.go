@@ -246,7 +246,7 @@ func clipRectToBounds(buf *core.Buffer, x, y, width, height int) (x1, y1, x2, y2
 	y1 = max(0, y)
 	x2 = min(buf.Width, x+width)
 	y2 = min(buf.Height, y+height)
-	return
+	return x1, y1, x2, y2
 }
 
 // fillSolidRect fills a rectangle with a solid color.
