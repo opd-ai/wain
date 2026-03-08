@@ -336,21 +336,21 @@ described in ROADMAP.md Phases 9-10. Steps are ordered by dependency.
   ```
 
 ### Step 18: Build & Distribution Verification
-- **Deliverable**: Verify the full `go get` → `go generate` → `go build` pipeline works from scratch. Add CI jobs for clean-environment builds. Create pre-built release assets for the Rust static library. Update README.md with getting-started instructions for the public API.
+- **Deliverable**: Verify the full `go get` → `go build` pipeline works from scratch using pre-built Rust artifacts (no `go generate` required in consumer modules). Add CI jobs for clean-environment builds. Create and publish pre-built release assets for the Rust static library. Provide a separate generator tool (e.g., `cmd/wain-build`) that can be invoked from within a consuming project when regeneration is needed. Update README.md with getting-started instructions for the public API and clear guidance on when/how to run the generator.
 - **Dependencies**: All previous steps
 - **Files**:
   - `scripts/build-rust.sh` (existing, verify)
-  - `internal/render/generate.go` (existing go:generate)
+  - `internal/render/generate.go` (existing go:generate, used only in this repo / generator tool, not via `go generate github.com/opd-ai/wain/...`)
+  - `cmd/wain-build/main.go` (new, optional Rust rebuild tool for consumers)
   - `.github/workflows/ci.yml` (add public API build test)
-  - `README.md` (update with public API getting-started)
-- **Acceptance**: `go get github.com/opd-ai/wain && go generate github.com/opd-ai/wain/... && go build .` succeeds on a clean x86_64 Linux environment
+  - `README.md` (update with public API getting-started and generator usage)
+- **Acceptance**: `go get github.com/opd-ai/wain && go build ./...` succeeds on a clean x86_64 Linux environment without requiring `go generate` on the `github.com/opd-ai/wain/...` import path; documentation shows how to optionally run the generator tool from a consumer module.
 - **Validation**:
   ```bash
-  # CI job verifies clean build:
+  # CI job verifies clean build from a fresh consumer module:
   mkdir /tmp/test-app && cd /tmp/test-app
   go mod init testapp
   go get github.com/opd-ai/wain
-  go generate github.com/opd-ai/wain/...
   cat > main.go << 'EOF'
   package main
   import "github.com/opd-ai/wain"
@@ -358,6 +358,8 @@ described in ROADMAP.md Phases 9-10. Steps are ordered by dependency.
   EOF
   go build -o testapp .
   ldd testapp 2>&1 | grep -q "not a dynamic executable"
+  # Optional: if rebuilding Rust backend from source is needed:
+  # go run github.com/opd-ai/wain/cmd/wain-build@latest
   ```
 
 ### Step 19: Reference Application & Documentation

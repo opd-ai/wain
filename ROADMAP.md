@@ -766,23 +766,35 @@ Go library — `go get github.com/opd-ai/wain` followed by a standard
 
 9.6  BUILD SYSTEM FOR GO-GET
      - Ensure `go get github.com/opd-ai/wain` works seamlessly:
-       (a) The go:generate directive (scripts/build-rust.sh) must build the
-           Rust static library and musl stub before `go build`.
-       (b) Document the one-time prerequisite: `cargo`, `musl-gcc`,
-           `rustup target add <musl-target>`.
-       (c) Provide pre-built static libraries (.a) as GitHub release assets
+       (a) Prefer prebuilt or embedded Rust static libraries so that a
+           standard `go build` on a fresh clone does not need to run any
+           generators in the Go module cache.
+       (b) For contributors or advanced users who want to rebuild the Rust
+           backend from source, provide a small helper CLI
+           (e.g., `cmd/wain-build`) that runs in the consuming project
+           directory and writes its outputs there (never into the module
+           cache).
+       (c) Document the one-time prerequisites for rebuilding from source:
+           `cargo`, `musl-gcc`, `rustup target add <musl-target>`.
+       (d) Provide pre-built static libraries (.a) as GitHub release assets
            for common platforms (x86_64-linux-musl, aarch64-linux-musl) so
-           that developers without Rust toolchain can still `go build`
-           directly with CGO_LDFLAGS pointing to the downloaded .a file.
-       (d) Verify that the final binary is fully static (ldd check) and
+           that developers without a Rust toolchain can still `go build`
+           using the provided static libraries, without needing to set
+           CGO-specific build flags in the common case (advanced users may
+           override library paths via CGO_LDFLAGS if necessary).
+       (e) Verify that the final binary is fully static (ldd check) and
            self-contained — no dynamic dependencies, no dlopen, no
            runtime file requirements.
-     - The developer experience must be:
+     - The default developer experience must be:
          go get github.com/opd-ai/wain
-         go generate github.com/opd-ai/wain/...   # (one-time, builds Rust)
          go build .                                 # produces static binary
-     - Milestone: a fresh machine with Go and the Rust toolchain can
-       `go get` and `go build` a sample wain application from scratch.
+     - For rebuilding the Rust backend from source:
+         go install github.com/opd-ai/wain/cmd/wain-build@latest
+         wain-build .                               # one-time, in-project
+         go build .                                 # now links rebuilt Rust
+     - Milestone: a fresh machine with Go can `go get` and `go build` a
+       sample wain application from scratch, with an opt-in path to rebuild
+       the Rust backend when the toolchain is installed.
 
 --------------------------------------------------------------------------------
 PHASE 10: Public Widget API & Developer Experience (Weeks 44-52)
@@ -803,8 +815,11 @@ Design principles:
     interfaces, error returns) as Go stdlib packages like net/http.
 
 10.1  PUBLIC WIDGET INTERFACES
-      - Promote the internal Widget interface to a public `wain.Widget`
-        interface with a stable contract:
+      - Define a new public `wain.Widget` interface with a simplified,
+        stable contract that wraps the internal widget system (the internal
+        `widgets.Widget` interface has pointer-specific handlers and
+        `Draw(*core.Buffer, x, y) error` — the public interface abstracts
+        over those details):
           type Widget interface {
               Bounds() (width, height int)
               HandleEvent(Event) bool
@@ -902,10 +917,13 @@ Design principles:
       - Provide built-in themes: DefaultDark (the existing RetroStyle),
         DefaultLight, and HighContrast (for accessibility).
       - Widgets inherit theme from their parent container unless overridden.
-      - Expose the existing Style interface for full custom styling.
+      - For per-widget customization, provide a concrete `StyleOverride`
+        struct (not an interface — the internal `pctwidget.Style` interface
+        is kept internal; the public API exposes a simple config struct
+        for developer ergonomics):
       - API sketch:
           app.SetTheme(wain.DefaultDark())
-          panel.SetStyle(wain.Style{Background: wain.RGB(40, 40, 60)})
+          panel.SetStyle(wain.StyleOverride{Background: wain.RGB(40, 40, 60)})
       - Milestone: switching themes at runtime re-renders all widgets with
         the new colors/fonts/spacing.
 
