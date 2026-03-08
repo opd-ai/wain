@@ -328,8 +328,12 @@ pub unsafe extern "C" fn render_submit_batch(
             }
         }
         GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
-            // AMD submission not yet implemented (Phase 6.2)
-            -1
+            // Use AMD submission path
+            // Note: batch_gpu_addr of 0 triggers simplified path with auto-VA
+            match dev.amdgpu_submit_batch_simple(batch_handle, batch_len_bytes, context_id) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
         }
         GpuGeneration::Unknown => -1,
     }

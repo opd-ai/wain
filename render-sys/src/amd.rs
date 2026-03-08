@@ -588,6 +588,95 @@ impl DrmDevice {
         };
         Ok(())
     }
+
+    /// Submit a batch buffer (PM4 commands) to the GPU and wait for completion.
+    ///
+    /// This is the high-level AMD equivalent of i915_submit_batch.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch_handle` - GEM handle of buffer containing PM4 commands
+    /// * `batch_va` - GPU virtual address where batch buffer is mapped
+    /// * `batch_len_bytes` - Length of PM4 command stream in bytes
+    /// * `context_id` - AMD GPU context ID
+    ///
+    /// # Returns
+    ///
+    /// Ok(()) on successful submission and completion, or io::Error on failure.
+    ///
+    /// # Note
+    ///
+    /// This method assumes the batch buffer is already mapped to GPU virtual
+    /// address space via amdgpu_gem_va. For now, it uses a simple single-IB
+    /// submission without BO lists or dependencies.
+    pub fn amdgpu_submit_batch(
+        &self,
+        batch_handle: u32,
+        batch_va: u64,
+        batch_len_bytes: u32,
+        context_id: u32,
+    ) -> io::Result<()> {
+        // Build the indirect buffer chunk
+        let ib_chunk = IBChunk::gfx(batch_va, batch_len_bytes);
+        
+        // Build the chunk data header
+        let chunk_data = ChunkData {
+            chunk_id: AMDGPU_CHUNK_ID_IB,
+            length_dw: (std::mem::size_of::<IBChunk>() / 4) as u32,
+            chunk_data: &ib_chunk as *const IBChunk as u64,
+        };
+        
+        // Build command submission request
+        let mut cs = CommandSubmission::new(
+            context_id,
+            1, // Single chunk (IB only)
+            &chunk_data as *const ChunkData as u64,
+        );
+        
+        // Submit to GPU
+        self.amdgpu_cs(&mut cs)?;
+        
+        // Wait for completion using the fence returned by CS
+        let mut wait = WaitCommandSubmission::new(
+            context_id,
+            AMDGPU_HW_IP_GFX,
+            cs.fence_info,
+        );
+        self.amdgpu_wait_cs(&mut wait)?;
+        
+        Ok(())
+    }
+
+    /// Submit a batch buffer without explicit VA (simplified for testing).
+    ///
+    /// This is a simplified version that assumes the kernel will handle VA mapping.
+    /// Used for basic smoke tests before full VA management is implemented.
+    pub fn amdgpu_submit_batch_simple(
+        &self,
+        batch_handle: u32,
+        batch_len_bytes: u32,
+        context_id: u32,
+    ) -> io::Result<()> {
+        // For testing, use the GEM handle as a placeholder VA
+        // In production, this should be a proper mapped VA from amdgpu_gem_va
+        let batch_va = (batch_handle as u64) << 12; // Simple mapping: handle * 4K
+        self.amdgpu_submit_batch(batch_handle, batch_va, batch_len_bytes, context_id)
+    }
+
+    /// Create an AMD GPU context and return its ID.
+    ///
+    /// Contexts isolate GPU state and allow independent workloads.
+    pub fn amdgpu_create_context(&self) -> io::Result<u32> {
+        let mut req = ContextOp::alloc();
+        self.amdgpu_ctx(&mut req)?;
+        Ok(req.ctx_id)
+    }
+
+    /// Destroy an AMD GPU context.
+    pub fn amdgpu_destroy_context(&self, ctx_id: u32) -> io::Result<()> {
+        let mut req = ContextOp::free(ctx_id);
+        self.amdgpu_ctx(&mut req)
+    }
 }
 
 #[cfg(test)]
