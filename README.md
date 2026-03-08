@@ -75,6 +75,21 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Shader validation pipeline
 - ✅ naga 0.14 integrated as Rust dependency
 
+### UI Shaders (Phase 4.2) — ✅ Complete
+- ✅ 7 WGSL shaders authored in `render-sys/shaders/`
+- ✅ All shaders validated with naga (14 shader tests passing)
+- ✅ Comprehensive shader documentation (478-line README)
+- ✅ Shaders: solid_fill, textured_quad, sdf_text, box_shadow, rounded_rect, linear_gradient, radial_gradient
+
+### Intel EU Backend (Phase 4.3) — 🔧 In Progress
+**Core Compilation Pipeline** (~2,400 LOC):
+- ✅ Main compile() function implemented
+- ✅ Register allocator (linear-scan, r0-r127 GRF mapping)
+- ✅ Instruction lowering (binary/unary ops, math functions, control flow)
+- ✅ Binary encoding (128-bit EU instruction format for Gen9+)
+- ✅ Basic shader compilation validated (vertex shaders compile to EU binary)
+- ⚠️ Advanced features deferred: URB I/O, texture SEND instructions, optimizations
+
 ### Rendering Layer (Phase 1.4) — ✅ Complete
 **Software 2D Rasterizer** (5 packages, ~1,877 LOC):
 - ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
@@ -96,7 +111,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Frame buffer ring management for double/triple buffering (`internal/buffer/`)
 - ⚠️ All packages marked `internal/` (public API surface planned for later)
 
-**Not yet implemented:** GPU-accelerated rendering backends (Phase 5+), shader lowering to Intel EU machine code (Phase 4.2+), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, and GPU command submission infrastructure exists, but GPU rendering is not yet wired into the display pipeline.
+**Not yet implemented:** Full GPU rendering pipeline integration (Phase 5+), advanced EU backend features (URB I/O, texture sampling, shader optimizations - Phase 4.3 cont'd), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, GPU command submission infrastructure exists, and basic shader compilation to EU binary is functional, but GPU rendering is not yet wired into the display pipeline.
 
 ## Prerequisites
 

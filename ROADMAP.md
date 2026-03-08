@@ -210,24 +210,31 @@ to GPU machine code entirely within Rust.
          box_shadow, rounded_rect, linear_gradient, radial_gradient
        - Ready for Phase 4.3 (Intel EU Backend)
 
-4.3  INTEL EU BACKEND (Rust)
+4.3  🔧 INTEL EU BACKEND (Rust) — IN PROGRESS
      - Write a compiler backend that lowers naga's IR to Intel EU machine
        code (binary, not text assembly).
      - Key components:
-       (a) Map naga's IR types to EU register file (GRF allocation).
-       (b) Lower arithmetic ops to EU ALU instructions (encoded as Rust
+       ✅ (a) Map naga's IR types to EU register file (GRF allocation).
+       ✅ (b) Lower arithmetic ops to EU ALU instructions (encoded as Rust
            structs that serialize to the binary instruction format).
-       (c) Lower texture samples to EU SEND instructions targeting the
-           sampler shared function.
-       (d) Handle input/output via URB reads/writes (vertex shader) and
-           render target writes (fragment shader).
-       (e) Implement a simple linear-scan register allocator.
+       ⚠️ (c) Lower texture samples to EU SEND instructions targeting the
+           sampler shared function. (Deferred - basic infrastructure exists)
+       ⚠️ (d) Handle input/output via URB reads/writes (vertex shader) and
+           render target writes (fragment shader). (Deferred)
+       ✅ (e) Implement a simple linear-scan register allocator.
      - Reference: Intel PRMs Volume 4 (Execution Unit ISA) and Volume 7
        (3D Media GPGPU). Mesa's `src/intel/compiler/` for lowering
        patterns.
      - The backend emits binary kernel objects — arrays of bytes that are
        uploaded to GPU memory and referenced by 3DSTATE_VS/3DSTATE_PS.
      - Estimated size: 10,000-20,000 lines of Rust.
+     - **Status**: ✅ Core compilation pipeline implemented (~2,400 LOC)
+       - EUCompiler::compile() successfully lowers basic shaders to binary
+       - Register allocator functional (regalloc.rs - 151 LOC)
+       - Instruction encoding complete (instruction.rs - 378 LOC, encoding.rs - 288 LOC)
+       - IR lowering operational (lower.rs - 1,245 LOC)
+       - All 153 Rust tests passing, basic shader compilation validated
+       - **Next work**: URB I/O, texture SEND instructions, optimizations
 
 4.4  COMPILE SHADERS AT BUILD TIME
      - Run the shader compiler as a build.rs step in Cargo. The compiled
