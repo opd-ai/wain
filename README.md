@@ -266,8 +266,9 @@ make test-go
 
 # Run Go tests with coverage reporting
 make coverage
+# Shows per-package coverage (average: ~70%)
 
-# Generate HTML coverage report (opens in browser)
+# Generate HTML coverage report
 make coverage-html
 # HTML report: coverage/coverage.html
 ```
@@ -281,6 +282,10 @@ make coverage-html
   - 2D rasterization (curves, text, effects, compositing)
   - UI framework (layout, widgets, event handling)
   - Integration tests (full protocol → rasterizer → display pipeline)
+  - **Code coverage:** ~70% average across 34 library packages (range: 8.9% to 100%)
+    - High coverage (>90%): buffer, raster, UI layout, X11 present/gc/dpi
+    - Moderate coverage (50-90%): Wayland/X11 protocols, UI widgets, effects
+    - Lower coverage (<50%): render backend, integration tests (hardware-dependent)
 
 **Without direnv:** Use `make test-go` instead of `go test ./...`. Direct `go test` requires `CGO_LDFLAGS` to link the Rust library (see [Troubleshooting](#troubleshooting)).
 
