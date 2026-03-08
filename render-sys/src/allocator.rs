@@ -167,6 +167,13 @@ impl BufferAllocator {
     pub fn export_dmabuf(&self, buffer: &Buffer) -> io::Result<RawFd> {
         self.device.prime_handle_to_fd(buffer.handle)
     }
+
+    /// Get a reference to the underlying DRM device.
+    ///
+    /// Useful for direct ioctl access (e.g., batch submission).
+    pub fn device(&self) -> &DrmDevice {
+        &self.device
+    }
 }
 
 #[cfg(test)]
