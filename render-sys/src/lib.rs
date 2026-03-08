@@ -19,6 +19,7 @@ pub mod surface;
 pub mod shader;
 pub mod shaders;
 pub mod eu;
+pub mod rdna;
 
 #[cfg(test)]
 pub mod gpu_test;
