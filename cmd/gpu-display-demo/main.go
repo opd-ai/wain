@@ -35,6 +35,7 @@ import (
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/render/display"
+	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
@@ -115,52 +116,90 @@ func runWaylandDemo() error {
 	}
 	defer conn.Close()
 
-	// Set up globals
-	wlCtx, err := demo.SetupWaylandGlobals(conn)
+	dmabufObj, surface, err := setupWaylandContext(conn)
 	if err != nil {
-		return fmt.Errorf("failed to setup globals: %w", err)
+		return err
 	}
 
-	// Bind to dmabuf (required for GPU rendering)
+	renderer, err := createGPUBackend()
+	if err != nil {
+		return err
+	}
+	defer renderer.Destroy()
+
+	pipeline, err := createWaylandPipeline(surface, dmabufObj, renderer)
+	if err != nil {
+		return err
+	}
+	defer pipeline.Close()
+
+	return renderFrameLoop(pipeline)
+}
+
+func setupWaylandContext(conn *client.Connection) (*dmabuf.Dmabuf, *client.Surface, error) {
+	wlCtx, err := demo.SetupWaylandGlobals(conn)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to setup globals: %w", err)
+	}
+
+	dmabufObj, err := bindDmabuf(conn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	surface, err := createWaylandWindow(wlCtx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dmabufObj, surface, nil
+}
+
+func bindDmabuf(conn *client.Connection) (*dmabuf.Dmabuf, error) {
 	registry, err := conn.Display().GetRegistry()
 	if err != nil {
-		return fmt.Errorf("failed to get registry: %w", err)
+		return nil, fmt.Errorf("failed to get registry: %w", err)
 	}
 
 	dmabufGlobal := registry.FindGlobal("zwp_linux_dmabuf_v1")
 	if dmabufGlobal == nil {
-		return fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
+		return nil, fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
 	}
 
 	dmabufID, err := registry.BindDmabuf(dmabufGlobal)
 	if err != nil {
-		return fmt.Errorf("failed to bind dmabuf: %w", err)
+		return nil, fmt.Errorf("failed to bind dmabuf: %w", err)
 	}
 
 	dmabufObj := dmabuf.NewDmabuf(conn, dmabufID)
 	conn.RegisterObject(dmabufObj)
 
-	// Create surface
+	return dmabufObj, nil
+}
+
+func createWaylandWindow(wlCtx *demo.WaylandContext) (*client.Surface, error) {
 	surface, err := wlCtx.Compositor.CreateSurface()
 	if err != nil {
-		return fmt.Errorf("failed to create surface: %w", err)
+		return nil, fmt.Errorf("failed to create surface: %w", err)
 	}
 
-	// Get xdg surface and toplevel
 	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
 	if err != nil {
-		return fmt.Errorf("failed to create xdg_surface: %w", err)
+		return nil, fmt.Errorf("failed to create xdg_surface: %w", err)
 	}
 
 	toplevel, err := xdgSurface.GetToplevel()
 	if err != nil {
-		return fmt.Errorf("failed to create toplevel: %w", err)
+		return nil, fmt.Errorf("failed to create toplevel: %w", err)
 	}
 
 	toplevel.SetTitle("wain GPU Display Demo (Wayland)")
 	surface.Commit()
 
-	// Create GPU backend
+	return surface, nil
+}
+
+func createGPUBackend() (*backend.GPUBackend, error) {
 	fmt.Println("Initializing GPU backend...")
 	renderer, err := backend.New(backend.Config{
 		DRMPath:          drmPath,
@@ -169,19 +208,21 @@ func runWaylandDemo() error {
 		VertexBufferSize: 1024 * 1024,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create GPU backend: %w", err)
+		return nil, fmt.Errorf("failed to create GPU backend: %w", err)
 	}
-	defer renderer.Destroy()
+	return renderer, nil
+}
 
-	// Create display pipeline
+func createWaylandPipeline(surface *client.Surface, dmabufObj *dmabuf.Dmabuf, renderer *backend.GPUBackend) (*display.WaylandPipeline, error) {
 	fmt.Println("Creating GPU→Wayland display pipeline...")
 	pipeline, err := display.NewWaylandPipeline(surface, dmabufObj, renderer)
 	if err != nil {
-		return fmt.Errorf("failed to create display pipeline: %w", err)
+		return nil, fmt.Errorf("failed to create display pipeline: %w", err)
 	}
-	defer pipeline.Close()
+	return pipeline, nil
+}
 
-	// Render frames
+func renderFrameLoop(pipeline interface{ RenderAndPresent(context.Context, *displaylist.DisplayList) error }) error {
 	fmt.Printf("Rendering %d frames...\n", numFrames)
 	for i := 0; i < numFrames; i++ {
 		dl := createAnimatedDisplayList(i, numFrames)
@@ -195,7 +236,6 @@ func runWaylandDemo() error {
 
 		time.Sleep(16 * time.Millisecond) // ~60 FPS
 	}
-
 	return nil
 }
 
@@ -208,19 +248,55 @@ func runX11Demo() error {
 	}
 	defer conn.Close()
 
-	// Query DRI3 extension
+	dri3Ext, presentExt, window, err := setupX11Context(conn)
+	if err != nil {
+		return err
+	}
+
+	renderer, err := createGPUBackend()
+	if err != nil {
+		return err
+	}
+	defer renderer.Destroy()
+
+	pipeline, err := createX11Pipeline(conn, window, dri3Ext, presentExt, renderer)
+	if err != nil {
+		return err
+	}
+	defer pipeline.Close()
+
+	return renderFrameLoop(pipeline)
+}
+
+func setupX11Context(conn *x11client.Connection) (*dri3.Extension, *present.Extension, x11client.XID, error) {
+	dri3Ext, presentExt, err := queryX11Extensions(conn)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	window, err := createX11Window(conn)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	return dri3Ext, presentExt, window, nil
+}
+
+func queryX11Extensions(conn *x11client.Connection) (*dri3.Extension, *present.Extension, error) {
 	dri3Ext, err := dri3.QueryExtension(newDRI3Adapter(conn))
 	if err != nil {
-		return fmt.Errorf("DRI3 extension not available: %w", err)
+		return nil, nil, fmt.Errorf("DRI3 extension not available: %w", err)
 	}
 
-	// Query Present extension
 	presentExt, err := present.QueryExtension(newPresentAdapter(conn))
 	if err != nil {
-		return fmt.Errorf("Present extension not available: %w", err)
+		return nil, nil, fmt.Errorf("Present extension not available: %w", err)
 	}
 
-	// Create window
+	return dri3Ext, presentExt, nil
+}
+
+func createX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	fmt.Println("Creating window...")
 	root := conn.RootWindow()
 
@@ -238,50 +314,23 @@ func runX11Demo() error {
 
 	window, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
-		return fmt.Errorf("failed to create window: %w", err)
+		return 0, fmt.Errorf("failed to create window: %w", err)
 	}
 
 	if err := conn.MapWindow(window); err != nil {
-		return fmt.Errorf("failed to map window: %w", err)
+		return 0, fmt.Errorf("failed to map window: %w", err)
 	}
 
-	// Create GPU backend
-	fmt.Println("Initializing GPU backend...")
-	renderer, err := backend.New(backend.Config{
-		DRMPath:          drmPath,
-		Width:            windowWidth,
-		Height:           windowHeight,
-		VertexBufferSize: 1024 * 1024,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create GPU backend: %w", err)
-	}
-	defer renderer.Destroy()
+	return window, nil
+}
 
-	// Create display pipeline
+func createX11Pipeline(conn *x11client.Connection, window x11client.XID, dri3Ext *dri3.Extension, presentExt *present.Extension, renderer *backend.GPUBackend) (*display.X11Pipeline, error) {
 	fmt.Println("Creating GPU→X11 display pipeline...")
 	pipeline, err := display.NewX11Pipeline(conn, window, dri3Ext, presentExt, renderer)
 	if err != nil {
-		return fmt.Errorf("failed to create display pipeline: %w", err)
+		return nil, fmt.Errorf("failed to create display pipeline: %w", err)
 	}
-	defer pipeline.Close()
-
-	// Render frames
-	fmt.Printf("Rendering %d frames...\n", numFrames)
-	for i := 0; i < numFrames; i++ {
-		dl := createAnimatedDisplayList(i, numFrames)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		if err := pipeline.RenderAndPresent(ctx, dl); err != nil {
-			cancel()
-			return fmt.Errorf("frame %d failed: %w", i, err)
-		}
-		cancel()
-
-		time.Sleep(16 * time.Millisecond) // ~60 FPS
-	}
-
-	return nil
+	return pipeline, nil
 }
 
 // createAnimatedDisplayList creates a simple animated display list for testing.
