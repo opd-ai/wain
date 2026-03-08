@@ -11,9 +11,9 @@
 //
 // To run integration tests, use ONE of these methods:
 //
-//	1. make test-go              (recommended for CI)
-//	2. direnv allow && go test   (recommended for development)
-//	3. See internal/integration/README.md for manual CGO setup
+//  1. make test-go              (recommended for CI)
+//  2. direnv allow && go test   (recommended for development)
+//  3. See internal/integration/README.md for manual CGO setup
 //
 // For details on test environment setup, see the project README.md Test section.
 package integration
