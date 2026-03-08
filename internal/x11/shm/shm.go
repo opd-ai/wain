@@ -69,20 +69,28 @@ const (
 	ExtensionName = "MIT-SHM"
 )
 
+// MIT-SHM request opcodes (relative to extension base opcode).
 const (
-	// SHM request opcodes (relative to extension base opcode)
+	// ShmQueryVersion queries the SHM extension version.
 	ShmQueryVersion = 0
-	ShmAttach       = 1
-	ShmDetach       = 2
-	ShmPutImage     = 3
-	ShmGetImage     = 4
+	// ShmAttach attaches a shared memory segment to the server.
+	ShmAttach = 1
+	// ShmDetach detaches a shared memory segment from the server.
+	ShmDetach = 2
+	// ShmPutImage copies image data from shared memory to a drawable.
+	ShmPutImage = 3
+	// ShmGetImage copies image data from a drawable to shared memory.
+	ShmGetImage = 4
+	// ShmCreatePixmap creates a pixmap using shared memory for backing.
 	ShmCreatePixmap = 5
 )
 
+// MIT-SHM pixmap format constants.
 const (
-	// SHM pixmap formats
+	// ShmPixmapFormatXY indicates XY bitmap format.
 	ShmPixmapFormatXY = 0
-	ShmPixmapFormatZ  = 1
+	// ShmPixmapFormatZ indicates ZPixmap format (packed pixels).
+	ShmPixmapFormatZ = 1
 )
 
 // XID represents an X11 resource identifier.

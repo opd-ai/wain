@@ -79,21 +79,32 @@ func EncodeSetupRequest(w io.Writer, req SetupRequest) error {
 // SetupStatus represents the status of a setup reply.
 type SetupStatus uint8
 
+// X11 connection setup status constants.
 const (
-	SetupStatusFailed       SetupStatus = 0
-	SetupStatusSuccess      SetupStatus = 1
+	// SetupStatusFailed indicates the connection setup failed.
+	SetupStatusFailed SetupStatus = 0
+	// SetupStatusSuccess indicates the connection setup succeeded.
+	SetupStatusSuccess SetupStatus = 1
+	// SetupStatusAuthenticate indicates authentication is required.
 	SetupStatusAuthenticate SetupStatus = 2
 )
 
 // VisualClass represents the visual type.
 type VisualClass uint8
 
+// X11 visual class constants identifying color model types.
 const (
-	VisualClassStaticGray  VisualClass = 0
-	VisualClassGrayScale   VisualClass = 1
+	// VisualClassStaticGray represents a static grayscale visual.
+	VisualClassStaticGray VisualClass = 0
+	// VisualClassGrayScale represents a dynamic grayscale visual.
+	VisualClassGrayScale VisualClass = 1
+	// VisualClassStaticColor represents a static indexed color visual.
 	VisualClassStaticColor VisualClass = 2
+	// VisualClassPseudoColor represents a dynamic indexed color visual.
 	VisualClassPseudoColor VisualClass = 3
-	VisualClassTrueColor   VisualClass = 4
+	// VisualClassTrueColor represents a static RGB visual (most common).
+	VisualClassTrueColor VisualClass = 4
+	// VisualClassDirectColor represents a dynamic RGB visual.
 	VisualClassDirectColor VisualClass = 5
 )
 

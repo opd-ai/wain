@@ -261,14 +261,22 @@ func (c *Connection) DestroyWindow(window XID) error {
 // ConfigureWindowMask represents configuration value mask bits.
 type ConfigureWindowMask uint16
 
+// Window configuration mask bits for ConfigureWindow operations.
 const (
-	ConfigMaskX           ConfigureWindowMask = 1 << 0
-	ConfigMaskY           ConfigureWindowMask = 1 << 1
-	ConfigMaskWidth       ConfigureWindowMask = 1 << 2
-	ConfigMaskHeight      ConfigureWindowMask = 1 << 3
+	// ConfigMaskX enables setting the window's X position.
+	ConfigMaskX ConfigureWindowMask = 1 << 0
+	// ConfigMaskY enables setting the window's Y position.
+	ConfigMaskY ConfigureWindowMask = 1 << 1
+	// ConfigMaskWidth enables setting the window's width.
+	ConfigMaskWidth ConfigureWindowMask = 1 << 2
+	// ConfigMaskHeight enables setting the window's height.
+	ConfigMaskHeight ConfigureWindowMask = 1 << 3
+	// ConfigMaskBorderWidth enables setting the window's border width.
 	ConfigMaskBorderWidth ConfigureWindowMask = 1 << 4
-	ConfigMaskSibling     ConfigureWindowMask = 1 << 5
-	ConfigMaskStackMode   ConfigureWindowMask = 1 << 6
+	// ConfigMaskSibling enables setting the sibling window for stacking.
+	ConfigMaskSibling ConfigureWindowMask = 1 << 5
+	// ConfigMaskStackMode enables setting the stacking mode (above/below).
+	ConfigMaskStackMode ConfigureWindowMask = 1 << 6
 )
 
 // ConfigureWindow changes window attributes like position and size.

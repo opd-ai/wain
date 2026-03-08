@@ -45,14 +45,23 @@ const (
 // State represents the state of a toplevel window.
 type State uint32
 
+// XDG toplevel window state constants.
 const (
-	StateMaximized   State = 1
-	StateFullscreen  State = 2
-	StateResizing    State = 3
-	StateActivated   State = 4
-	StateTiledLeft   State = 5
-	StateTiledRight  State = 6
-	StateTiledTop    State = 7
+	// StateMaximized indicates the window is maximized.
+	StateMaximized State = 1
+	// StateFullscreen indicates the window is in fullscreen mode.
+	StateFullscreen State = 2
+	// StateResizing indicates the window is being interactively resized.
+	StateResizing State = 3
+	// StateActivated indicates the window has keyboard focus.
+	StateActivated State = 4
+	// StateTiledLeft indicates the window is tiled to the left edge.
+	StateTiledLeft State = 5
+	// StateTiledRight indicates the window is tiled to the right edge.
+	StateTiledRight State = 6
+	// StateTiledTop indicates the window is tiled to the top edge.
+	StateTiledTop State = 7
+	// StateTiledBottom indicates the window is tiled to the bottom edge.
 	StateTiledBottom State = 8
 )
 

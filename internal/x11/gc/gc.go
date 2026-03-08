@@ -48,53 +48,89 @@ var (
 	ErrInvalidImage = errors.New("gc: invalid image data")
 )
 
+// Image format constants for PutImage operations.
 const (
-	// Image format constants
-	FormatBitmap   = 0 // 1-bit bitmap
-	FormatXYPixmap = 1 // XY format (plane-separated)
-	FormatZPixmap  = 2 // Z format (packed pixels)
+	// FormatBitmap indicates 1-bit bitmap format.
+	FormatBitmap = 0
+	// FormatXYPixmap indicates XY format (plane-separated pixel data).
+	FormatXYPixmap = 1
+	// FormatZPixmap indicates Z format (packed pixels, most common for ARGB8888).
+	FormatZPixmap = 2
 )
 
+// GC attribute mask bits for CreateGC. Each bit corresponds to a value
+// that can be set in the graphics context. Values are provided in the
+// attrs slice in the order of these bits (lowest bit first).
 const (
-	// GC attribute mask bits
-	GCFunction           = 1 << 0
-	GCPlaneMask          = 1 << 1
-	GCForeground         = 1 << 2
-	GCBackground         = 1 << 3
-	GCLineWidth          = 1 << 4
-	GCLineStyle          = 1 << 5
-	GCCapStyle           = 1 << 6
-	GCJoinStyle          = 1 << 7
-	GCFillStyle          = 1 << 8
-	GCFillRule           = 1 << 9
-	GCTile               = 1 << 10
-	GCStipple            = 1 << 11
+	// GCFunction selects the logical raster operation (e.g., copy, XOR).
+	GCFunction = 1 << 0
+	// GCPlaneMask selects which bit planes are affected by drawing operations.
+	GCPlaneMask = 1 << 1
+	// GCForeground sets the foreground pixel value for drawing operations.
+	GCForeground = 1 << 2
+	// GCBackground sets the background pixel value for drawing operations.
+	GCBackground = 1 << 3
+	// GCLineWidth sets the line width in pixels (0 means 1-pixel thin line).
+	GCLineWidth = 1 << 4
+	// GCLineStyle sets the line style (solid, dashed, etc.).
+	GCLineStyle = 1 << 5
+	// GCCapStyle sets the line cap style (butt, round, projecting).
+	GCCapStyle = 1 << 6
+	// GCJoinStyle sets the line join style (miter, round, bevel).
+	GCJoinStyle = 1 << 7
+	// GCFillStyle sets the fill style (solid, tiled, stippled, etc.).
+	GCFillStyle = 1 << 8
+	// GCFillRule sets the fill rule (even-odd or winding).
+	GCFillRule = 1 << 9
+	// GCTile sets the pixmap to use for tiled fill operations.
+	GCTile = 1 << 10
+	// GCStipple sets the pixmap to use for stippled fill operations.
+	GCStipple = 1 << 11
+	// GCTileStippleXOrigin sets the X origin for tile/stipple patterns.
 	GCTileStippleXOrigin = 1 << 12
+	// GCTileStippleYOrigin sets the Y origin for tile/stipple patterns.
 	GCTileStippleYOrigin = 1 << 13
-	GCFont               = 1 << 14
-	GCSubwindowMode      = 1 << 15
-	GCGraphicsExposures  = 1 << 16
-	GCClipXOrigin        = 1 << 17
-	GCClipYOrigin        = 1 << 18
-	GCClipMask           = 1 << 19
-	GCDashOffset         = 1 << 20
-	GCDashes             = 1 << 21
-	GCArcMode            = 1 << 22
+	// GCFont sets the font for text drawing operations.
+	GCFont = 1 << 14
+	// GCSubwindowMode controls whether subwindows clip drawing operations.
+	GCSubwindowMode = 1 << 15
+	// GCGraphicsExposures controls whether GraphicsExpose events are generated.
+	GCGraphicsExposures = 1 << 16
+	// GCClipXOrigin sets the X origin of the clipping region.
+	GCClipXOrigin = 1 << 17
+	// GCClipYOrigin sets the Y origin of the clipping region.
+	GCClipYOrigin = 1 << 18
+	// GCClipMask sets the pixmap to use as the clipping mask.
+	GCClipMask = 1 << 19
+	// GCDashOffset sets the starting offset for dashed lines.
+	GCDashOffset = 1 << 20
+	// GCDashes sets the dash pattern for dashed lines.
+	GCDashes = 1 << 21
+	// GCArcMode sets whether arcs are filled as pie slices or chords.
+	GCArcMode = 1 << 22
 )
 
+// GC function values for the GCFunction attribute. These define the
+// logical raster operation applied when drawing.
 const (
-	// GC function values
-	GXCopy = 3 // Copy source to destination
-	GXXor  = 6 // XOR source with destination
+	// GXCopy copies source pixels to destination (most common).
+	GXCopy = 3
+	// GXXor performs XOR between source and destination pixels.
+	GXXor = 6
 )
 
+// Opcodes for X11 GC and pixmap protocol requests.
 const (
-	// Opcodes for GC and pixmap operations
-	OpcodeCreateGC     = 55
-	OpcodeFreeGC       = 60
+	// OpcodeCreateGC is the X11 protocol opcode for CreateGC request.
+	OpcodeCreateGC = 55
+	// OpcodeFreeGC is the X11 protocol opcode for FreeGC request.
+	OpcodeFreeGC = 60
+	// OpcodeCreatePixmap is the X11 protocol opcode for CreatePixmap request.
 	OpcodeCreatePixmap = 53
-	OpcodeFreePixmap   = 54
-	OpcodePutImage     = 72
+	// OpcodeFreePixmap is the X11 protocol opcode for FreePixmap request.
+	OpcodeFreePixmap = 54
+	// OpcodePutImage is the X11 protocol opcode for PutImage request.
+	OpcodePutImage = 72
 )
 
 // XID represents an X11 resource identifier.

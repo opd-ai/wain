@@ -106,18 +106,25 @@ const (
 // CompleteKind indicates how the pixmap was presented.
 type CompleteKind uint8
 
+// Present completion kind constants.
 const (
-	CompleteKindPixmap    CompleteKind = 0 // Presented via pixmap (flip or copy)
-	CompleteKindNotifyMSC CompleteKind = 1 // NotifyMSC event delivered
+	// CompleteKindPixmap indicates presentation via pixmap (flip or copy).
+	CompleteKindPixmap CompleteKind = 0
+	// CompleteKindNotifyMSC indicates a NotifyMSC event was delivered.
+	CompleteKindNotifyMSC CompleteKind = 1
 )
 
 // CompleteMode indicates the presentation method used.
 type CompleteMode uint8
 
+// Present completion mode constants.
 const (
-	CompleteModeFlip CompleteMode = 0 // Page flip
-	CompleteModeCopy CompleteMode = 1 // Blit/copy
-	CompleteModeSkip CompleteMode = 2 // Skipped (late)
+	// CompleteModeFlip indicates a page flip was performed.
+	CompleteModeFlip CompleteMode = 0
+	// CompleteModeCopy indicates a blit/copy was performed.
+	CompleteModeCopy CompleteMode = 1
+	// CompleteModeSkip indicates the presentation was skipped (frame arrived too late).
+	CompleteModeSkip CompleteMode = 2
 )
 
 // XID represents an X11 resource identifier.

@@ -67,15 +67,24 @@ type Message struct {
 // ArgumentType identifies the type of a Wayland argument.
 type ArgumentType uint8
 
+// Argument type constants for Wayland wire protocol encoding/decoding.
 const (
-	ArgTypeInt32  ArgumentType = 0
+	// ArgTypeInt32 represents a signed 32-bit integer argument.
+	ArgTypeInt32 ArgumentType = 0
+	// ArgTypeUint32 represents an unsigned 32-bit integer argument.
 	ArgTypeUint32 ArgumentType = 1
-	ArgTypeFixed  ArgumentType = 2
+	// ArgTypeFixed represents a fixed-point decimal (Q24.8 format) argument.
+	ArgTypeFixed ArgumentType = 2
+	// ArgTypeString represents a null-terminated UTF-8 string argument.
 	ArgTypeString ArgumentType = 3
+	// ArgTypeObject represents a reference to an existing Wayland object.
 	ArgTypeObject ArgumentType = 4
-	ArgTypeNewID  ArgumentType = 5
-	ArgTypeArray  ArgumentType = 6
-	ArgTypeFD     ArgumentType = 7
+	// ArgTypeNewID represents a newly created Wayland object identifier.
+	ArgTypeNewID ArgumentType = 5
+	// ArgTypeArray represents a byte array with length prefix.
+	ArgTypeArray ArgumentType = 6
+	// ArgTypeFD represents a file descriptor passed via SCM_RIGHTS.
+	ArgTypeFD ArgumentType = 7
 )
 
 // Argument represents a single argument in a Wayland message.

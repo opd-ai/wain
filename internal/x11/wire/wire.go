@@ -229,8 +229,11 @@ func DecodeUint8(r io.Reader) (uint8, error) {
 // MessageType represents the type of a server message.
 type MessageType uint8
 
+// X11 server message type constants.
 const (
+	// MessageTypeError indicates an error response from the server.
 	MessageTypeError MessageType = 0
+	// MessageTypeReply indicates a successful reply to a request.
 	MessageTypeReply MessageType = 1
 )
 

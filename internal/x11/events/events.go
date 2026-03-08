@@ -310,20 +310,34 @@ func ParseConfigureNotifyEvent(header wire.EventHeader, data []byte) (ConfigureN
 // ModifierMask represents the modifier key and button state mask.
 type ModifierMask uint16
 
+// Modifier mask constants for keyboard and pointer state.
 const (
-	ModifierShift   ModifierMask = 1 << 0  // Shift key
-	ModifierLock    ModifierMask = 1 << 1  // Caps Lock
-	ModifierControl ModifierMask = 1 << 2  // Control key
-	ModifierMod1    ModifierMask = 1 << 3  // Mod1 (typically Alt)
-	ModifierMod2    ModifierMask = 1 << 4  // Mod2 (typically Num Lock)
-	ModifierMod3    ModifierMask = 1 << 5  // Mod3
-	ModifierMod4    ModifierMask = 1 << 6  // Mod4 (typically Super/Windows)
-	ModifierMod5    ModifierMask = 1 << 7  // Mod5
-	ModifierButton1 ModifierMask = 1 << 8  // Left mouse button
-	ModifierButton2 ModifierMask = 1 << 9  // Middle mouse button
-	ModifierButton3 ModifierMask = 1 << 10 // Right mouse button
-	ModifierButton4 ModifierMask = 1 << 11 // Scroll up
-	ModifierButton5 ModifierMask = 1 << 12 // Scroll down
+	// ModifierShift indicates the Shift key is pressed.
+	ModifierShift ModifierMask = 1 << 0
+	// ModifierLock indicates Caps Lock is active.
+	ModifierLock ModifierMask = 1 << 1
+	// ModifierControl indicates the Control key is pressed.
+	ModifierControl ModifierMask = 1 << 2
+	// ModifierMod1 indicates Mod1 (typically Alt) is pressed.
+	ModifierMod1 ModifierMask = 1 << 3
+	// ModifierMod2 indicates Mod2 (typically Num Lock) is active.
+	ModifierMod2 ModifierMask = 1 << 4
+	// ModifierMod3 indicates Mod3 is pressed.
+	ModifierMod3 ModifierMask = 1 << 5
+	// ModifierMod4 indicates Mod4 (typically Super/Windows) is pressed.
+	ModifierMod4 ModifierMask = 1 << 6
+	// ModifierMod5 indicates Mod5 is pressed.
+	ModifierMod5 ModifierMask = 1 << 7
+	// ModifierButton1 indicates the left mouse button is pressed.
+	ModifierButton1 ModifierMask = 1 << 8
+	// ModifierButton2 indicates the middle mouse button is pressed.
+	ModifierButton2 ModifierMask = 1 << 9
+	// ModifierButton3 indicates the right mouse button is pressed.
+	ModifierButton3 ModifierMask = 1 << 10
+	// ModifierButton4 indicates scroll up button is pressed.
+	ModifierButton4 ModifierMask = 1 << 11
+	// ModifierButton5 indicates scroll down button is pressed.
+	ModifierButton5 ModifierMask = 1 << 12
 )
 
 // HasModifier checks if a specific modifier is set in the state mask.
