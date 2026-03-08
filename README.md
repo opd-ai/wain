@@ -35,7 +35,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1–1.2) — ✅ Complete
-**Wayland Client** (7 packages, ~3,392 LOC):
+**Wayland Client** (7 packages, ~4,325 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
@@ -43,7 +43,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded QWERTY layout)
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (7 packages, ~2,888 LOC):
+**X11 Client** (7 packages, ~3,288 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -53,7 +53,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Present extension: frame synchronization and swap control
 
 ### Buffer Infrastructure (Phase 2) — ✅ Complete
-**Rust DRM/KMS Integration** (~5,372 LOC total in render-sys):
+**Rust DRM/KMS Integration** (~13,885 LOC total in render-sys):
 - ✅ Kernel ioctl wrappers: i915 and Xe GPU drivers (`i915.rs`, `xe.rs`)
 - ✅ DRM device access and GPU generation detection (`drm.rs`, `detect.rs`)
 - ✅ Buffer allocation: GPU-visible buffers with tiling support (`allocator.rs`)
@@ -83,7 +83,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Shaders: solid_fill, textured_quad, sdf_text, box_shadow, rounded_rect, linear_gradient, radial_gradient
 
 ### Intel EU Backend (Phase 4.3) — 🔧 In Progress
-**Core Compilation Pipeline** (~2,400 LOC):
+**Core Compilation Pipeline** (~4,090 LOC):
 - ✅ Main compile() function implemented
 - ✅ Register allocator (linear-scan, r0-r127 GRF mapping)
 - ✅ Instruction lowering (binary/unary ops, math functions, control flow)
@@ -92,7 +92,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ Advanced features deferred: URB I/O, texture SEND instructions, optimizations
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
-**Software 2D Rasterizer** (5 packages, ~1,877 LOC):
+**Software 2D Rasterizer** (5 packages, ~2,458 LOC):
 - ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
 - ✅ Curves: quadratic/cubic Bezier, arc fills
 - ✅ Text: SDF-based rendering with embedded glyph atlas
@@ -100,7 +100,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
 
 ### UI Framework (Phase 1.5) — ✅ Complete
-**Widget Layer** (3 packages, ~1,503 LOC):
+**Widget Layer** (3 packages, ~2,500 LOC):
 - ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
 - ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
 - ✅ Sizing: percentage-based dimensions with auto-layout

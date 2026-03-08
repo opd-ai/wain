@@ -53,12 +53,14 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **HandleEvent complexity hotspot** — internal/wayland/datadevice/datadevice.go:76 — Function `HandleEvent` has cyclomatic complexity of 21 (threshold: 10), making it the single highest-complexity function in the codebase. This violates the project's otherwise excellent complexity profile and increases maintenance risk for data device protocol handling. **RESOLVED**: Refactored to use dispatch pattern with separate handler methods. CC reduced from 21→7, well below threshold of 10.
 
-- [ ] **LOC claim inaccuracies** — README.md:58,65,111 — Multiple line-of-code claims are approximate but presented as precise:
-  - Wayland: "~3,392 LOC" (actual: 4,307 = +27%)
-  - X11: "~2,888 LOC" (actual: 3,278 = +13.5%)
-  - Raster: "~1,877 LOC" (actual: 2,458 = +31%)
-  - UI Framework: "~1,503 LOC" (actual: 2,500 = +66%)
-  These discrepancies suggest documentation was last updated during early development and has not been synchronized with codebase growth.
+- [x] **LOC claim inaccuracies** — README.md:58,65,111 — Multiple line-of-code claims are approximate but presented as precise:
+  - Wayland: "~3,392 LOC" (actual: 4,307 = +27%) **RESOLVED**: Updated to ~4,325 LOC
+  - X11: "~2,888 LOC" (actual: 3,278 = +13.5%) **RESOLVED**: Updated to ~3,288 LOC
+  - Raster: "~1,877 LOC" (actual: 2,458 = +31%) **RESOLVED**: Updated to ~2,458 LOC
+  - UI Framework: "~1,503 LOC" (actual: 2,500 = +66%) **RESOLVED**: Updated to ~2,500 LOC
+  - Rust render-sys: "~5,372 LOC" (actual: 13,885) **RESOLVED**: Updated to ~13,885 LOC
+  - EU Backend: "~2,400 LOC" (actual: 4,090) **RESOLVED**: Updated to ~4,090 LOC
+  All LOC claims synchronized with actual codebase counts measured via wc -l.
 
 - [ ] **Rust test suite incomplete visibility** — README.md:126 vs Cargo test output — README highlights "14 shader tests" but does not mention the project has 252 total Rust tests (244 passing, 8 ignored). This significantly understates the Rust test coverage and gives users an incomplete picture of validation scope.
 
