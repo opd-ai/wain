@@ -152,6 +152,21 @@ func (r *Registry) BindOutput(global *Global) (uint32, uint32, error) {
 	return objectID, global.Version, nil
 }
 
+// BindXdgDecorationManager is a helper that binds to the zxdg_decoration_manager_v1 interface.
+// Returns the object ID and version for creating a DecorationManager wrapper.
+func (r *Registry) BindXdgDecorationManager(global *Global) (uint32, uint32, error) {
+	if global.Interface != "zxdg_decoration_manager_v1" {
+		return 0, 0, fmt.Errorf("registry: not zxdg_decoration_manager_v1: %s", global.Interface)
+	}
+
+	objectID, err := r.Bind(global.Name, global.Interface, global.Version)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return objectID, global.Version, nil
+}
+
 // addGlobal is called internally when a global event is received.
 func (r *Registry) addGlobal(name uint32, iface string, version uint32) {
 	r.globals[name] = &Global{

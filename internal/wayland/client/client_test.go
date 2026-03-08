@@ -290,3 +290,34 @@ func TestConnectionClosedError(t *testing.T) {
 		t.Errorf("Flush on closed connection: got %v, want %v", err, ErrClosed)
 	}
 }
+
+// TestRegistry_BindXdgDecorationManager_WrongInterface verifies error on wrong interface.
+func TestRegistry_BindXdgDecorationManager_WrongInterface(t *testing.T) {
+	conn := &Connection{}
+	conn.nextID.Store(FirstClientObjectID)
+
+	registry := &Registry{
+		baseObject: baseObject{
+			id:    2,
+			iface: "wl_registry",
+			conn:  conn,
+		},
+		globals: make(map[uint32]*Global),
+	}
+
+	global := &Global{
+		Name:      10,
+		Interface: "wl_compositor",
+		Version:   4,
+	}
+
+	_, _, err := registry.BindXdgDecorationManager(global)
+	if err == nil {
+		t.Fatal("expected error for wrong interface, got nil")
+	}
+
+	expectedErr := "registry: not zxdg_decoration_manager_v1: wl_compositor"
+	if err.Error() != expectedErr {
+		t.Errorf("expected error %q, got %q", expectedErr, err.Error())
+	}
+}
