@@ -89,6 +89,7 @@ func (r *ResizeHandles) HitTest(x, y int) ResizeEdge {
 	return r.checkEdge(x, y)
 }
 
+// checkCorner tests if coordinates hit a corner resize handle.
 func (r *ResizeHandles) checkCorner(x, y int) ResizeEdge {
 	hw := r.handleWidth
 	if x < hw && y < hw {
@@ -106,6 +107,7 @@ func (r *ResizeHandles) checkCorner(x, y int) ResizeEdge {
 	return ResizeEdgeNone
 }
 
+// checkEdge tests if coordinates hit a straight edge resize handle.
 func (r *ResizeHandles) checkEdge(x, y int) ResizeEdge {
 	hw := r.handleWidth
 	if y < hw {

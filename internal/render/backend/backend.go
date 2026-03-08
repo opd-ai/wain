@@ -202,6 +202,7 @@ func (b *GPUBackend) RenderWithDamage(dl *displaylist.DisplayList, damage []disp
 	return nil
 }
 
+// processDamage filters draw commands by damage regions and converts damage rects to scissor rects.
 func (b *GPUBackend) processDamage(commands []displaylist.DrawCommand, damage []displaylist.Rect) ([]displaylist.DrawCommand, []ScissorRect) {
 	if len(damage) == 0 {
 		return commands, nil

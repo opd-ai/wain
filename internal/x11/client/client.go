@@ -457,6 +457,7 @@ func (c *Connection) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, 
 	return reply, receivedFDs, nil
 }
 
+// readReplyHeaderWithFDs reads the X11 reply header and any file descriptors from the Unix socket.
 func (c *Connection) readReplyHeaderWithFDs(unixConn *net.UnixConn) ([]byte, []byte, int, error) {
 	reply := make([]byte, wire.ReplyHeaderSize)
 	oob := make([]byte, syscall.CmsgSpace(4*16)) // Space for up to 16 fds
@@ -477,6 +478,7 @@ func (c *Connection) readReplyHeaderWithFDs(unixConn *net.UnixConn) ([]byte, []b
 	return reply, oob, oobn, nil
 }
 
+// readAdditionalReplyData reads any additional data beyond the header based on the reply length field.
 func (c *Connection) readAdditionalReplyData(reply []byte) ([]byte, error) {
 	dataLen := binary.LittleEndian.Uint32(reply[4:8])
 	if dataLen == 0 {

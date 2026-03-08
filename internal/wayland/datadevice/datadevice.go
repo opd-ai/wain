@@ -180,11 +180,13 @@ func (s *Source) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleTarget processes target event indicating accepted MIME type during drag-and-drop.
 func (s *Source) handleTarget(args []wire.Argument) error {
 	// Sent during drag-and-drop to indicate accepted MIME type
 	return nil
 }
 
+// handleSend processes send event requesting data transfer to the given file descriptor.
 func (s *Source) handleSend(args []wire.Argument) error {
 	if len(args) != 2 {
 		return fmt.Errorf("send event: expected 2 arguments, got %d", len(args))
@@ -199,6 +201,7 @@ func (s *Source) handleSend(args []wire.Argument) error {
 	return nil
 }
 
+// handleCancelled processes cancelled event indicating selection or drag operation cancellation.
 func (s *Source) handleCancelled(args []wire.Argument) error {
 	select {
 	case s.cancelled <- struct{}{}:
@@ -207,6 +210,7 @@ func (s *Source) handleCancelled(args []wire.Argument) error {
 	return nil
 }
 
+// handleDndDropPerformed processes dnd_drop_performed event indicating drop completion.
 func (s *Source) handleDndDropPerformed(args []wire.Argument) error {
 	select {
 	case s.dndDropPerform <- struct{}{}:
@@ -215,6 +219,7 @@ func (s *Source) handleDndDropPerformed(args []wire.Argument) error {
 	return nil
 }
 
+// handleDndFinished processes dnd_finished event indicating drag-and-drop operation finished.
 func (s *Source) handleDndFinished(args []wire.Argument) error {
 	select {
 	case s.dndFinished <- struct{}{}:
@@ -223,6 +228,7 @@ func (s *Source) handleDndFinished(args []wire.Argument) error {
 	return nil
 }
 
+// handleAction processes action event indicating the selected drag-and-drop action.
 func (s *Source) handleAction(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("action event: expected 1 argument, got %d", len(args))
@@ -327,6 +333,7 @@ func (d *Device) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleDataOffer processes data_offer event creating a new data offer object.
 func (d *Device) handleDataOffer(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("data_offer event: expected 1 argument, got %d", len(args))
@@ -338,6 +345,7 @@ func (d *Device) handleDataOffer(args []wire.Argument) error {
 	return nil
 }
 
+// handleEnter processes enter event indicating drag-and-drop entering a surface.
 func (d *Device) handleEnter(args []wire.Argument) error {
 	if len(args) != 5 {
 		return fmt.Errorf("enter event: expected 5 arguments, got %d", len(args))
@@ -363,6 +371,7 @@ func (d *Device) handleEnter(args []wire.Argument) error {
 	return nil
 }
 
+// handleLeave processes leave event indicating drag-and-drop leaving a surface.
 func (d *Device) handleLeave(args []wire.Argument) error {
 	select {
 	case d.dragLeaveChan <- struct{}{}:
@@ -371,6 +380,7 @@ func (d *Device) handleLeave(args []wire.Argument) error {
 	return nil
 }
 
+// handleMotion processes motion event during drag-and-drop with updated coordinates.
 func (d *Device) handleMotion(args []wire.Argument) error {
 	if len(args) != 3 {
 		return fmt.Errorf("motion event: expected 3 arguments, got %d", len(args))
@@ -391,6 +401,7 @@ func (d *Device) handleMotion(args []wire.Argument) error {
 	return nil
 }
 
+// handleDrop processes drop event indicating data drop completion.
 func (d *Device) handleDrop(args []wire.Argument) error {
 	select {
 	case d.dropChan <- struct{}{}:
@@ -399,6 +410,7 @@ func (d *Device) handleDrop(args []wire.Argument) error {
 	return nil
 }
 
+// handleSelection processes selection event indicating clipboard selection change.
 func (d *Device) handleSelection(args []wire.Argument) error {
 	var offer *Offer
 	if len(args) == 1 && args[0].Value.(uint32) != 0 {
@@ -497,6 +509,7 @@ func (o *Offer) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleOffer processes offer event advertising available MIME types.
 func (o *Offer) handleOffer(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("offer event: expected 1 argument, got %d", len(args))
@@ -510,6 +523,7 @@ func (o *Offer) handleOffer(args []wire.Argument) error {
 	return nil
 }
 
+// handleSourceActions processes source_actions event advertising available drag-and-drop actions.
 func (o *Offer) handleSourceActions(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("source_actions event: expected 1 argument, got %d", len(args))
@@ -522,6 +536,7 @@ func (o *Offer) handleSourceActions(args []wire.Argument) error {
 	return nil
 }
 
+// handleAction processes action event indicating the selected drag-and-drop action.
 func (o *Offer) handleAction(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("action event: expected 1 argument, got %d", len(args))

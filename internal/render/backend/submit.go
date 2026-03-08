@@ -44,6 +44,7 @@ func (b *GPUBackend) submitBatchesWithScissor(batches []Batch, vertexData []byte
 	return b.submitToGPU(batchBuffer, batchData, relocs)
 }
 
+// allocateBatchBuffer allocates a 64KB GPU buffer for batch command submission.
 func (b *GPUBackend) allocateBatchBuffer() (*render.BufferHandle, error) {
 	const batchSize = 64 * 1024
 	buffer, err := b.allocator.Allocate(batchSize/4, 1, 32, render.TilingNone)
@@ -53,6 +54,7 @@ func (b *GPUBackend) allocateBatchBuffer() (*render.BufferHandle, error) {
 	return buffer, nil
 }
 
+// submitToGPU submits the batch buffer to the GPU with relocations for execution.
 func (b *GPUBackend) submitToGPU(buffer *render.BufferHandle, data []byte, relocs []render.Relocation) error {
 	err := render.SubmitBatch(
 		b.drmPath,

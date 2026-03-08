@@ -65,6 +65,7 @@ func (b *WindowButton) HandlePointerUp(button uint32) {
 	b.state = widgets.PointerStateHover
 }
 
+// getStateColors returns background and foreground colors based on button state.
 func (b *WindowButton) getStateColors() (bg, fg core.Color) {
 	bg = b.theme.ButtonBackgroundNormal
 	fg = b.theme.ButtonForegroundNormal
@@ -233,6 +234,7 @@ func (t *TitleBar) StopDrag() {
 	t.dragStart = nil
 }
 
+// buttonPositions calculates the x-coordinates for minimize, maximize, and close buttons.
 func (t *TitleBar) buttonPositions() (minX, maxX, closeX int) {
 	buttonSize, _ := t.closeBtn.Bounds()
 	spacing := t.theme.ButtonSpacing
