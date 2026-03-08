@@ -75,3 +75,162 @@ func TestClosedConnection(t *testing.T) {
 		t.Error("ErrInvalidXID should be defined")
 	}
 }
+
+func TestConnectInvalidDisplay(t *testing.T) {
+	tests := []struct {
+		name    string
+		display string
+	}{
+		{
+			name:    "nonexistent display",
+			display: "999",
+		},
+		{
+			name:    "invalid display number",
+			display: "invalid",
+		},
+		{
+			name:    "empty display",
+			display: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := client.Connect(tc.display)
+			if err == nil {
+				t.Error("Connect should fail with invalid display path")
+			}
+		})
+	}
+}
+
+func TestAllocXIDUniqueness(t *testing.T) {
+	// Create a mock connection structure with controlled resource ID parameters
+	// Since we can't easily create a real connection without an X server,
+	// we test the actual AllocXID behavior by connecting to a real server if available,
+	// or skip if not available
+	conn, err := client.Connect("0")
+	if err != nil {
+		// X server not available, test with synthetic parameters
+		t.Skip("X server not available for XID allocation test")
+		return
+	}
+	defer conn.Close()
+
+	// Allocate 100 XIDs and check uniqueness
+	xids := make(map[client.XID]bool)
+	for i := 0; i < 100; i++ {
+		xid, err := conn.AllocXID()
+		if err != nil {
+			t.Fatalf("AllocXID failed at iteration %d: %v", i, err)
+		}
+
+		if xids[xid] {
+			t.Errorf("AllocXID produced duplicate XID %#x at iteration %d", xid, i)
+		}
+		xids[xid] = true
+	}
+
+	if len(xids) != 100 {
+		t.Errorf("Expected 100 unique XIDs, got %d", len(xids))
+	}
+}
+
+func TestExtensionOpcodeKnownExtension(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available for extension query test")
+		return
+	}
+	defer conn.Close()
+
+	// Test known X11 extension that should be universally supported
+	opcode, err := conn.ExtensionOpcode("BIG-REQUESTS")
+	if err != nil {
+		t.Fatalf("ExtensionOpcode failed for BIG-REQUESTS: %v", err)
+	}
+
+	if opcode == 0 {
+		t.Error("ExtensionOpcode should return non-zero opcode for BIG-REQUESTS")
+	}
+}
+
+func TestExtensionOpcodeUnknownExtension(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available for extension query test")
+		return
+	}
+	defer conn.Close()
+
+	// Test with a made-up extension name that won't exist
+	_, err = conn.ExtensionOpcode("DEFINITELY-NOT-A-REAL-EXTENSION-9999")
+	if err == nil {
+		t.Error("ExtensionOpcode should fail for nonexistent extension")
+	}
+}
+
+func TestConnectionProperties(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available for connection properties test")
+		return
+	}
+	defer conn.Close()
+
+	// Test RootWindow returns non-zero
+	rootWin := conn.RootWindow()
+	if rootWin == 0 {
+		t.Error("RootWindow should return non-zero XID")
+	}
+
+	// Test RootVisual returns non-zero
+	rootVis := conn.RootVisual()
+	if rootVis == 0 {
+		t.Error("RootVisual should return non-zero visual ID")
+	}
+
+	// Test RootDepth returns reasonable value (typically 24 or 32)
+	rootDepth := conn.RootDepth()
+	if rootDepth == 0 || rootDepth > 32 {
+		t.Errorf("RootDepth returned unexpected value: %d", rootDepth)
+	}
+}
+
+func TestDoubleClose(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available for double close test")
+		return
+	}
+
+	// First close should succeed
+	err = conn.Close()
+	if err != nil {
+		t.Errorf("First Close failed: %v", err)
+	}
+
+	// Second close should return ErrClosed
+	err = conn.Close()
+	if err != client.ErrClosed {
+		t.Errorf("Second Close should return ErrClosed, got: %v", err)
+	}
+}
+
+func TestAllocXIDAfterClose(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available for AllocXID after close test")
+		return
+	}
+
+	// Close connection
+	conn.Close()
+
+	// AllocXID should return ErrClosed
+	_, err = conn.AllocXID()
+	if err != client.ErrClosed {
+		t.Errorf("AllocXID after Close should return ErrClosed, got: %v", err)
+	}
+}

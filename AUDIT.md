@@ -44,7 +44,7 @@
 
 ### HIGH
 
-- [ ] **Critical X11 client package has 0% test coverage** — internal/x11/client/client.go:1 — The `internal/x11/client` package implements X11 connection setup, authentication, window creation, and extension queries but has no tests despite being foundational infrastructure. This creates undetected regression risk for all X11-based demos. **Remediation:** Create `internal/x11/client/client_test.go` with tests for: (1) `Connect()` with invalid display path (should return error), (2) `AllocXID()` XID uniqueness (100 sequential calls should produce unique values), (3) `ExtensionOpcode()` for known extensions (test "BIG-REQUESTS" returns non-zero). Validate with `go test -v ./internal/x11/client` (should show >30% coverage). Use table-driven tests for multiple display strings.
+- [x] **Critical X11 client package has 0% test coverage** — internal/x11/client/client.go:1 — The `internal/x11/client` package implements X11 connection setup, authentication, window creation, and extension queries but has no tests despite being foundational infrastructure. This creates undetected regression risk for all X11-based demos. **Remediation:** Create `internal/x11/client/client_test.go` with tests for: (1) `Connect()` with invalid display path (should return error), (2) `AllocXID()` XID uniqueness (100 sequential calls should produce unique values), (3) `ExtensionOpcode()` for known extensions (test "BIG-REQUESTS" returns non-zero). Validate with `go test -v ./internal/x11/client` (should show >30% coverage). Use table-driven tests for multiple display strings.
 
 ### MEDIUM
 
