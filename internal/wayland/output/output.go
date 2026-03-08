@@ -51,28 +51,48 @@ type Mode struct {
 	Refresh int32  // Refresh rate in mHz
 }
 
+// Mode flags for output modes.
 const (
-	// Mode flags for output modes.
-	ModeFlagCurrent   uint32 = 0x1 // Mode is currently active
-	ModeFlagPreferred uint32 = 0x2 // Mode is preferred by the output
+	// ModeFlagCurrent indicates the mode is currently active on the output.
+	ModeFlagCurrent uint32 = 0x1
+	// ModeFlagPreferred indicates the mode is preferred by the output.
+	ModeFlagPreferred uint32 = 0x2
+)
 
-	// Subpixel orientations describe how subpixels are arranged on the display.
-	SubpixelUnknown       int32 = 0 // Subpixel arrangement is unknown
-	SubpixelNone          int32 = 1 // No subpixel arrangement
-	SubpixelHorizontalRGB int32 = 2 // Horizontal RGB subpixel arrangement
-	SubpixelHorizontalBGR int32 = 3 // Horizontal BGR subpixel arrangement
-	SubpixelVerticalRGB   int32 = 4 // Vertical RGB subpixel arrangement
-	SubpixelVerticalBGR   int32 = 5 // Vertical BGR subpixel arrangement
+// Subpixel orientations describe how subpixels are arranged on the display.
+const (
+	// SubpixelUnknown indicates the subpixel arrangement is unknown.
+	SubpixelUnknown int32 = 0
+	// SubpixelNone indicates no subpixel arrangement.
+	SubpixelNone int32 = 1
+	// SubpixelHorizontalRGB indicates horizontal RGB subpixel arrangement.
+	SubpixelHorizontalRGB int32 = 2
+	// SubpixelHorizontalBGR indicates horizontal BGR subpixel arrangement.
+	SubpixelHorizontalBGR int32 = 3
+	// SubpixelVerticalRGB indicates vertical RGB subpixel arrangement.
+	SubpixelVerticalRGB int32 = 4
+	// SubpixelVerticalBGR indicates vertical BGR subpixel arrangement.
+	SubpixelVerticalBGR int32 = 5
+)
 
-	// Transform values describe how the output content is transformed.
-	TransformNormal     int32 = 0 // No transformation
-	Transform90         int32 = 1 // Rotated 90 degrees clockwise
-	Transform180        int32 = 2 // Rotated 180 degrees
-	Transform270        int32 = 3 // Rotated 270 degrees clockwise
-	TransformFlipped    int32 = 4 // Flipped horizontally
-	TransformFlipped90  int32 = 5 // Flipped and rotated 90 degrees
-	TransformFlipped180 int32 = 6 // Flipped and rotated 180 degrees
-	TransformFlipped270 int32 = 7 // Flipped and rotated 270 degrees
+// Transform values describe how the output content is transformed.
+const (
+	// TransformNormal indicates no transformation is applied.
+	TransformNormal int32 = 0
+	// Transform90 indicates the output is rotated 90 degrees clockwise.
+	Transform90 int32 = 1
+	// Transform180 indicates the output is rotated 180 degrees.
+	Transform180 int32 = 2
+	// Transform270 indicates the output is rotated 270 degrees clockwise.
+	Transform270 int32 = 3
+	// TransformFlipped indicates the output is flipped horizontally.
+	TransformFlipped int32 = 4
+	// TransformFlipped90 indicates the output is flipped and rotated 90 degrees.
+	TransformFlipped90 int32 = 5
+	// TransformFlipped180 indicates the output is flipped and rotated 180 degrees.
+	TransformFlipped180 int32 = 6
+	// TransformFlipped270 indicates the output is flipped and rotated 270 degrees.
+	TransformFlipped270 int32 = 7
 )
 
 const (

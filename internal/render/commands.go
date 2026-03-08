@@ -49,7 +49,7 @@ func (cb *CommandBuilder) MiBatchBufferEnd() {
 	cb.EmitDword(0x0A000000)
 }
 
-// PipelineSelect emits a PIPELINE_SELECT command (3D mode).
+// PipelineSelect3D emits a PIPELINE_SELECT command for 3D mode.
 func (cb *CommandBuilder) PipelineSelect3D() {
 	opcode := uint32(0x6904)
 	dw0 := (1 << 29) | (opcode << 16)

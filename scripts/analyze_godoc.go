@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// MethodInfo holds metadata about a method definition in a Go source file.
 type MethodInfo struct {
 	filename   string
 	lineNum    int
