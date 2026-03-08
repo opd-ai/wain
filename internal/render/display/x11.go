@@ -143,75 +143,90 @@ func (p *X11Pipeline) RenderAndPresent(ctx context.Context, dl *displaylist.Disp
 		return ErrPoolClosed
 	}
 
-	// Acquire a framebuffer from the pool
 	fb, err := p.pool.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("display: failed to acquire framebuffer: %w", err)
 	}
 
-	// Render the display list to the GPU render target
+	if err := p.renderToFramebuffer(dl, fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.ensureX11Pixmap(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.presentPixmap(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.pool.MarkDisplaying(fb); err != nil {
+		return fmt.Errorf("display: mark displaying failed: %w", err)
+	}
+
+	return nil
+}
+
+func (p *X11Pipeline) releaseFramebuffer(fb *Framebuffer) {
+	fb.setState(FramebufferAvailable)
+	fb.signalRelease()
+}
+
+func (p *X11Pipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *Framebuffer) error {
 	if err := p.renderer.Render(dl); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: render failed: %w", err)
 	}
 
-	// Export the render target as DMA-BUF
 	fd, err := p.renderer.Present()
 	if err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: present failed: %w", err)
 	}
 
-	// Store FD in framebuffer if first time
 	if fb.Fd < 0 {
 		fb.Fd = fd
 		width, height := p.renderer.Dimensions()
 		fb.Width = uint32(width)
 		fb.Height = uint32(height)
-		// stride is width * 4 for ARGB8888
 		fb.Stride = uint32(width) * 4
 	}
 
-	// Create X11 pixmap from DMA-BUF if not already created
-	if fb.BufferID == 0 {
-		pixmapXID, err := p.createX11Pixmap(fb)
-		if err != nil {
-			fb.setState(FramebufferAvailable)
-			fb.signalRelease()
-			return fmt.Errorf("display: failed to create pixmap: %w", err)
-		}
-		p.pool.Register(fb, pixmapXID)
+	return nil
+}
+
+func (p *X11Pipeline) ensureX11Pixmap(fb *Framebuffer) error {
+	if fb.BufferID != 0 {
+		return nil
 	}
 
-	// Present the pixmap using Present extension
+	pixmapXID, err := p.createX11Pixmap(fb)
+	if err != nil {
+		return fmt.Errorf("display: failed to create pixmap: %w", err)
+	}
+	p.pool.Register(fb, pixmapXID)
+	return nil
+}
+
+func (p *X11Pipeline) presentPixmap(fb *Framebuffer) error {
 	if err := p.present.PresentPixmap(p.presentAdapter, present.PixmapPresentOptions{
 		Window:       present.XID(p.window),
 		Pixmap:       present.XID(fb.BufferID),
 		Serial:       p.serial,
-		ValidRegion:  0, // entire pixmap
-		UpdateRegion: 0, // entire pixmap
+		ValidRegion:  0,
+		UpdateRegion: 0,
 		XOff:         0,
 		YOff:         0,
-		TargetMSC:    0, // present at next vblank
+		TargetMSC:    0,
 		Divisor:      0,
 		Remainder:    0,
 		Options:      present.PresentOptionNone,
 	}); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: present pixmap failed: %w", err)
 	}
 
-	// Increment serial for next frame
 	p.serial++
-
-	// Mark framebuffer as displaying
-	if err := p.pool.MarkDisplaying(fb); err != nil {
-		return fmt.Errorf("display: mark displaying failed: %w", err)
-	}
-
 	return nil
 }
 

@@ -248,3 +248,23 @@ go-stats-generator analyze . --skip-tests --format json --sections functions | \
 #  - setupX11Context: 10.9→4.4 (59.6% reduction)
 # Overall: reduced high-complexity functions from 45→43 (4.4% improvement)
 ```
+
+### Step 12: Refactor Display Pipeline RenderAndPresent ✅
+- **Deliverable**: Reduce complexity in display.RenderAndPresent by extracting buffer management, rendering, and presentation logic
+- **Dependencies**: None
+- **Files**:
+  - `internal/render/display/wayland.go` (RenderAndPresent 17.9→9.6)
+  - `internal/render/display/x11.go` (RenderAndPresent 14.0→9.6)
+- **Acceptance**: RenderAndPresent complexity ≤10 for both Wayland and X11
+- **Status**: ✅ Complete - reduced both implementations to 9.6 (46-31% improvement)
+- **Validation**:
+```bash
+go-stats-generator analyze . --skip-tests --format json --sections functions | \
+  jq '[.functions[] | select(.name == "RenderAndPresent")] | .[] | {file: .file, complexity: .complexity.overall}'
+# Result: wayland.go: 9.6, x11.go: 9.6 (both meet target ≤10)
+# Major improvements:
+#  - WaylandPipeline.RenderAndPresent: 17.9→9.6 (46.4% reduction)
+#  - X11Pipeline.RenderAndPresent: 14.0→9.6 (31.4% reduction)
+# Overall: high-complexity functions remain at 43, duplication reduced to 4.03%
+# Extracted helpers: releaseFramebuffer, renderToFramebuffer, ensureWaylandBuffer/ensureX11Pixmap, commitToSurface/presentPixmap
+```

@@ -83,81 +83,89 @@ func (p *WaylandPipeline) RenderAndPresent(ctx context.Context, dl *displaylist.
 		return ErrPoolClosed
 	}
 
-	// Acquire a framebuffer from the pool
 	fb, err := p.pool.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("display: failed to acquire framebuffer: %w", err)
 	}
 
-	// Render the display list to the GPU render target
+	if err := p.renderToFramebuffer(dl, fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.ensureWaylandBuffer(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.commitToSurface(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	if err := p.pool.MarkDisplaying(fb); err != nil {
+		return fmt.Errorf("display: mark displaying failed: %w", err)
+	}
+
+	return nil
+}
+
+func (p *WaylandPipeline) releaseFramebuffer(fb *Framebuffer) {
+	fb.setState(FramebufferAvailable)
+	fb.signalRelease()
+}
+
+func (p *WaylandPipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *Framebuffer) error {
 	if err := p.renderer.Render(dl); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: render failed: %w", err)
 	}
 
-	// Export the render target as DMA-BUF
 	fd, err := p.renderer.Present()
 	if err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: present failed: %w", err)
 	}
 
-	// Store FD in framebuffer if first time
 	if fb.Fd < 0 {
 		fb.Fd = fd
 		width, height := p.renderer.Dimensions()
 		fb.Width = uint32(width)
 		fb.Height = uint32(height)
-		// stride is width * 4 for ARGB8888
 		fb.Stride = uint32(width) * 4
 	}
 
-	// Create wl_buffer from DMA-BUF if not already created
-	if fb.BufferID == 0 {
-		bufferID, err := p.createWaylandBuffer(fb)
-		if err != nil {
-			fb.setState(FramebufferAvailable)
-			fb.signalRelease()
-			return fmt.Errorf("display: failed to create wl_buffer: %w", err)
-		}
-		p.pool.Register(fb, bufferID)
+	return nil
+}
+
+func (p *WaylandPipeline) ensureWaylandBuffer(fb *Framebuffer) error {
+	if fb.BufferID != 0 {
+		return nil
 	}
 
-	// Attach the buffer to the surface
+	bufferID, err := p.createWaylandBuffer(fb)
+	if err != nil {
+		return fmt.Errorf("display: failed to create wl_buffer: %w", err)
+	}
+	p.pool.Register(fb, bufferID)
+	return nil
+}
+
+func (p *WaylandPipeline) commitToSurface(fb *Framebuffer) error {
 	if err := p.surface.Attach(fb.BufferID, 0, 0); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: attach failed: %w", err)
 	}
 
-	// Mark the entire surface as damaged
 	if err := p.surface.Damage(0, 0, int32(fb.Width), int32(fb.Height)); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: damage failed: %w", err)
 	}
 
-	// Request a frame callback for next frame
 	callback, err := p.surface.Frame()
 	if err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: frame callback failed: %w", err)
 	}
 	p.callback = callback
 
-	// Commit the surface to make changes visible
 	if err := p.surface.Commit(); err != nil {
-		fb.setState(FramebufferAvailable)
-		fb.signalRelease()
 		return fmt.Errorf("display: commit failed: %w", err)
-	}
-
-	// Mark framebuffer as displaying
-	if err := p.pool.MarkDisplaying(fb); err != nil {
-		return fmt.Errorf("display: mark displaying failed: %w", err)
 	}
 
 	return nil
