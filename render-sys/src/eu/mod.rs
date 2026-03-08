@@ -20,7 +20,7 @@ pub mod lower;
 pub mod types;
 
 use crate::shader::ShaderModule;
-use naga::{Module, ShaderStage, Function};
+use naga::{Expression, ShaderStage, Function};
 use std::error::Error;
 use std::fmt;
 
@@ -109,13 +109,20 @@ impl EUCompiler {
         
         // Create lowering context
         let mut ctx = LoweringContext::new(self.gen, naga_module);
-        ctx.set_function(function);
+        ctx.set_function(function, stage);
         
         // Lower all statements in the function body
         // naga's Block is a Vec<Statement>, we iterate directly over it
         for stmt in &function.body {
             self.lower_statement(&mut ctx, stmt, function)?;
         }
+        
+        // Note: Full URB I/O implementation requires tracking Return statement values
+        // and emitting appropriate SEND instructions based on shader stage.
+        // For now, we demonstrate the infrastructure exists:
+        // - emit_urb_write() for vertex shader outputs
+        // - emit_render_target_write() for fragment shader outputs
+        // These will be wired up when implementing Phase 4.5 (shader testing with actual GPU).
         
         // Get generated instructions
         let instructions = ctx.take_instructions();
@@ -159,7 +166,8 @@ impl EUCompiler {
                 Ok(())
             }
             Store { pointer, value } => {
-                // Store operations - for now, we'll just lower the value expression
+                // Store operations - lower the value expression
+                // Full implementation would track stores to output variables
                 self.lower_expression(ctx, *value, function)?;
                 self.lower_expression(ctx, *pointer, function)?;
                 Ok(())
@@ -261,7 +269,7 @@ impl EUCompiler {
                 Ok(())
             }
             // Constants and other simple expressions don't need lowering
-            Constant(_) | LocalVariable(_) | GlobalVariable(_) | FunctionArgument(_) => {
+            Constant(_) | LocalVariable(_) | GlobalVariable(_) | FunctionArgument(_) | Load { .. } => {
                 Ok(())
             }
             _ => {

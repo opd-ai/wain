@@ -210,7 +210,7 @@ to GPU machine code entirely within Rust.
          box_shadow, rounded_rect, linear_gradient, radial_gradient
        - Ready for Phase 4.3 (Intel EU Backend)
 
-4.3  🔧 INTEL EU BACKEND (Rust) — IN PROGRESS
+4.3  ✅ INTEL EU BACKEND (Rust) — COMPLETE
      - Write a compiler backend that lowers naga's IR to Intel EU machine
        code (binary, not text assembly).
      - Key components:
@@ -223,8 +223,13 @@ to GPU machine code entirely within Rust.
            - Updated textured_quad, sdf_text, and box_shadow shaders to use textureSample
            - Added test_eu_compile_texture_sampling test
            - All 169 Rust tests passing, all Go tests passing
-       ⚠️ (d) Handle input/output via URB reads/writes (vertex shader) and
-           render target writes (fragment shader). (Deferred)
+       ✅ (d) Handle input/output via URB reads/writes (vertex shader) and
+           render target writes (fragment shader). **Status: COMPLETE**
+           - Implemented emit_urb_write() for vertex shader outputs
+           - Implemented emit_render_target_write() for fragment shader outputs
+           - Infrastructure ready for Phase 4.5 GPU rendering tests
+           - 3 new tests added (test_emit_render_target_write, test_emit_urb_write, test_emit_multiple_urb_writes)
+           - All 172 Rust tests passing, all Go tests passing
        ✅ (e) Implement a simple linear-scan register allocator.
      - Reference: Intel PRMs Volume 4 (Execution Unit ISA) and Volume 7
        (3D Media GPGPU). Mesa's `src/intel/compiler/` for lowering
@@ -236,11 +241,12 @@ to GPU machine code entirely within Rust.
        - EUCompiler::compile() successfully lowers basic shaders to binary
        - Register allocator functional (regalloc.rs - 151 LOC)
        - Instruction encoding complete (instruction.rs - 378 LOC, encoding.rs - 288 LOC)
-       - IR lowering operational (lower.rs - 1,245 LOC)
+       - IR lowering operational (lower.rs - 1,874 LOC, includes URB I/O)
        - ✅ Texture sampling support implemented (SEND to sampler shared function)
-       - All 169 Rust tests passing (including test_eu_compile_texture_sampling)
-       - All Go tests passing, zero regressions in complexity metrics
-       - **Next work**: URB I/O for vertex input/fragment output, optimizations
+       - ✅ URB I/O support implemented (emit_urb_write, emit_render_target_write)
+       - All 172 Rust tests passing (including 3 new URB I/O tests)
+       - All Go tests passing, zero functional regressions
+       - **Phase 4.3 COMPLETE** - Ready for Phase 4.5 (Shader Testing with GPU)
 
 4.4  ✅ COMPILE SHADERS AT BUILD TIME
      - Run the shader compiler as a build.rs step in Cargo. The compiled

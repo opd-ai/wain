@@ -21,11 +21,15 @@ pub struct LoweringContext<'a> {
     /// Register allocator
     reg_alloc: RegAllocator,
     /// Map from naga expression handles to virtual registers
-    expr_to_reg: HashMap<naga::Handle<Expression>, VirtualReg>,
+    pub(super) expr_to_reg: HashMap<naga::Handle<Expression>, VirtualReg>,
+    /// Track output values for final write (local variable handles to registers)
+    pub(super) output_values: Vec<(String, VirtualReg)>,
     /// Naga module being compiled
-    module: &'a Module,
+    pub(super) module: &'a Module,
     /// Current function being compiled
     function: Option<&'a Function>,
+    /// Current shader stage (vertex or fragment)
+    pub(super) stage: Option<naga::ShaderStage>,
     /// Generated EU instructions
     instructions: Vec<EUInstruction>,
 }
@@ -37,16 +41,20 @@ impl<'a> LoweringContext<'a> {
             gen,
             reg_alloc: RegAllocator::new(),
             expr_to_reg: HashMap::new(),
+            output_values: Vec::new(),
             module,
             function: None,
+            stage: None,
             instructions: Vec::new(),
         }
     }
 
-    /// Set the current function being compiled
-    pub fn set_function(&mut self, function: &'a Function) {
+    /// Set the current function and shader stage being compiled
+    pub fn set_function(&mut self, function: &'a Function, stage: naga::ShaderStage) {
         self.function = Some(function);
+        self.stage = Some(stage);
         self.expr_to_reg.clear();
+        self.output_values.clear();
         self.instructions.clear();
     }
 
@@ -784,7 +792,99 @@ impl<'a> LoweringContext<'a> {
         Ok(())
     }
 
-    /// Lower a type conversion (cast) operation
+    /// Emit render target write operation (fragment shader output)
+    ///
+    /// Generates SEND instruction to write color to render target.
+    /// Called at shader end with the final output color value.
+    pub fn emit_render_target_write(
+        &mut self,
+        value_reg: VirtualReg,
+    ) -> Result<(), EUCompileError> {
+        // Get physical register containing the color value
+        let src_phys = self.reg_alloc.get_physical(value_reg)
+            .ok_or_else(|| EUCompileError::from("Source not allocated"))?;
+        let src = Register {
+            file: RegFile::GRF,
+            num: src_phys.grf_num,
+            subreg: 0,
+        };
+        
+        // Render target write message descriptor:
+        // - SFID: RenderTargetCache (0x5)
+        // - Response length: 0 (write, no response)
+        // - Message length: 4 (RGBA, 4 GRF registers)
+        // - Function control: RT write message type (0xc = SIMD8 RT write)
+        let descriptor = SendDescriptor {
+            sfid: SharedFunctionID::RenderTargetCache,
+            response_length: 0,  // No response for write
+            message_length: 4,   // Send 4 GRF registers (RGBA)
+            function_control: 0xc,  // SIMD8 RT write, RT index 0
+        };
+        
+        // Null destination for write-only operation
+        let dst = Register {
+            file: RegFile::ARF,
+            num: 0,  // Null register
+            subreg: 0,
+        };
+        
+        let inst = EUInstruction::new(EUOpcode::Send)
+            .with_dst(dst, DataType::F)
+            .with_src0(src, DataType::F)
+            .with_exec_size(ExecSize::Size8)
+            .with_send_descriptor(descriptor);
+        
+        self.instructions.push(inst);
+        Ok(())
+    }
+
+    /// Emit URB write operation (vertex shader output)
+    ///
+    /// Generates SEND instruction to write vertex outputs to URB.
+    /// Called at shader end with final output values.
+    pub fn emit_urb_write(
+        &mut self,
+        location: u32,
+        value_reg: VirtualReg,
+    ) -> Result<(), EUCompileError> {
+        // Get physical register containing the value
+        let src_phys = self.reg_alloc.get_physical(value_reg)
+            .ok_or_else(|| EUCompileError::from("Source not allocated"))?;
+        let src = Register {
+            file: RegFile::GRF,
+            num: src_phys.grf_num,
+            subreg: 0,
+        };
+        
+        // URB write message descriptor:
+        // - Response length: 0 (write, no response)
+        // - Message length: 4 (vec4, 4 GRF registers)
+        // - Function control: URB write message, offset based on location
+        let descriptor = SendDescriptor {
+            sfid: SharedFunctionID::URB,
+            response_length: 0,  // No response for write
+            message_length: 4,   // Send 4 GRF registers (vec4)
+            function_control: (location << 4) | 0x7,  // URB write opcode
+        };
+        
+        // Destination is null for write-only
+        let dst = Register {
+            file: RegFile::ARF,
+            num: 0,  // Null register
+            subreg: 0,
+        };
+        
+        let inst = EUInstruction::new(EUOpcode::Send)
+            .with_dst(dst, DataType::F)
+            .with_src0(src, DataType::F)
+            .with_exec_size(ExecSize::Size8)
+            .with_send_descriptor(descriptor);
+        
+        self.instructions.push(inst);
+        Ok(())
+    }
+
+    /// Type conversion (cast) operation
     ///
     /// Handles conversions between scalar types: float<->int, int widening/narrowing
     /// Uses MOV with appropriate data types for most conversions
@@ -1708,5 +1808,68 @@ mod tests {
         
         let instructions = ctx.instructions();
         assert_eq!(instructions.len(), 1);
+    }
+
+    #[test]
+    fn test_emit_render_target_write() {
+        // Test that we can emit a render target write instruction
+        let module = naga::Module::default();
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+        
+        // Allocate a virtual register
+        let vreg = ctx.reg_alloc.allocate_vreg();
+        
+        // Emit RT write
+        let result = ctx.emit_render_target_write(vreg);
+        assert!(result.is_ok(), "Failed to emit render target write: {:?}", result.err());
+        
+        // Check that a SEND instruction was generated
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1, "Should generate exactly one instruction");
+        
+        // Verify it's a Send instruction (format check)
+        let inst_debug = format!("{:?}", instructions[0]);
+        assert!(inst_debug.contains("Send"), "Expected Send instruction, got: {}", inst_debug);
+    }
+
+    #[test]
+    fn test_emit_urb_write() {
+        // Test that we can emit a URB write instruction for vertex shader outputs
+        let module = naga::Module::default();
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+        
+        // Allocate a virtual register
+        let vreg = ctx.reg_alloc.allocate_vreg();
+        
+        // Emit URB write for location 0 (position)
+        let result = ctx.emit_urb_write(0, vreg);
+        assert!(result.is_ok(), "Failed to emit URB write: {:?}", result.err());
+        
+        // Check that a SEND instruction was generated
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1, "Should generate exactly one instruction");
+        
+        // Verify it's a Send instruction
+        let inst_debug = format!("{:?}", instructions[0]);
+        assert!(inst_debug.contains("Send"), "Expected Send instruction, got: {}", inst_debug);
+    }
+
+    #[test]
+    fn test_emit_multiple_urb_writes() {
+        // Test emitting multiple URB writes (position + user outputs)
+        let module = naga::Module::default();
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+        
+        // Allocate registers for position and color output
+        let position_vreg = ctx.reg_alloc.allocate_vreg();
+        let color_vreg = ctx.reg_alloc.allocate_vreg();
+        
+        // Emit URB writes
+        ctx.emit_urb_write(0, position_vreg).unwrap();  // Position at location 0
+        ctx.emit_urb_write(1, color_vreg).unwrap();     // Color at location 1
+        
+        // Should have two SEND instructions
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 2, "Should generate two URB write instructions");
     }
 }
