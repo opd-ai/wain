@@ -27,6 +27,8 @@ pub enum DriverType {
     I915,
     /// Intel Xe driver (Gen12+).
     Xe,
+    /// AMD AMDGPU driver (RDNA1+).
+    Amdgpu,
 }
 
 /// GPU buffer handle.
@@ -67,6 +69,7 @@ impl BufferAllocator {
         match self.driver {
             DriverType::I915 => self.allocate_i915(width, height, bpp, tiling),
             DriverType::Xe => self.allocate_xe(width, height, bpp, tiling),
+            DriverType::Amdgpu => self.allocate_amdgpu(width, height, bpp, tiling),
         }
     }
 
@@ -152,6 +155,40 @@ impl BufferAllocator {
             stride,
             tiling,
             _driver: DriverType::Xe,
+        })
+    }
+
+    /// Allocate buffer using AMD AMDGPU driver.
+    fn allocate_amdgpu(
+        &self,
+        width: u32,
+        height: u32,
+        bpp: u32,
+        tiling: TilingFormat,
+    ) -> io::Result<Buffer> {
+        use crate::amd::{GemCreate, AMDGPU_GEM_DOMAIN_VRAM, AMDGPU_GEM_DOMAIN_GTT,
+                         AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED};
+
+        // AMD handles tiling automatically based on buffer usage
+        // Tiling format is informational only for this driver
+        let stride = width * (bpp / 8);
+        let size = (stride * height) as u64;
+
+        // Prefer VRAM but allow fallback to GTT if VRAM is full
+        let domains = AMDGPU_GEM_DOMAIN_VRAM | AMDGPU_GEM_DOMAIN_GTT;
+        let flags = AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED;
+
+        let mut gem_create = GemCreate::new(size, domains, flags);
+        self.device.amdgpu_gem_create(&mut gem_create)?;
+
+        Ok(Buffer {
+            handle: gem_create.handle,
+            size,
+            width,
+            height,
+            stride,
+            tiling,
+            _driver: DriverType::Amdgpu,
         })
     }
 

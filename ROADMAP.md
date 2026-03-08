@@ -429,10 +429,20 @@ PHASE 5: Rendering Backend Integration (Weeks 18-22)
 PHASE 6: AMD GPU Support (Weeks 22-30)
 --------------------------------------------------------------------------------
 
-6.1  AMDGPU KERNEL IOCTLS
+6.1  ✅ AMDGPU KERNEL IOCTLS (Complete)
      - Wrap DRM_IOCTL_AMDGPU_GEM_CREATE, AMDGPU_CS_SUBMIT,
        AMDGPU_BO_VA, AMDGPU_CTX, etc.
      - Reference: Mesa's src/amd/common/ and src/amd/vulkan/ (RADV).
+     - **Status**: ✅ Complete
+       - Created render-sys/src/amd.rs with comprehensive IOCTL wrappers (~660 LOC)
+       - Implemented all core ioctls: GEM_CREATE, GEM_MMAP, GEM_WAIT_IDLE, GEM_VA,
+         CTX (context ops), CS (command submission), WAIT_CS, INFO
+       - Added GpuGeneration enum variants: AmdRdna1, AmdRdna2, AmdRdna3
+       - Extended detect.rs with AMD GPU detection via AMDGPU_INFO_DEV_INFO
+       - Added DriverType::Amdgpu to allocator.rs with allocate_amdgpu() method
+       - All 209 Rust tests passing (8 new AMD ioctl tests)
+       - All Go tests passing
+       - Ready for Phase 6.2 (PM4 command buffer implementation)
 
 6.2  COMMAND BUFFER (PM4 PACKETS)
      - AMD GPUs use PM4 packet format for command submission.

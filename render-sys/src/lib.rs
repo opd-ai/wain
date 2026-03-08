@@ -7,6 +7,7 @@
 pub mod drm;
 pub mod i915;
 pub mod xe;
+pub mod amd;
 pub mod allocator;
 pub mod slab;
 pub mod detect;
@@ -84,6 +85,9 @@ pub unsafe extern "C" fn render_detect_gpu(path: *const std::ffi::c_char) -> i32
         GpuGeneration::Gen11 => 11,
         GpuGeneration::Gen12 => 12,
         GpuGeneration::Xe => 13,
+        GpuGeneration::AmdRdna1 => 20,
+        GpuGeneration::AmdRdna2 => 21,
+        GpuGeneration::AmdRdna3 => 22,
         GpuGeneration::Unknown => 0,
     }
 }
@@ -321,6 +325,10 @@ pub unsafe extern "C" fn render_submit_batch(
                 Err(_) => -1,
             }
         }
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
+            // AMD submission not yet implemented (Phase 6.2)
+            -1
+        }
         GpuGeneration::Unknown => -1,
     }
 }
@@ -393,6 +401,10 @@ pub unsafe extern "C" fn render_create_context(
                 }
                 Err(_) => -1,
             }
+        }
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
+            // AMD context creation not yet implemented (Phase 6.1)
+            -1
         }
         GpuGeneration::Unknown => -1,
     }
