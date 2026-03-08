@@ -314,12 +314,7 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 	// dst-x(2) + dst-y(2) + depth(1) + format(1) + send-event(1) + pad(1) +
 	// shmseg(4) + offset(4)
 	wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmPutImage, 0, 10)
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint32(&buf, uint32(gc))
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
-	wire.EncodeInt16(&buf, srcX)
-	wire.EncodeInt16(&buf, srcY)
+	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, srcX, srcY)
 	wire.EncodeUint16(&buf, width)  // src-width (use full width)
 	wire.EncodeUint16(&buf, height) // src-height (use full height)
 	wire.EncodeInt16(&buf, dstX)

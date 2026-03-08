@@ -253,12 +253,7 @@ func PutImage(conn Connection, drawable, gc XID, width, height uint16, x, y int1
 	wire.EncodeRequestHeader(&buf, OpcodePutImage, format, msgLen)
 
 	// Encode parameters
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint32(&buf, uint32(gc))
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
-	wire.EncodeInt16(&buf, x)
-	wire.EncodeInt16(&buf, y)
+	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, x, y)
 
 	// leftPad (0 for ZPixmap) and depth
 	buf.WriteByte(0)

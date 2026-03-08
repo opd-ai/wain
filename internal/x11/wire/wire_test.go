@@ -565,3 +565,87 @@ func TestEncodePadding(t *testing.T) {
 		})
 	}
 }
+
+func TestEncodeDrawableGeometry(t *testing.T) {
+	tests := []struct {
+		name     string
+		drawable uint32
+		gc       uint32
+		width    uint16
+		height   uint16
+		x        int16
+		y        int16
+		want     []byte
+	}{
+		{
+			name:     "typical PutImage parameters",
+			drawable: 0x12345678,
+			gc:       0xABCDEF00,
+			width:    640,
+			height:   480,
+			x:        10,
+			y:        20,
+			want: []byte{
+				0x78, 0x56, 0x34, 0x12, // drawable (little-endian)
+				0x00, 0xEF, 0xCD, 0xAB, // gc (little-endian)
+				0x80, 0x02, // width=640 (little-endian)
+				0xE0, 0x01, // height=480 (little-endian)
+				0x0A, 0x00, // x=10 (little-endian)
+				0x14, 0x00, // y=20 (little-endian)
+			},
+		},
+		{
+			name:     "negative coordinates",
+			drawable: 1000,
+			gc:       2000,
+			width:    100,
+			height:   200,
+			x:        -50,
+			y:        -75,
+			want: []byte{
+				0xE8, 0x03, 0x00, 0x00, // drawable=1000
+				0xD0, 0x07, 0x00, 0x00, // gc=2000
+				0x64, 0x00, // width=100
+				0xC8, 0x00, // height=200
+				0xCE, 0xFF, // x=-50 (two's complement)
+				0xB5, 0xFF, // y=-75 (two's complement)
+			},
+		},
+		{
+			name:     "zero values",
+			drawable: 0,
+			gc:       0,
+			width:    0,
+			height:   0,
+			x:        0,
+			y:        0,
+			want: []byte{
+				0x00, 0x00, 0x00, 0x00, // drawable=0
+				0x00, 0x00, 0x00, 0x00, // gc=0
+				0x00, 0x00, // width=0
+				0x00, 0x00, // height=0
+				0x00, 0x00, // x=0
+				0x00, 0x00, // y=0
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := wire.EncodeDrawableGeometry(&buf, tc.drawable, tc.gc, tc.width, tc.height, tc.x, tc.y)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			got := buf.Bytes()
+			if !bytes.Equal(got, tc.want) {
+				t.Errorf("got %v, want %v", got, tc.want)
+			}
+
+			if len(got) != 16 {
+				t.Errorf("got length %d, want 16", len(got))
+			}
+		})
+	}
+}
