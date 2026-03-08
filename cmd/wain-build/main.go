@@ -225,7 +225,7 @@ func buildStub(stubSrc, stubObj string) error {
 
 func copyOutputs(rustLib, stubObj, destDir string) error {
 	// Ensure destination directory exists
-	if err := os.MkdirAll(destDir, 0755); err != nil {
+	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return err
 	}
 
@@ -249,5 +249,5 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0644)
+	return os.WriteFile(dst, data, 0o644)
 }
