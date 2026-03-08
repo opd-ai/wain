@@ -286,89 +286,107 @@ func (d *Device) Release() error {
 // HandleEvent processes events from the compositor.
 func (d *Device) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
-	case 0: // data_offer event
-		if len(args) != 1 {
-			return fmt.Errorf("data_offer event: expected 1 argument, got %d", len(args))
-		}
-		offerID := args[0].Value.(uint32)
-		offer := NewOffer(d.conn, offerID)
-		d.dataOffers[offerID] = offer
-		d.conn.RegisterObject(offer)
-		return nil
-
-	case 1: // enter event (drag-and-drop)
-		if len(args) != 5 {
-			return fmt.Errorf("enter event: expected 5 arguments, got %d", len(args))
-		}
-		serial := args[0].Value.(uint32)
-		surface := args[1].Value.(uint32)
-		x := args[2].Value.(float64)
-		y := args[3].Value.(float64)
-		offerID := args[4].Value.(uint32)
-
-		d.enterSerial = serial
-		event := DragEnterEvent{
-			Serial:  serial,
-			Surface: surface,
-			X:       x,
-			Y:       y,
-			Offer:   d.dataOffers[offerID],
-		}
-		select {
-		case d.dragEnterChan <- event:
-		default:
-		}
-		return nil
-
-	case 2: // leave event (drag-and-drop)
-		select {
-		case d.dragLeaveChan <- struct{}{}:
-		default:
-		}
-		return nil
-
-	case 3: // motion event (drag-and-drop)
-		if len(args) != 3 {
-			return fmt.Errorf("motion event: expected 3 arguments, got %d", len(args))
-		}
-		time := args[0].Value.(uint32)
-		x := args[1].Value.(float64)
-		y := args[2].Value.(float64)
-
-		event := DragMotionEvent{
-			Time: time,
-			X:    x,
-			Y:    y,
-		}
-		select {
-		case d.dragMotionChan <- event:
-		default:
-		}
-		return nil
-
-	case 4: // drop event (drag-and-drop)
-		select {
-		case d.dropChan <- struct{}{}:
-		default:
-		}
-		return nil
-
-	case 5: // selection event (clipboard)
-		var offer *Offer
-		if len(args) == 1 && args[0].Value.(uint32) != 0 {
-			offerID := args[0].Value.(uint32)
-			offer = d.dataOffers[offerID]
-		}
-		d.selection = offer
-		select {
-		case d.selectionChan <- offer:
-		default:
-		}
-		return nil
-
+	case 0:
+		return d.handleDataOffer(args)
+	case 1:
+		return d.handleEnter(args)
+	case 2:
+		return d.handleLeave(args)
+	case 3:
+		return d.handleMotion(args)
+	case 4:
+		return d.handleDrop(args)
+	case 5:
+		return d.handleSelection(args)
 	default:
 		return fmt.Errorf("unknown wl_data_device event opcode: %d", opcode)
 	}
+}
+
+func (d *Device) handleDataOffer(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("data_offer event: expected 1 argument, got %d", len(args))
+	}
+	offerID := args[0].Value.(uint32)
+	offer := NewOffer(d.conn, offerID)
+	d.dataOffers[offerID] = offer
+	d.conn.RegisterObject(offer)
+	return nil
+}
+
+func (d *Device) handleEnter(args []wire.Argument) error {
+	if len(args) != 5 {
+		return fmt.Errorf("enter event: expected 5 arguments, got %d", len(args))
+	}
+	serial := args[0].Value.(uint32)
+	surface := args[1].Value.(uint32)
+	x := args[2].Value.(float64)
+	y := args[3].Value.(float64)
+	offerID := args[4].Value.(uint32)
+
+	d.enterSerial = serial
+	event := DragEnterEvent{
+		Serial:  serial,
+		Surface: surface,
+		X:       x,
+		Y:       y,
+		Offer:   d.dataOffers[offerID],
+	}
+	select {
+	case d.dragEnterChan <- event:
+	default:
+	}
+	return nil
+}
+
+func (d *Device) handleLeave(args []wire.Argument) error {
+	select {
+	case d.dragLeaveChan <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
+func (d *Device) handleMotion(args []wire.Argument) error {
+	if len(args) != 3 {
+		return fmt.Errorf("motion event: expected 3 arguments, got %d", len(args))
+	}
+	time := args[0].Value.(uint32)
+	x := args[1].Value.(float64)
+	y := args[2].Value.(float64)
+
+	event := DragMotionEvent{
+		Time: time,
+		X:    x,
+		Y:    y,
+	}
+	select {
+	case d.dragMotionChan <- event:
+	default:
+	}
+	return nil
+}
+
+func (d *Device) handleDrop(args []wire.Argument) error {
+	select {
+	case d.dropChan <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
+func (d *Device) handleSelection(args []wire.Argument) error {
+	var offer *Offer
+	if len(args) == 1 && args[0].Value.(uint32) != 0 {
+		offerID := args[0].Value.(uint32)
+		offer = d.dataOffers[offerID]
+	}
+	d.selection = offer
+	select {
+	case d.selectionChan <- offer:
+	default:
+	}
+	return nil
 }
 
 // Selection returns the current clipboard selection offer.

@@ -51,7 +51,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 ### MEDIUM
 
-- [ ] **HandleEvent complexity hotspot** — internal/wayland/datadevice/datadevice.go:76 — Function `HandleEvent` has cyclomatic complexity of 21 (threshold: 10), making it the single highest-complexity function in the codebase. This violates the project's otherwise excellent complexity profile and increases maintenance risk for data device protocol handling.
+- [x] **HandleEvent complexity hotspot** — internal/wayland/datadevice/datadevice.go:76 — Function `HandleEvent` has cyclomatic complexity of 21 (threshold: 10), making it the single highest-complexity function in the codebase. This violates the project's otherwise excellent complexity profile and increases maintenance risk for data device protocol handling. **RESOLVED**: Refactored to use dispatch pattern with separate handler methods. CC reduced from 21→7, well below threshold of 10.
 
 - [ ] **LOC claim inaccuracies** — README.md:58,65,111 — Multiple line-of-code claims are approximate but presented as precise:
   - Wayland: "~3,392 LOC" (actual: 4,307 = +27%)
