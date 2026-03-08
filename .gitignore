@@ -33,6 +33,8 @@ diff-report*.json
 
 # Coverage and profiling artifacts
 *.out
+coverage/
+coverage.txt
 coverage.html
 cpu.prof
 mem.prof

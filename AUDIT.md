@@ -60,7 +60,7 @@ The codebase is generally well-structured with:
 
 ### LOW
 
-- [ ] **Missing Test Coverage Metrics** — audit-baseline.json — The go-stats-generator output shows `test_coverage.function_coverage_rate: 0` and `test_coverage.complexity_coverage_rate: 0`, indicating the tool did not calculate test coverage percentages. While 32 test files exist and `make test-go` passes all tests, quantitative coverage metrics are unavailable. **Recommendation:** Use `go test -cover ./...` to measure actual test coverage percentage.
+- [x] **Missing Test Coverage Metrics** — audit-baseline.json — The go-stats-generator output shows `test_coverage.function_coverage_rate: 0` and `test_coverage.complexity_coverage_rate: 0`, indicating the tool did not calculate test coverage percentages. While 32 test files exist and `make test-go` passes all tests, quantitative coverage metrics are unavailable. **Recommendation:** Use `go test -cover ./...` to measure actual test coverage percentage. **Resolution:** Added `make coverage` and `make coverage-html` targets to Makefile. The coverage target runs tests with coverage reporting and calculates average coverage (69.9% across 23 packages). The coverage-html target generates an HTML coverage report at coverage/coverage.html. Updated README.md to document the new targets. Tests pass. (commit 2026-03-08)
 
 ## Metrics Snapshot
 

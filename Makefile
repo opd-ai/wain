@@ -11,6 +11,8 @@
 #   make widget-demo  – build the interactive widget demonstration binary
 #   make gen-atlas    – build the SDF font atlas generator tool
 #   make test         – run both Rust and Go test suites
+#   make coverage     – run Go tests with coverage reporting
+#   make coverage-html – generate HTML coverage report (coverage/coverage.html)
 #   make check-static – assert the final binary is fully statically linked
 #   make clean        – remove build artifacts
 #
@@ -59,7 +61,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go clean check-static check-deps gen-atlas demo wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo
+.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas demo wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo
 
 all: build
 
@@ -215,6 +217,39 @@ test-go: rust $(DL_STUB_OBJ)
 	  go test ./...
 
 test: test-rust test-go
+
+coverage: rust $(DL_STUB_OBJ)
+	@echo "Running Go tests with coverage…"
+	@CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go test -cover ./... 2>&1 | tee coverage.txt
+	@echo ""
+	@echo "Coverage summary (library packages only, excluding cmd/):"
+	@grep "internal.*coverage:" coverage.txt | awk '{ \
+	    match($$0, /([0-9.]+)%/, arr); \
+	    pkg = $$2; \
+	    gsub(/^github.com\/opd-ai\/wain\//, "", pkg); \
+	    if (arr[1] > 0) { \
+	        total += arr[1]; \
+	        count++; \
+	        printf "  %-50s %6.1f%%\n", pkg, arr[1] \
+	    } \
+	} END { \
+	    if (count > 0) { \
+	        printf "\nAverage coverage: %.1f%% across %d packages with tests\n", total/count, count \
+	    } \
+	}'
+
+coverage-html: rust $(DL_STUB_OBJ)
+	@echo "Generating HTML coverage report…"
+	@mkdir -p coverage
+	@CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go test -coverprofile=coverage/coverage.out ./...
+	@go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+	@echo "HTML coverage report generated at coverage/coverage.html"
 
 ## ── Static-link verification ─────────────────────────────────────────────────
 

@@ -166,6 +166,13 @@ make test-rust
 
 # Run only Go tests
 make test-go
+
+# Run Go tests with coverage reporting
+make coverage
+
+# Generate HTML coverage report (opens in browser)
+make coverage-html
+# HTML report: coverage/coverage.html
 ```
 
 **Note:** Do NOT use `go test ./...` directly. Go tests require `CGO_LDFLAGS` to be set to link the Rust static library, which is architecture-dependent. The `make test-go` target handles this automatically. Direct `go test` will fail with linker errors (`undefined reference to render_add`).
@@ -425,12 +432,14 @@ See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan toward full GPU rende
 
 **Development commands:**
 ```bash
-make build        # Build fully static binary
-make test         # Run all tests (Rust + Go)
-make test-rust    # Run Rust tests only
-make test-go      # Run Go tests only
-make check-static # Verify static linkage
-make clean        # Remove build artifacts
+make build         # Build fully static binary
+make test          # Run all tests (Rust + Go)
+make test-rust     # Run Rust tests only
+make test-go       # Run Go tests only
+make coverage      # Run Go tests with coverage reporting
+make coverage-html # Generate HTML coverage report
+make check-static  # Verify static linkage
+make clean         # Remove build artifacts
 ```
 
 **Priority contributions (Phase 4.2+):**
