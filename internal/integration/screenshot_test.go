@@ -35,9 +35,9 @@ const (
 type Backend string
 
 const (
-	BackendSoftware  Backend = "software"
-	BackendIntelGPU  Backend = "intel_gpu"
-	BackendAMDGPU    Backend = "amd_gpu"
+	BackendSoftware Backend = "software"
+	BackendIntelGPU Backend = "intel_gpu"
+	BackendAMDGPU   Backend = "amd_gpu"
 )
 
 // TestScene represents a test scene with expected visual output
@@ -60,11 +60,11 @@ func buildRoundedRect(dl *displaylist.DisplayList) {
 // buildLinearGradient creates a linear gradient scene
 func buildLinearGradient(dl *displaylist.DisplayList) {
 	dl.AddLinearGradient(
-		30, 30, 180, 120,    // bounds
-		30, 75,              // start point
-		210, 75,             // end point
-		core.Color{R: 255, G: 200, B: 0, A: 255},  // color0
-		core.Color{R: 255, G: 0, B: 128, A: 255},  // color1
+		30, 30, 180, 120, // bounds
+		30, 75, // start point
+		210, 75, // end point
+		core.Color{R: 255, G: 200, B: 0, A: 255}, // color0
+		core.Color{R: 255, G: 0, B: 128, A: 255}, // color1
 	)
 }
 
@@ -260,7 +260,7 @@ func savePNG(buf *core.Buffer, path string) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
@@ -338,10 +338,10 @@ func TestScreenshotGoldenImages(t *testing.T) {
 			// Check if GENERATE_GOLDEN env var is set
 			if os.Getenv("GENERATE_GOLDEN") == "1" {
 				// Generate golden image
-				if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
+				if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
 					t.Fatalf("Failed to create golden directory: %v", err)
 				}
-				if err := os.WriteFile(goldenPath, bufferToBytes(buf), 0644); err != nil {
+				if err := os.WriteFile(goldenPath, bufferToBytes(buf), 0o644); err != nil {
 					t.Fatalf("Failed to write golden image: %v", err)
 				}
 				t.Logf("Generated golden image: %s", goldenPath)
@@ -476,32 +476,32 @@ func TestCrossBackendParity(t *testing.T) {
 	t.Skip("GPU backend integration pending - Phase 5.5 in progress")
 
 	/*
-	// Example structure for future GPU tests:
-	for _, scene := range testScenes {
-		t.Run(scene.Name, func(t *testing.T) {
-			dl := displaylist.New()
-			scene.BuildFunc(dl)
+		// Example structure for future GPU tests:
+		for _, scene := range testScenes {
+			t.Run(scene.Name, func(t *testing.T) {
+				dl := displaylist.New()
+				scene.BuildFunc(dl)
 
-			// Render on software backend
-			swBuf, err := renderSoftware(dl)
-			if err != nil {
-				t.Fatalf("Software render failed: %v", err)
-			}
-
-			// Render on Intel GPU backend (if available)
-			if intelBuf, err := renderIntelGPU(dl); err == nil {
-				if err := compareBuffers(swBuf, intelBuf, pixelTolerance); err != nil {
-					t.Errorf("Intel GPU differs from software: %v", err)
+				// Render on software backend
+				swBuf, err := renderSoftware(dl)
+				if err != nil {
+					t.Fatalf("Software render failed: %v", err)
 				}
-			}
 
-			// Render on AMD GPU backend (if available)
-			if amdBuf, err := renderAMDGPU(dl); err == nil {
-				if err := compareBuffers(swBuf, amdBuf, pixelTolerance); err != nil {
-					t.Errorf("AMD GPU differs from software: %v", err)
+				// Render on Intel GPU backend (if available)
+				if intelBuf, err := renderIntelGPU(dl); err == nil {
+					if err := compareBuffers(swBuf, intelBuf, pixelTolerance); err != nil {
+						t.Errorf("Intel GPU differs from software: %v", err)
+					}
 				}
-			}
-		})
-	}
+
+				// Render on AMD GPU backend (if available)
+				if amdBuf, err := renderAMDGPU(dl); err == nil {
+					if err := compareBuffers(swBuf, amdBuf, pixelTolerance); err != nil {
+						t.Errorf("AMD GPU differs from software: %v", err)
+					}
+				}
+			})
+		}
 	*/
 }
