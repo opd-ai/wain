@@ -149,8 +149,6 @@ func setup() (*demoContext, func(), error) {
 	return demoCtx, cleanup, nil
 }
 
-
-
 func createBufferRing(demoCtx *demoContext) error {
 	fmt.Printf("\n[4/5] Creating buffer ring (size=%d)...\n", bufferCount)
 
@@ -274,7 +272,7 @@ func attachAndCommitBuffer(demoCtx *demoContext, slotIndex int) error {
 	return nil
 }
 
-func simulateCompositorRelease(demoCtx *demoContext, frame int, currentSlot int, currentlyDisplaying map[int]bool) {
+func simulateCompositorRelease(demoCtx *demoContext, frame, currentSlot int, currentlyDisplaying map[int]bool) {
 	if frame > 0 {
 		prevSlot := (currentSlot - 1 + bufferCount) % bufferCount
 		if currentlyDisplaying[prevSlot] {
