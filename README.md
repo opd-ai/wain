@@ -273,6 +273,12 @@ The project includes several demonstration binaries that exercise different subs
 | `bin/dmabuf-demo`   | `make dmabuf-demo`   | Yes          | Wayland DMA-BUF GPU buffer sharing demo                  |
 | `bin/double-buffer-demo` | `make double-buffer-demo` | Yes  | Phase 5.3 double/triple buffering with compositor sync  |
 | `bin/gpu-triangle-demo` | `make gpu-triangle-demo` | Yes  | GPU command submission triangle rendering demo           |
+| `bin/amd-triangle-demo` | `make amd-triangle-demo` | Yes  | Phase 6.4 AMD GPU detection and RDNA backend demo        |
+| `bin/auto-render-demo` | `make auto-render-demo` | Yes   | Phase 7.1 automatic backend selection with fallback      |
+| `bin/clipboard-demo` | `make clipboard-demo` | No         | Phase 8.2 clipboard protocol demo (X11/Wayland)          |
+| `bin/decorations-demo` | `make decorations-demo` | Yes    | Phase 8.3 client-side window decorations demo            |
+| `bin/perf-demo`     | `make perf-demo`     | Yes          | GPU performance profiling with frame time measurements   |
+| `bin/shader-test`   | `make shader-test`   | Yes          | Phase 4.6 shader compilation test for all 7 UI shaders   |
 | `bin/gen-atlas`     | `make gen-atlas`     | Yes          | SDF font atlas generator tool                            |
 
 ## Architecture
