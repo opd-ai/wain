@@ -293,7 +293,6 @@ The project includes several demonstration binaries that exercise different subs
 | Binary              | Make Target          | CGO Required | Description                                             |
 |---------------------|----------------------|--------------|---------------------------------------------------------|
 | `bin/wain`          | `make build`         | Yes          | Phase 0 validation (Go → Rust linkage)                  |
-| `bin/demo`          | `make demo`          | No           | Phase 1 X11 rendering pipeline demo                     |
 | `bin/wayland-demo`  | `make wayland-demo`  | No           | Wayland protocol + rasterizer + widgets demo             |
 | `bin/x11-demo`      | `make x11-demo`      | No           | X11 protocol + rasterizer + widgets demo                 |
 | `bin/widget-demo`   | `make widget-demo`   | Yes          | Interactive widget demo (auto-detects X11/Wayland)       |

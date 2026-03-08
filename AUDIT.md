@@ -74,7 +74,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 ### LOW
 
-- [ ] **Demo binary naming inconsistency** — cmd/ directory — Naming convention is inconsistent: some demos use `-demo` suffix (`wayland-demo`, `x11-demo`), others omit it (`demo`, `gen-atlas`), and one uses a different pattern (`shader-test`). A consistent naming scheme (e.g., all tools in cmd/tools/, all demos with -demo suffix) would improve discoverability.
+- [x] **Demo binary naming inconsistency** — cmd/ directory — Naming convention is inconsistent: some demos use `-demo` suffix (`wayland-demo`, `x11-demo`), others omit it (`demo`, `gen-atlas`), and one uses a different pattern (`shader-test`). A consistent naming scheme (e.g., all tools in cmd/tools/, all demos with -demo suffix) would improve discoverability. **RESOLVED**: Removed redundant `cmd/demo` binary (duplicate of `x11-demo`). All demonstration binaries now consistently use `-demo` suffix. Tools (`gen-atlas`, `shader-test`, `wain`) correctly omit the suffix as they are utilities, not demos.
 
 - [ ] **README section ordering** — README.md structure — The "Known Limitations" section appears near the end (line 421) but describes fundamental constraints (CPU-only rendering, no public API). Moving this to follow "Current Functionality" would set user expectations earlier and reduce confusion.
 

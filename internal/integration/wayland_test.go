@@ -295,7 +295,7 @@ func encodeCallbackDone(callbackID, callbackData uint32) []byte {
 
 // TestX11ProtocolIntegration verifies X11 client stack integration.
 // Note: This is a minimal validation since full X11 requires a running X server.
-// For comprehensive testing, use the cmd/demo binary manually.
+// For comprehensive testing, use the cmd/x11-demo binary manually.
 func TestX11ProtocolIntegration(t *testing.T) {
 	// Verify wire format encoding for X11 CreateWindow request
 	// This validates the protocol layer can construct valid requests

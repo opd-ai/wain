@@ -61,7 +61,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas demo wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo
+.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo
 
 all: build
 
@@ -139,12 +139,6 @@ go: rust $(DL_STUB_OBJ)
 	    -o $(GO_BIN) $(GO_PKG)
 
 build: go
-
-demo:
-	mkdir -p bin
-	CGO_ENABLED=0 go build \
-	  -ldflags "-s -w" \
-	  -o bin/demo github.com/opd-ai/wain/cmd/demo
 
 wayland-demo:
 	mkdir -p bin
