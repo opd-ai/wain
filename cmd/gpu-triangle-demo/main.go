@@ -316,7 +316,7 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 	batchData := buildTriangleBatch(buffer.GemHandle())
 	fmt.Printf("       ✓ Built batch with %d bytes of GPU commands\n", len(batchData))
 	fmt.Println("       Commands: PIPELINE_SELECT → STATE_BASE_ADDRESS → 3DSTATE_* → 3DPRIMITIVE → PIPE_CONTROL")
-	
+
 	// Upload batch to GPU buffer via mmap
 	batchMem, err := batchBuffer.Mmap()
 	if err != nil {
@@ -325,7 +325,7 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 		return nil, nil, fmt.Errorf("mmap batch buffer: %w", err)
 	}
 	defer batchBuffer.Munmap(batchMem)
-	
+
 	copy(batchMem, batchData)
 	fmt.Println("       ✓ Uploaded batch commands to GPU buffer")
 
@@ -361,30 +361,30 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 //   - Flushes with PIPE_CONTROL
 func buildTriangleBatch(renderTargetHandle uint32) []byte {
 	_ = renderTargetHandle // Will be used for render target state in later phases
-	
+
 	cb := render.NewCommandBuilder()
-	
+
 	// Alignment
 	cb.MiNoop()
 	cb.MiNoop()
-	
+
 	// Select 3D pipeline mode
 	cb.PipelineSelect3D()
-	
+
 	// Set up base addresses (dummy addresses for first triangle)
 	// In production, these would point to state heaps, but for a simple
 	// triangle with hardcoded shaders, we can use zeros.
 	cb.StateBaseAddress()
-	
+
 	// Configure clipping (enable viewport clipping)
 	cb.State3DClip()
-	
+
 	// Configure rasterization (no culling, CCW front face)
 	cb.State3DSF()
-	
+
 	// Configure fragment shader stage (enable pixel shader)
 	cb.State3DWM()
-	
+
 	// CRITICAL: For the first triangle, we're submitting a minimal pipeline
 	// WITHOUT uploading actual shader binaries. The GPU may execute undefined
 	// behavior or skip rendering. This is expected for Phase 3.5 milestone -
@@ -393,27 +393,27 @@ func buildTriangleBatch(renderTargetHandle uint32) []byte {
 	//
 	// Set pixel shader state with dummy kernel address
 	cb.State3DPS(0)
-	
+
 	// Define vertex buffer layout: 3 vertices, each with 2D position (8 bytes)
 	// Vertex format: R32G32_FLOAT (2 floats = X, Y in NDC space)
 	const vertexFormat = uint32(0x79) // R32G32_FLOAT format code
 	cb.State3DVertexElements(0, 0, vertexFormat)
-	
+
 	// Set up vertex buffer (will point to vertex data uploaded separately)
 	// For this demo, we're not actually uploading vertex data yet - that
 	// requires buffer mapping infrastructure. This demonstrates command
 	// structure only.
 	cb.State3DVertexBuffers(0, 0, 24, 8) // 3 vertices * 8 bytes, stride 8
-	
+
 	// Draw 3 vertices as a triangle list
 	cb.Primitive3D(3)
-	
+
 	// Flush and wait for rendering to complete
 	cb.PipeControl()
-	
+
 	// End batch
 	cb.MiBatchBufferEnd()
-	
+
 	return cb.Data()
 }
 
