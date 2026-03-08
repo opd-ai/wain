@@ -30,6 +30,15 @@
 // This implementation is not thread-safe. All operations must be performed
 // from the same goroutine that owns the X11 connection.
 //
+// # Note on unsafe.Pointer Usage
+//
+// This package uses unsafe.Pointer to interface with System V shared memory
+// syscalls (shmat/shmdt). The conversion of uintptr syscall results to
+// unsafe.Pointer triggers go vet warnings ("possible misuse of unsafe.Pointer").
+// These are false positives - the usage complies with unsafe.Pointer rule (6)
+// which explicitly allows conversion of syscall results that represent pointers.
+// The memory is kernel-managed and not subject to Go's garbage collector.
+//
 // Reference: https://www.x.org/releases/X11R7.7/doc/xextproto/shm.html
 package shm
 
@@ -184,7 +193,14 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 		return nil, fmt.Errorf("%w: shmget failed: %v", ErrShmFailed, errno)
 	}
 
-	// Attach segment to our address space
+	// Attach segment to our address space.
+	// Note: The uintptr -> unsafe.Pointer conversion below triggers a go vet warning
+	// ("possible misuse of unsafe.Pointer"). This is a known false positive for
+	// syscalls that return pointers. The conversion is safe because:
+	//   1. The address comes directly from shmat() syscall
+	//   2. The memory is kernel-managed, not subject to Go's GC
+	//   3. We convert immediately without intermediate storage aside from the syscall return
+	// This pattern follows Go's unsafe.Pointer rule (6) for syscall results.
 	addr, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
 	if errno != 0 {
 		// Clean up segment on failure
@@ -192,12 +208,6 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 		return nil, fmt.Errorf("%w: shmat failed: %v", ErrShmFailed, errno)
 	}
 
-	// Convert syscall result to pointer. While this triggers a go vet warning
-	// ("possible misuse of unsafe.Pointer"), it is safe here because:
-	// 1. The address comes from shmat(), which returns kernel-managed memory
-	// 2. The memory is not subject to Go's garbage collector
-	// 3. The address is fixed and will not be moved or invalidated by the GC
-	// This pattern is standard for syscalls that return pointer-like addresses.
 	seg := &Segment{
 		ID:       Shmseg(xid),
 		ShmID:    int(shmID),

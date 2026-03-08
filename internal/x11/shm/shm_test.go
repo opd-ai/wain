@@ -36,6 +36,11 @@ func TestExtensionConstants(t *testing.T) {
 
 // TestSegmentGetBuffer verifies GetBuffer validation.
 func TestSegmentGetBuffer(t *testing.T) {
+	// Create a valid address for tests that need non-nil Addr.
+	// Use the address of a local variable to get a valid pointer without uintptr conversion.
+	var dummyByte byte
+	validAddr := unsafe.Pointer(&dummyByte)
+
 	tests := []struct {
 		name    string
 		seg     *Segment
@@ -52,9 +57,7 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "negative size",
 			seg: &Segment{
-				// Test fixture with constant address. The uintptr->unsafe.Pointer
-				// conversion triggers go vet warning but is safe for test constants.
-				Addr: unsafe.Pointer(uintptr(0x1000)),
+				Addr: validAddr,
 				Size: -1,
 			},
 			wantErr: ErrSegmentTooLarge,
@@ -62,9 +65,7 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "size exceeds maximum",
 			seg: &Segment{
-				// Test fixture with constant address. The uintptr->unsafe.Pointer
-				// conversion triggers go vet warning but is safe for test constants.
-				Addr: unsafe.Pointer(uintptr(0x1000)),
+				Addr: validAddr,
 				Size: (1 << 30) + 1,
 			},
 			wantErr: ErrSegmentTooLarge,
