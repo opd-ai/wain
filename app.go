@@ -81,30 +81,30 @@ type App struct {
 	x11Conn       *x11client.Connection
 
 	// Wayland-specific objects
-	waylandRegistry  *client.Registry
+	waylandRegistry   *client.Registry
 	waylandCompositor *client.Compositor
-	waylandShm       *shm.SHM
-	waylandWmBase    *xdg.WmBase
-	waylandSurface   *client.Surface
+	waylandShm        *shm.SHM
+	waylandWmBase     *xdg.WmBase
+	waylandSurface    *client.Surface
 	waylandXdgSurface *xdg.Surface
-	waylandToplevel  *xdg.Toplevel
+	waylandToplevel   *xdg.Toplevel
 
 	// X11-specific objects
 	x11Window x11client.XID
 	x11GC     x11client.XID
 
 	// Rendering backend
-	renderer     backend.Renderer
-	backendType  backend.BackendType
-	displayList  *displaylist.DisplayList
+	renderer    backend.Renderer
+	backendType backend.BackendType
+	displayList *displaylist.DisplayList
 
 	// State
-	running      bool
-	shouldQuit   bool
-	initialized  bool
-	width        int
-	height       int
-	verbose      bool
+	running     bool
+	shouldQuit  bool
+	initialized bool
+	width       int
+	height      int
+	verbose     bool
 }
 
 // AppConfig contains configuration options for creating an App.
@@ -422,14 +422,14 @@ func (a *App) initX11Window() error {
 
 	// Create window
 	_, err = a.x11Conn.CreateWindow(
-		root,          // parent
-		0, 0,          // x, y
+		root, // parent
+		0, 0, // x, y
 		uint16(a.width), uint16(a.height),
-		0,             // border width
-		1,             // class: InputOutput
-		0,             // visual: CopyFromParent
-		0,             // value mask
-		nil,           // attributes
+		0,   // border width
+		1,   // class: InputOutput
+		0,   // visual: CopyFromParent
+		0,   // value mask
+		nil, // attributes
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create window: %w", err)
