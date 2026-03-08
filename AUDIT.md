@@ -56,7 +56,7 @@ The codebase is generally well-structured with:
 
 - [x] **Long Function: DecodeSetupReply** — internal/x11/wire/setup.go:177 — 127 lines with cyclomatic complexity 11. This function handles X11 protocol setup reply decoding with nested loops for screens, depths, and visuals. **Recommendation:** Extract screen/depth/visual decoding into helper functions. **Resolution:** Refactored into 5 helper functions (decodeSetupFailure, decodePixmapFormats, decodeVisuals, decodeDepths, decodeScreen) reducing cyclomatic complexity from 11→8 (27.3% improvement) and overall complexity from 15.8→11.4 (27.8% improvement). Tests pass. (commit 2026-03-08)
 
-- [ ] **High Parameter Count: PresentPixmap** — internal/x11/present/present.go:227 — 8 parameters (window, pixmap, serial, valid, update, x_off, y_off, target_msc). While this matches the X11 Present extension specification, consider using a PresentOptions struct to improve call-site readability and future extensibility.
+- [x] **High Parameter Count: PresentPixmap** — internal/x11/present/present.go:227 — 8 parameters (window, pixmap, serial, valid, update, x_off, y_off, target_msc). While this matches the X11 Present extension specification, consider using a PresentOptions struct to improve call-site readability and future extensibility. **Resolution:** Refactored to use `PixmapPresentOptions` struct with 13 well-documented fields, improving call-site readability (no more positional argument confusion) and future extensibility. All call sites updated (3 locations). Tests pass. (commit 2026-03-08)
 
 ### LOW
 
@@ -228,8 +228,6 @@ Based on cyclomatic complexity >15 OR length >50 OR params >7:
 4. **Add Test Coverage Reporting** — Integrate `go test -cover` into the Makefile and CI pipeline to track test coverage percentage over time. Target: >80% coverage for critical packages (protocol, render bindings).
 
 5. **Refactor Long Functions** — Extract helper functions from `setupX11AndGPU` and `DecodeSetupReply` to improve readability and testability.
-
-6. **Consider Struct-Based Options** — Refactor `PresentPixmap` to use a `PresentOptions` struct for better extensibility.
 
 ### Low Priority
 

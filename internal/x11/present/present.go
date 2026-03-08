@@ -206,29 +206,46 @@ func (e *Extension) SupportsAsync() bool {
 	return e.majorVersion > 1 || (e.majorVersion == 1 && e.minorVersion >= 2)
 }
 
-// PresentPixmap schedules a pixmap for presentation.
+// PixmapPresentOptions holds parameters for presenting a pixmap to a window.
 //
-// Parameters:
-//   - window: the target window for presentation
-//   - pixmap: the pixmap to present (created via DRI3 or standard X11)
-//   - serial: client serial number for matching with events (arbitrary, for client use)
-//   - validRegion: region of pixmap with valid content (0 = entire pixmap)
-//   - updateRegion: region that changed since last present (0 = unknown/entire)
-//   - xOff, yOff: offset within window for pixmap placement
-//   - targetMSC: target media stream counter value (0 = next vblank)
-//   - divisor, remainder: for periodic updates (0,0 = ASAP)
-//   - options: PresentOption flags (typically PresentOptionNone)
+// For typical double-buffering use:
+//   - Serial: arbitrary client value for event tracking
+//   - TargetMSC: 0 (present at next vblank)
+//   - Options: PresentOptionNone
+//   - All other fields: zero values
+type PixmapPresentOptions struct {
+	// Window is the target window for presentation
+	Window XID
+	// Pixmap is the pixmap to present (created via DRI3 or standard X11)
+	Pixmap XID
+	// Serial is a client serial number for matching with events (arbitrary)
+	Serial uint32
+	// ValidRegion is the region of pixmap with valid content (0 = entire pixmap)
+	ValidRegion XID
+	// UpdateRegion is the region that changed since last present (0 = unknown/entire)
+	UpdateRegion XID
+	// XOff is the X offset within window for pixmap placement
+	XOff int16
+	// YOff is the Y offset within window for pixmap placement
+	YOff int16
+	// TargetMSC is the target media stream counter value (0 = next vblank)
+	TargetMSC uint64
+	// Divisor is used for periodic updates (0 = ASAP)
+	Divisor uint64
+	// Remainder is used for periodic updates (0 = ASAP)
+	Remainder uint64
+	// Options contains PresentOption flags (typically PresentOptionNone)
+	Options uint32
+}
+
+// PresentPixmap schedules a pixmap for presentation using the provided options.
 //
 // The server will present the pixmap synchronized to the specified MSC value.
-// For typical double-buffering, use targetMSC=0 to present at next vblank.
+// For typical double-buffering, use TargetMSC=0 to present at next vblank.
 //
-// After presentation, the server sends PresentCompleteNotify event with matching serial.
+// After presentation, the server sends PresentCompleteNotify event with matching Serial.
 // When the buffer is no longer needed, server sends PresentIdleNotify.
-func (e *Extension) PresentPixmap(conn Connection, window, pixmap XID,
-	serial uint32, validRegion, updateRegion XID,
-	xOff, yOff int16, targetMSC uint64,
-	divisor, remainder uint64, options uint32,
-) error {
+func (e *Extension) PresentPixmap(conn Connection, opts PixmapPresentOptions) error {
 	var buf bytes.Buffer
 
 	// PresentPixmap request (version 1.0):
@@ -239,20 +256,20 @@ func (e *Extension) PresentPixmap(conn Connection, window, pixmap XID,
 	//
 	// Total: 68 bytes = 17 * 4-byte units
 	wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentPixmap, 0, 18)
-	wire.EncodeUint32(&buf, uint32(window))
-	wire.EncodeUint32(&buf, uint32(pixmap))
-	wire.EncodeUint32(&buf, serial)
-	wire.EncodeUint32(&buf, uint32(validRegion))
-	wire.EncodeUint32(&buf, uint32(updateRegion))
-	wire.EncodeInt16(&buf, xOff)
-	wire.EncodeInt16(&buf, yOff)
+	wire.EncodeUint32(&buf, uint32(opts.Window))
+	wire.EncodeUint32(&buf, uint32(opts.Pixmap))
+	wire.EncodeUint32(&buf, opts.Serial)
+	wire.EncodeUint32(&buf, uint32(opts.ValidRegion))
+	wire.EncodeUint32(&buf, uint32(opts.UpdateRegion))
+	wire.EncodeInt16(&buf, opts.XOff)
+	wire.EncodeInt16(&buf, opts.YOff)
 	wire.EncodeUint32(&buf, 0) // target_crtc (0 = any CRTC)
 	wire.EncodeUint32(&buf, 0) // wait_fence (0 = none)
 	wire.EncodeUint32(&buf, 0) // idle_fence (0 = none)
-	wire.EncodeUint32(&buf, options)
-	wire.EncodeUint64(&buf, targetMSC)
-	wire.EncodeUint64(&buf, divisor)
-	wire.EncodeUint64(&buf, remainder)
+	wire.EncodeUint32(&buf, opts.Options)
+	wire.EncodeUint64(&buf, opts.TargetMSC)
+	wire.EncodeUint64(&buf, opts.Divisor)
+	wire.EncodeUint64(&buf, opts.Remainder)
 	wire.EncodeUint32(&buf, 0) // notifies_len (no notify list)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {

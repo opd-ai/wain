@@ -151,12 +151,13 @@ func TestPresentPixmap(t *testing.T) {
 	serial := uint32(42)
 	targetMSC := uint64(1000)
 
-	err := ext.PresentPixmap(conn, window, pixmap, serial,
-		0, 0, // validRegion, updateRegion
-		0, 0, // xOff, yOff
-		targetMSC, 0, 0, // targetMSC, divisor, remainder
-		PresentOptionNone,
-	)
+	err := ext.PresentPixmap(conn, PixmapPresentOptions{
+		Window:    window,
+		Pixmap:    pixmap,
+		Serial:    serial,
+		TargetMSC: targetMSC,
+		Options:   PresentOptionNone,
+	})
 	if err != nil {
 		t.Fatalf("PresentPixmap() error = %v", err)
 	}
@@ -209,7 +210,11 @@ func TestPresentPixmapError(t *testing.T) {
 		requestErr: errors.New("connection closed"),
 	}
 
-	err := ext.PresentPixmap(conn, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, PresentOptionNone)
+	err := ext.PresentPixmap(conn, PixmapPresentOptions{
+		Window:  1,
+		Pixmap:  2,
+		Options: PresentOptionNone,
+	})
 
 	if err == nil {
 		t.Error("PresentPixmap() expected error, got nil")

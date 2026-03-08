@@ -412,20 +412,11 @@ func presentPixmap(ctx *demoContext, pixmap x11client.XID) error {
 	fmt.Println("\n       Presenting pixmap to window...")
 
 	presentAdapter := &presentConnectionAdapter{ctx.conn}
-	err := ctx.presentExt.PresentPixmap(
-		presentAdapter,
-		present.XID(ctx.window),
-		present.XID(pixmap),
-		0, // serial
-		0, // valid region (0 = none)
-		0, // update region (0 = none)
-		0, // x_off
-		0, // y_off
-		0, // target_msc (0 = immediate)
-		0, // divisor
-		0, // remainder
-		present.PresentOptionNone,
-	)
+	err := ctx.presentExt.PresentPixmap(presentAdapter, present.PixmapPresentOptions{
+		Window:  present.XID(ctx.window),
+		Pixmap:  present.XID(pixmap),
+		Options: present.PresentOptionNone,
+	})
 	if err != nil {
 		return fmt.Errorf("present pixmap: %w", err)
 	}
