@@ -10,10 +10,8 @@ import (
 	"github.com/opd-ai/wain/internal/raster/text"
 )
 
-var (
-	// ErrSoftwareNoDmabuf is returned when Present() is called on software backend.
-	ErrSoftwareNoDmabuf = errors.New("backend: software renderer does not export DMA-BUF")
-)
+// ErrSoftwareNoDmabuf is returned when Present() is called on software backend.
+var ErrSoftwareNoDmabuf = errors.New("backend: software renderer does not export DMA-BUF")
 
 // SoftwareBackend renders display lists using CPU rasterization.
 //
