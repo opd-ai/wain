@@ -54,19 +54,8 @@ func (b *Buffer) FillRoundedRect(x, y, width, height int, radius float64, c Colo
 		return
 	}
 
-	r := int(radius)
-	if r*2 > width {
-		r = width / 2
-	}
-	if r*2 > height {
-		r = height / 2
-	}
-	radius = float64(r)
-
-	x1 := max(0, x)
-	y1 := max(0, y)
-	x2 := min(b.Width, x+width)
-	y2 := min(b.Height, y+height)
+	radius = clampRadius(radius, width, height)
+	x1, y1, x2, y2 := clipRectToBounds(x, y, width, height, b.Width, b.Height)
 
 	if x1 >= x2 || y1 >= y2 {
 		return
@@ -74,24 +63,50 @@ func (b *Buffer) FillRoundedRect(x, y, width, height int, radius float64, c Colo
 
 	for row := y1; row < y2; row++ {
 		for col := x1; col < x2; col++ {
-			localX := col - x
-			localY := row - y
-
-			coverage := roundedRectCoverage(localX, localY, width, height, radius)
-			if coverage <= 0 {
-				continue
-			}
-
-			alpha := uint8(float64(c.A) * coverage)
-			if alpha == 0 {
-				continue
-			}
-
-			pixelColor := Color{c.R, c.G, c.B, alpha}
-			idx := row*b.Stride + col*4
-			BlendPixel(b.Pixels[idx:idx+4], pixelColor)
+			b.fillRoundedRectPixel(x, y, width, height, radius, c, row, col)
 		}
 	}
+}
+
+// clampRadius ensures the radius doesn't exceed half the rectangle dimensions.
+func clampRadius(radius float64, width, height int) float64 {
+	r := int(radius)
+	if r*2 > width {
+		r = width / 2
+	}
+	if r*2 > height {
+		r = height / 2
+	}
+	return float64(r)
+}
+
+// clipRectToBounds clips a rectangle to the given buffer dimensions.
+func clipRectToBounds(x, y, width, height, bufWidth, bufHeight int) (x1, y1, x2, y2 int) {
+	x1 = max(0, x)
+	y1 = max(0, y)
+	x2 = min(bufWidth, x+width)
+	y2 = min(bufHeight, y+height)
+	return
+}
+
+// fillRoundedRectPixel renders a single pixel with anti-aliased rounded corners.
+func (b *Buffer) fillRoundedRectPixel(x, y, width, height int, radius float64, c Color, row, col int) {
+	localX := col - x
+	localY := row - y
+
+	coverage := roundedRectCoverage(localX, localY, width, height, radius)
+	if coverage <= 0 {
+		return
+	}
+
+	alpha := uint8(float64(c.A) * coverage)
+	if alpha == 0 {
+		return
+	}
+
+	pixelColor := Color{c.R, c.G, c.B, alpha}
+	idx := row*b.Stride + col*4
+	BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 }
 
 // roundedRectCoverage calculates the anti-aliased coverage value (0.0 to 1.0)
