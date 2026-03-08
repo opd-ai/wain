@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -239,6 +240,16 @@ type Window struct {
 	onClose       func()
 	onFocus       func(focused bool)
 	onScaleChange func(scale float64)
+	onPointer     func(*PointerEvent)
+	onKeyPress    func(*KeyEvent)
+	onKeyRelease  func(*KeyEvent)
+	onTouch       func(*TouchEvent)
+
+	// Event dispatcher
+	dispatcher *EventDispatcher
+
+	// Root widget for hit-testing
+	rootWidget Widget
 }
 
 // NewWindow creates a new window with the specified configuration.
@@ -287,6 +298,7 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 		fullscreen:  cfg.Fullscreen,
 		decorations: cfg.Decorations,
 		scale:       1.0,
+		dispatcher:  NewEventDispatcher(),
 	}
 
 	if err := win.initialize(); err != nil {
@@ -634,6 +646,62 @@ func (w *Window) OnScaleChange(callback func(scale float64)) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.onScaleChange = callback
+}
+
+// OnPointer sets the callback for pointer (mouse/touchpad) events.
+func (w *Window) OnPointer(callback func(*PointerEvent)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onPointer = callback
+}
+
+// OnKeyPress sets the callback for key press events.
+func (w *Window) OnKeyPress(callback func(*KeyEvent)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onKeyPress = callback
+}
+
+// OnKeyRelease sets the callback for key release events.
+func (w *Window) OnKeyRelease(callback func(*KeyEvent)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onKeyRelease = callback
+}
+
+// OnTouch sets the callback for touch events.
+func (w *Window) OnTouch(callback func(*TouchEvent)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.onTouch = callback
+}
+
+// SetRootWidget sets the root widget for event hit-testing.
+func (w *Window) SetRootWidget(widget Widget) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.rootWidget = widget
+	if w.dispatcher != nil {
+		w.dispatcher.SetWidgetRoot(widget)
+	}
+}
+
+// Dispatcher returns the window's event dispatcher.
+func (w *Window) Dispatcher() *EventDispatcher {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.dispatcher
+}
+
+// SendCustomEvent injects a custom event into the event loop.
+func (w *Window) SendCustomEvent(data interface{}) {
+	evt := &CustomEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		data:      data,
+	}
+	if w.dispatcher != nil {
+		w.dispatcher.Dispatch(evt)
+	}
 }
 
 // Run initializes the application and starts the event loop.
