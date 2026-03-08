@@ -405,7 +405,7 @@ func (ta *TextureAtlas) evictLRURegions(neededWidth, neededHeight int) bool {
 
 	// Get regions sorted by LRU (least recently used first)
 	sortedIDs := ta.getRegionsSortedByLRU()
-	
+
 	// Evict 25% of regions as heuristic
 	evictCount := max(1, len(sortedIDs)/4)
 
@@ -422,7 +422,7 @@ func (ta *TextureAtlas) getRegionsSortedByLRU() []int {
 		id      int
 		counter uint64
 	}
-	
+
 	regions := make([]regionWithID, 0, len(ta.imageRegions))
 	for id, region := range ta.imageRegions {
 		regions = append(regions, regionWithID{id: id, counter: region.LRUCounter})
