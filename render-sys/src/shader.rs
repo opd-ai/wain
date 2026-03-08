@@ -219,4 +219,132 @@ mod tests {
         let result = ShaderModule::from_glsl(source, ShaderStage::Vertex);
         assert!(result.is_err(), "Invalid GLSL should fail compilation");
     }
+
+    // Phase 4.2 - UI Shader Authoring validation tests
+    // These tests validate that all UI shaders in render-sys/shaders/ compile correctly
+
+    #[test]
+    fn test_solid_fill_shader() {
+        let source = include_str!("../shaders/solid_fill.wgsl");
+        
+        // Test vertex shader compilation
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Solid fill vertex shader should compile: {:?}", vs_result.err());
+        
+        // Test fragment shader compilation
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Solid fill fragment shader should compile: {:?}", fs_result.err());
+        
+        // Verify entry points exist
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Solid fill shader should have entry points");
+    }
+
+    #[test]
+    fn test_textured_quad_shader() {
+        let source = include_str!("../shaders/textured_quad.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Textured quad vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Textured quad fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Textured quad shader should have entry points");
+    }
+
+    #[test]
+    fn test_sdf_text_shader() {
+        let source = include_str!("../shaders/sdf_text.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "SDF text vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "SDF text fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "SDF text shader should have entry points");
+    }
+
+    #[test]
+    fn test_box_shadow_shader() {
+        let source = include_str!("../shaders/box_shadow.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Box shadow vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Box shadow fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Box shadow shader should have entry points");
+    }
+
+    #[test]
+    fn test_rounded_rect_shader() {
+        let source = include_str!("../shaders/rounded_rect.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Rounded rect vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Rounded rect fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Rounded rect shader should have entry points");
+    }
+
+    #[test]
+    fn test_linear_gradient_shader() {
+        let source = include_str!("../shaders/linear_gradient.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Linear gradient vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Linear gradient fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Linear gradient shader should have entry points");
+    }
+
+    #[test]
+    fn test_radial_gradient_shader() {
+        let source = include_str!("../shaders/radial_gradient.wgsl");
+        
+        let vs_result = ShaderModule::from_wgsl(source, ShaderStage::Vertex);
+        assert!(vs_result.is_ok(), "Radial gradient vertex shader should compile: {:?}", vs_result.err());
+        
+        let fs_result = ShaderModule::from_wgsl(source, ShaderStage::Fragment);
+        assert!(fs_result.is_ok(), "Radial gradient fragment shader should compile: {:?}", fs_result.err());
+        
+        let module = vs_result.unwrap();
+        assert!(!module.ir().entry_points.is_empty(), "Radial gradient shader should have entry points");
+    }
+
+    #[test]
+    fn test_all_shaders_count() {
+        // Verify we have all 7 required shaders by attempting to load them
+        // This validates that all shader files exist and are accessible via include_str!
+        let shaders = vec![
+            ("solid_fill", include_str!("../shaders/solid_fill.wgsl")),
+            ("textured_quad", include_str!("../shaders/textured_quad.wgsl")),
+            ("sdf_text", include_str!("../shaders/sdf_text.wgsl")),
+            ("box_shadow", include_str!("../shaders/box_shadow.wgsl")),
+            ("rounded_rect", include_str!("../shaders/rounded_rect.wgsl")),
+            ("linear_gradient", include_str!("../shaders/linear_gradient.wgsl")),
+            ("radial_gradient", include_str!("../shaders/radial_gradient.wgsl")),
+        ];
+        
+        assert_eq!(shaders.len(), 7, "Should have exactly 7 UI shaders");
+        
+        // Verify each shader is non-empty
+        for (name, source) in shaders.iter() {
+            assert!(!source.is_empty(), "Shader {} should not be empty", name);
+            assert!(source.contains("@vertex"), "Shader {} should have a vertex entry point", name);
+            assert!(source.contains("@fragment"), "Shader {} should have a fragment entry point", name);
+        }
+    }
 }
