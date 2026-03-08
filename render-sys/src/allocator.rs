@@ -211,6 +211,124 @@ impl BufferAllocator {
     pub fn device(&self) -> &DrmDevice {
         &self.device
     }
+
+    /// Map a GPU buffer into CPU address space for reading/writing.
+    ///
+    /// Returns a slice of the mapped buffer. The mapping is automatically
+    /// unmapped when the returned MappedBuffer is dropped.
+    pub fn mmap_buffer(&self, buffer: &Buffer) -> io::Result<MappedBuffer> {
+        let size = (buffer.stride * buffer.height) as usize;
+
+        match self.driver {
+            DriverType::I915 => {
+                // Get mmap offset using i915_gem_mmap_offset
+                let mut mmap_req = i915::GemMmapOffset::new(buffer.handle, i915::I915_MMAP_OFFSET_WB);
+                self.device.i915_gem_mmap_offset(&mut mmap_req)?;
+
+                // Map the buffer into userspace
+                let ptr = unsafe {
+                    nix::libc::mmap(
+                        std::ptr::null_mut(),
+                        size,
+                        nix::libc::PROT_READ | nix::libc::PROT_WRITE,
+                        nix::libc::MAP_SHARED,
+                        self.device.fd(),
+                        mmap_req.offset as i64,
+                    )
+                };
+
+                if ptr == nix::libc::MAP_FAILED {
+                    return Err(io::Error::last_os_error());
+                }
+
+                Ok(MappedBuffer {
+                    ptr: ptr as *mut u8,
+                    size,
+                })
+            }
+            DriverType::Xe => {
+                // Xe driver uses the same mmap mechanism as i915 for now
+                // In future, may need Xe-specific handling
+                let mut mmap_req = i915::GemMmapOffset::new(buffer.handle, i915::I915_MMAP_OFFSET_WB);
+                self.device.i915_gem_mmap_offset(&mut mmap_req)?;
+
+                let ptr = unsafe {
+                    nix::libc::mmap(
+                        std::ptr::null_mut(),
+                        size,
+                        nix::libc::PROT_READ | nix::libc::PROT_WRITE,
+                        nix::libc::MAP_SHARED,
+                        self.device.fd(),
+                        mmap_req.offset as i64,
+                    )
+                };
+
+                if ptr == nix::libc::MAP_FAILED {
+                    return Err(io::Error::last_os_error());
+                }
+
+                Ok(MappedBuffer {
+                    ptr: ptr as *mut u8,
+                    size,
+                })
+            }
+            DriverType::Amdgpu => {
+                use crate::amd::GemMmap;
+
+                // Get mmap offset for AMD GPU
+                let mut mmap_req = GemMmap::new(buffer.handle);
+                self.device.amdgpu_gem_mmap(&mut mmap_req)?;
+
+                let ptr = unsafe {
+                    nix::libc::mmap(
+                        std::ptr::null_mut(),
+                        size,
+                        nix::libc::PROT_READ | nix::libc::PROT_WRITE,
+                        nix::libc::MAP_SHARED,
+                        self.device.fd(),
+                        mmap_req.offset as i64,
+                    )
+                };
+
+                if ptr == nix::libc::MAP_FAILED {
+                    return Err(io::Error::last_os_error());
+                }
+
+                Ok(MappedBuffer {
+                    ptr: ptr as *mut u8,
+                    size,
+                })
+            }
+        }
+    }
+}
+
+/// A CPU-mapped view of a GPU buffer.
+///
+/// The buffer is automatically unmapped when this struct is dropped.
+pub struct MappedBuffer {
+    ptr: *mut u8,
+    size: usize,
+}
+
+impl MappedBuffer {
+    /// Get a read-only slice of the mapped buffer.
+    pub fn as_slice(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.ptr, self.size) }
+    }
+
+    /// Get a mutable slice of the mapped buffer.
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
+    }
+}
+
+impl Drop for MappedBuffer {
+    fn drop(&mut self) {
+        unsafe {
+            nix::libc::munmap(self.ptr as *mut nix::libc::c_void, self.size);
+        }
+    }
 }
 
 #[cfg(test)]

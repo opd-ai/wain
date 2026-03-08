@@ -458,7 +458,7 @@ mod tests {
     #[test]
     #[ignore] // Requires Intel GPU hardware
     fn test_textured_quad_gpu() {
-        let ctx = match GpuTestContext::new() {
+        let mut ctx = match GpuTestContext::new() {
             Some(c) => c,
             None => {
                 println!("No Intel GPU available, test skipped");
@@ -475,7 +475,7 @@ mod tests {
     #[test]
     #[ignore] // Requires Intel GPU hardware  
     fn test_sdf_text_gpu() {
-        let ctx = match GpuTestContext::new() {
+        let mut ctx = match GpuTestContext::new() {
             Some(c) => c,
             None => {
                 println!("No Intel GPU available, test skipped");
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     #[ignore] // Requires Intel GPU hardware
     fn test_rounded_rect_gpu() {
-        let ctx = match GpuTestContext::new() {
+        let mut ctx = match GpuTestContext::new() {
             Some(c) => c,
             None => {
                 println!("No Intel GPU available, test skipped");
@@ -507,7 +507,7 @@ mod tests {
     #[test]
     #[ignore] // Requires Intel GPU hardware
     fn test_radial_gradient_gpu() {
-        let ctx = match GpuTestContext::new() {
+        let mut ctx = match GpuTestContext::new() {
             Some(c) => c,
             None => {
                 println!("No Intel GPU available, test skipped");
@@ -523,7 +523,7 @@ mod tests {
     #[test]
     #[ignore] // Requires Intel GPU hardware
     fn test_box_shadow_gpu() {
-        let ctx = match GpuTestContext::new() {
+        let mut ctx = match GpuTestContext::new() {
             Some(c) => c,
             None => {
                 println!("No Intel GPU available, test skipped");

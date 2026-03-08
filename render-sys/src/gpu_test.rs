@@ -185,15 +185,21 @@ impl GpuTestContext {
             .map_err(|e| format!("Failed to allocate render target: {:?}", e))
     }
 
-    /// Read back pixels from a buffer (placeholder - needs mmap implementation)
-    pub fn readback_pixels(&self, _buffer: &crate::allocator::Buffer) -> Result<ImageBuffer, String> {
-        // TODO: Implement CPU mmap and readback
-        // For now, return a placeholder solid color image
-        Ok(ImageBuffer::new_solid(
-            TEST_RT_WIDTH,
-            TEST_RT_HEIGHT,
-            Pixel::new(0, 0, 255, 255), // Blue
-        ))
+    /// Read back pixels from a GPU buffer via CPU mmap.
+    ///
+    /// This maps the GPU buffer into CPU address space, reads the pixel data,
+    /// and returns an ImageBuffer for comparison with reference images.
+    pub fn readback_pixels(&mut self, buffer: &crate::allocator::Buffer) -> Result<ImageBuffer, String> {
+        // Map the buffer into CPU address space
+        let mapped = self.allocator
+            .mmap_buffer(buffer)
+            .map_err(|e| format!("Failed to mmap buffer: {}", e))?;
+
+        // Read pixel data from the mapped buffer
+        let data = mapped.as_slice();
+
+        // Convert from ARGB8888 to ImageBuffer
+        ImageBuffer::from_argb8888(TEST_RT_WIDTH, TEST_RT_HEIGHT, data)
     }
 
     /// GPU generation
