@@ -461,7 +461,7 @@ You only need to regenerate the atlas if you change the supported character set,
 - ⚠️ Single-threaded rasterizer (no tile-based threading)
 
 **Testing:**
-- ✅ Unit tests for all packages (33 test files)
+- ✅ Unit tests for all packages (57 test files)
 - ✅ End-to-end integration tests for DRI3, GPU, and Wayland subsystems
 - ✅ Fuzz tests for Wayland and X11 wire protocol encoding/decoding
 - ⚠️ No automated screenshot comparison tests

@@ -43,7 +43,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **Undocumented demonstration binaries** — README.md:203-213 vs cmd/ — The README documents 10 demonstration binaries but the codebase contains 16 cmd/ directories. Six binaries are completely undocumented: `amd-triangle-demo`, `auto-render-demo`, `clipboard-demo`, `decorations-demo`, `perf-demo`, `shader-test`. Users discovering these binaries have no guidance on their purpose or usage.
 
-- [ ] **Test count discrepancy** — README.md:432 — README claims "33 test files" but actual count is 57 test files (`find . -name "*_test.go" | wc -l`). This is a 73% overcount in actual vs. documented tests, suggesting documentation was not updated after test additions in recent development phases.
+- [x] **Test count discrepancy** — README.md:432 — README claims "33 test files" but actual count is 57 test files (`find . -name "*_test.go" | wc -l`). This is a 73% overcount in actual vs. documented tests, suggesting documentation was not updated after test additions in recent development phases.
 
 - [ ] **Shader test count mismatch** — README.md:126 — README claims "14 shader tests passing" but `cargo test shader` shows 22 passing shader tests (with 7 ignored GPU tests). The claim is outdated by 57% and does not account for recent shader validation additions.
 
