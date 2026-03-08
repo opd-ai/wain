@@ -214,6 +214,24 @@ make build CC=x86_64-linux-musl-gcc
 
 ## Test
 
+### Quick Start (direnv)
+
+For the best developer experience, use [direnv](https://direnv.net/) to auto-configure CGO flags:
+
+```bash
+# One-time setup:
+direnv allow
+
+# Now standard Go commands work:
+go test ./...
+go test ./internal/raster/...
+go test -v ./internal/wayland/wire
+```
+
+The `.envrc` file automatically sets `CGO_LDFLAGS` when entering the project directory.
+
+### Using Make Targets
+
 ```bash
 # Run all tests (Rust + Go)
 make test
@@ -242,7 +260,7 @@ make coverage-html
   - UI framework (layout, widgets, event handling)
   - Integration tests (full protocol → rasterizer → display pipeline)
 
-**Note:** Do NOT use `go test ./...` directly. Go tests require `CGO_LDFLAGS` to be set to link the Rust static library, which is architecture-dependent. The `make test-go` target handles this automatically. Direct `go test` will fail with linker errors (`undefined reference to render_add`).
+**Without direnv:** Use `make test-go` instead of `go test ./...`. Direct `go test` requires `CGO_LDFLAGS` to link the Rust library (see [Troubleshooting](#troubleshooting)).
 
 ## Verify Static Linking
 
@@ -487,9 +505,26 @@ Install the musl C compiler (see [Prerequisites](#prerequisites) section above).
 
 ### `go test ./...` fails with linker errors
 
-Go tests require `CGO_LDFLAGS` to be set. Use `make test-go` instead of running `go test` directly.
+Go tests require `CGO_LDFLAGS` to be set. You have two options:
 
-The Rust library path is architecture-dependent and auto-detected by the Makefile. Direct `go test` does not have this information.
+**Option 1: Use direnv (recommended for daily development)**
+```bash
+# Install direnv: https://direnv.net/
+# Then allow the project's .envrc file:
+direnv allow
+
+# Now go test works directly:
+go test ./...
+```
+
+The `.envrc` file automatically configures `CGO_LDFLAGS` when entering the project directory.
+
+**Option 2: Use make wrapper**
+```bash
+make test-go
+```
+
+The Makefile sets the required CGO flags and ensures dependencies are built.
 
 ### Binary is not static (has dynamic dependencies)
 

@@ -70,7 +70,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
 
 - [x] **Multiple HandleEvent high-complexity instances** — internal/wayland/datadevice/datadevice.go:164,463 — Two more `HandleEvent` functions had CC=13 and CC=10, indicating a pattern of complex event dispatch logic. **RESOLVED**: Refactored both functions using dispatch pattern with separate handler methods. `Source.HandleEvent` CC reduced from 13→7, `Offer.HandleEvent` CC reduced from 10→4. All three HandleEvent functions in this file now have CC ≤ 7, well below threshold of 10.
 
-- [ ] **go test requires make wrapper** — README.md:419-422 — Running `go test ./...` directly fails with linker errors (verified in audit) because CGO_LDFLAGS are not set. While documented in Troubleshooting, this is a poor developer experience. The project should include a .envrc, Makefile.include, or go:generate directive to make testing discoverable.
+- [x] **go test requires make wrapper** — README.md:419-422 — Running `go test ./...` directly fails with linker errors (verified in audit) because CGO_LDFLAGS are not set. While documented in Troubleshooting, this is a poor developer experience. The project should include a .envrc, Makefile.include, or go:generate directive to make testing discoverable. **RESOLVED**: Added .envrc file for direnv users that auto-configures CGO_LDFLAGS. Updated README Test section to document direnv as the recommended approach. Users can now run `go test ./...` directly after `direnv allow`.
 
 ### LOW
 
