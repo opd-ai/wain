@@ -1,0 +1,331 @@
+// Command gpu-display-demo demonstrates end-to-end GPU rendering to display.
+//
+// This binary showcases the complete GPU-to-Display pipeline integration:
+//   - GPU backend initialization (Intel or AMD)
+//   - Display list rendering to GPU
+//   - DMA-BUF export from GPU render target
+//   - Wayland/X11 compositor integration via display pipeline
+//   - Event-driven rendering loop with proper frame synchronization
+//
+// This demo proves that GPU-rendered output can reach the screen via
+// zero-copy DMA-BUF sharing with the compositor.
+//
+// Usage:
+//
+//	./bin/gpu-display-demo           # auto-detect Wayland or X11
+//	./bin/gpu-display-demo -wayland  # force Wayland
+//	./bin/gpu-display-demo -x11      # force X11
+//
+// Requirements:
+//   - Wayland: compositor with zwp_linux_dmabuf_v1 support
+//   - X11: server with DRI3 and Present extensions
+//   - Intel GPU (Gen9-Gen12/Xe) or AMD GPU (RDNA1/2/3)
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/render/backend"
+	"github.com/opd-ai/wain/internal/render/display"
+	x11client "github.com/opd-ai/wain/internal/x11/client"
+	"github.com/opd-ai/wain/internal/x11/dri3"
+	"github.com/opd-ai/wain/internal/x11/present"
+	"github.com/opd-ai/wain/internal/wayland/client"
+	"github.com/opd-ai/wain/internal/wayland/dmabuf"
+	"github.com/opd-ai/wain/internal/wayland/xdg"
+)
+
+const (
+	windowWidth  = 800
+	windowHeight = 600
+	drmPath      = "/dev/dri/renderD128"
+	numFrames    = 60 // render 60 frames then exit
+)
+
+var (
+	forceWayland = flag.Bool("wayland", false, "force Wayland (ignore X11)")
+	forceX11     = flag.Bool("x11", false, "force X11 (ignore Wayland)")
+)
+
+func main() {
+	flag.Parse()
+
+	fmt.Println("==============================================")
+	fmt.Println("wain GPU Display Integration Demo")
+	fmt.Println("==============================================")
+	fmt.Println()
+
+	if err := runDemo(); err != nil {
+		log.Fatalf("Demo failed: %v", err)
+	}
+
+	fmt.Println("\n✓ Demo completed successfully!")
+	fmt.Println("GPU-rendered output successfully reached the display compositor!")
+}
+
+func runDemo() error {
+	// Auto-detect display server
+	useWayland, err := shouldUseWayland()
+	if err != nil {
+		return fmt.Errorf("display detection failed: %w", err)
+	}
+
+	if useWayland {
+		fmt.Println("Display server: Wayland")
+		return runWaylandDemo()
+	}
+	fmt.Println("Display server: X11")
+	return runX11Demo()
+}
+
+func shouldUseWayland() (bool, error) {
+	if *forceX11 {
+		return false, nil
+	}
+	if *forceWayland {
+		return true, nil
+	}
+
+	// Check for Wayland display
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+		return true, nil
+	}
+
+	// Check for X11 display
+	if os.Getenv("DISPLAY") != "" {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("no WAYLAND_DISPLAY or DISPLAY environment variable set")
+}
+
+func runWaylandDemo() error {
+	fmt.Println("Initializing Wayland connection...")
+
+	conn, err := client.Connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect to Wayland: %w", err)
+	}
+	defer conn.Close()
+
+	// Get compositor and create surface
+	compositor := conn.Registry().Compositor()
+	if compositor == nil {
+		return fmt.Errorf("compositor not available")
+	}
+
+	surface, err := compositor.CreateSurface()
+	if err != nil {
+		return fmt.Errorf("failed to create surface: %w", err)
+	}
+
+	// Get dmabuf global
+	dmabufGlobal := conn.Registry().Dmabuf()
+	if dmabufGlobal == nil {
+		return fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
+	}
+
+	// Get xdg shell and create toplevel window
+	xdgWmBase := conn.Registry().XdgWmBase()
+	if xdgWmBase == nil {
+		return fmt.Errorf("xdg_wm_base not available")
+	}
+
+	xdgSurface, err := xdgWmBase.GetXdgSurface(surface)
+	if err != nil {
+		return fmt.Errorf("failed to create xdg_surface: %w", err)
+	}
+
+	toplevel, err := xdgSurface.GetToplevel()
+	if err != nil {
+		return fmt.Errorf("failed to create toplevel: %w", err)
+	}
+
+	toplevel.SetTitle("wain GPU Display Demo (Wayland)")
+	surface.Commit()
+
+	// Create GPU backend
+	fmt.Println("Initializing GPU backend...")
+	renderer, err := backend.New(backend.Config{
+		DRMPath:          drmPath,
+		Width:            windowWidth,
+		Height:           windowHeight,
+		VertexBufferSize: 1024 * 1024,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create GPU backend: %w", err)
+	}
+	defer renderer.Destroy()
+
+	// Create display pipeline
+	fmt.Println("Creating GPU→Wayland display pipeline...")
+	pipeline, err := display.NewWaylandPipeline(surface, dmabufGlobal, renderer)
+	if err != nil {
+		return fmt.Errorf("failed to create display pipeline: %w", err)
+	}
+	defer pipeline.Close()
+
+	// Render frames
+	fmt.Printf("Rendering %d frames...\n", numFrames)
+	for i := 0; i < numFrames; i++ {
+		dl := createAnimatedDisplayList(i, numFrames)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		if err := pipeline.RenderAndPresent(ctx, dl); err != nil {
+			cancel()
+			return fmt.Errorf("frame %d failed: %w", i, err)
+		}
+		cancel()
+
+		// Process Wayland events
+		if err := conn.Dispatch(); err != nil {
+			return fmt.Errorf("dispatch failed: %w", err)
+		}
+
+		time.Sleep(16 * time.Millisecond) // ~60 FPS
+	}
+
+	return nil
+}
+
+func runX11Demo() error {
+	fmt.Println("Initializing X11 connection...")
+
+	conn, err := x11client.Connect("0")
+	if err != nil {
+		return fmt.Errorf("failed to connect to X11: %w", err)
+	}
+	defer conn.Close()
+
+	// Query DRI3 extension
+	dri3Ext, err := dri3.QueryExtension(newDRI3Adapter(conn))
+	if err != nil {
+		return fmt.Errorf("DRI3 extension not available: %w", err)
+	}
+
+	// Query Present extension
+	presentExt, err := present.QueryExtension(newPresentAdapter(conn))
+	if err != nil {
+		return fmt.Errorf("Present extension not available: %w", err)
+	}
+
+	// Create window
+	window, err := conn.CreateSimpleWindow(windowWidth, windowHeight, "wain GPU Display Demo (X11)")
+	if err != nil {
+		return fmt.Errorf("failed to create window: %w", err)
+	}
+
+	if err := conn.MapWindow(window); err != nil {
+		return fmt.Errorf("failed to map window: %w", err)
+	}
+
+	// Create GPU backend
+	fmt.Println("Initializing GPU backend...")
+	renderer, err := backend.New(backend.Config{
+		DRMPath:          drmPath,
+		Width:            windowWidth,
+		Height:           windowHeight,
+		VertexBufferSize: 1024 * 1024,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create GPU backend: %w", err)
+	}
+	defer renderer.Destroy()
+
+	// Create display pipeline
+	fmt.Println("Creating GPU→X11 display pipeline...")
+	pipeline, err := display.NewX11Pipeline(conn, window, dri3Ext, presentExt, renderer)
+	if err != nil {
+		return fmt.Errorf("failed to create display pipeline: %w", err)
+	}
+	defer pipeline.Close()
+
+	// Render frames
+	fmt.Printf("Rendering %d frames...\n", numFrames)
+	for i := 0; i < numFrames; i++ {
+		dl := createAnimatedDisplayList(i, numFrames)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		if err := pipeline.RenderAndPresent(ctx, dl); err != nil {
+			cancel()
+			return fmt.Errorf("frame %d failed: %w", i, err)
+		}
+		cancel()
+
+		time.Sleep(16 * time.Millisecond) // ~60 FPS
+	}
+
+	return nil
+}
+
+// createAnimatedDisplayList creates a simple animated display list for testing.
+func createAnimatedDisplayList(frame, totalFrames int) *displaylist.DisplayList {
+	dl := displaylist.New()
+
+	// Background: interpolate from blue to purple
+	progress := float32(frame) / float32(totalFrames)
+	bg := core.Color{
+		R: uint8(progress * 128),
+		G: 0,
+		B: 255,
+		A: 255,
+	}
+
+	dl.Clear(bg)
+
+	// Draw a rectangle that moves across the screen
+	x := int(progress * float32(windowWidth-200))
+	y := windowHeight/2 - 50
+
+	dl.FillRect(displaylist.Rect{
+		X:      x,
+		Y:      y,
+		Width:  200,
+		Height: 100,
+	}, core.Color{R: 255, G: 255, B: 255, A: 255})
+
+	return dl
+}
+
+// DRI3/Present adapters (similar to gpu-triangle-demo)
+
+type dri3Adapter struct {
+	*x11client.Connection
+}
+
+func newDRI3Adapter(conn *x11client.Connection) *dri3Adapter {
+	return &dri3Adapter{Connection: conn}
+}
+
+func (a *dri3Adapter) AllocXID() (dri3.XID, error) {
+	xid, err := a.Connection.AllocXID()
+	return dri3.XID(xid), err
+}
+
+func (a *dri3Adapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
+	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
+}
+
+func (a *dri3Adapter) SendRequestWithFDs(req []byte, fds []int) error {
+	return a.Connection.SendRequestWithFDs(req, fds)
+}
+
+type presentAdapter struct {
+	*x11client.Connection
+}
+
+func newPresentAdapter(conn *x11client.Connection) *presentAdapter {
+	return &presentAdapter{Connection: conn}
+}
+
+func (a *presentAdapter) AllocXID() (present.XID, error) {
+	xid, err := a.Connection.AllocXID()
+	return present.XID(xid), err
+}
