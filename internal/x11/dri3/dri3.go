@@ -275,6 +275,7 @@ func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 
 	wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffers, 0, msgLen)
 	wire.EncodeUint32(&buf, uint32(pixmap))
+	// DRI3 pixmap geometry fields
 	wire.EncodeUint32(&buf, uint32(drawable))
 	wire.EncodeUint8(&buf, numBuffers)
 	wire.EncodePadding(&buf, 3)

@@ -316,15 +316,19 @@ func (e *Extension) NotifyMSC(conn Connection, window XID,
 	wire.EncodeUint32(&buf, uint32(window))
 	wire.EncodeUint32(&buf, serial)
 	wire.EncodeUint32(&buf, 0) // pad
-	wire.EncodeUint64(&buf, targetMSC)
-	wire.EncodeUint64(&buf, divisor)
-	wire.EncodeUint64(&buf, remainder)
+	encodeNotifyMSCTiming(&buf, targetMSC, divisor, remainder)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("present: NotifyMSC failed: %w", err)
 	}
 
 	return nil
+}
+
+func encodeNotifyMSCTiming(buf *bytes.Buffer, targetMSC, divisor, remainder uint64) {
+	wire.EncodeUint64(buf, targetMSC)
+	wire.EncodeUint64(buf, divisor)
+	wire.EncodeUint64(buf, remainder)
 }
 
 // CompleteNotifyEvent represents a PresentCompleteNotify event.

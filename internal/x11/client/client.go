@@ -434,59 +434,82 @@ func (c *Connection) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, 
 		return nil, nil, err
 	}
 
-	// Convert net.Conn to *net.UnixConn for RecvMsg support
 	unixConn, ok := c.conn.(*net.UnixConn)
 	if !ok {
 		return nil, nil, fmt.Errorf("client: connection is not a Unix socket")
 	}
 
-	// Read reply header with potential file descriptors
+	reply, oob, oobn, err := c.readReplyHeaderWithFDs(unixConn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reply, err = c.readAdditionalReplyData(reply)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	receivedFDs, err := extractFileDescriptors(oob, oobn)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return reply, receivedFDs, nil
+}
+
+func (c *Connection) readReplyHeaderWithFDs(unixConn *net.UnixConn) ([]byte, []byte, int, error) {
 	reply := make([]byte, wire.ReplyHeaderSize)
 	oob := make([]byte, syscall.CmsgSpace(4*16)) // Space for up to 16 fds
 
 	n, oobn, _, _, err := unixConn.ReadMsgUnix(reply, oob)
 	if err != nil {
-		return nil, nil, fmt.Errorf("client: failed to read reply: %w", err)
+		return nil, nil, 0, fmt.Errorf("client: failed to read reply: %w", err)
 	}
 	if n < wire.ReplyHeaderSize {
-		return nil, nil, fmt.Errorf("client: incomplete reply (got %d bytes)", n)
+		return nil, nil, 0, fmt.Errorf("client: incomplete reply (got %d bytes)", n)
 	}
 
-	// Check if it's a reply (type 1) or error (type 0)
 	if reply[0] == 0 {
 		errCode := reply[1]
-		return nil, nil, fmt.Errorf("client: X11 error code %d", errCode)
+		return nil, nil, 0, fmt.Errorf("client: X11 error code %d", errCode)
 	}
 
-	// Parse additional data length (in 4-byte units)
+	return reply, oob, oobn, nil
+}
+
+func (c *Connection) readAdditionalReplyData(reply []byte) ([]byte, error) {
 	dataLen := binary.LittleEndian.Uint32(reply[4:8])
-	if dataLen > 0 {
-		additionalData := make([]byte, dataLen*4)
-		if _, err := c.conn.Read(additionalData); err != nil {
-			return nil, nil, fmt.Errorf("client: failed to read reply data: %w", err)
-		}
-		reply = append(reply, additionalData...)
+	if dataLen == 0 {
+		return reply, nil
 	}
 
-	// Extract file descriptors from control message
+	additionalData := make([]byte, dataLen*4)
+	if _, err := c.conn.Read(additionalData); err != nil {
+		return nil, fmt.Errorf("client: failed to read reply data: %w", err)
+	}
+	return append(reply, additionalData...), nil
+}
+
+func extractFileDescriptors(oob []byte, oobn int) ([]int, error) {
+	if oobn == 0 {
+		return nil, nil
+	}
+
+	messages, err := syscall.ParseSocketControlMessage(oob[:oobn])
+	if err != nil {
+		return nil, fmt.Errorf("client: failed to parse control message: %w", err)
+	}
+
 	var receivedFDs []int
-	if oobn > 0 {
-		messages, err := syscall.ParseSocketControlMessage(oob[:oobn])
-		if err != nil {
-			return nil, nil, fmt.Errorf("client: failed to parse control message: %w", err)
-		}
-
-		for _, msg := range messages {
-			if msg.Header.Level == syscall.SOL_SOCKET && msg.Header.Type == syscall.SCM_RIGHTS {
-				// Extract file descriptors
-				fds, err := syscall.ParseUnixRights(&msg)
-				if err != nil {
-					return nil, nil, fmt.Errorf("client: failed to parse SCM_RIGHTS: %w", err)
-				}
-				receivedFDs = append(receivedFDs, fds...)
+	for _, msg := range messages {
+		if msg.Header.Level == syscall.SOL_SOCKET && msg.Header.Type == syscall.SCM_RIGHTS {
+			fds, err := syscall.ParseUnixRights(&msg)
+			if err != nil {
+				return nil, fmt.Errorf("client: failed to parse SCM_RIGHTS: %w", err)
 			}
+			receivedFDs = append(receivedFDs, fds...)
 		}
 	}
 
-	return reply, receivedFDs, nil
+	return receivedFDs, nil
 }

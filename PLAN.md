@@ -30,19 +30,21 @@ go-stats-generator analyze . --skip-tests --format json --sections functions | \
 # Result: 5 (target: ≤4, baseline: 10)
 ```
 
-### Step 2: Deduplicate X11 Client Protocol Code
+### Step 2: Deduplicate X11 Client Protocol Code ✅
 - **Deliverable**: Extract shared request/reply handling from SendRequestAndReplyWithFDs and reduce X11 duplication
 - **Dependencies**: None
 - **Files**:
-  - `internal/x11/client/client.go` (complexity 18.9)
+  - `internal/x11/client/client.go` (complexity 18.9→8.3)
   - `internal/x11/dri3/dri3.go` (duplication with present.go)
   - `internal/x11/present/present.go` (duplication with dri3.go)
 - **Acceptance**: Reduce X11 client complexity ≤12, eliminate dri3/present clone pair
+- **Status**: ✅ Complete - complexity reduced to 8.3, duplication eliminated
 - **Validation**:
 ```bash
 go-stats-generator analyze . --skip-tests --format json --sections functions,duplication | \
   jq '{complexity: [.functions[] | select(.name == "SendRequestAndReplyWithFDs")] | .[0].complexity.overall, dri3_present_dupes: [.duplication.clones[] | select(.instances[0].file | contains("dri3") or contains("present"))] | length}'
-# Target: complexity ≤12, dri3_present_dupes == 0
+# Result: {complexity: 8.3, dri3_present_dupes: 0}
+# Target met: complexity ≤12 ✅, dri3_present_dupes == 0 ✅
 ```
 
 ### Step 3: Refactor Atlas Region Allocation
