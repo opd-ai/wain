@@ -35,7 +35,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1–1.2) — ✅ Complete
-**Wayland Client** (7 packages, ~4,325 LOC):
+**Wayland Client** (9 packages, ~4,325 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
@@ -43,7 +43,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded QWERTY layout)
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (7 packages, ~3,288 LOC):
+**X11 Client** (9 packages, ~3,288 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -373,22 +373,26 @@ Provides Go wrappers for all Rust C ABI exports:
 
 ```
 Protocol Implementations (~6,280 LOC)
-├── Wayland Client (7 packages, ~3,392 LOC)
+├── Wayland Client (9 packages, ~3,392 LOC)
 │   ├── wire/        → Binary marshaling + fd passing
 │   ├── socket/      → Unix domain socket + SCM_RIGHTS
 │   ├── client/      → Display, Registry, Compositor, Surface
 │   ├── shm/         → Shared memory buffers (memfd)
 │   ├── xdg/         → Window management (xdg-shell)
 │   ├── input/       → Seat, Pointer, Keyboard (hardcoded QWERTY)
-│   └── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
-└── X11 Client (7 packages, ~2,888 LOC)
+│   ├── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
+│   ├── datadevice/  → Data device manager for clipboard/DnD
+│   └── output/      → Output configuration and mode handling
+└── X11 Client (9 packages, ~2,888 LOC)
     ├── wire/        → Request/reply/event encoding, extension queries
     ├── client/      → Connection, CreateWindow, MapWindow, extension support
     ├── events/      → KeyPress, Button, Motion events
     ├── gc/          → Graphics context, PutImage
     ├── shm/         → MIT-SHM extension (zero-copy image transfers)
     ├── dri3/        → DRI3 extension (GPU buffer sharing via DMA-BUF)
-    └── present/     → Present extension (frame synchronization)
+    ├── present/     → Present extension (frame synchronization)
+    ├── dpi/         → DPI detection and scaling
+    └── selection/   → Selection and clipboard handling
 ```
 
 ### 4. Rendering Layer (`internal/raster/`)
