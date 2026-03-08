@@ -323,7 +323,8 @@ impl MappedBuffer {
     /// Get a mutable slice of the mapped buffer.
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         if self.ptr.is_null() {
-            return &mut [];
+            let ptr = std::ptr::NonNull::<u8>::dangling().as_ptr();
+            return unsafe { std::slice::from_raw_parts_mut(ptr, 0) };
         }
         unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
     }
