@@ -197,6 +197,21 @@ impl EUInstruction {
         self.src1_mod = if negate { SrcMod::NEGATE } else { SrcMod::NONE };
     }
     
+    /// Set source 0 absolute modifier (mutable)
+    pub fn set_src0_absolute(&mut self, absolute: bool) {
+        self.src0_mod = if absolute { SrcMod::ABSOLUTE } else { SrcMod::NONE };
+    }
+    
+    /// Set source 1 absolute modifier (mutable)
+    pub fn set_src1_absolute(&mut self, absolute: bool) {
+        self.src1_mod = if absolute { SrcMod::ABSOLUTE } else { SrcMod::NONE };
+    }
+    
+    /// Set conditional modifier (mutable)
+    pub fn set_cond_mod(&mut self, cond_mod: CondMod) {
+        self.cond_mod = cond_mod;
+    }
+    
     /// Encode instruction to binary format
     ///
     /// Returns 16 bytes (128 bits) on Gen9+

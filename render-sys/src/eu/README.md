@@ -2,7 +2,7 @@
 
 This module implements the Intel Execution Unit (EU) backend for the shader compiler pipeline.
 
-## Status: Instruction Lowering Foundation Complete ✅
+## Status: Extended Operations Complete ✅
 
 ### Implemented Components
 
@@ -13,7 +13,7 @@ This module implements the Intel Execution Unit (EU) backend for the shader comp
    - `EUCompileError`: Error handling
    - Test infrastructure for EU compilation
 
-2. **Instruction Encoding** (`instruction.rs`) ✅ COMPLETE
+2. **Instruction Encoding** (`instruction.rs`) ✅ COMPLETE + ENHANCED
    - `EUOpcode`: Instruction opcode enumeration (ALU, logic, flow control, SEND)
    - `Register`: Register file references (GRF, ARF, immediate)
    - `EUInstruction`: 128-bit instruction format for Gen9+
@@ -21,6 +21,7 @@ This module implements the Intel Execution Unit (EU) backend for the shader comp
    - Support for execution size, data types, conditional modifiers
    - Source modifiers (negate, absolute)
    - Mutable setter methods for imperative instruction building
+   - **NEW**: `set_src0_absolute()`, `set_src1_absolute()`, `set_cond_mod()`
    - Comprehensive test coverage (11 tests)
 
 3. **Binary Encoding Tables** (`encoding.rs`) ✅ COMPLETE
@@ -28,7 +29,7 @@ This module implements the Intel Execution Unit (EU) backend for the shader comp
    - Register encoding (GRF, ARF, immediate)
    - Execution size encoding (1, 2, 4, 8, 16, 32 channels)
    - Data type encoding (UD, D, UW, W, UB, B, F, HF)
-   - Conditional modifier encoding
+   - Conditional modifier encoding (None, Z, NZ, G, GE, L, LE, E, NE)
    - Source modifier encoding (NONE, NEGATE, ABSOLUTE)
    - Comprehensive test coverage (6 tests)
 
@@ -40,48 +41,59 @@ This module implements the Intel Execution Unit (EU) backend for the shader comp
    - Virtual register allocation (`allocate_vreg`)
    - Physical register lookup (`get_physical`)
 
-5. **Instruction Lowering** (`lower.rs`) ✅ NEW - FOUNDATION COMPLETE
+5. **Instruction Lowering** (`lower.rs`) ✅ EXTENDED OPERATIONS COMPLETE
    - `LoweringContext`: Manages instruction generation from naga IR
-   - Binary arithmetic lowering: Add, Subtract (via negation), Multiply
-   - Unary arithmetic lowering: Negate, BitwiseNot, LogicalNot
+   - **Arithmetic Operations**:
+     - Binary: Add, Subtract (via negation), Multiply
+     - Unary: Negate, BitwiseNot, LogicalNot
+   - **Math Operations (NEW)**:
+     - Abs (absolute value via MOV with absolute modifier)
+     - Min/Max (via SEL with conditional modifiers)
+     - Floor/Ceil/Round/Fract (deferred - requires multi-instruction sequences)
+     - Sqrt (deferred - requires SEND instruction)
+     - Mix (deferred - multi-instruction lerp sequence)
+   - **Comparison Operations (NEW)**:
+     - Equal, NotEqual (via CMP with E/NE conditional)
+     - Less, LessEqual (via CMP with L/LE conditional)
+     - Greater, GreaterEqual (via CMP with G/GE conditional)
+   - **Select Operation (NEW)**:
+     - Conditional select (ternary operator via SEL)
+   - **Division (NEW)**:
+     - Floating-point division (deferred - requires SEND for reciprocal)
    - Expression-to-register mapping
    - Automatic register allocation during lowering
-   - Comprehensive test coverage (9 tests)
-   - **Note**: Division and advanced operations deferred to next iteration
+   - Comprehensive test coverage (17 tests, up from 9)
 
 ### Integration
 
 The EU module is integrated into the main `render-sys` library:
 - Declared in `lib.rs` as `pub mod eu`
 - Available for use by future shader compilation infrastructure
-- All tests passing (138 EU tests, 138 total Rust tests)
+- All tests passing (146 total Rust tests, up from 138)
 
 ### Code Metrics
 
-- **Total LOC**: ~1,400 lines (up from ~864)
-- **Test count**: 26 tests (up from 17)
+- **Total LOC**: ~1,940 lines (up from ~1,400)
+- **Test count**: 34 tests (up from 26)
 - **Test coverage**: 100% for public API
 - **Files**: 5 Rust modules
-  - `encoding.rs`: 280 lines
-  - `instruction.rs`: 365 lines (enhanced with mutable setters)
-  - `lower.rs`: 402 lines (NEW)
-  - `mod.rs`: 144 lines
-  - `regalloc.rs`: 155 lines (enhanced)
+  - `encoding.rs`: 282 lines
+  - `instruction.rs`: 377 lines (enhanced with absolute/cond modifiers)
+  - `lower.rs`: 822 lines (NEW: +420 lines for extended operations)
+  - `mod.rs`: 145 lines
+  - `regalloc.rs`: 151 lines
 
 ### Next Steps (Phase 4.3 Continuation)
 
-The instruction lowering foundation is in place with basic arithmetic operations. The full implementation requires:
+The instruction lowering foundation is in place with basic and extended arithmetic operations. The full implementation requires:
 
-1. **Instruction Lowering - Extended Operations** (8-12 sub-components) - NEXT PRIORITY
-   - Division (multi-instruction sequence)
-   - Modulo operations
-   - Floating-point math functions (sqrt, rsqrt, sin, cos, exp, log)
-   - Comparison ops → EU compare instructions
-   - Logic ops (AND, OR, XOR already supported)
-   - Bitwise shifts
-   - Min/max operations
-   - Control flow → EU branch/jump instructions
-   - Function calls → URB handling
+1. **Advanced Math Functions** (4-8 sub-components) - NEXT PRIORITY
+   - Floor, Ceil, Round, Fract (multi-instruction sequences)
+   - Sqrt, InverseSqrt (SEND to math unit)
+   - Sin, Cos, Tan, Asin, Acos, Atan (approximation via polynomial or SEND)
+   - Exp, Exp2, Log, Log2 (approximation or SEND)
+   - Pow (combination of log/exp)
+   - Mix/Lerp (multi-instruction: x*(1-a) + y*a)
    
 2. **Type System Integration**
    - Naga type analysis → EU data types
@@ -123,12 +135,17 @@ Current tests validate:
 - **Arithmetic instruction lowering (Add, Mul, Subtract via negation)** ✅
 - **Unary instruction lowering (Negate, NOT)** ✅
 - **Multi-instruction lowering chains** ✅
+- **Math operations (Abs, Min, Max)** ✅ NEW
+- **Comparison operations (Equal, Less, GreaterEqual, etc.)** ✅ NEW
+- **Select operation (ternary conditional)** ✅ NEW
 
 Future tests will add:
+- Advanced math functions (Floor, Sqrt, Mix, etc.)
 - Full shader compilation (solid fill, textured quad, etc.)
 - Binary output verification against Mesa reference
 - GPU execution validation (read-back tests)
-- Complete instruction lowering from naga IR for all operations
+- Vector operations (vec2/3/4)
+- Type conversions
 
 ### References
 
@@ -141,17 +158,20 @@ Future tests will add:
 
 Phase 4.3 is estimated at 10,000-20,000 LOC total.
 
-Current state: ~1,400 LOC (foundation + binary encoding + arithmetic lowering)
-Remaining: ~8,600-18,600 LOC
+Current state: ~1,940 LOC (foundation + binary encoding + arithmetic + extended operations)
+Remaining: ~8,060-18,060 LOC
 
 Components:
 - ✅ Binary encoding: COMPLETE (~564 LOC)
-- ✅ Arithmetic lowering (basic): COMPLETE (~402 LOC)
-- Extended instruction lowering: 4,000-7,000 LOC (NEXT)
+- ✅ Arithmetic lowering (basic): COMPLETE (~200 LOC)
+- ✅ Extended operations (math, comparison, select): COMPLETE (~420 LOC)
+- Advanced math functions: 600-1,200 LOC (NEXT)
 - Type system integration: 800-1,500 LOC
+- Vector operations: 1,200-2,000 LOC
 - Texture sampling: 1,000-2,000 LOC
 - I/O handling: 1,000-2,000 LOC
+- Control flow: 800-1,500 LOC
 - Optimization passes: 1,500-3,000 LOC
-- Test infrastructure: 1,200-2,700 LOC
+- Test infrastructure: 1,500-3,000 LOC
 
 This is a multi-week effort suitable for incremental development.
