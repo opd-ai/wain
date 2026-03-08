@@ -15,6 +15,7 @@
 
 pub mod instruction;
 pub mod regalloc;
+pub mod encoding;
 
 use crate::shader::ShaderModule;
 use naga::{Module, ShaderStage};
