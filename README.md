@@ -166,6 +166,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 
 ## Build
 
+### Quick Build (Recommended)
 ```bash
 # Build the static binary (checks deps, builds Rust library, builds Go binary)
 make build
@@ -174,6 +175,30 @@ make build
 ```
 
 The Makefile auto-detects the host architecture via `rustc -vV` and selects the appropriate musl target (e.g., `x86_64-unknown-linux-musl` or `aarch64-unknown-linux-musl`).
+
+### Alternative: Go Generate Workflow
+
+You can also build using Go's native workflow with `go generate`:
+
+```bash
+# Step 1: Generate build artifacts (Rust library + musl stub)
+go generate ./...
+
+# Step 2: Build the Go binary
+CC=musl-gcc CGO_ENABLED=1 \
+  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
+  CGO_LDFLAGS_ALLOW=".*" \
+  go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
+```
+
+The `go generate` step:
+1. Checks for required tools (musl-gcc, cargo, rustup)
+2. Auto-detects host architecture
+3. Installs musl Rust target if missing
+4. Builds the Rust static library (`librender.a`)
+5. Compiles the musl compatibility stub
+
+**Recommendation:** Use `make build` for simplicity. The `go generate` workflow is provided for integration with Go-native build systems and CI pipelines that prefer Go tooling over Make.
 
 ### Configurable Variables
 

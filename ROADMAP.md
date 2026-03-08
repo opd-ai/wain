@@ -662,8 +662,17 @@ PHASE 8: Polish & Distribution (Weeks 34-38)
        - Added Documentation section to README with quick links
        - Documentation coverage: 88% overall (package 100%, functions 98%, methods 84%)
 
-8.6  Package the Rust rendering library build as a Go generate step so
+8.6  ✅ Package the Rust rendering library build as a Go generate step so
      `go generate && go build` produces the final static binary.
+     - **Status**: ✅ Complete
+       - Created scripts/build-rust.sh comprehensive build script
+       - Added go:generate directive in internal/render/generate.go
+       - Automatic dependency checking (musl-gcc, cargo, rustup)
+       - Auto-detection of host architecture and Rust musl target
+       - Auto-installation of musl Rust target if missing
+       - Builds both Rust library and musl compatibility stub
+       - All tests passing, zero regressions
+       - Full integration: `go generate ./...` followed by `go build` works
 
 --------------------------------------------------------------------------------
 KEY RISKS & MITIGATIONS
