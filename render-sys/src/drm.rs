@@ -7,6 +7,21 @@ use std::fs::File;
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::io;
 
+/// Execute an ioctl and return an error if it fails.
+///
+/// Unlike calling `nix::libc::ioctl` directly, this function checks the return
+/// value and converts a negative result into an `io::Error`. Callers must not
+/// ignore the returned `Result` — on failure the output fields of `arg` are
+/// left in an undefined state.
+pub(crate) fn checked_ioctl<T>(fd: RawFd, request: nix::libc::c_ulong, arg: *mut T) -> io::Result<()> {
+    let ret = unsafe { nix::libc::ioctl(fd, request, arg) };
+    if ret < 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 /// DRM device file handle.
 pub struct DrmDevice {
     file: File,
@@ -65,10 +80,7 @@ const DRM_IOCTL_MODE_CREATE_DUMB: nix::libc::Ioctl = nix::request_code_readwrite
 impl DrmDevice {
     /// Allocate a dumb buffer.
     pub fn create_dumb(&self, req: &mut CreateDumb) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_MODE_CREATE_DUMB as _, req as *mut CreateDumb)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_MODE_CREATE_DUMB as u64, req as *mut CreateDumb)
     }
 }
 
@@ -86,10 +98,7 @@ impl DrmDevice {
     /// Close (free) a GEM buffer object.
     pub fn gem_close(&self, handle: u32) -> io::Result<()> {
         let mut req = GemClose { handle, pad: 0 };
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_GEM_CLOSE as _, &mut req as *mut GemClose)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_GEM_CLOSE as u64, &mut req as *mut GemClose)
     }
 }
 
@@ -116,12 +125,7 @@ impl DrmDevice {
             flags: DRM_CLOEXEC | DRM_RDWR,
             fd: -1,
         };
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_PRIME_HANDLE_TO_FD as _, &mut req as *mut PrimeHandleToFd)
-        };
-        if req.fd < 0 {
-            return Err(io::Error::last_os_error());
-        }
+        checked_ioctl(self.fd(), DRM_IOCTL_PRIME_HANDLE_TO_FD as u64, &mut req as *mut PrimeHandleToFd)?;
         Ok(req.fd)
     }
 }

@@ -7,7 +7,7 @@
 /// Reference: Mesa src/amd/common/ and Linux kernel drm/amd/amdgpu/
 
 use std::io;
-use crate::drm::DrmDevice;
+use crate::drm::{DrmDevice, checked_ioctl};
 
 /// AMDGPU_GEM_CREATE: Allocate a GEM buffer object.
 ///
@@ -527,66 +527,42 @@ const DRM_IOCTL_AMDGPU_INFO: nix::libc::Ioctl = nix::request_code_readwrite!(DRM
 impl DrmDevice {
     /// Execute AMDGPU_GEM_CREATE ioctl.
     pub fn amdgpu_gem_create(&self, req: &mut GemCreate) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_CREATE as _, req as *mut GemCreate)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_CREATE as u64, req as *mut GemCreate)
     }
 
     /// Execute AMDGPU_GEM_MMAP ioctl.
     pub fn amdgpu_gem_mmap(&self, req: &mut GemMmap) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_MMAP as _, req as *mut GemMmap)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_MMAP as u64, req as *mut GemMmap)
     }
 
     /// Execute AMDGPU_GEM_WAIT_IDLE ioctl.
     pub fn amdgpu_gem_wait_idle(&self, req: &mut GemWaitIdle) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_WAIT_IDLE as _, req as *mut GemWaitIdle)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_WAIT_IDLE as u64, req as *mut GemWaitIdle)
     }
 
     /// Execute AMDGPU_GEM_VA ioctl.
     pub fn amdgpu_gem_va(&self, req: &mut GemVa) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_VA as _, req as *mut GemVa)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_GEM_VA as u64, req as *mut GemVa)
     }
 
     /// Execute AMDGPU_CTX ioctl.
     pub fn amdgpu_ctx(&self, req: &mut ContextOp) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_CTX as _, req as *mut ContextOp)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_CTX as u64, req as *mut ContextOp)
     }
 
     /// Execute AMDGPU_CS ioctl.
     pub fn amdgpu_cs(&self, req: &mut CommandSubmission) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_CS as _, req as *mut CommandSubmission)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_CS as u64, req as *mut CommandSubmission)
     }
 
     /// Execute AMDGPU_WAIT_CS ioctl.
     pub fn amdgpu_wait_cs(&self, req: &mut WaitCommandSubmission) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_WAIT_CS as _, req as *mut WaitCommandSubmission)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_WAIT_CS as u64, req as *mut WaitCommandSubmission)
     }
 
     /// Execute AMDGPU_INFO ioctl.
     pub fn amdgpu_info(&self, req: &mut DeviceInfo) -> io::Result<()> {
-        unsafe {
-            nix::libc::ioctl(self.fd(), DRM_IOCTL_AMDGPU_INFO as _, req as *mut DeviceInfo)
-        };
-        Ok(())
+        checked_ioctl(self.fd(), DRM_IOCTL_AMDGPU_INFO as u64, req as *mut DeviceInfo)
     }
 
     /// Map a GEM buffer to GPU virtual address space.

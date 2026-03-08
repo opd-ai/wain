@@ -223,6 +223,10 @@ func DecodeString(r io.Reader) (string, error) {
 		return "", nil
 	}
 
+	if length > MaxMessageSize-HeaderSize {
+		return "", fmt.Errorf("%w: string length %d exceeds maximum", ErrInvalidArgument, length)
+	}
+
 	buf := make([]byte, length)
 	if _, err := io.ReadFull(r, buf); err != nil {
 		return "", fmt.Errorf("%w: string data: %v", ErrInvalidArgument, err)
@@ -276,6 +280,10 @@ func DecodeArray(r io.Reader) ([]byte, error) {
 
 	if length == 0 {
 		return nil, nil
+	}
+
+	if length > MaxMessageSize-HeaderSize {
+		return nil, fmt.Errorf("%w: array length %d exceeds maximum", ErrInvalidArgument, length)
 	}
 
 	buf := make([]byte, length)

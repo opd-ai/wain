@@ -314,20 +314,41 @@ pub struct MappedBuffer {
 impl MappedBuffer {
     /// Get a read-only slice of the mapped buffer.
     pub fn as_slice(&self) -> &[u8] {
+        if self.ptr.is_null() {
+            return &[];
+        }
         unsafe { std::slice::from_raw_parts(self.ptr, self.size) }
     }
 
     /// Get a mutable slice of the mapped buffer.
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        if self.ptr.is_null() {
+            let ptr = std::ptr::NonNull::<u8>::dangling().as_ptr();
+            return unsafe { std::slice::from_raw_parts_mut(ptr, 0) };
+        }
         unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
     }
 }
 
 impl Drop for MappedBuffer {
     fn drop(&mut self) {
-        unsafe {
-            nix::libc::munmap(self.ptr as *mut nix::libc::c_void, self.size);
+        if self.ptr.is_null() {
+            return;
         }
+        let ret = unsafe {
+            nix::libc::munmap(self.ptr as *mut nix::libc::c_void, self.size)
+        };
+        if ret < 0 {
+            // Log warning in debug builds but do not panic in Drop
+            #[cfg(debug_assertions)]
+            {
+                eprintln!(
+                    "MappedBuffer::drop: munmap failed: {}",
+                    std::io::Error::last_os_error()
+                );
+            }
+        }
+        self.ptr = std::ptr::null_mut();
     }
 }
 
