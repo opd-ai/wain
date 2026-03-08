@@ -35,7 +35,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Fully static binary output (no dynamic dependencies)
 
 ### Protocol Layer (Phase 1.1–1.2) — ✅ Complete
-**Wayland Client** (9 packages, ~4,325 LOC):
+**Wayland Client** (9 packages, ~9,747 LOC):
 - ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
@@ -43,7 +43,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded QWERTY layout)
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
-**X11 Client** (9 packages, ~3,288 LOC):
+**X11 Client** (9 packages, ~7,735 LOC):
 - ✅ Connection setup: authentication, XID allocation, extension queries
 - ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
@@ -92,7 +92,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ Advanced features deferred: URB I/O, texture SEND instructions, optimizations
 
 ### Rendering Layer (Phase 1.4) — ✅ Complete
-**Software 2D Rasterizer** (5 packages, ~2,458 LOC):
+**Software 2D Rasterizer** (7 packages, ~6,994 LOC):
 - ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
 - ✅ Curves: quadratic/cubic Bezier, arc fills
 - ✅ Text: SDF-based rendering with embedded glyph atlas
@@ -100,7 +100,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
 
 ### UI Framework (Phase 1.5) — ✅ Complete
-**Widget Layer** (3 packages, ~2,500 LOC):
+**Widget Layer** (5 packages, ~4,893 LOC):
 - ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
 - ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
 - ✅ Sizing: percentage-based dimensions with auto-layout
