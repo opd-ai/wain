@@ -5,12 +5,6 @@ import (
 	"unsafe"
 )
 
-// testPointer converts a test address value to unsafe.Pointer.
-// Only for use in tests with non-GC-managed addresses.
-func testPointer(addr uintptr) unsafe.Pointer {
-	return unsafe.Pointer(addr)
-}
-
 // TestExtensionConstants verifies SHM extension constant values.
 func TestExtensionConstants(t *testing.T) {
 	tests := []struct {
@@ -58,7 +52,9 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "negative size",
 			seg: &Segment{
-				Addr: testPointer(0x1000),
+				// Test fixture with constant address. The uintptr->unsafe.Pointer
+				// conversion triggers go vet warning but is safe for test constants.
+				Addr: unsafe.Pointer(uintptr(0x1000)),
 				Size: -1,
 			},
 			wantErr: ErrSegmentTooLarge,
@@ -66,7 +62,9 @@ func TestSegmentGetBuffer(t *testing.T) {
 		{
 			name: "size exceeds maximum",
 			seg: &Segment{
-				Addr: testPointer(0x1000),
+				// Test fixture with constant address. The uintptr->unsafe.Pointer
+				// conversion triggers go vet warning but is safe for test constants.
+				Addr: unsafe.Pointer(uintptr(0x1000)),
 				Size: (1 << 30) + 1,
 			},
 			wantErr: ErrSegmentTooLarge,

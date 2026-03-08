@@ -107,18 +107,6 @@ type Connection interface {
 	ExtensionOpcode(name string) (uint8, error)
 }
 
-// sysPointer converts a syscall-returned uintptr address to unsafe.Pointer.
-// This is safe for syscall-allocated memory (like shmat) because:
-// 1. The memory is allocated and managed by the kernel, not Go's GC
-// 2. The address is fixed and will not move
-// 3. The conversion satisfies unsafe.Pointer rule (6): converting syscall results
-//
-// Note: This function exists to centralize and document this pattern, which
-// triggers a go vet warning but is safe for kernel-allocated memory.
-func sysPointer(addr uintptr) unsafe.Pointer {
-	return unsafe.Pointer(addr)
-}
-
 // Segment represents an attached shared memory segment.
 type Segment struct {
 	ID       Shmseg         // X server segment ID
@@ -196,8 +184,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 		return nil, fmt.Errorf("%w: shmget failed: %v", ErrShmFailed, errno)
 	}
 
-	// Attach segment to our address space and convert to pointer.
-	// Use sysPointer helper to document why uintptr->pointer conversion is safe here.
+	// Attach segment to our address space
 	addr, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
 	if errno != 0 {
 		// Clean up segment on failure
@@ -205,10 +192,16 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 		return nil, fmt.Errorf("%w: shmat failed: %v", ErrShmFailed, errno)
 	}
 
+	// Convert syscall result to pointer. While this triggers a go vet warning
+	// ("possible misuse of unsafe.Pointer"), it is safe here because:
+	// 1. The address comes from shmat(), which returns kernel-managed memory
+	// 2. The memory is not subject to Go's garbage collector
+	// 3. The address is fixed and will not be moved or invalidated by the GC
+	// This pattern is standard for syscalls that return pointer-like addresses.
 	seg := &Segment{
 		ID:       Shmseg(xid),
 		ShmID:    int(shmID),
-		Addr:     sysPointer(addr),
+		Addr:     unsafe.Pointer(addr),
 		Size:     size,
 		ReadOnly: readOnly,
 	}
