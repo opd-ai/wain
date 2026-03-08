@@ -62,7 +62,7 @@ The codebase demonstrates solid engineering practices with comprehensive test co
   - EU Backend: "~2,400 LOC" (actual: 4,090) **RESOLVED**: Updated to ~4,090 LOC
   All LOC claims synchronized with actual codebase counts measured via wc -l.
 
-- [ ] **Rust test suite incomplete visibility** — README.md:126 vs Cargo test output — README highlights "14 shader tests" but does not mention the project has 252 total Rust tests (244 passing, 8 ignored). This significantly understates the Rust test coverage and gives users an incomplete picture of validation scope.
+- [x] **Rust test suite incomplete visibility** — README.md:126 vs Cargo test output — README highlights "14 shader tests" but does not mention the project has 252 total Rust tests (244 passing, 8 ignored). This significantly understates the Rust test coverage and gives users an incomplete picture of validation scope. **RESOLVED**: Added comprehensive test coverage section to README.md Test section documenting 252 Rust tests (244 passing, 8 ignored) with breakdown of test categories, plus 57 Go test files.
 
 - [ ] **EU backend LOC claim mismatch** — README.md:117 — README claims "~2,400 LOC" for Intel EU Backend but actual count is 4,090 LOC in `render-sys/src/eu/` (+70%). This is the largest LOC discrepancy in the documentation and suggests significant expansion beyond initial phase scope.
 

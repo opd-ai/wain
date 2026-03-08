@@ -232,6 +232,16 @@ make coverage-html
 # HTML report: coverage/coverage.html
 ```
 
+**Test Suite Coverage:**
+- **Rust:** 252 tests total (244 passing, 8 GPU tests ignored)
+  - Includes comprehensive unit tests for shader compilation, EU backend, batch processing, and pipeline management
+  - 22 shader validation tests (naga integration tests for all 7 WGSL shaders)
+- **Go:** 57 test files covering all 40 packages
+  - Protocol implementations (Wayland wire format, X11 protocol)
+  - 2D rasterization (curves, text, effects, compositing)
+  - UI framework (layout, widgets, event handling)
+  - Integration tests (full protocol → rasterizer → display pipeline)
+
 **Note:** Do NOT use `go test ./...` directly. Go tests require `CGO_LDFLAGS` to be set to link the Rust static library, which is architecture-dependent. The `make test-go` target handles this automatically. Direct `go test` will fail with linker errors (`undefined reference to render_add`).
 
 ## Verify Static Linking
