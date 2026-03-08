@@ -24,6 +24,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("x11-demo", "X11 protocol client with software rasterizer", []string{
+		demo.FormatExample("x11-demo", "Run demo on X11 server"),
+		demo.FormatExample("x11-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("==================================")
 	fmt.Println("wain Phase 1 Demo - X11 Backend")
 	fmt.Println("==================================")

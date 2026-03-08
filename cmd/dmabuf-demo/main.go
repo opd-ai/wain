@@ -34,6 +34,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("dmabuf-demo", "Wayland DMA-BUF GPU buffer sharing demonstration", []string{
+		demo.FormatExample("dmabuf-demo", "Run demo on Wayland compositor"),
+		demo.FormatExample("dmabuf-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("==============================================")
 	fmt.Println("wain Phase 2.3 Demo - DMA-BUF + Wayland")
 	fmt.Println("==============================================")

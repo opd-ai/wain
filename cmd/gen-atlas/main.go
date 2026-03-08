@@ -4,9 +4,16 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
+	demo.CheckHelpFlag("gen-atlas", "Generate SDF font atlas for text rendering", []string{
+		demo.FormatExample("gen-atlas", "Generate atlas.bin font atlas file"),
+		demo.FormatExample("gen-atlas --help", "Show this help message"),
+	})
+
 	const atlasWidth = 256
 	const atlasHeight = 256
 	const glyphSize = 16

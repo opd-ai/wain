@@ -15,12 +15,19 @@ import (
 	"log"
 	"os"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
 
 func main() {
+	demo.CheckHelpFlag("auto-render-demo", "Automatic backend selection with GPU fallback", []string{
+		demo.FormatExample("auto-render-demo", "Auto-detect GPU and render"),
+		demo.FormatExample("FORCE_SOFTWARE=1 auto-render-demo", "Force software renderer"),
+		demo.FormatExample("auto-render-demo --help", "Show this help message"),
+	})
+
 	log.SetFlags(0)
 
 	// Configure automatic backend selection

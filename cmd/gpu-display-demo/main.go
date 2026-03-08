@@ -53,10 +53,20 @@ const (
 var (
 	forceWayland = flag.Bool("wayland", false, "force Wayland (ignore X11)")
 	forceX11     = flag.Bool("x11", false, "force X11 (ignore Wayland)")
+	showHelp     = flag.Bool("help", false, "show help message")
 )
 
 func main() {
 	flag.Parse()
+
+	if *showHelp {
+		demo.PrintUsageAndExit("gpu-display-demo", "End-to-end GPU rendering to display", []string{
+			demo.FormatExample("gpu-display-demo", "Auto-detect Wayland or X11"),
+			demo.FormatExample("gpu-display-demo -wayland", "Force Wayland"),
+			demo.FormatExample("gpu-display-demo -x11", "Force X11"),
+			demo.FormatExample("gpu-display-demo -help", "Show this help message"),
+		})
+	}
 
 	fmt.Println("==============================================")
 	fmt.Println("wain GPU Display Integration Demo")

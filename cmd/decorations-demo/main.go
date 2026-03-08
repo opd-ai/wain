@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -13,6 +14,11 @@ import (
 )
 
 func main() {
+	demo.CheckHelpFlag("decorations-demo", "Client-side window decorations demonstration", []string{
+		demo.FormatExample("decorations-demo", "Run window decorations demo"),
+		demo.FormatExample("decorations-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("======================================")
 	fmt.Println("Window Decorations Demo - Phase 8.3")
 	fmt.Println("======================================")

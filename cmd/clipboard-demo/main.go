@@ -6,12 +6,18 @@ package main
 import (
 	"fmt"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/wayland/datadevice"
 	"github.com/opd-ai/wain/internal/wayland/wire"
 	"github.com/opd-ai/wain/internal/x11/selection"
 )
 
 func main() {
+	demo.CheckHelpFlag("clipboard-demo", "Clipboard protocol implementation for X11 and Wayland", []string{
+		demo.FormatExample("clipboard-demo", "Run clipboard API demonstration"),
+		demo.FormatExample("clipboard-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("Clipboard Demo - Phase 8.2 Implementation")
 	fmt.Println("==========================================")
 	fmt.Println()

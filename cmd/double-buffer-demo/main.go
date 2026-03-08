@@ -42,6 +42,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("double-buffer-demo", "Double/triple buffering with Wayland compositor synchronization", []string{
+		demo.FormatExample("double-buffer-demo", "Run animated demo with double buffering"),
+		demo.FormatExample("double-buffer-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("=======================================================")
 	fmt.Println("wain Phase 5.3 Demo - Double/Triple Buffering")
 	fmt.Println("=======================================================")

@@ -24,6 +24,7 @@ import (
 	"log"
 	"syscall"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
@@ -40,6 +41,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("gpu-triangle-demo", "GPU command submission with Intel EU rendering", []string{
+		demo.FormatExample("gpu-triangle-demo", "Render triangle via GPU commands"),
+		demo.FormatExample("gpu-triangle-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("==============================================")
 	fmt.Println("wain Phase 3 Demo - GPU Triangle Rendering")
 	fmt.Println("==============================================")

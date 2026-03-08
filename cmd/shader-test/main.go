@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
 )
 
@@ -87,6 +88,11 @@ type shaderTest struct {
 }
 
 func main() {
+	demo.CheckHelpFlag("shader-test", "Test shader compilation for all 7 UI shader types", []string{
+		demo.FormatExample("shader-test", "Compile and validate all UI shaders"),
+		demo.FormatExample("shader-test --help", "Show this help message"),
+	})
+
 	fmt.Println("==============================================")
 	fmt.Println("wain Phase 4.6 - Shader Compilation Test")
 	fmt.Println("==============================================")

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render"
@@ -15,6 +16,11 @@ import (
 )
 
 func main() {
+	demo.CheckHelpFlag("perf-demo", "GPU performance profiling and benchmarking", []string{
+		demo.FormatExample("perf-demo", "Run GPU performance tests"),
+		demo.FormatExample("perf-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("=== GPU Performance Profiling Demo ===")
 	fmt.Println()
 

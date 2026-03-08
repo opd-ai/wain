@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/ui/widgets"
 )
@@ -28,6 +29,13 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("widget-demo", "Interactive Phase 1 widgets on X11 and Wayland", []string{
+		demo.FormatExample("widget-demo", "Auto-detect platform"),
+		demo.FormatExample("widget-demo --x11", "Force X11"),
+		demo.FormatExample("widget-demo --wayland", "Force Wayland"),
+		demo.FormatExample("widget-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("======================================")
 	fmt.Println("wain Interactive Widget Demo")
 	fmt.Println("======================================")

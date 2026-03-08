@@ -6,6 +6,7 @@ import (
 	"log"
 	"syscall"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
@@ -22,6 +23,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("amd-triangle-demo", "AMD GPU detection and architecture readiness demonstration", []string{
+		demo.FormatExample("amd-triangle-demo", "Run AMD GPU detection demo"),
+		demo.FormatExample("amd-triangle-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("==============================================")
 	fmt.Println("wain Phase 6.4 Demo - AMD GPU Architecture")
 	fmt.Println("==============================================")

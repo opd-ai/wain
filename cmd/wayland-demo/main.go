@@ -29,6 +29,11 @@ const (
 )
 
 func main() {
+	demo.CheckHelpFlag("wayland-demo", "Wayland protocol client with software rasterizer", []string{
+		demo.FormatExample("wayland-demo", "Run demo on Wayland compositor"),
+		demo.FormatExample("wayland-demo --help", "Show this help message"),
+	})
+
 	fmt.Println("======================================")
 	fmt.Println("wain Phase 1 Demo - Wayland Backend")
 	fmt.Println("======================================")
