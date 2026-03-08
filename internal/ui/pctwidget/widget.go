@@ -155,10 +155,10 @@ func (p *Panel) drawBorder(buf *core.Buffer, s Style) {
 		bw = p.height / 2
 	}
 	bc := s.Border()
-	buf.FillRect(p.x, p.y, p.width, bw, bc)                       // top
-	buf.FillRect(p.x, p.y+p.height-bw, p.width, bw, bc)           // bottom
-	buf.FillRect(p.x, p.y, bw, p.height, bc)                      // left
-	buf.FillRect(p.x+p.width-bw, p.y, bw, p.height, bc)           // right
+	buf.FillRect(p.x, p.y, p.width, bw, bc)             // top
+	buf.FillRect(p.x, p.y+p.height-bw, p.width, bw, bc) // bottom
+	buf.FillRect(p.x, p.y, bw, p.height, bc)            // left
+	buf.FillRect(p.x+p.width-bw, p.y, bw, p.height, bc) // right
 }
 
 // drawChildren renders all child panels recursively.

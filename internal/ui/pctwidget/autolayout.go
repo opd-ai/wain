@@ -69,7 +69,7 @@ func computeContentArea(parentX, parentY, parentW, parentH int, style Style) (cx
 	if ch < 0 {
 		ch = 0
 	}
-	return
+	return cx, cy, cw, ch
 }
 
 // placePanel positions a panel based on flow direction and returns the updated cursor.
