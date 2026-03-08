@@ -109,33 +109,45 @@ func Version() string {
 	return C.GoString(C.render_version())
 }
 
-// GpuGeneration represents a detected Intel GPU generation.
+// GpuGeneration represents a detected GPU generation (Intel or AMD).
 type GpuGeneration int
 
 const (
 	// GpuUnknown represents an unknown or unsupported GPU.
 	GpuUnknown GpuGeneration = 0
-	// GpuGen9 represents Gen9 (Skylake, Kaby Lake, Coffee Lake).
+	// GpuGen9 represents Intel Gen9 (Skylake, Kaby Lake, Coffee Lake).
 	GpuGen9 GpuGeneration = 9
-	// GpuGen11 represents Gen11 (Ice Lake).
+	// GpuGen11 represents Intel Gen11 (Ice Lake).
 	GpuGen11 GpuGeneration = 11
-	// GpuGen12 represents Gen12 (Tiger Lake, Rocket Lake, Alder Lake).
+	// GpuGen12 represents Intel Gen12 (Tiger Lake, Rocket Lake, Alder Lake).
 	GpuGen12 GpuGeneration = 12
-	// GpuXe represents Xe (Meteor Lake and later).
+	// GpuXe represents Intel Xe (Meteor Lake and later).
 	GpuXe GpuGeneration = 13
+	// GpuAmdRdna1 represents AMD RDNA1 (Navi 10/12/14, RX 5000 series).
+	GpuAmdRdna1 GpuGeneration = 20
+	// GpuAmdRdna2 represents AMD RDNA2 (Navi 21/22/23/24, RX 6000 series).
+	GpuAmdRdna2 GpuGeneration = 21
+	// GpuAmdRdna3 represents AMD RDNA3 (Navi 31/32/33, RX 7000 series).
+	GpuAmdRdna3 GpuGeneration = 22
 )
 
 // String returns a human-readable name for the GPU generation.
 func (g GpuGeneration) String() string {
 	switch g {
 	case GpuGen9:
-		return "Gen9 (Skylake/Kaby Lake/Coffee Lake)"
+		return "Intel Gen9 (Skylake/Kaby Lake/Coffee Lake)"
 	case GpuGen11:
-		return "Gen11 (Ice Lake)"
+		return "Intel Gen11 (Ice Lake)"
 	case GpuGen12:
-		return "Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"
+		return "Intel Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"
 	case GpuXe:
-		return "Xe (Meteor Lake+)"
+		return "Intel Xe (Meteor Lake+)"
+	case GpuAmdRdna1:
+		return "AMD RDNA1 (Navi 10/12/14, RX 5000)"
+	case GpuAmdRdna2:
+		return "AMD RDNA2 (Navi 21/22/23/24, RX 6000)"
+	case GpuAmdRdna3:
+		return "AMD RDNA3 (Navi 31/32/33, RX 7000)"
 	case GpuUnknown:
 		return "Unknown"
 	default:

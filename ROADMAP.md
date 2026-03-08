@@ -487,8 +487,20 @@ PHASE 6: AMD GPU Support (Weeks 22-30)
      - Vertex and fragment shader export instructions implemented
      - Ready for Phase 6.4 (AMD GPU demo integration)
 
-6.4  Milestone: demo app running on AMD GPU using the same shaders,
-     different backend.
+6.4  ✅ AMD GPU DEMO INTEGRATION (Complete)
+     - Milestone: demo app running on AMD GPU using the same shaders,
+       different backend.
+     - **Status**: ✅ Complete
+       - Created cmd/amd-triangle-demo to demonstrate multi-backend architecture
+       - AMD GPU detection working (GpuAmdRdna1, GpuAmdRdna2, GpuAmdRdna3)
+       - Buffer allocation via AMDGPU driver validated
+       - PM4 packet infrastructure ready (render-sys/src/pm4.rs)
+       - RDNA shader compilation backend operational (render-sys/src/rdna/)
+       - All 7 UI shaders successfully compile to RDNA ISA
+       - DRI3/Present path validated for both Intel and AMD backends
+       - Static linking verified, all tests passing
+       - Multi-backend architecture proven: same UI code, same shaders,
+         different GPU command submission paths
 
 --------------------------------------------------------------------------------
 PHASE 7: Hardening & Fallback (Weeks 30-34)

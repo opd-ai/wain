@@ -100,10 +100,13 @@ func TestGpuGenerationString(t *testing.T) {
 		gen      render.GpuGeneration
 		expected string
 	}{
-		{render.GpuGen9, "Gen9 (Skylake/Kaby Lake/Coffee Lake)"},
-		{render.GpuGen11, "Gen11 (Ice Lake)"},
-		{render.GpuGen12, "Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"},
-		{render.GpuXe, "Xe (Meteor Lake+)"},
+		{render.GpuGen9, "Intel Gen9 (Skylake/Kaby Lake/Coffee Lake)"},
+		{render.GpuGen11, "Intel Gen11 (Ice Lake)"},
+		{render.GpuGen12, "Intel Gen12 (Tiger Lake/Rocket Lake/Alder Lake)"},
+		{render.GpuXe, "Intel Xe (Meteor Lake+)"},
+		{render.GpuAmdRdna1, "AMD RDNA1 (Navi 10/12/14, RX 5000)"},
+		{render.GpuAmdRdna2, "AMD RDNA2 (Navi 21/22/23/24, RX 6000)"},
+		{render.GpuAmdRdna3, "AMD RDNA3 (Navi 31/32/33, RX 7000)"},
 		{render.GpuUnknown, "Unknown"},
 		{render.GpuGeneration(999), "Invalid"},
 	}
