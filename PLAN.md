@@ -114,27 +114,31 @@
     jq '.duplication | {pairs: .clone_pairs, ratio: .duplication_ratio}'
   ```
 
-### Step 5: Simplify Wayland Output Event Handler
+### Step 5: Simplify Wayland Output Event Handler ✅ COMPLETE
 - **Deliverable**: Refactor `handleGeometry` in output package to extract field assignments into a struct builder
 - **Dependencies**: None
-- **Files**: `internal/wayland/output/output.go` (line 149, complexity 13.5)
-- **Acceptance**: `handleGeometry` complexity ≤9.0
+- **Files**: `internal/wayland/output/output.go` (line 149, complexity 13.5 → 4.4)
+- **Acceptance**: `handleGeometry` complexity ≤9.0 ✅ (achieved 4.4)
+- **Implementation**: Extracted `parseGeometryArgs` helper function with individual field extraction helpers (`getInt32Arg`, `getStringArg`)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '[.functions[] | select(.name == "handleGeometry")] | .[0].complexity.overall'
   ```
+  Result: 4.4 (67.4% improvement from baseline)
 
-### Step 6: Refactor encodeArgument Switch Statement
+### Step 6: Refactor encodeArgument Switch Statement ✅ COMPLETE
 - **Deliverable**: Replace type-switch with map-based encoder dispatch or extract type-specific encoders
 - **Dependencies**: None
-- **Files**: `internal/wayland/wire/wire.go` (line 381, complexity 12.7)
-- **Acceptance**: `encodeArgument` complexity ≤9.0
+- **Files**: `internal/wayland/wire/wire.go` (line 381, complexity 12.7 → 3.1)
+- **Acceptance**: `encodeArgument` complexity ≤9.0 ✅ (achieved 3.1)
+- **Implementation**: Extracted 7 type-specific encoder functions (`encodeInt32Arg`, `encodeUint32Arg`, `encodeFixedArg`, `encodeStringArg`, `encodeObjectArg`, `encodeArrayArg`, `encodeFDArg`)
 - **Validation**:
   ```bash
   go-stats-generator analyze . --skip-tests --format json --sections functions | \
     jq '[.functions[] | select(.name == "encodeArgument")] | .[0].complexity.overall'
   ```
+  Result: 3.1 (75.6% improvement from baseline)
 
 ### Step 7: Improve Method Documentation Coverage
 - **Deliverable**: Add godoc comments to undocumented exported methods (target: >90% method coverage)

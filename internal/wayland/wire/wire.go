@@ -381,57 +381,78 @@ func encodeArguments(w io.Writer, args []Argument) ([]int, error) {
 func encodeArgument(w io.Writer, arg *Argument) (int, error) {
 	switch arg.Type {
 	case ArgTypeInt32:
-		v, ok := arg.Value.(int32)
-		if !ok {
-			return -1, fmt.Errorf("%w: int32 value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeInt32(w, v)
-
+		return encodeInt32Arg(w, arg)
 	case ArgTypeUint32:
-		v, ok := arg.Value.(uint32)
-		if !ok {
-			return -1, fmt.Errorf("%w: uint32 value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeUint32(w, v)
-
+		return encodeUint32Arg(w, arg)
 	case ArgTypeFixed:
-		v, ok := arg.Value.(float64)
-		if !ok {
-			return -1, fmt.Errorf("%w: fixed value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeFixed(w, v)
-
+		return encodeFixedArg(w, arg)
 	case ArgTypeString:
-		v, ok := arg.Value.(string)
-		if !ok {
-			return -1, fmt.Errorf("%w: string value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeString(w, v)
-
+		return encodeStringArg(w, arg)
 	case ArgTypeObject, ArgTypeNewID:
-		v, ok := arg.Value.(uint32)
-		if !ok {
-			return -1, fmt.Errorf("%w: object/new_id value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeUint32(w, v)
-
+		return encodeObjectArg(w, arg)
 	case ArgTypeArray:
-		v, ok := arg.Value.([]byte)
-		if !ok {
-			return -1, fmt.Errorf("%w: array value has wrong type", ErrInvalidArgument)
-		}
-		return -1, EncodeArray(w, v)
-
+		return encodeArrayArg(w, arg)
 	case ArgTypeFD:
-		v, ok := arg.Value.(int)
-		if !ok {
-			return -1, fmt.Errorf("%w: fd value has wrong type", ErrInvalidArgument)
-		}
-		return v, nil
-
+		return encodeFDArg(arg)
 	default:
 		return -1, fmt.Errorf("%w: unknown argument type %d", ErrInvalidArgument, arg.Type)
 	}
+}
+
+func encodeInt32Arg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.(int32)
+	if !ok {
+		return -1, fmt.Errorf("%w: int32 value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeInt32(w, v)
+}
+
+func encodeUint32Arg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.(uint32)
+	if !ok {
+		return -1, fmt.Errorf("%w: uint32 value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeUint32(w, v)
+}
+
+func encodeFixedArg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.(float64)
+	if !ok {
+		return -1, fmt.Errorf("%w: fixed value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeFixed(w, v)
+}
+
+func encodeStringArg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.(string)
+	if !ok {
+		return -1, fmt.Errorf("%w: string value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeString(w, v)
+}
+
+func encodeObjectArg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.(uint32)
+	if !ok {
+		return -1, fmt.Errorf("%w: object/new_id value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeUint32(w, v)
+}
+
+func encodeArrayArg(w io.Writer, arg *Argument) (int, error) {
+	v, ok := arg.Value.([]byte)
+	if !ok {
+		return -1, fmt.Errorf("%w: array value has wrong type", ErrInvalidArgument)
+	}
+	return -1, EncodeArray(w, v)
+}
+
+func encodeFDArg(arg *Argument) (int, error) {
+	v, ok := arg.Value.(int)
+	if !ok {
+		return -1, fmt.Errorf("%w: fd value has wrong type", ErrInvalidArgument)
+	}
+	return v, nil
 }
 
 // byteWriter is an io.Writer that appends to a byte slice.
