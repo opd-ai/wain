@@ -656,6 +656,209 @@ impl<'a> LoweringContext<'a> {
         ))
     }
 
+    /// Lower a type conversion (cast) operation
+    ///
+    /// Handles conversions between scalar types: float<->int, int widening/narrowing
+    /// Uses MOV with appropriate data types for most conversions
+    pub fn lower_type_conversion(
+        &mut self,
+        src: naga::Handle<Expression>,
+        src_kind: naga::ScalarKind,
+        src_width: u8,
+        dst_kind: naga::ScalarKind,
+        dst_width: u8,
+        result: naga::Handle<Expression>,
+    ) -> Result<(), EUCompileError> {
+        use super::types::TypeConversionKind;
+        
+        // Determine conversion kind
+        let conv_kind = TypeConversionKind::from_types(src_kind, src_width, dst_kind, dst_width)?;
+        
+        // Get or allocate registers
+        let src_reg = self.get_or_alloc_reg(src)?;
+        let dst_reg = self.alloc_reg(result)?;
+        
+        // Convert to physical registers
+        let src_phys = self.reg_alloc.get_physical(src_reg)
+            .ok_or_else(|| EUCompileError::from("Source operand not allocated"))?;
+        let dst_phys = self.reg_alloc.get_physical(dst_reg)
+            .ok_or_else(|| EUCompileError::from("Destination not allocated"))?;
+        
+        // Create register references
+        let dst = Register {
+            file: RegFile::GRF,
+            num: dst_phys.grf_num,
+            subreg: 0,
+        };
+        let src0 = Register {
+            file: RegFile::GRF,
+            num: src_phys.grf_num,
+            subreg: 0,
+        };
+        
+        // Generate appropriate conversion instruction(s)
+        match conv_kind {
+            TypeConversionKind::FloatToSint | TypeConversionKind::FloatToUint => {
+                // Float to int: MOV with rounding toward zero (RNDZ)
+                // Intel EU: use RNDZ to truncate, then MOV to convert type
+                let temp_reg = self.reg_alloc.allocate_vreg();
+                let temp_phys = self.reg_alloc.get_physical(temp_reg)
+                    .ok_or_else(|| EUCompileError::from("Temp register not allocated"))?;
+                let temp = Register {
+                    file: RegFile::GRF,
+                    num: temp_phys.grf_num,
+                    subreg: 0,
+                };
+                
+                // RNDZ (round toward zero / truncate)
+                let mut rndz = EUInstruction::new(EUOpcode::Rndz);
+                rndz.set_dst(temp);
+                rndz.set_dst_type(DataType::F);
+                rndz.set_src0(src0);
+                rndz.set_src0_type(DataType::F);
+                rndz.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(rndz);
+                
+                // MOV to convert type
+                let dst_dtype = if matches!(conv_kind, TypeConversionKind::FloatToSint) {
+                    match dst_width {
+                        1 => DataType::B,
+                        2 => DataType::W,
+                        4 => DataType::D,
+                        _ => return Err(EUCompileError::from("Invalid integer width")),
+                    }
+                } else {
+                    match dst_width {
+                        1 => DataType::UB,
+                        2 => DataType::UW,
+                        4 => DataType::UD,
+                        _ => return Err(EUCompileError::from("Invalid integer width")),
+                    }
+                };
+                
+                let mut mov = EUInstruction::new(EUOpcode::Mov);
+                mov.set_dst(dst);
+                mov.set_dst_type(dst_dtype);
+                mov.set_src0(temp);
+                mov.set_src0_type(DataType::F);
+                mov.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(mov);
+            }
+            TypeConversionKind::SintToFloat | TypeConversionKind::UintToFloat => {
+                // Int to float: MOV with type conversion
+                let src_dtype = if matches!(conv_kind, TypeConversionKind::SintToFloat) {
+                    match src_width {
+                        1 => DataType::B,
+                        2 => DataType::W,
+                        4 => DataType::D,
+                        _ => return Err(EUCompileError::from("Invalid integer width")),
+                    }
+                } else {
+                    match src_width {
+                        1 => DataType::UB,
+                        2 => DataType::UW,
+                        4 => DataType::UD,
+                        _ => return Err(EUCompileError::from("Invalid integer width")),
+                    }
+                };
+                
+                let dst_dtype = match dst_width {
+                    2 => DataType::HF,
+                    4 => DataType::F,
+                    _ => return Err(EUCompileError::from("Invalid float width")),
+                };
+                
+                let mut mov = EUInstruction::new(EUOpcode::Mov);
+                mov.set_dst(dst);
+                mov.set_dst_type(dst_dtype);
+                mov.set_src0(src0);
+                mov.set_src0_type(src_dtype);
+                mov.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(mov);
+            }
+            TypeConversionKind::SintWiden | TypeConversionKind::UintWiden => {
+                // Integer widening: MOV with sign/zero extension
+                let src_dtype = if matches!(conv_kind, TypeConversionKind::SintWiden) {
+                    match src_width {
+                        1 => DataType::B,
+                        2 => DataType::W,
+                        _ => return Err(EUCompileError::from("Invalid source width for widening")),
+                    }
+                } else {
+                    match src_width {
+                        1 => DataType::UB,
+                        2 => DataType::UW,
+                        _ => return Err(EUCompileError::from("Invalid source width for widening")),
+                    }
+                };
+                
+                let dst_dtype = if matches!(conv_kind, TypeConversionKind::SintWiden) {
+                    DataType::D
+                } else {
+                    DataType::UD
+                };
+                
+                let mut mov = EUInstruction::new(EUOpcode::Mov);
+                mov.set_dst(dst);
+                mov.set_dst_type(dst_dtype);
+                mov.set_src0(src0);
+                mov.set_src0_type(src_dtype);
+                mov.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(mov);
+            }
+            TypeConversionKind::SintNarrow | TypeConversionKind::UintNarrow => {
+                // Integer narrowing: MOV with saturation (if available)
+                // Intel EU MOV automatically truncates to destination width
+                let dst_dtype = if matches!(conv_kind, TypeConversionKind::SintNarrow) {
+                    match dst_width {
+                        1 => DataType::B,
+                        2 => DataType::W,
+                        _ => return Err(EUCompileError::from("Invalid destination width for narrowing")),
+                    }
+                } else {
+                    match dst_width {
+                        1 => DataType::UB,
+                        2 => DataType::UW,
+                        _ => return Err(EUCompileError::from("Invalid destination width for narrowing")),
+                    }
+                };
+                
+                let src_dtype = if matches!(conv_kind, TypeConversionKind::SintNarrow) {
+                    DataType::D
+                } else {
+                    DataType::UD
+                };
+                
+                let mut mov = EUInstruction::new(EUOpcode::Mov);
+                mov.set_dst(dst);
+                mov.set_dst_type(dst_dtype);
+                mov.set_src0(src0);
+                mov.set_src0_type(src_dtype);
+                mov.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(mov);
+            }
+            TypeConversionKind::Bitcast => {
+                // Bitcast: simple MOV, no conversion
+                let dtype = match src_width {
+                    1 => if src_kind == naga::ScalarKind::Sint { DataType::B } else { DataType::UB },
+                    2 => if src_kind == naga::ScalarKind::Sint { DataType::W } else { DataType::UW },
+                    4 => if src_kind == naga::ScalarKind::Sint { DataType::D } else { DataType::UD },
+                    _ => return Err(EUCompileError::from("Invalid bitcast width")),
+                };
+                
+                let mut mov = EUInstruction::new(EUOpcode::Mov);
+                mov.set_dst(dst);
+                mov.set_dst_type(dtype);
+                mov.set_src0(src0);
+                mov.set_src0_type(dtype);
+                mov.set_exec_size(ExecSize::Scalar);
+                self.instructions.push(mov);
+            }
+        }
+        
+        Ok(())
+    }
+
     /// Get or allocate a virtual register for an expression
     fn get_or_alloc_reg(
         &mut self,
@@ -1241,5 +1444,137 @@ mod tests {
         let res = ctx.lower_math(MathFunction::InverseSqrt, arg, None, None, result);
         assert!(res.is_err(), "InverseSqrt should return error (requires SEND)");
         assert!(res.unwrap_err().to_string().contains("SEND instruction"));
+    }
+
+    #[test]
+    fn test_lower_float_to_sint() {
+        use naga::ScalarKind;
+        let mut module = naga::Module::default();
+        
+        let src = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(3.7)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(3)
+        ), Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_type_conversion(
+            src,
+            ScalarKind::Float, 4,
+            ScalarKind::Sint, 4,
+            result
+        );
+        assert!(res.is_ok(), "Float to sint conversion should succeed");
+        
+        // Should generate 2 instructions: RNDZ + MOV
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 2, "Should generate RNDZ + MOV");
+    }
+
+    #[test]
+    fn test_lower_sint_to_float() {
+        use naga::ScalarKind;
+        let mut module = naga::Module::default();
+        
+        let src = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(42)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Literal(
+            naga::Literal::F32(42.0)
+        ), Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_type_conversion(
+            src,
+            ScalarKind::Sint, 4,
+            ScalarKind::Float, 4,
+            result
+        );
+        assert!(res.is_ok(), "Sint to float conversion should succeed");
+        
+        // Should generate 1 MOV instruction
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+    }
+
+    #[test]
+    fn test_lower_uint_widening() {
+        use naga::ScalarKind;
+        let mut module = naga::Module::default();
+        
+        let src = module.const_expressions.append(Expression::Literal(
+            naga::Literal::U32(255)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Literal(
+            naga::Literal::U32(255)
+        ), Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_type_conversion(
+            src,
+            ScalarKind::Uint, 2,  // u16
+            ScalarKind::Uint, 4,  // u32
+            result
+        );
+        assert!(res.is_ok(), "Uint widening should succeed");
+        
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+    }
+
+    #[test]
+    fn test_lower_sint_narrowing() {
+        use naga::ScalarKind;
+        let mut module = naga::Module::default();
+        
+        let src = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(127)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(127)
+        ), Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_type_conversion(
+            src,
+            ScalarKind::Sint, 4,  // i32
+            ScalarKind::Sint, 1,  // i8
+            result
+        );
+        assert!(res.is_ok(), "Sint narrowing should succeed");
+        
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
+    }
+
+    #[test]
+    fn test_lower_bitcast() {
+        use naga::ScalarKind;
+        let mut module = naga::Module::default();
+        
+        let src = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(42)
+        ), Default::default());
+        let result = module.const_expressions.append(Expression::Literal(
+            naga::Literal::I32(42)
+        ), Default::default());
+
+        let mut ctx = LoweringContext::new(IntelGen::Gen9, &module);
+
+        let res = ctx.lower_type_conversion(
+            src,
+            ScalarKind::Sint, 4,
+            ScalarKind::Sint, 4,
+            result
+        );
+        assert!(res.is_ok(), "Bitcast should succeed");
+        
+        let instructions = ctx.instructions();
+        assert_eq!(instructions.len(), 1);
     }
 }
