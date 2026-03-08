@@ -14,8 +14,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
@@ -86,64 +84,28 @@ func runDemo() error {
 // connectToCompositor establishes connection to the Wayland compositor.
 func connectToCompositor() (*client.Connection, error) {
 	fmt.Println("[1/6] Connecting to Wayland compositor...")
-	display := os.Getenv("WAYLAND_DISPLAY")
-	if display == "" {
-		display = "wayland-0"
-	}
-
-	conn, err := client.Connect(display)
+	conn, err := demo.ConnectToWayland()
 	if err != nil {
-		return nil, fmt.Errorf("connect to Wayland: %w", err)
+		return nil, err
 	}
-	fmt.Printf("      ✓ Connected to %s\n", display)
+	fmt.Println("      ✓ Connected")
 	return conn, nil
 }
 
 // discoverGlobals binds to required Wayland global objects.
 func discoverGlobals(conn *client.Connection) (*demoContext, error) {
 	fmt.Println("\n[2/6] Discovering compositor globals...")
-	registry, err := conn.Display().GetRegistry()
+	wlCtx, err := demo.SetupWaylandGlobals(conn)
 	if err != nil {
-		return nil, fmt.Errorf("get registry: %w", err)
+		return nil, err
 	}
-
-	compositorGlobal := registry.FindGlobal("wl_compositor")
-	if compositorGlobal == nil {
-		return nil, fmt.Errorf("wl_compositor not found")
-	}
-	compositor, err := registry.BindCompositor(compositorGlobal)
-	if err != nil {
-		return nil, fmt.Errorf("bind compositor: %w", err)
-	}
-	fmt.Println("      ✓ Bound to wl_compositor")
-
-	shmGlobal := registry.FindGlobal("wl_shm")
-	if shmGlobal == nil {
-		return nil, fmt.Errorf("wl_shm not found")
-	}
-	shmID, err := registry.Bind(shmGlobal.Name, "wl_shm", shmGlobal.Version)
-	if err != nil {
-		return nil, fmt.Errorf("bind shm: %w", err)
-	}
-	shmObj := shm.NewSHM(conn, shmID)
-	fmt.Println("      ✓ Bound to wl_shm")
-
-	xdgGlobal := registry.FindGlobal("xdg_wm_base")
-	if xdgGlobal == nil {
-		return nil, fmt.Errorf("xdg_wm_base not found")
-	}
-	wmBaseID, _, err := registry.BindXdgWmBase(xdgGlobal)
-	if err != nil {
-		return nil, fmt.Errorf("bind xdg_wm_base: %w", err)
-	}
-	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
-	fmt.Println("      ✓ Bound to xdg_wm_base")
+	fmt.Println("      ✓ Bound to wl_compositor, wl_shm, xdg_wm_base")
 
 	return &demoContext{
-		conn:       conn,
-		compositor: compositor,
-		shmObj:     shmObj,
-		wmBase:     wmBase,
+		conn:       wlCtx.Conn,
+		compositor: wlCtx.Compositor,
+		shmObj:     wlCtx.SHM,
+		wmBase:     wlCtx.WmBase,
 	}, nil
 }
 
@@ -204,49 +166,10 @@ func renderContent(btn *widgets.Button, input *widgets.TextInput) (*core.Buffer,
 
 // displayBuffer copies the render buffer to shared memory and displays it.
 func displayBuffer(ctx *demoContext, surface *client.Surface, renderBuffer *core.Buffer) error {
-	fd, err := shm.CreateMemfd("wain-wayland-demo")
-	if err != nil {
-		return fmt.Errorf("create memfd: %w", err)
-	}
-
-	bufferSize := int32(windowWidth * windowHeight * 4)
-	if err := syscall.Ftruncate(fd, int64(bufferSize)); err != nil {
-		syscall.Close(fd)
-		return fmt.Errorf("truncate memfd: %w", err)
-	}
-
-	pool, err := ctx.shmObj.CreatePool(fd, bufferSize)
-	if err != nil {
-		syscall.Close(fd)
-		return fmt.Errorf("create shm pool: %w", err)
-	}
-	defer pool.Destroy()
-
-	if err := pool.Map(); err != nil {
-		return fmt.Errorf("map pool: %w", err)
-	}
-
-	buffer, err := pool.CreateBuffer(0, int32(windowWidth), int32(windowHeight), int32(windowWidth*4), shm.FormatARGB8888)
-	if err != nil {
-		return fmt.Errorf("create buffer: %w", err)
-	}
-
-	copy(buffer.Pixels(), renderBuffer.Pixels)
-	fmt.Println("      ✓ Copied to shared memory buffer")
-
-	if err := surface.Attach(buffer.ID(), 0, 0); err != nil {
-		return fmt.Errorf("attach buffer: %w", err)
-	}
-
-	if err := surface.Damage(0, 0, int32(windowWidth), int32(windowHeight)); err != nil {
-		return fmt.Errorf("damage surface: %w", err)
-	}
-
-	if err := surface.Commit(); err != nil {
-		return fmt.Errorf("commit surface: %w", err)
+	if err := demo.AttachAndDisplayBuffer(ctx.shmObj, surface, renderBuffer, windowWidth, windowHeight); err != nil {
+		return err
 	}
 	fmt.Println("      ✓ Buffer attached and displayed")
-
 	return nil
 }
 

@@ -14,3 +14,5 @@ func CreateDemoBuffer(width, height int) (*core.Buffer, error) {
 	}
 	return buf, nil
 }
+
+

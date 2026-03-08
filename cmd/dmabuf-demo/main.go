@@ -18,9 +18,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"syscall"
 
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
@@ -84,16 +84,11 @@ func runDemo() error {
 
 func setupWaylandContext() (*demoContext, func(), error) {
 	fmt.Println("[1/8] Connecting to Wayland compositor...")
-	display := os.Getenv("WAYLAND_DISPLAY")
-	if display == "" {
-		display = "wayland-0"
-	}
-
-	conn, err := client.Connect(display)
+	conn, err := demo.ConnectToWayland()
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect to Wayland: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("      ✓ Connected to %s\n", display)
+	fmt.Println("      ✓ Connected")
 
 	fmt.Println("\n[2/8] Discovering compositor globals...")
 	registry, err := conn.Display().GetRegistry()
@@ -221,18 +216,9 @@ func createAndDisplayWindow(ctx *demoContext, bufferID uint32) error {
 		return fmt.Errorf("create surface: %w", err)
 	}
 
-	xdgSurface, err := ctx.wmBase.GetXdgSurface(surface.ID())
+	_, _, err = demo.CreateXdgWindow(ctx.conn, ctx.wmBase, surface, "wain DMA-BUF Demo")
 	if err != nil {
-		return fmt.Errorf("get xdg surface: %w", err)
-	}
-
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return fmt.Errorf("get toplevel: %w", err)
-	}
-
-	if err := toplevel.SetTitle("wain DMA-BUF Demo"); err != nil {
-		return fmt.Errorf("set title: %w", err)
+		return err
 	}
 
 	if err := surface.Commit(); err != nil {
@@ -240,6 +226,10 @@ func createAndDisplayWindow(ctx *demoContext, bufferID uint32) error {
 	}
 	fmt.Println("      ✓ Window created")
 
+	return attachDMABUFBuffer(surface, bufferID)
+}
+
+func attachDMABUFBuffer(surface *client.Surface, bufferID uint32) error {
 	fmt.Println("\n[8/8] Attaching DMA-BUF buffer to window...")
 	if err := surface.Attach(bufferID, 0, 0); err != nil {
 		return fmt.Errorf("attach buffer: %w", err)
@@ -253,6 +243,6 @@ func createAndDisplayWindow(ctx *demoContext, bufferID uint32) error {
 		return fmt.Errorf("commit surface: %w", err)
 	}
 
-	fmt.Println("      ✓ Window created and buffer attached")
+	fmt.Println("      ✓ Buffer attached")
 	return nil
 }

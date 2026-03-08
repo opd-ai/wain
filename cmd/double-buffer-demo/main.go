@@ -30,11 +30,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 	"unsafe"
 
 	"github.com/opd-ai/wain/internal/buffer"
+	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/shm"
@@ -97,66 +97,22 @@ func runDemo() error {
 
 func setup() (*demoContext, func(), error) {
 	fmt.Println("[1/5] Connecting to Wayland compositor...")
-	display := os.Getenv("WAYLAND_DISPLAY")
-	if display == "" {
-		display = "wayland-0"
-	}
-
-	conn, err := client.Connect(display)
+	conn, err := demo.ConnectToWayland()
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect to Wayland: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("      ✓ Connected to %s\n", display)
+	fmt.Println("      ✓ Connected")
 
 	fmt.Println("\n[2/5] Discovering compositor globals...")
-	registry, err := conn.Display().GetRegistry()
+	wlCtx, err := demo.SetupWaylandGlobals(conn)
 	if err != nil {
 		conn.Close()
-		return nil, nil, fmt.Errorf("get registry: %w", err)
+		return nil, nil, err
 	}
-
-	compositorGlobal := registry.FindGlobal("wl_compositor")
-	if compositorGlobal == nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("wl_compositor not found")
-	}
-	compositor, err := registry.BindCompositor(compositorGlobal)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("bind compositor: %w", err)
-	}
-	fmt.Println("      ✓ Bound to wl_compositor")
-
-	shmGlobal := registry.FindGlobal("wl_shm")
-	if shmGlobal == nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("wl_shm not found")
-	}
-	shmID, err := registry.BindSHM(shmGlobal)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("bind shm: %w", err)
-	}
-	shmObj := shm.NewSHM(conn, shmID)
-	conn.RegisterObject(shmObj)
-	fmt.Println("      ✓ Bound to wl_shm")
-
-	xdgGlobal := registry.FindGlobal("xdg_wm_base")
-	if xdgGlobal == nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("xdg_wm_base not found")
-	}
-	wmBaseID, _, err := registry.BindXdgWmBase(xdgGlobal)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("bind xdg_wm_base: %w", err)
-	}
-	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
-	conn.RegisterObject(wmBase)
-	fmt.Println("      ✓ Bound to xdg_wm_base")
+	fmt.Println("      ✓ Bound to wl_compositor, wl_shm, xdg_wm_base")
 
 	fmt.Println("\n[3/5] Creating window...")
-	surfaceID, err := compositor.CreateSurface()
+	surfaceID, err := wlCtx.Compositor.CreateSurface()
 	if err != nil {
 		conn.Close()
 		return nil, nil, fmt.Errorf("create surface: %w", err)
@@ -164,7 +120,7 @@ func setup() (*demoContext, func(), error) {
 	surface := client.NewSurface(conn, surfaceID)
 	conn.RegisterObject(surface)
 
-	xdgSurface, toplevel, err := createXdgWindow(conn, wmBase, surface)
+	xdgSurface, toplevel, err := demo.CreateXdgWindow(conn, wlCtx.WmBase, surface, "Double Buffering Demo")
 	if err != nil {
 		conn.Close()
 		return nil, nil, err
@@ -184,36 +140,16 @@ func setup() (*demoContext, func(), error) {
 
 	demoCtx := &demoContext{
 		conn:       conn,
-		compositor: compositor,
-		shmObj:     shmObj,
-		wmBase:     wmBase,
+		compositor: wlCtx.Compositor,
+		shmObj:     wlCtx.SHM,
+		wmBase:     wlCtx.WmBase,
 		surface:    surface,
 	}
 
 	return demoCtx, cleanup, nil
 }
 
-func createXdgWindow(conn *client.Connection, wmBase *xdg.WmBase, surface *client.Surface) (*xdg.Surface, *xdg.Toplevel, error) {
-	xdgSurfaceID, err := wmBase.GetXdgSurface(surface.ID())
-	if err != nil {
-		return nil, nil, fmt.Errorf("get xdg_surface: %w", err)
-	}
-	xdgSurface := xdg.NewSurface(conn, xdgSurfaceID)
-	conn.RegisterObject(xdgSurface)
 
-	toplevelID, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return nil, nil, fmt.Errorf("get toplevel: %w", err)
-	}
-	toplevel := xdg.NewToplevel(conn, toplevelID)
-	conn.RegisterObject(toplevel)
-
-	if err := toplevel.SetTitle("Double Buffering Demo"); err != nil {
-		return nil, nil, fmt.Errorf("set title: %w", err)
-	}
-
-	return xdgSurface, toplevel, nil
-}
 
 func createBufferRing(demoCtx *demoContext) error {
 	fmt.Printf("\n[4/5] Creating buffer ring (size=%d)...\n", bufferCount)
@@ -276,76 +212,84 @@ func createBufferRing(demoCtx *demoContext) error {
 func renderFrames(ctx context.Context, demoCtx *demoContext) error {
 	fmt.Printf("\n[5/5] Rendering %d frames...\n", frameCount)
 
-	// Track which buffers are in use
 	currentlyDisplaying := make(map[int]bool)
 
 	for frame := 0; frame < frameCount; frame++ {
-		// Acquire next available slot
-		slot, err := demoCtx.sync.AcquireForWriting(ctx)
-		if err != nil {
-			return fmt.Errorf("acquire slot for frame %d: %w", frame, err)
-		}
-
-		// Get pool data from slot
-		pool, ok := slot.UserData.(*shm.Pool)
-		if !ok {
-			return fmt.Errorf("slot %d has invalid UserData", slot.Index)
-		}
-
-		// Render content
-		renderFrame(pool.Data(), frame)
-
-		// Attach buffer and commit
-		wlBuffer := demoCtx.shmBuffers[slot.Index]
-		if err := demoCtx.surface.Attach(wlBuffer.ID(), 0, 0); err != nil {
-			return fmt.Errorf("attach buffer: %w", err)
-		}
-		if err := demoCtx.surface.Damage(0, 0, windowWidth, windowHeight); err != nil {
-			return fmt.Errorf("damage surface: %w", err)
-		}
-		if err := demoCtx.surface.Commit(); err != nil {
-			return fmt.Errorf("commit surface: %w", err)
-		}
-
-		// Mark as displaying (compositor now owns the buffer)
-		if err := demoCtx.sync.MarkDisplaying(slot.Index); err != nil {
-			return fmt.Errorf("mark displaying: %w", err)
-		}
-		currentlyDisplaying[slot.Index] = true
-
-		// Process events (this will trigger wl_buffer.release for previous frames)
-		if err := demoCtx.conn.Dispatch(); err != nil {
-			return fmt.Errorf("dispatch events: %w", err)
-		}
-
-		// Simulate compositor release events for demonstration
-		// In a real implementation, this would be driven by actual wl_buffer.release events
-		// For now, we simulate immediate release of the previous frame's buffer
-		if frame > 0 {
-			prevSlot := (slot.Index - 1 + bufferCount) % bufferCount
-			if currentlyDisplaying[prevSlot] {
-				// Simulate the compositor sending wl_buffer.release
-				if err := demoCtx.sync.OnReleaseEvent(demoCtx.shmBuffers[prevSlot].ID()); err == nil {
-					delete(currentlyDisplaying, prevSlot)
-				}
-			}
+		if err := renderSingleFrame(ctx, demoCtx, frame, currentlyDisplaying); err != nil {
+			return err
 		}
 
 		if (frame+1)%10 == 0 {
 			fmt.Printf("      ✓ Frame %d/%d rendered\n", frame+1, frameCount)
 		}
 
-		// Small delay to simulate frame timing
-		time.Sleep(16 * time.Millisecond) // ~60fps
+		time.Sleep(16 * time.Millisecond)
 	}
 
-	// Process any remaining events
+	processRemainingEvents(demoCtx.conn)
+	return nil
+}
+
+func renderSingleFrame(ctx context.Context, demoCtx *demoContext, frame int, currentlyDisplaying map[int]bool) error {
+	slot, err := demoCtx.sync.AcquireForWriting(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire slot for frame %d: %w", frame, err)
+	}
+
+	pool, ok := slot.UserData.(*shm.Pool)
+	if !ok {
+		return fmt.Errorf("slot %d has invalid UserData", slot.Index)
+	}
+
+	renderFrame(pool.Data(), frame)
+
+	if err := attachAndCommitBuffer(demoCtx, slot.Index); err != nil {
+		return err
+	}
+
+	if err := demoCtx.sync.MarkDisplaying(slot.Index); err != nil {
+		return fmt.Errorf("mark displaying: %w", err)
+	}
+	currentlyDisplaying[slot.Index] = true
+
+	if err := demoCtx.conn.Dispatch(); err != nil {
+		return fmt.Errorf("dispatch events: %w", err)
+	}
+
+	simulateCompositorRelease(demoCtx, frame, slot.Index, currentlyDisplaying)
+	return nil
+}
+
+func attachAndCommitBuffer(demoCtx *demoContext, slotIndex int) error {
+	wlBuffer := demoCtx.shmBuffers[slotIndex]
+	if err := demoCtx.surface.Attach(wlBuffer.ID(), 0, 0); err != nil {
+		return fmt.Errorf("attach buffer: %w", err)
+	}
+	if err := demoCtx.surface.Damage(0, 0, windowWidth, windowHeight); err != nil {
+		return fmt.Errorf("damage surface: %w", err)
+	}
+	if err := demoCtx.surface.Commit(); err != nil {
+		return fmt.Errorf("commit surface: %w", err)
+	}
+	return nil
+}
+
+func simulateCompositorRelease(demoCtx *demoContext, frame int, currentSlot int, currentlyDisplaying map[int]bool) {
+	if frame > 0 {
+		prevSlot := (currentSlot - 1 + bufferCount) % bufferCount
+		if currentlyDisplaying[prevSlot] {
+			if err := demoCtx.sync.OnReleaseEvent(demoCtx.shmBuffers[prevSlot].ID()); err == nil {
+				delete(currentlyDisplaying, prevSlot)
+			}
+		}
+	}
+}
+
+func processRemainingEvents(conn *client.Connection) {
 	for i := 0; i < 10; i++ {
-		demoCtx.conn.Dispatch()
+		conn.Dispatch()
 		time.Sleep(10 * time.Millisecond)
 	}
-
-	return nil
 }
 
 func renderFrame(data []byte, frameNum int) {
