@@ -361,7 +361,158 @@ pub enum IntelDriver {
     Unknown,
 }
 
+/// Sync object for Xe fence-based synchronization.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct SyncObject {
+    pub handle: u32,
+    pub flags: u32,
+    pub timeline_value: u64,
+}
+
+/// Sync flags for Xe.
+pub const DRM_XE_SYNC_FLAG_SIGNAL: u32 = 1 << 0;
+
+impl SyncObject {
+    /// Create a new sync object for signaling.
+    pub fn new_signal(handle: u32) -> Self {
+        Self {
+            handle,
+            flags: DRM_XE_SYNC_FLAG_SIGNAL,
+            timeline_value: 0,
+        }
+    }
+}
+
+/// Engine instance for Xe exec queue creation.
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct EngineInstance {
+    pub engine_class: u16,
+    pub engine_instance: u16,
+    pub gt_id: u16,
+}
+
+/// Engine classes for Xe.
+pub const DRM_XE_ENGINE_CLASS_RENDER: u16 = 0;
+pub const DRM_XE_ENGINE_CLASS_COPY: u16 = 1;
+pub const DRM_XE_ENGINE_CLASS_VIDEO_DECODE: u16 = 2;
+pub const DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE: u16 = 3;
+pub const DRM_XE_ENGINE_CLASS_COMPUTE: u16 = 4;
+
+impl EngineInstance {
+    /// Create a render engine instance.
+    pub fn render(gt_id: u16) -> Self {
+        Self {
+            engine_class: DRM_XE_ENGINE_CLASS_RENDER,
+            engine_instance: 0,
+            gt_id,
+        }
+    }
+}
+
 impl DrmDevice {
+    /// Submit a batch buffer on Xe driver with VM binding and wait for completion.
+    ///
+    /// This is a high-level wrapper for Xe batch submission that:
+    /// 1. Creates a VM if vm_id is None
+    /// 2. Binds the batch buffer to the VM at the specified address
+    /// 3. Creates an exec queue if exec_queue_id is None
+    /// 4. Submits the batch via DRM_IOCTL_XE_EXEC
+    /// 5. Waits for completion (synchronous submission)
+    ///
+    /// # Arguments
+    /// * `batch_handle` - GEM handle of the batch buffer
+    /// * `batch_gpu_addr` - GPU virtual address where batch should be mapped
+    /// * `batch_size_bytes` - Size of the batch buffer in bytes
+    /// * `vm_id` - Optional VM ID (None = create new VM)
+    /// * `exec_queue_id` - Optional exec queue ID (None = create new queue)
+    ///
+    /// # Returns
+    /// * `Ok((vm_id, exec_queue_id))` if submission succeeded
+    /// * `Err(_)` if submission failed or GPU hang occurred
+    pub fn xe_submit_batch(
+        &self,
+        batch_handle: u32,
+        batch_gpu_addr: u64,
+        batch_size_bytes: u64,
+        vm_id: Option<u32>,
+        exec_queue_id: Option<u32>,
+    ) -> io::Result<(u32, u32)> {
+        // Create VM if not provided
+        let vm_id = match vm_id {
+            Some(id) => id,
+            None => {
+                let mut vm_create = VmCreate::new();
+                self.xe_vm_create(&mut vm_create)?;
+                vm_create.vm_id
+            }
+        };
+
+        // Bind the batch buffer to the VM
+        let bind_op = VmBindOp::new_map(batch_handle, batch_gpu_addr, batch_size_bytes);
+        let mut vm_bind = VmBind::new(vm_id, &bind_op as *const VmBindOp as u64, 1);
+        self.xe_vm_bind(&mut vm_bind)?;
+
+        // Create exec queue if not provided
+        let exec_queue_id = match exec_queue_id {
+            Some(id) => id,
+            None => {
+                let engine = EngineInstance::render(0);
+                let mut queue_create = ExecQueueCreate::new(
+                    vm_id,
+                    &engine as *const EngineInstance as u64,
+                    1,
+                );
+                self.xe_exec_queue_create(&mut queue_create)?;
+                queue_create.exec_queue_id
+            }
+        };
+
+        // Submit the batch (synchronous - waits for completion)
+        let mut exec = Exec::new(exec_queue_id, batch_gpu_addr);
+        self.xe_exec(&mut exec)?;
+
+        Ok((vm_id, exec_queue_id))
+    }
+
+    /// Submit a batch buffer on Xe driver with simplified interface.
+    ///
+    /// Creates a new VM and exec queue for each submission.
+    /// Use this for simple cases where resource reuse is not needed.
+    pub fn xe_submit_batch_simple(
+        &self,
+        batch_handle: u32,
+        batch_gpu_addr: u64,
+        batch_size_bytes: u64,
+    ) -> io::Result<()> {
+        self.xe_submit_batch(batch_handle, batch_gpu_addr, batch_size_bytes, None, None)?;
+        Ok(())
+    }
+
+    /// Create a VM and exec queue pair for Xe batch submission.
+    ///
+    /// Returns (vm_id, exec_queue_id) that can be reused across multiple submissions.
+    /// This is more efficient than creating new resources for each batch.
+    pub fn xe_create_context(&self) -> io::Result<(u32, u32)> {
+        // Create VM
+        let mut vm_create = VmCreate::new();
+        self.xe_vm_create(&mut vm_create)?;
+        let vm_id = vm_create.vm_id;
+
+        // Create exec queue on the render engine
+        let engine = EngineInstance::render(0);
+        let mut queue_create = ExecQueueCreate::new(
+            vm_id,
+            &engine as *const EngineInstance as u64,
+            1,
+        );
+        self.xe_exec_queue_create(&mut queue_create)?;
+        let exec_queue_id = queue_create.exec_queue_id;
+
+        Ok((vm_id, exec_queue_id))
+    }
+
     /// Detect which Intel driver is active (i915 vs Xe).
     ///
     /// Uses DRM_IOCTL_VERSION to query the driver name.
@@ -469,5 +620,32 @@ mod tests {
         assert_eq!(req.vm_id, 1);
         assert_eq!(req.instances, 0x1000);
         assert_eq!(req.num_placements, 2);
+    }
+
+    #[test]
+    fn sync_object_signal() {
+        let sync = SyncObject::new_signal(123);
+        assert_eq!(sync.handle, 123);
+        assert_eq!(sync.flags, DRM_XE_SYNC_FLAG_SIGNAL);
+        assert_eq!(sync.timeline_value, 0);
+    }
+
+    #[test]
+    fn engine_instance_render() {
+        let engine = EngineInstance::render(0);
+        assert_eq!(engine.engine_class, DRM_XE_ENGINE_CLASS_RENDER);
+        assert_eq!(engine.engine_instance, 0);
+        assert_eq!(engine.gt_id, 0);
+    }
+
+    #[test]
+    fn engine_instance_compute() {
+        let engine = EngineInstance {
+            engine_class: DRM_XE_ENGINE_CLASS_COMPUTE,
+            engine_instance: 1,
+            gt_id: 0,
+        };
+        assert_eq!(engine.engine_class, DRM_XE_ENGINE_CLASS_COMPUTE);
+        assert_eq!(engine.engine_instance, 1);
     }
 }
