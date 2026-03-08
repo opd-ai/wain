@@ -340,7 +340,6 @@ func (b *Button) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 	}
 }
 
-
 // measureTextWidth estimates the width of text in pixels.
 func (b *Button) measureTextWidth(s string) int {
 	if b.atlas == nil {
@@ -380,7 +379,6 @@ func emitRectBorder(dl *displaylist.DisplayList, x, y, width, height, lineWidth 
 	// Left edge
 	dl.AddDrawLine(x, y+height, x, y, lineWidth, color)
 }
-
 
 // TextInput represents a single-line text input field.
 type TextInput struct {
@@ -627,7 +625,6 @@ func (t *TextInput) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 	}
 }
 
-
 // getCursorX calculates the X position of the cursor.
 func (t *TextInput) getCursorX(baseX int) int {
 	if t.atlas == nil {
@@ -849,4 +846,3 @@ func (s *ScrollContainer) emitScrollbar(dl *displaylist.DisplayList, x, y int) {
 	thumbColor := core.Color{R: 180, G: 180, B: 180, A: 255}
 	dl.AddFillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4, thumbColor)
 }
-
