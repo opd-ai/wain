@@ -911,7 +911,7 @@ Design principles:
         - Zero regressions in existing code
         - Public API abstracts internal details (core.Buffer, internal event types, displaylist commands)
 
-10.2  PERCENT-BASED LAYOUT API
+10.2  ✅ PERCENT-BASED LAYOUT API (Complete)
       - Expose the percentage-based auto-layout engine as the primary
         public layout mechanism, building on internal/ui/pctwidget/:
           type Size struct {
@@ -934,6 +934,19 @@ Design principles:
           win.SetRoot(root)
       - Milestone: a three-panel layout (header 100×10%, sidebar 25×90%,
         content 75×90%) renders correctly and adapts on window resize.
+      - **Status**: ✅ Complete
+        - Created layout.go with Size, FlowDirection, Align types (289 LOC)
+        - Implemented Panel container with percentage-based sizing
+        - Implemented Row and Column convenience containers
+        - FlowDirection support: FlowRow and FlowColumn
+        - Panel methods: SetFlowDirection, SetPadding, SetGap, SetAlign,
+          SetPosition, ClearPosition, SetVisible
+        - Alignment constants: AlignStart, AlignCenter, AlignEnd, AlignStretch
+        - Comprehensive test coverage (layout_test.go - 232 LOC, 14 tests)
+        - All tests passing (100% pass rate)
+        - Three-panel layout milestone validated
+        - Zero regressions, 10 complexity improvements
+        - Ready for Phase 10.3 (Concrete Widget Types)
 
 10.3  CONCRETE WIDGET TYPES
       - Expose public concrete widgets, each using percentage-based sizing:

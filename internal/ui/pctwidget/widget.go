@@ -108,13 +108,15 @@ func (w *BaseWidget) Resolve(parentWidth, parentHeight int) error {
 // It can hold child widgets that are laid out automatically within it.
 type Panel struct {
 	BaseWidget
-	children []*Panel
+	children      []*Panel
+	flowDirection FlowDirection
 }
 
 // NewPanel creates a panel with percentage-based dimensions.
 func NewPanel(widthPct, heightPct float64) *Panel {
 	return &Panel{
-		BaseWidget: NewBaseWidget(widthPct, heightPct),
+		BaseWidget:    NewBaseWidget(widthPct, heightPct),
+		flowDirection: FlowColumn, // default flow direction
 	}
 }
 
@@ -126,6 +128,21 @@ func (p *Panel) AddChild(child *Panel) {
 
 // Children returns the list of child panels.
 func (p *Panel) Children() []*Panel { return p.children }
+
+// SetFlowDirection sets how child panels are arranged.
+func (p *Panel) SetFlowDirection(dir FlowDirection) {
+	p.flowDirection = dir
+}
+
+// FlowDirection returns the current flow direction.
+func (p *Panel) FlowDirection() FlowDirection {
+	return p.flowDirection
+}
+
+// Add is an alias for AddChild for consistency with public API.
+func (p *Panel) Add(child *Panel) {
+	p.AddChild(child)
+}
 
 // Draw renders the panel (and its children recursively) into the buffer.
 func (p *Panel) Draw(buf *core.Buffer) error {
