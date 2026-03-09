@@ -1202,6 +1202,20 @@ func (a *App) connectWayland(path string) error {
 
 // bindWaylandGlobals binds required Wayland global objects.
 func (a *App) bindWaylandGlobals(registry *client.Registry) error {
+	if err := a.bindCompositor(registry); err != nil {
+		return err
+	}
+	if err := a.bindShellProtocols(registry); err != nil {
+		return err
+	}
+	if err := a.bindInputDevices(registry); err != nil {
+		return err
+	}
+	return nil
+}
+
+// bindCompositor binds the compositor and SHM globals.
+func (a *App) bindCompositor(registry *client.Registry) error {
 	// Bind compositor
 	compositorGlobal := registry.FindGlobal("wl_compositor")
 	if compositorGlobal == nil {
@@ -1226,6 +1240,11 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	a.waylandConn.RegisterObject(shmObj)
 	a.waylandShm = shmObj
 
+	return nil
+}
+
+// bindShellProtocols binds xdg-shell and related window management protocols.
+func (a *App) bindShellProtocols(registry *client.Registry) error {
 	// Bind xdg_wm_base
 	xdgGlobal := registry.FindGlobal("xdg_wm_base")
 	if xdgGlobal == nil {
@@ -1239,6 +1258,11 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	a.waylandConn.RegisterObject(wmBase)
 	a.waylandWmBase = wmBase
 
+	return nil
+}
+
+// bindInputDevices binds seat, keyboard, and pointer input devices.
+func (a *App) bindInputDevices(registry *client.Registry) error {
 	// Bind seat for input
 	seatGlobal := registry.FindGlobal("wl_seat")
 	if seatGlobal != nil {
