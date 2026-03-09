@@ -123,6 +123,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ All packages marked `internal/` — no public API for external users yet
 - ⚠️ No platform abstraction layer (users must choose Wayland or X11 explicitly)
 - ⚠️ No production-ready event loop (demos have basic event handling only)
+- ⚠️ Widget demo platform detection functional; event handling deferred
 
 **Input:**
 - ⚠️ Wayland input handling only supports US QWERTY keyboard layout. International keyboards require XKB parser implementation (planned for Phase 8.1)
@@ -375,7 +376,7 @@ The project includes several demonstration binaries that exercise different subs
 | `bin/wain`          | `make build`         | Yes          | Phase 0 validation (Go → Rust linkage)                  |
 | `bin/wayland-demo`  | `make wayland-demo`  | No           | Wayland protocol + rasterizer + widgets demo             |
 | `bin/x11-demo`      | `make x11-demo`      | No           | X11 protocol + rasterizer + widgets demo                 |
-| `bin/widget-demo`   | `make widget-demo`   | Yes          | Interactive widget demo (auto-detects X11/Wayland)       |
+| `bin/widget-demo`   | `make widget-demo`   | Yes          | Interactive widget demo (auto-detects X11/Wayland; event loops not yet implemented) |
 | `bin/x11-dmabuf-demo` | `make x11-dmabuf-demo` | Yes      | X11 DRI3/Present GPU buffer sharing demo                 |
 | `bin/dmabuf-demo`   | `make dmabuf-demo`   | Yes          | Wayland DMA-BUF GPU buffer sharing demo                  |
 | `bin/double-buffer-demo` | `make double-buffer-demo` | Yes  | Phase 5.3 double/triple buffering with compositor sync  |
