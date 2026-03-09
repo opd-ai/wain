@@ -83,6 +83,7 @@ const (
 type Panel struct {
 	internal      *pctwidget.Panel
 	styleOverride *StyleOverride
+	theme         *Theme
 }
 
 // NewPanel creates a new Panel with percentage-based dimensions.
@@ -253,6 +254,44 @@ func (p *Panel) SetStyle(override StyleOverride) {
 	p.syncStyleToInternal()
 }
 
+// SetTheme applies a theme to this panel and all its children.
+//
+// The theme controls the visual appearance of widgets that do not have
+// a StyleOverride applied. This method recursively propagates the theme
+// to all descendant panels.
+//
+// This method is typically called by the framework when rendering a window.
+// Application code rarely needs to call this directly.
+func (p *Panel) SetTheme(theme Theme) {
+	p.theme = &theme
+	p.syncStyleToInternal()
+
+	// Recursively propagate to children
+	for _, child := range p.Children() {
+		if childPanel := extractPanel(child); childPanel != nil {
+			childPanel.SetTheme(theme)
+		}
+	}
+}
+
+// extractPanel returns the underlying Panel from a PublicWidget, if any.
+func extractPanel(w PublicWidget) *Panel {
+	switch widget := w.(type) {
+	case *Panel:
+		return widget
+	case *Row:
+		return widget.Panel
+	case *Column:
+		return widget.Panel
+	case *Stack:
+		return widget.Panel
+	case *Grid:
+		return widget.Panel
+	default:
+		return nil
+	}
+}
+
 // Row is a convenience container that arranges children horizontally.
 //
 // Row is equivalent to a Panel with FlowDirection set to FlowRow.
@@ -380,12 +419,18 @@ func (g *Grid) SetColumns(columns int) {
 // syncStyleToInternal applies the panel's style override to the internal widget.
 // This method creates a panelStyle that wraps the current theme with the override.
 func (p *Panel) syncStyleToInternal() {
-	if p.styleOverride == nil {
+	if p.styleOverride == nil && p.theme == nil {
 		p.internal.SetStyle(nil)
 		return
 	}
+
+	baseTheme := DefaultDark()
+	if p.theme != nil {
+		baseTheme = *p.theme
+	}
+
 	style := &panelStyle{
-		base:     DefaultDark(), // TODO(TD-3): Get from App.theme when available
+		base:     baseTheme,
 		override: p.styleOverride,
 	}
 	p.internal.SetStyle(style)

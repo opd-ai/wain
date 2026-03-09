@@ -1029,6 +1029,12 @@ func (a *App) GetTheme() Theme {
 	return a.theme
 }
 
+// Theme returns the current application-wide theme.
+// This is an alias for GetTheme for convenience.
+func (a *App) Theme() Theme {
+	return a.GetTheme()
+}
+
 // DisplayServer returns the detected display server type.
 func (a *App) DisplayServer() DisplayServer {
 	a.mu.Lock()

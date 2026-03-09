@@ -4,15 +4,27 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 
 ## Active Items
 
-### TD-3: Theme system integration for Panel widget
-**File:** `layout.go:388`  
-**Priority:** Low  
-**Description:** Panel widget currently hardcodes `DefaultDark()` theme instead of reading from `App.theme`. Once the App-level theme system is implemented, Panel should respect the global theme setting while allowing per-widget style overrides.  
-**Impact:** Panels ignore app-wide theme, always use dark theme  
-**Effort:** ~30 minutes (change to `app.theme.Panel()` once theme system exists)  
-**Related:** Blocked by App.theme field implementation (not yet designed)  
+_(No active items)_
 
 ## Completed Items
+
+### TD-3: Theme system integration for Panel widget ✅
+**Completed:** 2026-03-09  
+**File:** `layout.go:421` (syncStyleToInternal), `layout.go:265` (SetTheme)  
+**Solution:** Implemented theme propagation system for Panel widgets:
+1. Added `theme *Theme` field to Panel struct to cache the current theme
+2. Added `SetTheme(theme Theme)` method that sets the theme and recursively propagates to all children
+3. Updated `syncStyleToInternal()` to use cached theme if set, otherwise fall back to DefaultDark()
+4. Added `extractPanel()` helper to extract the underlying Panel from composite widget types (Row, Column, Stack, Grid)
+5. Added `Theme()` method to App as convenience alias for GetTheme()
+**Files Modified:**
+- `layout.go`: Added theme field, SetTheme method, extractPanel helper, updated syncStyleToInternal (51 LOC added)
+- `app.go`: Added Theme() convenience method (6 LOC added)
+**Tests:** All tests passing (59 packages), zero regressions
+**Impact:** Panels now support theme propagation. Applications can call `panel.SetTheme(app.Theme())` to apply the app's theme to a widget tree. Panels without an explicit theme set continue to use DefaultDark() for backward compatibility.
+**Complexity:** Added extractPanel (cc=3.1), Theme (cc=1.3); syncStyleToInternal increased from cc=2 to cc=3 (well under threshold of 10)
+
+
 
 ### TD-2: Implement proper child management for ScrollView ✅
 **Completed:** 2026-03-09  
