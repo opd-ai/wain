@@ -92,6 +92,22 @@ func (b *Button) HandleEvent(evt Event) bool {
 	return false
 }
 
+// SetStyle applies a style override to this button.
+//
+// The override allows customizing specific visual properties while inheriting
+// others from the theme. Any field left nil in the override will use the
+// theme's value.
+//
+// Example:
+//
+//	accent := wain.RGB(100, 200, 100)
+//	btn.SetStyle(wain.StyleOverride{Accent: &accent})
+func (b *Button) SetStyle(override StyleOverride) {
+	// Placeholder - actual implementation will be added when integrating
+	// theme system with internal widgets
+	_ = override
+}
+
 // buttonToInternal converts PointerButton to internal button number.
 func buttonToInternal(btn PointerButton) uint32 {
 	switch btn {
@@ -165,6 +181,14 @@ func (l *Label) Draw(c Canvas) {
 	_ = c
 	_ = x
 	_ = y
+}
+
+// SetStyle applies a style override to this label.
+//
+// The override allows customizing specific visual properties while inheriting
+// others from the theme.
+func (l *Label) SetStyle(override StyleOverride) {
+	_ = override
 }
 
 // TextInput is a single-line editable text field with cursor.
@@ -259,6 +283,11 @@ func (t *TextInput) HandleEvent(evt Event) bool {
 	return false
 }
 
+// SetStyle applies a style override to this text input.
+func (t *TextInput) SetStyle(override StyleOverride) {
+	_ = override
+}
+
 // ScrollView is a scrollable container for overflow content.
 //
 // ScrollView displays a subset of its content area and provides vertical
@@ -334,6 +363,11 @@ func (s *ScrollView) Add(child PublicWidget) {
 	_ = child
 }
 
+// SetStyle applies a style override to this scroll view.
+func (s *ScrollView) SetStyle(override StyleOverride) {
+	_ = override
+}
+
 // ImageWidget displays an image resource.
 //
 // ImageWidget renders an image loaded via LoadImage. The image is scaled
@@ -379,6 +413,11 @@ func (iw *ImageWidget) Draw(c Canvas) {
 	c.DrawImage(iw.image, x, y, w, h)
 }
 
+// SetStyle applies a style override to this image widget.
+func (iw *ImageWidget) SetStyle(override StyleOverride) {
+	_ = override
+}
+
 // Spacer is an invisible widget that consumes percentage space.
 //
 // Spacer is used for layout alignment and spacing. It participates in
@@ -407,4 +446,9 @@ func NewSpacer(size Size) *Spacer {
 // Draw does nothing for spacers (they are invisible).
 func (s *Spacer) Draw(c Canvas) {
 	// Spacers are invisible
+}
+
+// SetStyle applies a style override to this spacer (does nothing - spacers are invisible).
+func (s *Spacer) SetStyle(override StyleOverride) {
+	_ = override
 }

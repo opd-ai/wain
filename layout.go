@@ -234,6 +234,22 @@ func (p *Panel) Visible() bool {
 	return p.internal.Visible()
 }
 
+// SetStyle applies a style override to this panel.
+//
+// The override allows customizing specific visual properties while inheriting
+// others from the theme. Any field left nil in the override will use the
+// theme's value.
+//
+// Example:
+//
+//	bg := wain.RGB(40, 40, 60)
+//	panel.SetStyle(wain.StyleOverride{Background: &bg})
+func (p *Panel) SetStyle(override StyleOverride) {
+	// This is a placeholder - actual implementation will be added when
+	// we integrate the theme system with internal widgets
+	_ = override
+}
+
 // Row is a convenience container that arranges children horizontally.
 //
 // Row is equivalent to a Panel with FlowDirection set to FlowRow.

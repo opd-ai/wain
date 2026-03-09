@@ -112,6 +112,9 @@ type App struct {
 	// Resource management
 	resources *ResourceManager
 
+	// Theming
+	theme Theme
+
 	// State
 	running     bool
 	shouldQuit  bool
@@ -180,6 +183,7 @@ func NewAppWithConfig(cfg AppConfig) *App {
 		drmPath:     cfg.DRMPath,
 		forceSW:     cfg.ForceSoftware,
 		displayList: displaylist.New(),
+		theme:       DefaultDark(),
 	}
 }
 
@@ -956,6 +960,39 @@ func (a *App) Quit() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.shouldQuit = true
+}
+
+// SetTheme sets the application-wide theme.
+//
+// The theme controls the visual appearance of all widgets that do not have
+// a StyleOverride applied. Changing the theme triggers a redraw of all
+// windows on the next frame.
+//
+// Example:
+//
+//	app.SetTheme(wain.DefaultLight())
+//	app.SetTheme(wain.HighContrast())
+func (a *App) SetTheme(theme Theme) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.theme = theme
+
+	// Trigger redraw of all windows
+	for _, w := range a.windows {
+		if w.renderBridge != nil {
+			w.renderBridge.MarkDirty()
+		}
+	}
+}
+
+// GetTheme returns the current application-wide theme.
+//
+// The returned theme is a copy and can be safely modified without affecting
+// the application's theme. To apply changes, use SetTheme.
+func (a *App) GetTheme() Theme {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.theme
 }
 
 // DisplayServer returns the detected display server type.
