@@ -1055,18 +1055,29 @@ Design principles:
         - Zero regressions in modified files
         - Ready for Phase 10.6 (State & Callbacks)
 
-10.6  STATE & CALLBACKS
+10.6  ✅ STATE & CALLBACKS (Complete)
       - Provide simple callback-based state management (no reactive
         framework — stay close to Go idioms):
           btn.OnClick(func() { ... })
           input.OnChange(func(text string) { ... })
           scroll.OnScroll(func(offset int) { ... })
-      - Provide `wain.Notify()` to schedule a callback on the UI goroutine
+      - Provide `App.Notify()` to schedule a callback on the UI goroutine
         from any goroutine (safe cross-goroutine communication):
           go func() {
               result := fetchData()
-              wain.Notify(func() { label.SetText(result) })
+              app.Notify(func() { label.SetText(result) })
           }()
+      - **Status**: ✅ Implemented
+        - Button.OnClick() callback support (concretewidgets.go)
+        - TextInput.OnChange() callback support (concretewidgets.go)
+        - ScrollView.OnScroll() callback support (concretewidgets.go)
+        - App.Notify() for cross-goroutine UI updates (app.go)
+        - Notification processing integrated into event loop (processNotifications)
+        - Buffered channel (100 slots) prevents unbounded memory growth
+        - Comprehensive test coverage (notify_test.go - 7 tests, all passing)
+        - Race detector clean (go test -race passes)
+        - Demo binary: cmd/callback-demo/ demonstrating all callback features
+        - Zero regressions in modified files (app.go, notify_test.go)
       - Milestone: cross-goroutine state updates render correctly without
         data races.
 

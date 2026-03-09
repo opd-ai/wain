@@ -124,6 +124,9 @@ type App struct {
 	verbose     bool
 	drmPath     string
 	forceSW     bool
+
+	// Cross-goroutine notification
+	notifyChan chan func()
 }
 
 // AppConfig contains configuration options for creating an App.
@@ -184,6 +187,7 @@ func NewAppWithConfig(cfg AppConfig) *App {
 		forceSW:     cfg.ForceSoftware,
 		displayList: displaylist.New(),
 		theme:       DefaultDark(),
+		notifyChan:  make(chan func(), 100),
 	}
 }
 
@@ -962,6 +966,35 @@ func (a *App) Quit() {
 	a.shouldQuit = true
 }
 
+// Notify schedules a callback to be executed on the UI goroutine.
+//
+// This function provides safe cross-goroutine communication by ensuring
+// that UI updates from background goroutines are executed on the main
+// UI event loop goroutine. Callbacks are queued and executed during the
+// next event loop iteration.
+//
+// Example usage:
+//
+//	go func() {
+//	    result := fetchDataFromAPI()
+//	    app.Notify(func() {
+//	        label.SetText(result)
+//	    })
+//	}()
+//
+// The callback will be executed on the UI goroutine, making it safe to
+// call any widget methods or perform UI updates.
+//
+// If the notification channel is full (100 pending callbacks), Notify
+// will block until space is available. This prevents unbounded memory
+// growth while allowing reasonable buffering.
+func (a *App) Notify(callback func()) {
+	if callback == nil {
+		return
+	}
+	a.notifyChan <- callback
+}
+
 // SetTheme sets the application-wide theme.
 //
 // The theme controls the visual appearance of all widgets that do not have
@@ -1335,6 +1368,9 @@ func (a *App) eventLoop() error {
 		}
 		a.mu.Unlock()
 
+		// Process pending notifications from other goroutines
+		a.processNotifications()
+
 		// Process events
 		if err := a.processEvents(); err != nil {
 			return err
@@ -1346,6 +1382,21 @@ func (a *App) eventLoop() error {
 		}
 	}
 	return nil
+}
+
+// processNotifications executes all pending notification callbacks.
+func (a *App) processNotifications() {
+	for {
+		select {
+		case callback := <-a.notifyChan:
+			if callback != nil {
+				callback()
+			}
+		default:
+			// No more pending notifications
+			return
+		}
+	}
 }
 
 // processEvents processes pending events from the display server.
