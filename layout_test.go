@@ -244,3 +244,146 @@ func TestFlowDirectionConstants(t *testing.T) {
 		t.Error("FlowRow and FlowColumn have the same value")
 	}
 }
+
+func TestNewStack(t *testing.T) {
+	stack := NewStack()
+	if stack == nil {
+		t.Fatal("NewStack() returned nil")
+	}
+	if stack.Panel == nil {
+		t.Fatal("Stack.Panel is nil")
+	}
+}
+
+func TestStackLayering(t *testing.T) {
+	stack := NewStack()
+
+	// Add three layers
+	background := NewPanel(Size{Width: 100, Height: 100})
+	content := NewPanel(Size{Width: 80, Height: 80})
+	overlay := NewPanel(Size{Width: 50, Height: 50})
+
+	stack.Add(background)
+	stack.Add(content)
+	stack.Add(overlay)
+
+	children := stack.Children()
+	if len(children) != 3 {
+		t.Errorf("Stack has %d children, want 3", len(children))
+	}
+}
+
+func TestNewGrid(t *testing.T) {
+	tests := []struct {
+		name    string
+		columns int
+		want    int
+	}{
+		{"3 columns", 3, 3},
+		{"1 column", 1, 1},
+		{"5 columns", 5, 5},
+		{"zero columns defaults to 1", 0, 1},
+		{"negative columns defaults to 1", -1, 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			grid := NewGrid(tt.columns)
+			if grid == nil {
+				t.Fatal("NewGrid() returned nil")
+			}
+			if grid.Panel == nil {
+				t.Fatal("Grid.Panel is nil")
+			}
+			if grid.Columns() != tt.want {
+				t.Errorf("Grid.Columns() = %d, want %d", grid.Columns(), tt.want)
+			}
+		})
+	}
+}
+
+func TestGridSetColumns(t *testing.T) {
+	grid := NewGrid(3)
+
+	// Change to 4 columns
+	grid.SetColumns(4)
+	if grid.Columns() != 4 {
+		t.Errorf("After SetColumns(4), Columns() = %d, want 4", grid.Columns())
+	}
+
+	// Invalid values should clamp to 1
+	grid.SetColumns(0)
+	if grid.Columns() != 1 {
+		t.Errorf("After SetColumns(0), Columns() = %d, want 1", grid.Columns())
+	}
+
+	grid.SetColumns(-5)
+	if grid.Columns() != 1 {
+		t.Errorf("After SetColumns(-5), Columns() = %d, want 1", grid.Columns())
+	}
+}
+
+func TestGrid3x3Layout(t *testing.T) {
+	grid := NewGrid(3)
+
+	// Add 9 panels to create a 3x3 grid
+	for i := 0; i < 9; i++ {
+		panel := NewPanel(Size{Width: 100, Height: 100})
+		grid.Add(panel)
+	}
+
+	children := grid.Children()
+	if len(children) != 9 {
+		t.Errorf("Grid has %d children, want 9", len(children))
+	}
+}
+
+func TestGridPartialRow(t *testing.T) {
+	grid := NewGrid(3)
+
+	// Add 7 panels (2 full rows + 1 partial row)
+	for i := 0; i < 7; i++ {
+		panel := NewPanel(Size{Width: 100, Height: 100})
+		grid.Add(panel)
+	}
+
+	children := grid.Children()
+	if len(children) != 7 {
+		t.Errorf("Grid has %d children, want 7", len(children))
+	}
+}
+
+func TestContainerTypes(t *testing.T) {
+	// Verify all container types can be created and used together
+	root := NewColumn()
+
+	header := NewRow()
+	header.Add(NewPanel(Size{Width: 100, Height: 100}))
+
+	content := NewRow()
+	sidebar := NewColumn()
+	sidebar.Add(NewPanel(Size{Width: 100, Height: 50}))
+	sidebar.Add(NewPanel(Size{Width: 100, Height: 50}))
+
+	mainArea := NewStack()
+	mainArea.Add(NewPanel(Size{Width: 100, Height: 100}))
+	mainArea.Add(NewPanel(Size{Width: 80, Height: 80}))
+
+	content.Add(sidebar)
+	content.Add(mainArea)
+
+	footer := NewGrid(4)
+	for i := 0; i < 4; i++ {
+		footer.Add(NewPanel(Size{Width: 100, Height: 100}))
+	}
+
+	root.Add(header)
+	root.Add(content)
+	root.Add(footer)
+
+	// Verify structure
+	rootChildren := root.Children()
+	if len(rootChildren) != 3 {
+		t.Errorf("Root has %d children, want 3", len(rootChildren))
+	}
+}

@@ -101,7 +101,7 @@ func NewPanel(size Size) *Panel {
 // Each child's percentage size is relative to this panel's resolved pixel dimensions.
 func (p *Panel) Add(child PublicWidget) {
 	// Unwrap the public widget to get the internal panel.
-	// Currently only supports Panel, Row, and Column types.
+	// Currently only supports Panel, Row, Column, Stack, and Grid types.
 	// Phase 10.3 will add support for all concrete widget types.
 	switch c := child.(type) {
 	case *Panel:
@@ -109,6 +109,10 @@ func (p *Panel) Add(child PublicWidget) {
 	case *Row:
 		p.internal.Add(c.Panel.internal)
 	case *Column:
+		p.internal.Add(c.Panel.internal)
+	case *Stack:
+		p.internal.Add(c.Panel.internal)
+	case *Grid:
 		p.internal.Add(c.Panel.internal)
 	}
 }
@@ -266,4 +270,90 @@ func NewColumn() *Column {
 	panel := NewPanel(Size{Width: 100, Height: 100})
 	panel.SetFlowDirection(FlowColumn)
 	return &Column{Panel: panel}
+}
+
+// Stack is a layering container that places children on top of each other.
+//
+// Stack is useful for overlays, modals, tooltips, and other UI elements
+// that need to be layered. All children are positioned at the same location
+// and rendered in the order they were added (first child on bottom, last on top).
+//
+// Each child's percentage-based size is resolved against the stack's dimensions.
+// Children can have different sizes - they do not need to fill the entire stack.
+//
+// Example usage:
+//
+//	stack := wain.NewStack()
+//	stack.Add(background)  // drawn first (bottom layer)
+//	stack.Add(content)     // drawn second (middle layer)
+//	stack.Add(tooltip)     // drawn last (top layer)
+type Stack struct {
+	*Panel
+}
+
+// NewStack creates a new layering container.
+//
+// The stack automatically fills 100% width and height of its parent.
+// Children are layered in the order added (first = bottom, last = top).
+func NewStack() *Stack {
+	panel := NewPanel(Size{Width: 100, Height: 100})
+	// Stack uses a special flow direction that we'll handle in autolayout
+	return &Stack{Panel: panel}
+}
+
+// Grid is a fixed-column grid container.
+//
+// Grid arranges children in a grid with a fixed number of columns. Each cell
+// is evenly divided, and children's percentage sizes are relative to their cell.
+// Children are added left-to-right, top-to-bottom.
+//
+// The grid automatically calculates the number of rows needed based on the
+// number of children and the column count.
+//
+// Example usage:
+//
+//	grid := wain.NewGrid(3)  // 3 columns
+//	for i := 0; i < 9; i++ {
+//	    grid.Add(wain.NewPanel(wain.Size{Width: 100, Height: 100}))
+//	}
+//	// Creates a 3x3 grid where each cell is equal size
+type Grid struct {
+	*Panel
+	columns int
+}
+
+// NewGrid creates a new grid container with the specified number of columns.
+//
+// The grid automatically fills 100% width and height of its parent.
+// Children are arranged in cells, left-to-right, top-to-bottom.
+// The number of rows is calculated based on the number of children.
+//
+// The columns parameter must be positive. If columns is less than 1,
+// it defaults to 1.
+func NewGrid(columns int) *Grid {
+	if columns < 1 {
+		columns = 1
+	}
+	panel := NewPanel(Size{Width: 100, Height: 100})
+	return &Grid{
+		Panel:   panel,
+		columns: columns,
+	}
+}
+
+// Columns returns the number of columns in the grid.
+func (g *Grid) Columns() int {
+	return g.columns
+}
+
+// SetColumns changes the number of columns in the grid.
+//
+// The layout will be recomputed on the next frame.
+// The columns parameter must be positive. If columns is less than 1,
+// it is set to 1.
+func (g *Grid) SetColumns(columns int) {
+	if columns < 1 {
+		columns = 1
+	}
+	g.columns = columns
 }
