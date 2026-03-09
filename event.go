@@ -378,72 +378,48 @@ func translateX11ConfigureNotifyEvent(e events.ConfigureNotifyEvent) *WindowEven
 	}
 }
 
+// linuxKeycodeMap maps Linux input event keycodes to X11 keysyms.
+var linuxKeycodeMap = map[uint32]Key{
+	1:   KeyEscape,
+	28:  KeyReturn,
+	15:  KeyTab,
+	14:  KeyBackspace,
+	111: KeyDelete,
+	105: KeyLeft,
+	103: KeyUp,
+	106: KeyRight,
+	108: KeyDown,
+	102: KeyHome,
+	107: KeyEnd,
+	104: KeyPageUp,
+	109: KeyPageDown,
+	57:  KeySpace,
+	42:  KeyShiftL,
+	54:  KeyShiftR,
+	29:  KeyControlL,
+	97:  KeyControlR,
+	56:  KeyAltL,
+	100: KeyAltR,
+	125: KeySuperL,
+	126: KeySuperR,
+	// Number keys (1-0)
+	2: Key(0x0031), 3: Key(0x0032), 4: Key(0x0033), 5: Key(0x0034), 6: Key(0x0035),
+	7: Key(0x0036), 8: Key(0x0037), 9: Key(0x0038), 10: Key(0x0039), 11: Key(0x0030),
+	// QWERTY row
+	16: Key('q'), 17: Key('w'), 18: Key('e'), 19: Key('r'), 20: Key('t'),
+	21: Key('y'), 22: Key('u'), 23: Key('i'), 24: Key('o'), 25: Key('p'),
+	// ASDF row
+	30: Key('a'), 31: Key('s'), 32: Key('d'), 33: Key('f'), 34: Key('g'),
+	35: Key('h'), 36: Key('j'), 37: Key('k'), 38: Key('l'),
+	// ZXCV row
+	44: Key('z'), 45: Key('x'), 46: Key('c'), 47: Key('v'), 48: Key('b'),
+	49: Key('n'), 50: Key('m'),
+}
+
 // linuxToKeysym converts Linux input event keycodes to X11 keysyms (simplified).
 func linuxToKeysym(code uint32) Key {
-	// Simplified mapping for common keys
-	// Full mapping requires xkbcommon or lookup table
-	switch code {
-	case 1:
-		return KeyEscape
-	case 28:
-		return KeyReturn
-	case 15:
-		return KeyTab
-	case 14:
-		return KeyBackspace
-	case 111:
-		return KeyDelete
-	case 105:
-		return KeyLeft
-	case 103:
-		return KeyUp
-	case 106:
-		return KeyRight
-	case 108:
-		return KeyDown
-	case 102:
-		return KeyHome
-	case 107:
-		return KeyEnd
-	case 104:
-		return KeyPageUp
-	case 109:
-		return KeyPageDown
-	case 57:
-		return KeySpace
-	case 42:
-		return KeyShiftL
-	case 54:
-		return KeyShiftR
-	case 29:
-		return KeyControlL
-	case 97:
-		return KeyControlR
-	case 56:
-		return KeyAltL
-	case 100:
-		return KeyAltR
-	case 125:
-		return KeySuperL
-	case 126:
-		return KeySuperR
-	default:
-		// For printable characters, use the code directly
-		if code >= 2 && code <= 11 { // 1-0 keys
-			return Key(0x0030 + (code-1)%10)
-		}
-		if code >= 16 && code <= 25 { // QWERTY keys
-			qwerty := "qwertyuiop"
-			return Key(qwerty[code-16])
-		}
-		if code >= 30 && code <= 38 { // ASDF keys
-			asdf := "asdfghjkl"
-			return Key(asdf[code-30])
-		}
-		if code >= 44 && code <= 50 { // ZXCV keys
-			zxcv := "zxcvbnm"
-			return Key(zxcv[code-44])
-		}
-		return Key(code)
+	if key, ok := linuxKeycodeMap[code]; ok {
+		return key
 	}
+	return Key(code)
 }

@@ -258,7 +258,7 @@ Documentation gate passes, but naming is critical for a library/framework:
 
 #### Function Length Gate (94 functions over threshold)
 Priority: focus on library code (60 functions), defer demo code (34 functions):
-- [ ] Refactor `linuxToKeysym` in `event.go:376` (66 lines) — extract keycode lookup table to a `var` or map, reduce function to table lookup
+- [x] Refactor `linuxToKeysym` in `event.go:376` (66 lines) — extract keycode lookup table to a `var` or map, reduce function to table lookup
 - [ ] Refactor `linuxToKeysym` in `internal/integration/events.go:285` (64 lines) — same as above (duplicated function, consider deduplicating)
 - [ ] Refactor `ComputeDamageForCommand` in `internal/raster/displaylist/damage.go:155` (52 lines) — extract per-command-type damage computation into helper functions
 - [ ] Refactor `KeycodeToKeysym` in `internal/wayland/input/keymap.go:64` (52 lines) — similar table extraction pattern
