@@ -270,7 +270,7 @@ Priority: focus on library code (60 functions), defer demo code (34 functions):
 - [x] **SL-010:** Extract remaining bare X11 protocol constants in `internal/x11/wire/wire.go` to named constants
 - [x] **SL-014:** Add GPU device skip guards in `internal/integration/gpu_test.go`
 - [x] **SL-015:** Replace blank identifier test assertions in `accessibility_test.go` and `integration_test.go` with explicit value checks
-- [ ] **SL-016:** Add justification comments to 5 `#[allow(dead_code)]` attributes in `render-sys/src/eu/instruction.rs`
+- [x] **SL-016:** Add justification comments to 5 `#[allow(dead_code)]` attributes in `render-sys/src/eu/instruction.rs`
 - [ ] **SL-001:** Annotate 51 unreferenced functions with phase/purpose comments or remove truly dead code
 - [ ] **SL-012:** Convert 14 TODO comments to GitHub Issues for better tracking visibility
 - [ ] **SL-017:** Document DMA-buf naming convention in CONTRIBUTING.md

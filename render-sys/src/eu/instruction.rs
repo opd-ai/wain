@@ -10,6 +10,7 @@ use super::encoding::{encode_opcode, encode_register, encode_send_descriptor, Ex
 
 /// EU instruction opcode categories
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// Used dynamically during instruction encoding for Gen9+ GPU command generation
 #[allow(dead_code)]
 pub enum EUOpcode {
     // ALU operations
@@ -63,6 +64,7 @@ pub enum EUOpcode {
 
 /// Register file type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// Used dynamically during register encoding for GPU instruction generation
 #[allow(dead_code)]
 pub enum RegFile {
     /// General Register File (GRF) - main working registers
@@ -75,6 +77,7 @@ pub enum RegFile {
 
 /// Register reference
 #[derive(Debug, Clone, Copy)]
+// Used dynamically during instruction construction for GPU command encoding
 #[allow(dead_code)]
 pub struct Register {
     pub file: RegFile,
@@ -84,6 +87,7 @@ pub struct Register {
 
 /// Shared Function ID for SEND instructions
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// Used dynamically during SEND instruction encoding for GPU memory/texture operations
 #[allow(dead_code)]
 pub enum SharedFunctionID {
     /// Null function (no operation)
@@ -106,6 +110,7 @@ pub enum SharedFunctionID {
 
 /// Message descriptor for SEND instructions
 #[derive(Debug, Clone, Copy)]
+// Used dynamically during SEND instruction construction for GPU communication
 #[allow(dead_code)]
 pub struct SendDescriptor {
     /// Shared function ID (SFID) - which fixed function to send to
