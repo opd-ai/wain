@@ -135,7 +135,7 @@ func TestVisual(t *testing.T) {
 
 			// Create display list and render
 			dl := tt.commands()
-			
+
 			// Create a minimal atlas for text rendering (can be nil for non-text tests)
 			atlas, err := text.NewAtlas()
 			if err != nil {
@@ -266,7 +266,7 @@ func absDiff(a, b uint32) uint32 {
 func saveImage(img image.Image, path string) error {
 	// Ensure directory exists
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
