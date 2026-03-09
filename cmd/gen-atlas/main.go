@@ -8,42 +8,56 @@ import (
 	"github.com/opd-ai/wain/internal/demo"
 )
 
+type glyphMeta struct {
+	Rune    rune
+	X, Y    int
+	W, H    int
+	OffsetX float64
+	OffsetY float64
+	Advance float64
+}
+
+type atlasConfig struct {
+	width      int
+	height     int
+	glyphSize  int
+	firstChar  int
+	lastChar   int
+	lineHeight uint32
+}
+
 func main() {
 	demo.CheckHelpFlag("gen-atlas", "Generate SDF font atlas for text rendering", []string{
 		demo.FormatExample("gen-atlas", "Generate atlas.bin font atlas file"),
 		demo.FormatExample("gen-atlas --help", "Show this help message"),
 	})
 
-	const atlasWidth = 256
-	const atlasHeight = 256
-	const glyphSize = 16
-	const firstChar = 0x20
-	const lastChar = 0x7E
-	glyphCount := lastChar - firstChar + 1 + 1
-
-	sdf := make([]uint8, atlasWidth*atlasHeight)
-	for i := range sdf {
-		sdf[i] = 0
+	cfg := atlasConfig{
+		width:      256,
+		height:     256,
+		glyphSize:  16,
+		firstChar:  0x20,
+		lastChar:   0x7E,
+		lineHeight: uint32(16 * 64),
 	}
 
-	type GlyphMeta struct {
-		Rune    rune
-		X, Y    int
-		W, H    int
-		OffsetX float64
-		OffsetY float64
-		Advance float64
-	}
+	sdf, glyphs := generateAtlas(cfg)
+	writeAtlasFile("internal/raster/text/data/atlas.bin", cfg, sdf, glyphs)
+	fmt.Printf("Generated atlas: %dx%d, %d glyphs\n", cfg.width, cfg.height, len(glyphs))
+}
 
-	glyphs := make([]GlyphMeta, 0, glyphCount)
+func generateAtlas(cfg atlasConfig) ([]uint8, []glyphMeta) {
+	sdf := make([]uint8, cfg.width*cfg.height)
+	glyphCount := cfg.lastChar - cfg.firstChar + 1 + 1
+	glyphs := make([]glyphMeta, 0, glyphCount)
+
 	col, row := 0, 0
-
-	for r := firstChar; r <= lastChar; r++ {
-		x, y := col*glyphSize, row*glyphSize
-		drawSimpleGlyph(sdf, atlasWidth, atlasHeight, x, y, glyphSize, r)
-		glyphs = append(glyphs, GlyphMeta{
-			Rune: rune(r), X: x, Y: y, W: glyphSize, H: glyphSize,
-			OffsetX: 0, OffsetY: -float64(glyphSize) * 0.75, Advance: float64(glyphSize) * 0.6,
+	for r := cfg.firstChar; r <= cfg.lastChar; r++ {
+		x, y := col*cfg.glyphSize, row*cfg.glyphSize
+		drawSimpleGlyph(sdf, cfg.width, cfg.height, x, y, cfg.glyphSize, r)
+		glyphs = append(glyphs, glyphMeta{
+			Rune: rune(r), X: x, Y: y, W: cfg.glyphSize, H: cfg.glyphSize,
+			OffsetX: 0, OffsetY: -float64(cfg.glyphSize) * 0.75, Advance: float64(cfg.glyphSize) * 0.6,
 		})
 		col++
 		if col >= 16 {
@@ -51,36 +65,46 @@ func main() {
 		}
 	}
 
-	x, y := col*glyphSize, row*glyphSize
-	drawReplacementGlyph(sdf, atlasWidth, atlasHeight, x, y, glyphSize)
-	glyphs = append(glyphs, GlyphMeta{
-		Rune: '□', X: x, Y: y, W: glyphSize, H: glyphSize,
-		OffsetX: 0, OffsetY: -float64(glyphSize) * 0.75, Advance: float64(glyphSize) * 0.6,
+	x, y := col*cfg.glyphSize, row*cfg.glyphSize
+	drawReplacementGlyph(sdf, cfg.width, cfg.height, x, y, cfg.glyphSize)
+	glyphs = append(glyphs, glyphMeta{
+		Rune: '□', X: x, Y: y, W: cfg.glyphSize, H: cfg.glyphSize,
+		OffsetX: 0, OffsetY: -float64(cfg.glyphSize) * 0.75, Advance: float64(cfg.glyphSize) * 0.6,
 	})
 
-	f, err := os.Create("internal/raster/text/data/atlas.bin")
+	return sdf, glyphs
+}
+
+func writeAtlasFile(path string, cfg atlasConfig, sdf []uint8, glyphs []glyphMeta) {
+	f, err := os.Create(path)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
-	lineHeight := uint32(glyphSize * 64)
-	if err := binary.Write(f, binary.LittleEndian, uint32(atlasWidth)); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, uint32(atlasHeight)); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, uint32(len(glyphs))); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, lineHeight); err != nil {
-		panic(err)
-	}
+	writeAtlasHeader(f, cfg, len(glyphs))
 	if _, err := f.Write(sdf); err != nil {
 		panic(err)
 	}
+	writeGlyphMetadata(f, glyphs)
+}
 
+func writeAtlasHeader(f *os.File, cfg atlasConfig, glyphCount int) {
+	if err := binary.Write(f, binary.LittleEndian, uint32(cfg.width)); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, uint32(cfg.height)); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, uint32(glyphCount)); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, cfg.lineHeight); err != nil {
+		panic(err)
+	}
+}
+
+func writeGlyphMetadata(f *os.File, glyphs []glyphMeta) {
 	for _, g := range glyphs {
 		if err := binary.Write(f, binary.LittleEndian, uint32(g.Rune)); err != nil {
 			panic(err)
@@ -110,8 +134,6 @@ func main() {
 			panic(err)
 		}
 	}
-
-	fmt.Printf("Generated atlas: %dx%d, %d glyphs\n", atlasWidth, atlasHeight, len(glyphs))
 }
 
 func drawSimpleGlyph(sdf []uint8, width, height, xPos, yPos, size, r int) {
