@@ -11,7 +11,6 @@ import (
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
 	"github.com/opd-ai/wain/internal/x11/present"
-	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
 const (
@@ -91,22 +90,13 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 	}
 	fmt.Println("       ✓ Connected to :0")
 
-	fmt.Println("\n[2/8] Querying DRI3 extension...")
-	dri3Adapter := demo.NewDRI3ConnectionAdapter(conn)
-	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
+	fmt.Println("\n[2/8] Querying DRI3 and Present extensions...")
+	dri3Ext, presentExt, renderFd, err := demo.QueryDRI3AndPresentExtensions(conn)
 	if err != nil {
 		conn.Close()
-		return nil, nil, fmt.Errorf("query DRI3: %w", err)
+		return nil, nil, err
 	}
 	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
-
-	fmt.Println("\n[3/8] Querying Present extension...")
-	presentAdapter := demo.NewPresentConnectionAdapter(conn)
-	presentExt, err := present.QueryExtension(presentAdapter)
-	if err != nil {
-		conn.Close()
-		return nil, nil, fmt.Errorf("query Present: %w", err)
-	}
 	fmt.Printf("       ✓ Present version %d.%d\n", presentExt.MajorVersion(), presentExt.MinorVersion())
 
 	fmt.Println("\n[4/8] Opening DRM device for GPU access...")
@@ -114,6 +104,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 
 	allocator, gpuCtx, err := setupGPU()
 	if err != nil {
+		syscall.Close(renderFd)
 		conn.Close()
 		return nil, nil, err
 	}
@@ -121,6 +112,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 	window, err := setupX11Window(conn)
 	if err != nil {
 		allocator.Close()
+		syscall.Close(renderFd)
 		conn.Close()
 		return nil, nil, err
 	}
@@ -136,6 +128,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 
 	cleanup := func() {
 		allocator.Close()
+		syscall.Close(renderFd)
 		conn.Close()
 	}
 
@@ -179,30 +172,11 @@ func setupGPU() (*render.Allocator, *render.GpuContext, error) {
 
 func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	fmt.Println("\n[8/8] Creating X11 window...")
-	const (
-		windowX     = 100
-		windowY     = 100
-		borderWidth = 0
-		windowClass = wire.WindowClassInputOutput
-		visual      = 0
-		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress
-	)
-
-	mask := uint32(wire.CWEventMask)
-	attrs := []uint32{eventMask}
-	root := conn.RootWindow()
-
-	wid, err := conn.CreateWindow(root, windowX, windowY, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
+	wid, err := demo.CreateX11WindowWithDefaults(conn, windowWidth, windowHeight)
 	if err != nil {
-		return 0, fmt.Errorf("create window: %w", err)
+		return 0, err
 	}
-	fmt.Printf("       ✓ Created window XID %d\n", wid)
-
-	if err := conn.MapWindow(wid); err != nil {
-		return 0, fmt.Errorf("map window: %w", err)
-	}
-	fmt.Println("       ✓ Window mapped to display")
-
+	fmt.Printf("       ✓ Created and mapped window XID %d\n", wid)
 	return wid, nil
 }
 

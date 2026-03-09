@@ -237,7 +237,7 @@ Documentation gate passes, but naming is critical for a library/framework:
 - [x] **Naming:** Define `type CustomEventPayload interface{}` or use concrete types for `event.go:286` (SL-006) ✅ COMPLETED (2026-03-09) — Added type alias with documentation, updated CustomEvent struct and all related methods
 
 ### Phase 3: High-Severity Slop Remediation
-- [ ] **SL-003:** Extract 26-line display setup boilerplate from 8+ demo binaries into `internal/demo/display.go:SetupDisplay()` helper
+- [x] **SL-003:** Extract 26-line display setup boilerplate from 8+ demo binaries into `internal/demo/display.go:SetupDisplay()` helper ✅ COMPLETED (2026-03-09) — Created display.go with 5 helper functions (SetupDisplay, QueryDRI3AndPresentExtensions, CreateX11WindowWithDefaults, CreatePixmapFromBuffer, PresentPixmapToWindow); refactored 3 demo binaries (x11-dmabuf-demo, gpu-triangle-demo, amd-triangle-demo) removing 189 net lines of duplicated code; complexity improvements: setupExtensions -77.2%, setupGPU -84.3%, createPixmapFromBuffer -45.6%
 - [ ] **SL-009:** Extract magic numbers to named constants in the files where they are used:
   - In `theme.go`, add constants for theme defaults:
     ```go

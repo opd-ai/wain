@@ -21,14 +21,12 @@ package main
 
 import (
 	"fmt"
-	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/dri3"
 	"github.com/opd-ai/wain/internal/x11/present"
-	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
 const (
@@ -134,31 +132,8 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 }
 
 func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Extension, int, error) {
-	fmt.Println("\n[2/12] Querying DRI3 extension...")
-	dri3Adapter := demo.NewDRI3ConnectionAdapter(conn)
-	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
-	if err != nil {
-		return nil, nil, 0, fmt.Errorf("query DRI3: %w", err)
-	}
-	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
-
-	fmt.Println("\n[3/12] Querying Present extension...")
-	presentAdapter := demo.NewPresentConnectionAdapter(conn)
-	presentExt, err := present.QueryExtension(presentAdapter)
-	if err != nil {
-		return nil, nil, 0, fmt.Errorf("query Present: %w", err)
-	}
-	fmt.Printf("       ✓ Present version %d.%d\n", presentExt.MajorVersion(), presentExt.MinorVersion())
-
-	fmt.Println("\n[4/12] Opening DRI3 render node...")
-	root := conn.RootWindow()
-	renderFd, err := dri3Ext.Open(dri3Adapter, dri3.XID(root), 0)
-	if err != nil {
-		return nil, nil, 0, fmt.Errorf("open DRI3: %w", err)
-	}
-	fmt.Printf("       ✓ Opened render node (fd %d)\n", renderFd)
-
-	return dri3Ext, presentExt, renderFd, nil
+	fmt.Println("\n[2/12] Querying DRI3 and Present extensions...")
+	return demo.QueryDRI3AndPresentExtensions(conn)
 }
 
 func setupGPU() (*render.Allocator, *render.GpuContext, error) {
@@ -167,30 +142,11 @@ func setupGPU() (*render.Allocator, *render.GpuContext, error) {
 
 func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	fmt.Println("\n[8/12] Creating X11 window...")
-	const (
-		windowX     = 100
-		windowY     = 100
-		borderWidth = 0
-		windowClass = wire.WindowClassInputOutput
-		visual      = 0 // CopyFromParent
-		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress
-	)
-
-	mask := uint32(wire.CWEventMask)
-	attrs := []uint32{eventMask}
-	root := conn.RootWindow()
-
-	wid, err := conn.CreateWindow(root, windowX, windowY, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
+	wid, err := demo.CreateX11WindowWithDefaults(conn, windowWidth, windowHeight)
 	if err != nil {
-		return 0, fmt.Errorf("create window: %w", err)
+		return 0, err
 	}
-	fmt.Printf("       ✓ Created window XID %d\n", wid)
-
-	if err := conn.MapWindow(wid); err != nil {
-		return 0, fmt.Errorf("map window: %w", err)
-	}
-	fmt.Println("       ✓ Window mapped to display")
-
+	fmt.Printf("       ✓ Created and mapped window XID %d\n", wid)
 	return wid, nil
 }
 
@@ -320,36 +276,11 @@ func buildTriangleBatch(renderTargetHandle uint32) []byte {
 func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11client.XID, error) {
 	fmt.Println("\n[12/12] Creating X11 pixmap from GPU buffer...")
 
-	fd, err := ctx.allocator.ExportDmabuf(buffer)
+	pixmapXID, err := demo.CreatePixmapFromBuffer(ctx.conn, ctx.dri3Ext, ctx.window, buffer, ctx.allocator, depth, bpp)
 	if err != nil {
-		return 0, fmt.Errorf("export dmabuf: %w", err)
+		return 0, err
 	}
-	defer syscall.Close(fd)
-	fmt.Printf("       ✓ Exported as DMA-BUF fd %d\n", fd)
-
-	pixmapXID, err := ctx.conn.AllocXID()
-	if err != nil {
-		return 0, fmt.Errorf("allocate pixmap XID: %w", err)
-	}
-
-	size := buffer.Stride * buffer.Height
-	dri3Adapter := demo.NewDRI3ConnectionAdapter(ctx.conn)
-	err = ctx.dri3Ext.PixmapFromBuffer(
-		dri3Adapter,
-		dri3.XID(pixmapXID),
-		dri3.XID(ctx.window),
-		size,
-		uint16(buffer.Width),
-		uint16(buffer.Height),
-		uint16(buffer.Stride),
-		depth,
-		bpp,
-		fd,
-	)
-	if err != nil {
-		return 0, fmt.Errorf("create pixmap from buffer: %w", err)
-	}
-	fmt.Printf("       ✓ Created pixmap XID %d from GPU buffer\n", pixmapXID)
+	fmt.Printf("       ✓ Exported as DMA-BUF and created pixmap XID %d\n", pixmapXID)
 
 	return pixmapXID, nil
 }
@@ -357,14 +288,8 @@ func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11c
 func presentPixmap(ctx *demoContext, pixmap x11client.XID) error {
 	fmt.Println("\n       Presenting pixmap to window...")
 
-	presentAdapter := demo.NewPresentConnectionAdapter(ctx.conn)
-	err := ctx.presentExt.PresentPixmap(presentAdapter, present.PixmapPresentOptions{
-		Window:  present.XID(ctx.window),
-		Pixmap:  present.XID(pixmap),
-		Options: present.PresentOptionNone,
-	})
-	if err != nil {
-		return fmt.Errorf("present pixmap: %w", err)
+	if err := demo.PresentPixmapToWindow(ctx.conn, ctx.presentExt, ctx.window, pixmap); err != nil {
+		return err
 	}
 	fmt.Println("       ✓ Pixmap presented to window")
 
