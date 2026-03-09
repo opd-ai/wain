@@ -32,6 +32,35 @@ const (
 	KeysymSuperR    Keysym = 0xFFEC
 )
 
+type keymapEntry struct {
+	unshifted Keysym
+	shifted   Keysym
+}
+
+var specialKeycodeMap = map[uint32]keymapEntry{
+	1:   {KeysymEscape, KeysymEscape},
+	14:  {KeysymBackSpace, KeysymBackSpace},
+	15:  {KeysymTab, KeysymTab},
+	28:  {KeysymReturn, KeysymReturn},
+	42:  {KeysymShiftL, KeysymShiftR},
+	54:  {KeysymShiftL, KeysymShiftR},
+	29:  {KeysymControlL, KeysymControlR},
+	97:  {KeysymControlL, KeysymControlR},
+	56:  {KeysymAltL, KeysymAltR},
+	100: {KeysymAltL, KeysymAltR},
+	102: {KeysymHome, KeysymHome},
+	103: {KeysymUp, KeysymUp},
+	104: {KeysymPageUp, KeysymPageUp},
+	105: {KeysymLeft, KeysymLeft},
+	106: {KeysymRight, KeysymRight},
+	107: {KeysymEnd, KeysymEnd},
+	108: {KeysymDown, KeysymDown},
+	109: {KeysymPageDown, KeysymPageDown},
+	111: {KeysymDelete, KeysymDelete},
+	125: {KeysymSuperL, KeysymSuperR},
+	126: {KeysymSuperL, KeysymSuperR},
+}
+
 // Keymap represents a keyboard mapping from evdev keycodes to keysyms.
 //
 // This is a minimal implementation that provides basic keycode to keysym
@@ -62,58 +91,14 @@ func NewKeymap(fd, size int) *Keymap {
 // This uses a simple lookup table for common keys. For a full implementation,
 // this would parse the XKB keymap data.
 func (km *Keymap) KeycodeToKeysym(keycode uint32, modifiers ModifierState) Keysym {
-	shifted := modifiers.Shift
-
-	switch keycode {
-	case 1:
-		return KeysymEscape
-	case 14:
-		return KeysymBackSpace
-	case 15:
-		return KeysymTab
-	case 28:
-		return KeysymReturn
-	case 42, 54:
-		if shifted {
-			return KeysymShiftR
+	if entry, ok := specialKeycodeMap[keycode]; ok {
+		if modifiers.Shift {
+			return entry.shifted
 		}
-		return KeysymShiftL
-	case 29, 97:
-		if shifted {
-			return KeysymControlR
-		}
-		return KeysymControlL
-	case 56, 100:
-		if shifted {
-			return KeysymAltR
-		}
-		return KeysymAltL
-	case 102:
-		return KeysymHome
-	case 103:
-		return KeysymUp
-	case 104:
-		return KeysymPageUp
-	case 105:
-		return KeysymLeft
-	case 106:
-		return KeysymRight
-	case 107:
-		return KeysymEnd
-	case 108:
-		return KeysymDown
-	case 109:
-		return KeysymPageDown
-	case 111:
-		return KeysymDelete
-	case 125, 126:
-		if shifted {
-			return KeysymSuperR
-		}
-		return KeysymSuperL
+		return entry.unshifted
 	}
 
-	return km.keycodeToAlphanumeric(keycode, shifted)
+	return km.keycodeToAlphanumeric(keycode, modifiers.Shift)
 }
 
 // keycodeToAlphanumeric maps Linux keycodes to alphanumeric keysyms for common QWERTY keys.

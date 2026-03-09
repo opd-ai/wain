@@ -261,7 +261,7 @@ Priority: focus on library code (60 functions), defer demo code (34 functions):
 - [x] Refactor `linuxToKeysym` in `event.go:376` (66 lines) — extract keycode lookup table to a `var` or map, reduce function to table lookup
 - [x] Refactor `linuxToKeysym` in `internal/integration/events.go:285` (64 lines) — same as above (duplicated function, consider deduplicating)
 - [x] Refactor `ComputeDamageForCommand` in `internal/raster/displaylist/damage.go:155` (52 lines) — extract per-command-type damage computation into helper functions
-- [ ] Refactor `KeycodeToKeysym` in `internal/wayland/input/keymap.go:64` (52 lines) — similar table extraction pattern
+- [x] Refactor `KeycodeToKeysym` in `internal/wayland/input/keymap.go:64` (52 lines) — similar table extraction pattern
 - [ ] Refactor `RunX11Demo` in `internal/demo/x11setup.go:13` (71 lines) — extract setup phases into `connectX11`, `createWindow`, `setupEventLoop` helpers
 
 ### Phase 5: Medium/Low Slop Cleanup
