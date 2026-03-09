@@ -123,8 +123,17 @@ pub unsafe extern "C" fn buffer_allocator_create(path: *const std::ffi::c_char) 
         Err(_) => return std::ptr::null_mut(),
     };
 
-    // Detect driver type (for now, assume i915 - could be enhanced with device query)
-    let driver = DriverType::I915;
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    let driver = match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => DriverType::I915,
+        GpuGeneration::Xe => DriverType::Xe,
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => DriverType::Amdgpu,
+        GpuGeneration::Unknown => return std::ptr::null_mut(),
+    };
 
     let allocator = Box::new(BufferAllocator::new(device, driver));
     Box::into_raw(allocator)
@@ -312,7 +321,14 @@ pub unsafe extern "C" fn render_submit_batch(
         Err(_) => return -1,
     };
 
-    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let driver = match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => DriverType::I915,
+        GpuGeneration::Xe => DriverType::Xe,
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => DriverType::Amdgpu,
+        GpuGeneration::Unknown => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, driver);
     let dev = allocator.device();
 
     match generation {
@@ -389,7 +405,14 @@ pub unsafe extern "C" fn render_create_context(
         Err(_) => return -1,
     };
 
-    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let driver = match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => DriverType::I915,
+        GpuGeneration::Xe => DriverType::Xe,
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => DriverType::Amdgpu,
+        GpuGeneration::Unknown => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, driver);
     let dev = allocator.device();
 
     match generation {
@@ -421,8 +444,18 @@ pub unsafe extern "C" fn render_create_context(
             }
         }
         GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
-            // AMD context creation not yet implemented (Phase 6.1)
-            -1
+            // AMD context creation
+            match dev.amdgpu_create_context() {
+                Ok(ctx_id) => {
+                    *out_context_id = ctx_id;
+                    // AMD doesn't have separate VM ID
+                    if !out_vm_id.is_null() {
+                        *out_vm_id = 0;
+                    }
+                    0
+                }
+                Err(_) => -1,
+            }
         }
         GpuGeneration::Unknown => -1,
     }
@@ -465,7 +498,14 @@ pub unsafe extern "C" fn render_destroy_context(
         Err(_) => return -1,
     };
 
-    let allocator = BufferAllocator::new(device, DriverType::I915);
+    let driver = match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => DriverType::I915,
+        GpuGeneration::Xe => DriverType::Xe,
+        GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => DriverType::Amdgpu,
+        GpuGeneration::Unknown => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, driver);
     let dev = allocator.device();
 
     match generation {
@@ -484,8 +524,11 @@ pub unsafe extern "C" fn render_destroy_context(
             }
         }
         GpuGeneration::AmdRdna1 | GpuGeneration::AmdRdna2 | GpuGeneration::AmdRdna3 => {
-            // AMD context destruction not yet implemented
-            -1
+            // AMD context destruction
+            match dev.amdgpu_destroy_context(context_id) {
+                Ok(()) => 0,
+                Err(_) => -1,
+            }
         }
         GpuGeneration::Unknown => -1,
     }
