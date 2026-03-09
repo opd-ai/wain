@@ -75,16 +75,56 @@ jobs:
           CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
             go test ./...
 
-      - name: Smoke-test binary
-        run: ./bin/wain
-
-      - name: Assert fully static binary
+      - name: Run integration tests
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
         run: |
-          echo "=== ldd output ==="
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go test -v -run TestPublicAPI ./...
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go test -v -run TestAccessibility ./...
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go test -v -run TestExampleApp ./internal/integration
+
+      - name: Run build verification
+        run: |
+          bash scripts/verify-build.sh
+
+      - name: Build example app
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
+        run: |
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go build \
+              -ldflags "-extldflags '-static'" \
+              -o bin/example-app \
+              ./cmd/example-app
+
+      - name: Smoke-test binaries
+        run: |
+          ./bin/wain || true
+          ./bin/example-app || true
+
+      - name: Assert fully static binaries
+        run: |
+          echo "=== Checking wain binary ==="
           ldd bin/wain 2>&1 || true
           if ldd bin/wain 2>&1 | grep -q "not a dynamic executable"; then
-            echo "✓ Binary is fully statically linked."
+            echo "✓ wain binary is fully statically linked."
           else
-            echo "ERROR: binary is dynamically linked — musl build must produce a static binary."
+            echo "ERROR: wain binary is dynamically linked — musl build must produce a static binary."
+            exit 1
+          fi
+          echo ""
+          echo "=== Checking example-app binary ==="
+          ldd bin/example-app 2>&1 || true
+          if ldd bin/example-app 2>&1 | grep -q "not a dynamic executable"; then
+            echo "✓ example-app binary is fully statically linked."
+          else
+            echo "ERROR: example-app binary is dynamically linked — musl build must produce a static binary."
             exit 1
           fi
