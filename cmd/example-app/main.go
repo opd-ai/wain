@@ -283,9 +283,9 @@ func demonstrateThemes(app *wain.App) {
 
 // printFeatureList prints a header followed by bullet-pointed items.
 func printFeatureList(header string, items []string) {
-	fmt.Println()
-	fmt.Println(header)
+	log.Println()
+	log.Println(header)
 	for _, item := range items {
-		fmt.Println("  • " + item)
+		log.Println("  • " + item)
 	}
 }
