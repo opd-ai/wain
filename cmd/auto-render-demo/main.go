@@ -16,7 +16,7 @@ import (
 	"os"
 
 	"github.com/opd-ai/wain/internal/demo"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
@@ -55,31 +55,31 @@ func main() {
 	dl := displaylist.New()
 
 	// Background
-	dl.AddFillRect(0, 0, 800, 600, core.Color{R: 240, G: 240, B: 240, A: 255})
+	dl.AddFillRect(0, 0, 800, 600, primitives.Color{R: 240, G: 240, B: 240, A: 255})
 
 	// Red rectangle
-	dl.AddFillRect(50, 50, 200, 150, core.Color{R: 255, G: 0, B: 0, A: 255})
+	dl.AddFillRect(50, 50, 200, 150, primitives.Color{R: 255, G: 0, B: 0, A: 255})
 
 	// Green rounded rectangle
-	dl.AddFillRoundedRect(300, 50, 200, 150, 20, core.Color{R: 0, G: 255, B: 0, A: 255})
+	dl.AddFillRoundedRect(300, 50, 200, 150, 20, primitives.Color{R: 0, G: 255, B: 0, A: 255})
 
 	// Blue rectangle
-	dl.AddFillRect(550, 50, 200, 150, core.Color{R: 0, G: 0, B: 255, A: 255})
+	dl.AddFillRect(550, 50, 200, 150, primitives.Color{R: 0, G: 0, B: 255, A: 255})
 
 	// Linear gradient
 	dl.AddLinearGradient(
 		50, 250, 700, 100,
 		50, 250, 750, 250,
-		core.Color{R: 255, G: 0, B: 255, A: 255},
-		core.Color{R: 255, G: 255, B: 0, A: 255},
+		primitives.Color{R: 255, G: 0, B: 255, A: 255},
+		primitives.Color{R: 255, G: 255, B: 0, A: 255},
 	)
 
 	// Radial gradient
 	dl.AddRadialGradient(
 		50, 400, 700, 150,
 		400, 475, 100,
-		core.Color{R: 0, G: 255, B: 255, A: 255},
-		core.Color{R: 255, G: 128, B: 0, A: 255},
+		primitives.Color{R: 0, G: 255, B: 255, A: 255},
+		primitives.Color{R: 255, G: 128, B: 0, A: 255},
 	)
 
 	// Render the scene

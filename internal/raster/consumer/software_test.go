@@ -3,7 +3,7 @@ package consumer
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -29,9 +29,9 @@ func TestRenderNilInputs(t *testing.T) {
 	tests := []struct {
 		name string
 		dl   *displaylist.DisplayList
-		buf  *core.Buffer
+		buf  *primitives.Buffer
 	}{
-		{"nil displaylist", nil, &core.Buffer{}},
+		{"nil displaylist", nil, &primitives.Buffer{}},
 		{"nil buffer", displaylist.New(), nil},
 	}
 
@@ -46,13 +46,13 @@ func TestRenderNilInputs(t *testing.T) {
 }
 
 func TestRenderFillRect(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 	dl.AddFillRect(10, 10, 50, 30, color)
 
 	sc := NewSoftwareConsumer(nil)
@@ -68,13 +68,13 @@ func TestRenderFillRect(t *testing.T) {
 }
 
 func TestRenderFillRoundedRect(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color := core.Color{R: 0, G: 255, B: 0, A: 255}
+	color := primitives.Color{R: 0, G: 255, B: 0, A: 255}
 	dl.AddFillRoundedRect(10, 10, 50, 30, 5, color)
 
 	sc := NewSoftwareConsumer(nil)
@@ -90,13 +90,13 @@ func TestRenderFillRoundedRect(t *testing.T) {
 }
 
 func TestRenderDrawLine(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color := core.Color{R: 0, G: 0, B: 255, A: 255}
+	color := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 	dl.AddDrawLine(10, 10, 90, 90, 2, color)
 
 	sc := NewSoftwareConsumer(nil)
@@ -112,14 +112,14 @@ func TestRenderDrawLine(t *testing.T) {
 }
 
 func TestRenderLinearGradient(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color0 := core.Color{R: 255, G: 0, B: 0, A: 255}
-	color1 := core.Color{R: 0, G: 0, B: 255, A: 255}
+	color0 := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	color1 := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 	dl.AddLinearGradient(10, 10, 80, 80, 10, 10, 90, 90, color0, color1)
 
 	sc := NewSoftwareConsumer(nil)
@@ -135,14 +135,14 @@ func TestRenderLinearGradient(t *testing.T) {
 }
 
 func TestRenderRadialGradient(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color0 := core.Color{R: 255, G: 255, B: 255, A: 255}
-	color1 := core.Color{R: 0, G: 0, B: 0, A: 255}
+	color0 := primitives.Color{R: 255, G: 255, B: 255, A: 255}
+	color1 := primitives.Color{R: 0, G: 0, B: 0, A: 255}
 	dl.AddRadialGradient(10, 10, 80, 80, 50, 50, 40, color0, color1)
 
 	sc := NewSoftwareConsumer(nil)
@@ -158,13 +158,13 @@ func TestRenderRadialGradient(t *testing.T) {
 }
 
 func TestRenderBoxShadow(t *testing.T) {
-	buf, err := core.NewBuffer(200, 200)
+	buf, err := primitives.NewBuffer(200, 200)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	color := core.Color{R: 0, G: 0, B: 0, A: 128}
+	color := primitives.Color{R: 0, G: 0, B: 0, A: 128}
 	dl.AddBoxShadow(50, 50, 100, 100, 10, 0, color)
 
 	sc := NewSoftwareConsumer(nil)
@@ -177,7 +177,7 @@ func TestRenderBoxShadow(t *testing.T) {
 }
 
 func TestRenderDrawText(t *testing.T) {
-	buf, err := core.NewBuffer(200, 100)
+	buf, err := primitives.NewBuffer(200, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
@@ -187,7 +187,7 @@ func TestRenderDrawText(t *testing.T) {
 		t.Fatalf("Failed to create atlas: %v", err)
 	}
 	dl := displaylist.New()
-	color := core.Color{R: 255, G: 255, B: 255, A: 255}
+	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 	dl.AddDrawText("Test", 10, 50, 16, color, 0)
 
 	sc := NewSoftwareConsumer(atlas)
@@ -200,15 +200,15 @@ func TestRenderDrawText(t *testing.T) {
 }
 
 func TestRenderMultipleCommands(t *testing.T) {
-	buf, err := core.NewBuffer(200, 200)
+	buf, err := primitives.NewBuffer(200, 200)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	dl := displaylist.New()
-	redColor := core.Color{R: 255, G: 0, B: 0, A: 255}
-	greenColor := core.Color{R: 0, G: 255, B: 0, A: 255}
-	blueColor := core.Color{R: 0, G: 0, B: 255, A: 255}
+	redColor := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	greenColor := primitives.Color{R: 0, G: 255, B: 0, A: 255}
+	blueColor := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	// Add multiple different commands
 	dl.AddFillRect(10, 10, 50, 50, redColor)
@@ -238,7 +238,7 @@ func TestRenderMultipleCommands(t *testing.T) {
 }
 
 func TestRenderEmptyDisplayList(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}

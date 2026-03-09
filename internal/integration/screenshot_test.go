@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/opd-ai/wain/internal/raster/consumer"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -49,12 +49,12 @@ type TestScene struct {
 
 // buildSimpleRect creates a simple solid rectangle scene
 func buildSimpleRect(dl *displaylist.DisplayList) {
-	dl.AddFillRect(50, 50, 100, 100, core.Color{R: 255, G: 0, B: 0, A: 255})
+	dl.AddFillRect(50, 50, 100, 100, primitives.Color{R: 255, G: 0, B: 0, A: 255})
 }
 
 // buildRoundedRect creates a rounded rectangle scene
 func buildRoundedRect(dl *displaylist.DisplayList) {
-	dl.AddFillRoundedRect(40, 40, 120, 80, 15, core.Color{R: 0, G: 128, B: 255, A: 255})
+	dl.AddFillRoundedRect(40, 40, 120, 80, 15, primitives.Color{R: 0, G: 128, B: 255, A: 255})
 }
 
 // buildLinearGradient creates a linear gradient scene
@@ -63,8 +63,8 @@ func buildLinearGradient(dl *displaylist.DisplayList) {
 		30, 30, 180, 120, // bounds
 		30, 75, // start point
 		210, 75, // end point
-		core.Color{R: 255, G: 200, B: 0, A: 255}, // color0
-		core.Color{R: 255, G: 0, B: 128, A: 255}, // color1
+		primitives.Color{R: 255, G: 200, B: 0, A: 255}, // color0
+		primitives.Color{R: 255, G: 0, B: 128, A: 255}, // color1
 	)
 }
 
@@ -73,41 +73,41 @@ func buildRadialGradient(dl *displaylist.DisplayList) {
 	dl.AddRadialGradient(
 		30, 30, 180, 120,
 		120, 90, 60,
-		core.Color{R: 255, G: 255, B: 0, A: 255},
-		core.Color{R: 128, G: 0, B: 255, A: 255},
+		primitives.Color{R: 255, G: 255, B: 0, A: 255},
+		primitives.Color{R: 128, G: 0, B: 255, A: 255},
 	)
 }
 
 // buildMultiRect creates multiple overlapping rectangles
 func buildMultiRect(dl *displaylist.DisplayList) {
-	dl.AddFillRect(20, 20, 80, 80, core.Color{R: 255, G: 0, B: 0, A: 200})
-	dl.AddFillRect(60, 60, 80, 80, core.Color{R: 0, G: 255, B: 0, A: 200})
-	dl.AddFillRect(100, 100, 80, 80, core.Color{R: 0, G: 0, B: 255, A: 200})
+	dl.AddFillRect(20, 20, 80, 80, primitives.Color{R: 255, G: 0, B: 0, A: 200})
+	dl.AddFillRect(60, 60, 80, 80, primitives.Color{R: 0, G: 255, B: 0, A: 200})
+	dl.AddFillRect(100, 100, 80, 80, primitives.Color{R: 0, G: 0, B: 255, A: 200})
 }
 
 // buildComplexScene creates a complex scene with multiple primitives
 func buildComplexScene(dl *displaylist.DisplayList) {
 	// Background
-	dl.AddFillRect(0, 0, screenshotWidth, screenshotHeight, core.Color{R: 240, G: 240, B: 240, A: 255})
+	dl.AddFillRect(0, 0, screenshotWidth, screenshotHeight, primitives.Color{R: 240, G: 240, B: 240, A: 255})
 
 	// Rounded rects with gradients
-	dl.AddFillRoundedRect(10, 10, 100, 60, 10, core.Color{R: 100, G: 150, B: 250, A: 255})
-	dl.AddFillRoundedRect(120, 10, 100, 60, 10, core.Color{R: 250, G: 150, B: 100, A: 255})
+	dl.AddFillRoundedRect(10, 10, 100, 60, 10, primitives.Color{R: 100, G: 150, B: 250, A: 255})
+	dl.AddFillRoundedRect(120, 10, 100, 60, 10, primitives.Color{R: 250, G: 150, B: 100, A: 255})
 
 	// Linear gradient
 	dl.AddLinearGradient(
 		10, 80, 210, 40,
 		10, 100, 220, 100,
-		core.Color{R: 255, G: 100, B: 100, A: 255},
-		core.Color{R: 100, G: 100, B: 255, A: 255},
+		primitives.Color{R: 255, G: 100, B: 100, A: 255},
+		primitives.Color{R: 100, G: 100, B: 255, A: 255},
 	)
 
 	// Radial gradient
 	dl.AddRadialGradient(
 		10, 130, 210, 100,
 		115, 180, 50,
-		core.Color{R: 255, G: 255, B: 0, A: 255},
-		core.Color{R: 255, G: 0, B: 255, A: 255},
+		primitives.Color{R: 255, G: 255, B: 0, A: 255},
+		primitives.Color{R: 255, G: 0, B: 255, A: 255},
 	)
 }
 
@@ -146,8 +146,8 @@ var testScenes = []TestScene{
 }
 
 // renderSoftware renders a display list using the software backend
-func renderSoftware(dl *displaylist.DisplayList) (*core.Buffer, error) {
-	buf, err := core.NewBuffer(screenshotWidth, screenshotHeight)
+func renderSoftware(dl *displaylist.DisplayList) (*primitives.Buffer, error) {
+	buf, err := primitives.NewBuffer(screenshotWidth, screenshotHeight)
 	if err != nil {
 		return nil, fmt.Errorf("buffer creation failed: %w", err)
 	}
@@ -166,7 +166,7 @@ func renderSoftware(dl *displaylist.DisplayList) (*core.Buffer, error) {
 }
 
 // compareBuffers compares two buffers pixel-by-pixel with tolerance
-func compareBuffers(buf1, buf2 *core.Buffer, tolerance uint8) error {
+func compareBuffers(buf1, buf2 *primitives.Buffer, tolerance uint8) error {
 	if buf1.Width != buf2.Width || buf1.Height != buf2.Height {
 		return fmt.Errorf("buffer dimension mismatch: %dx%d vs %dx%d",
 			buf1.Width, buf1.Height, buf2.Width, buf2.Height)
@@ -174,7 +174,7 @@ func compareBuffers(buf1, buf2 *core.Buffer, tolerance uint8) error {
 
 	var mismatches []struct {
 		x, y     int
-		c1, c2   core.Color
+		c1, c2   primitives.Color
 		maxDelta int
 	}
 
@@ -193,7 +193,7 @@ func compareBuffers(buf1, buf2 *core.Buffer, tolerance uint8) error {
 			if maxDelta > int(tolerance) {
 				mismatches = append(mismatches, struct {
 					x, y     int
-					c1, c2   core.Color
+					c1, c2   primitives.Color
 					maxDelta int
 				}{x, y, c1, c2, maxDelta})
 
@@ -248,7 +248,7 @@ done:
 }
 
 // savePNG saves a buffer as PNG to the specified path (for debugging)
-func savePNG(buf *core.Buffer, path string) error {
+func savePNG(buf *primitives.Buffer, path string) error {
 	img := image.NewRGBA(image.Rect(0, 0, buf.Width, buf.Height))
 
 	for y := 0; y < buf.Height; y++ {
@@ -274,7 +274,7 @@ func savePNG(buf *core.Buffer, path string) error {
 }
 
 // bufferToBytes converts a buffer to raw RGBA bytes for comparison
-func bufferToBytes(buf *core.Buffer) []byte {
+func bufferToBytes(buf *primitives.Buffer) []byte {
 	data := make([]byte, buf.Width*buf.Height*4)
 	for y := 0; y < buf.Height; y++ {
 		for x := 0; x < buf.Width; x++ {
@@ -364,14 +364,14 @@ func TestScreenshotGoldenImages(t *testing.T) {
 					screenshotWidth*screenshotHeight*4, len(goldenData))
 			}
 
-			goldenBuf, err := core.NewBuffer(screenshotWidth, screenshotHeight)
+			goldenBuf, err := primitives.NewBuffer(screenshotWidth, screenshotHeight)
 			if err != nil {
 				t.Fatalf("Failed to create golden buffer: %v", err)
 			}
 			for y := 0; y < screenshotHeight; y++ {
 				for x := 0; x < screenshotWidth; x++ {
 					idx := (y*screenshotWidth + x) * 4
-					color := core.Color{
+					color := primitives.Color{
 						R: goldenData[idx+0],
 						G: goldenData[idx+1],
 						B: goldenData[idx+2],
@@ -403,7 +403,7 @@ func TestScreenshotGoldenImages(t *testing.T) {
 // TestDisplayListIntegrity tests that display lists are immutable after rendering
 func TestDisplayListIntegrity(t *testing.T) {
 	dl := displaylist.New()
-	dl.AddFillRect(10, 10, 50, 50, core.Color{R: 255, G: 0, B: 0, A: 255})
+	dl.AddFillRect(10, 10, 50, 50, primitives.Color{R: 255, G: 0, B: 0, A: 255})
 
 	// Render multiple times
 	for i := 0; i < 3; i++ {
@@ -436,7 +436,7 @@ func BenchmarkSoftwareRender(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				buf, err := core.NewBuffer(screenshotWidth, screenshotHeight)
+				buf, err := primitives.NewBuffer(screenshotWidth, screenshotHeight)
 				if err != nil {
 					b.Fatalf("Failed to create buffer: %v", err)
 				}

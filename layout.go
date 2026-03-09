@@ -1,7 +1,7 @@
 package wain
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/ui/pctwidget"
 )
 
@@ -397,28 +397,28 @@ type panelStyle struct {
 	override *StyleOverride
 }
 
-func (s *panelStyle) Background() core.Color {
+func (s *panelStyle) Background() primitives.Color {
 	if s.override != nil && s.override.Background != nil {
 		return s.override.Background.toInternal()
 	}
 	return s.base.Background.toInternal()
 }
 
-func (s *panelStyle) Foreground() core.Color {
+func (s *panelStyle) Foreground() primitives.Color {
 	if s.override != nil && s.override.Foreground != nil {
 		return s.override.Foreground.toInternal()
 	}
 	return s.base.Foreground.toInternal()
 }
 
-func (s *panelStyle) Accent() core.Color {
+func (s *panelStyle) Accent() primitives.Color {
 	if s.override != nil && s.override.Accent != nil {
 		return s.override.Accent.toInternal()
 	}
 	return s.base.Accent.toInternal()
 }
 
-func (s *panelStyle) Border() core.Color {
+func (s *panelStyle) Border() primitives.Color {
 	if s.override != nil && s.override.Border != nil {
 		return s.override.Border.toInternal()
 	}

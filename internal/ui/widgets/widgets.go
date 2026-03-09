@@ -29,7 +29,7 @@ package widgets
 import (
 	"errors"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/effects"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -75,28 +75,28 @@ type Widget interface {
 	HandlePointerUp(button uint32)
 
 	// Draw renders the widget to the buffer at the specified position.
-	Draw(buf *core.Buffer, x, y int) error
+	Draw(buf *primitives.Buffer, x, y int) error
 }
 
 // Theme defines the visual appearance of widgets.
 type Theme struct {
 	// Background colors
-	BackgroundNormal   core.Color
-	BackgroundHover    core.Color
-	BackgroundPressed  core.Color
-	BackgroundDisabled core.Color
+	BackgroundNormal   primitives.Color
+	BackgroundHover    primitives.Color
+	BackgroundPressed  primitives.Color
+	BackgroundDisabled primitives.Color
 
 	// Text colors
-	TextNormal   core.Color
-	TextHover    core.Color
-	TextPressed  core.Color
-	TextDisabled core.Color
+	TextNormal   primitives.Color
+	TextHover    primitives.Color
+	TextPressed  primitives.Color
+	TextDisabled primitives.Color
 
 	// Border colors
-	BorderNormal  core.Color
-	BorderHover   core.Color
-	BorderPressed core.Color
-	BorderFocus   core.Color
+	BorderNormal  primitives.Color
+	BorderHover   primitives.Color
+	BorderPressed primitives.Color
+	BorderFocus   primitives.Color
 
 	// Scale factor for HiDPI displays (1.0 = normal, 2.0 = 2x)
 	Scale float32
@@ -105,7 +105,7 @@ type Theme struct {
 	BorderRadius int
 
 	// Shadow properties
-	ShadowColor   core.Color
+	ShadowColor   primitives.Color
 	ShadowBlur    int
 	ShadowOffsetX int
 	ShadowOffsetY int
@@ -117,24 +117,24 @@ type Theme struct {
 // DefaultTheme returns the default widget theme.
 func DefaultTheme() *Theme {
 	return &Theme{
-		BackgroundNormal:   core.Color{R: 240, G: 240, B: 240, A: 255},
-		BackgroundHover:    core.Color{R: 230, G: 230, B: 230, A: 255},
-		BackgroundPressed:  core.Color{R: 210, G: 210, B: 210, A: 255},
-		BackgroundDisabled: core.Color{R: 200, G: 200, B: 200, A: 128},
+		BackgroundNormal:   primitives.Color{R: 240, G: 240, B: 240, A: 255},
+		BackgroundHover:    primitives.Color{R: 230, G: 230, B: 230, A: 255},
+		BackgroundPressed:  primitives.Color{R: 210, G: 210, B: 210, A: 255},
+		BackgroundDisabled: primitives.Color{R: 200, G: 200, B: 200, A: 128},
 
-		TextNormal:   core.Color{R: 30, G: 30, B: 30, A: 255},
-		TextHover:    core.Color{R: 0, G: 0, B: 0, A: 255},
-		TextPressed:  core.Color{R: 0, G: 0, B: 0, A: 255},
-		TextDisabled: core.Color{R: 150, G: 150, B: 150, A: 255},
+		TextNormal:   primitives.Color{R: 30, G: 30, B: 30, A: 255},
+		TextHover:    primitives.Color{R: 0, G: 0, B: 0, A: 255},
+		TextPressed:  primitives.Color{R: 0, G: 0, B: 0, A: 255},
+		TextDisabled: primitives.Color{R: 150, G: 150, B: 150, A: 255},
 
-		BorderNormal:  core.Color{R: 180, G: 180, B: 180, A: 255},
-		BorderHover:   core.Color{R: 120, G: 120, B: 120, A: 255},
-		BorderPressed: core.Color{R: 100, G: 100, B: 100, A: 255},
-		BorderFocus:   core.Color{R: 70, G: 130, B: 220, A: 255},
+		BorderNormal:  primitives.Color{R: 180, G: 180, B: 180, A: 255},
+		BorderHover:   primitives.Color{R: 120, G: 120, B: 120, A: 255},
+		BorderPressed: primitives.Color{R: 100, G: 100, B: 100, A: 255},
+		BorderFocus:   primitives.Color{R: 70, G: 130, B: 220, A: 255},
 
 		BorderRadius: 4,
 
-		ShadowColor:   core.Color{R: 0, G: 0, B: 0, A: 40},
+		ShadowColor:   primitives.Color{R: 0, G: 0, B: 0, A: 40},
 		ShadowBlur:    4,
 		ShadowOffsetX: 0,
 		ShadowOffsetY: 2,
@@ -230,9 +230,9 @@ func (b *Button) HandlePointerUp(button uint32) {
 
 // buttonColors holds the color scheme for a button in its current state.
 type buttonColors struct {
-	background core.Color
-	text       core.Color
-	border     core.Color
+	background primitives.Color
+	text       primitives.Color
+	border     primitives.Color
 }
 
 // getButtonColors returns the appropriate colors based on button state.
@@ -268,7 +268,7 @@ func (b *Button) getButtonColors() buttonColors {
 
 // Draw renders the button to the buffer at the specified position.
 // Draw renders the button to the buffer at the specified position.
-func (b *Button) Draw(buf *core.Buffer, x, y int) error {
+func (b *Button) Draw(buf *primitives.Buffer, x, y int) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
@@ -362,7 +362,7 @@ func (b *Button) measureTextWidth(s string) int {
 }
 
 // drawRectBorder draws a rectangle border using lines.
-func drawRectBorder(buf *core.Buffer, x, y, width, height, lineWidth int, color core.Color) {
+func drawRectBorder(buf *primitives.Buffer, x, y, width, height, lineWidth int, color primitives.Color) {
 	w := float64(lineWidth)
 	// Top edge
 	buf.DrawLine(x, y, x+width, y, w, color)
@@ -375,7 +375,7 @@ func drawRectBorder(buf *core.Buffer, x, y, width, height, lineWidth int, color 
 }
 
 // emitRectBorder emits border draw commands to a display list.
-func emitRectBorder(dl *displaylist.DisplayList, x, y, width, height, lineWidth int, color core.Color) {
+func emitRectBorder(dl *displaylist.DisplayList, x, y, width, height, lineWidth int, color primitives.Color) {
 	// Top edge
 	dl.AddDrawLine(x, y, x+width, y, lineWidth, color)
 	// Right edge
@@ -545,7 +545,7 @@ func (t *TextInput) HandleBlur() {
 // textInputDisplay holds the display text and color for rendering.
 type textInputDisplay struct {
 	text  string
-	color core.Color
+	color primitives.Color
 }
 
 // getDisplayText returns the text to display and its color.
@@ -560,14 +560,14 @@ func (t *TextInput) getDisplayText() textInputDisplay {
 	if t.placeholder != "" {
 		return textInputDisplay{
 			text:  t.placeholder,
-			color: core.Color{R: 150, G: 150, B: 150, A: 255},
+			color: primitives.Color{R: 150, G: 150, B: 150, A: 255},
 		}
 	}
 	return textInputDisplay{text: "", color: t.theme.TextNormal}
 }
 
 // getBackgroundColor returns the background color based on enabled state.
-func (t *TextInput) getBackgroundColor() core.Color {
+func (t *TextInput) getBackgroundColor() primitives.Color {
 	if t.enabled {
 		return t.theme.BackgroundNormal
 	}
@@ -575,7 +575,7 @@ func (t *TextInput) getBackgroundColor() core.Color {
 }
 
 // getBorderColor returns the border color based on focus state.
-func (t *TextInput) getBorderColor() core.Color {
+func (t *TextInput) getBorderColor() primitives.Color {
 	if t.focused {
 		return t.theme.BorderFocus
 	}
@@ -584,7 +584,7 @@ func (t *TextInput) getBorderColor() core.Color {
 
 // Draw renders the text input to the buffer at the specified position.
 // Draw renders the text input to the buffer at the specified position.
-func (t *TextInput) Draw(buf *core.Buffer, x, y int) error {
+func (t *TextInput) Draw(buf *primitives.Buffer, x, y int) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
@@ -770,7 +770,7 @@ func (s *ScrollContainer) SetScrollOffset(offset int) {
 }
 
 // Draw renders the scroll container to the buffer at the specified position.
-func (s *ScrollContainer) Draw(buf *core.Buffer, x, y int) error {
+func (s *ScrollContainer) Draw(buf *primitives.Buffer, x, y int) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
@@ -804,7 +804,7 @@ func (s *ScrollContainer) Draw(buf *core.Buffer, x, y int) error {
 }
 
 // drawScrollbar draws a vertical scrollbar.
-func (s *ScrollContainer) drawScrollbar(buf *core.Buffer, x, y int) {
+func (s *ScrollContainer) drawScrollbar(buf *primitives.Buffer, x, y int) {
 	barWidth := 8
 	barX := x + s.width - barWidth - 2
 
@@ -819,11 +819,11 @@ func (s *ScrollContainer) drawScrollbar(buf *core.Buffer, x, y int) {
 	thumbY := y + int(scrollRatio*float64(s.height-thumbHeight))
 
 	// Draw scrollbar track
-	trackColor := core.Color{R: 230, G: 230, B: 230, A: 255}
+	trackColor := primitives.Color{R: 230, G: 230, B: 230, A: 255}
 	buf.FillRect(barX, y, barWidth, s.height, trackColor)
 
 	// Draw scrollbar thumb
-	thumbColor := core.Color{R: 180, G: 180, B: 180, A: 255}
+	thumbColor := primitives.Color{R: 180, G: 180, B: 180, A: 255}
 	buf.FillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4.0, thumbColor)
 }
 
@@ -880,10 +880,10 @@ func (s *ScrollContainer) emitScrollbar(dl *displaylist.DisplayList, x, y int) {
 	thumbY := y + int(scrollRatio*float64(s.height-thumbHeight))
 
 	// Emit scrollbar track
-	trackColor := core.Color{R: 230, G: 230, B: 230, A: 255}
+	trackColor := primitives.Color{R: 230, G: 230, B: 230, A: 255}
 	dl.AddFillRect(barX, y, barWidth, s.height, trackColor)
 
 	// Emit scrollbar thumb
-	thumbColor := core.Color{R: 180, G: 180, B: 180, A: 255}
+	thumbColor := primitives.Color{R: 180, G: 180, B: 180, A: 255}
 	dl.AddFillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4, thumbColor)
 }

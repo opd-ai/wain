@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/opd-ai/wain/internal/raster/consumer"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -19,7 +19,7 @@ var ErrSoftwareNoDmabuf = errors.New("backend: software renderer does not export
 // It provides pixel-perfect output matching the GPU backends.
 type SoftwareBackend struct {
 	consumer *consumer.SoftwareConsumer
-	buffer   *core.Buffer
+	buffer   *primitives.Buffer
 	width    int
 	height   int
 }
@@ -42,7 +42,7 @@ func NewSoftwareBackend(cfg SoftwareConfig) (*SoftwareBackend, error) {
 		return nil, fmt.Errorf("backend: invalid dimensions %dx%d", cfg.Width, cfg.Height)
 	}
 
-	buffer, err := core.NewBuffer(cfg.Width, cfg.Height)
+	buffer, err := primitives.NewBuffer(cfg.Width, cfg.Height)
 	if err != nil {
 		return nil, fmt.Errorf("backend: buffer creation failed: %w", err)
 	}
@@ -113,7 +113,7 @@ func (sb *SoftwareBackend) Present() (int, error) {
 
 // Buffer returns the underlying pixel buffer for direct access.
 // This is the software equivalent of Present() for GPU backends.
-func (sb *SoftwareBackend) Buffer() *core.Buffer {
+func (sb *SoftwareBackend) Buffer() *primitives.Buffer {
 	return sb.buffer
 }
 

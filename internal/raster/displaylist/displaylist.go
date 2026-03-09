@@ -6,7 +6,7 @@
 package displaylist
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // CommandType represents the type of draw command.
@@ -48,7 +48,7 @@ type DrawCommand struct {
 type FillRectData struct {
 	X, Y          int
 	Width, Height int
-	Color         core.Color
+	Color         primitives.Color
 }
 
 // FillRoundedRectData contains parameters for a filled rounded rectangle.
@@ -56,14 +56,14 @@ type FillRoundedRectData struct {
 	X, Y          int
 	Width, Height int
 	Radius        int
-	Color         core.Color
+	Color         primitives.Color
 }
 
 // DrawLineData contains parameters for a line segment.
 type DrawLineData struct {
 	X0, Y0, X1, Y1 int
 	Width          int
-	Color          core.Color
+	Color          primitives.Color
 }
 
 // DrawTextData contains parameters for text rendering.
@@ -71,7 +71,7 @@ type DrawTextData struct {
 	Text     string
 	X, Y     int
 	FontSize int
-	Color    core.Color
+	Color    primitives.Color
 	AtlasID  int // Reference to font atlas texture (for GPU backend)
 }
 
@@ -81,8 +81,8 @@ type LinearGradientData struct {
 	Width, Height int
 	X0, Y0        int // Start point
 	X1, Y1        int // End point
-	Color0        core.Color
-	Color1        core.Color
+	Color0        primitives.Color
+	Color1        primitives.Color
 }
 
 // RadialGradientData contains parameters for radial gradient.
@@ -92,8 +92,8 @@ type RadialGradientData struct {
 	CenterX       int
 	CenterY       int
 	Radius        int
-	Color0        core.Color
-	Color1        core.Color
+	Color0        primitives.Color
+	Color1        primitives.Color
 }
 
 // BoxShadowData contains parameters for box shadow.
@@ -102,7 +102,7 @@ type BoxShadowData struct {
 	Width, Height int
 	BlurRadius    int
 	SpreadRadius  int
-	Color         core.Color
+	Color         primitives.Color
 }
 
 // DrawImageData contains parameters for image rendering.
@@ -132,7 +132,7 @@ func (dl *DisplayList) Reset() {
 }
 
 // AddFillRect adds a filled rectangle command.
-func (dl *DisplayList) AddFillRect(x, y, width, height int, color core.Color) {
+func (dl *DisplayList) AddFillRect(x, y, width, height int, color primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdFillRect,
 		Data: FillRectData{
@@ -146,7 +146,7 @@ func (dl *DisplayList) AddFillRect(x, y, width, height int, color core.Color) {
 }
 
 // AddFillRoundedRect adds a filled rounded rectangle command.
-func (dl *DisplayList) AddFillRoundedRect(x, y, width, height, radius int, color core.Color) {
+func (dl *DisplayList) AddFillRoundedRect(x, y, width, height, radius int, color primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdFillRoundedRect,
 		Data: FillRoundedRectData{
@@ -161,7 +161,7 @@ func (dl *DisplayList) AddFillRoundedRect(x, y, width, height, radius int, color
 }
 
 // AddDrawLine adds a line drawing command.
-func (dl *DisplayList) AddDrawLine(x0, y0, x1, y1, width int, color core.Color) {
+func (dl *DisplayList) AddDrawLine(x0, y0, x1, y1, width int, color primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdDrawLine,
 		Data: DrawLineData{
@@ -176,7 +176,7 @@ func (dl *DisplayList) AddDrawLine(x0, y0, x1, y1, width int, color core.Color) 
 }
 
 // AddDrawText adds a text drawing command.
-func (dl *DisplayList) AddDrawText(text string, x, y, fontSize int, color core.Color, atlasID int) {
+func (dl *DisplayList) AddDrawText(text string, x, y, fontSize int, color primitives.Color, atlasID int) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdDrawText,
 		Data: DrawTextData{
@@ -191,7 +191,7 @@ func (dl *DisplayList) AddDrawText(text string, x, y, fontSize int, color core.C
 }
 
 // AddLinearGradient adds a linear gradient command.
-func (dl *DisplayList) AddLinearGradient(x, y, width, height, x0, y0, x1, y1 int, color0, color1 core.Color) {
+func (dl *DisplayList) AddLinearGradient(x, y, width, height, x0, y0, x1, y1 int, color0, color1 primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdLinearGradient,
 		Data: LinearGradientData{
@@ -210,7 +210,7 @@ func (dl *DisplayList) AddLinearGradient(x, y, width, height, x0, y0, x1, y1 int
 }
 
 // AddRadialGradient adds a radial gradient command.
-func (dl *DisplayList) AddRadialGradient(x, y, width, height, centerX, centerY, radius int, color0, color1 core.Color) {
+func (dl *DisplayList) AddRadialGradient(x, y, width, height, centerX, centerY, radius int, color0, color1 primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdRadialGradient,
 		Data: RadialGradientData{
@@ -228,7 +228,7 @@ func (dl *DisplayList) AddRadialGradient(x, y, width, height, centerX, centerY, 
 }
 
 // AddBoxShadow adds a box shadow command.
-func (dl *DisplayList) AddBoxShadow(x, y, width, height, blurRadius, spreadRadius int, color core.Color) {
+func (dl *DisplayList) AddBoxShadow(x, y, width, height, blurRadius, spreadRadius int, color primitives.Color) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdBoxShadow,
 		Data: BoxShadowData{

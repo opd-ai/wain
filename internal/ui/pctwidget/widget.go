@@ -3,7 +3,7 @@ package pctwidget
 import (
 	"errors"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // BaseWidget provides the common foundation for all percentage-based widgets.
@@ -145,7 +145,7 @@ func (p *Panel) Add(child *Panel) {
 }
 
 // Draw renders the panel (and its children recursively) into the buffer.
-func (p *Panel) Draw(buf *core.Buffer) error {
+func (p *Panel) Draw(buf *primitives.Buffer) error {
 	if buf == nil {
 		return ErrNilBuffer
 	}
@@ -159,7 +159,7 @@ func (p *Panel) Draw(buf *core.Buffer) error {
 }
 
 // drawBorder renders the panel border if border width is non-zero.
-func (p *Panel) drawBorder(buf *core.Buffer, s Style) {
+func (p *Panel) drawBorder(buf *primitives.Buffer, s Style) {
 	bw := s.BorderWidth()
 	if bw <= 0 || p.width <= 0 || p.height <= 0 {
 		return
@@ -179,7 +179,7 @@ func (p *Panel) drawBorder(buf *core.Buffer, s Style) {
 }
 
 // drawChildren renders all child panels recursively.
-func (p *Panel) drawChildren(buf *core.Buffer) error {
+func (p *Panel) drawChildren(buf *primitives.Buffer) error {
 	for _, c := range p.children {
 		if err := c.Draw(buf); err != nil {
 			return err

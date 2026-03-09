@@ -25,14 +25,14 @@
 package composite
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // Blit copies a rectangular region from src to dst with no filtering.
 // The source rectangle is defined by (srcX, srcY, width, height).
 // The destination position is (dstX, dstY).
 // Coordinates are automatically clipped to buffer bounds.
-func Blit(dst *core.Buffer, dstX, dstY int, src *core.Buffer, srcX, srcY, width, height int) {
+func Blit(dst *primitives.Buffer, dstX, dstY int, src *primitives.Buffer, srcX, srcY, width, height int) {
 	if dst == nil || src == nil || width <= 0 || height <= 0 {
 		return
 	}
@@ -48,7 +48,7 @@ func Blit(dst *core.Buffer, dstX, dstY int, src *core.Buffer, srcX, srcY, width,
 }
 
 // calculateClippedRegion computes clipped source coordinates and copy dimensions.
-func calculateClippedRegion(dst *core.Buffer, dstX, dstY int, src *core.Buffer, srcX, srcY, width, height int) (srcX1, srcY1, copyWidth, copyHeight int) {
+func calculateClippedRegion(dst *primitives.Buffer, dstX, dstY int, src *primitives.Buffer, srcX, srcY, width, height int) (srcX1, srcY1, copyWidth, copyHeight int) {
 	srcX1 = max(0, srcX)
 	srcY1 = max(0, srcY)
 	srcX2 := min(src.Width, srcX+width)
@@ -73,7 +73,7 @@ func calculateClippedRegion(dst *core.Buffer, dstX, dstY int, src *core.Buffer, 
 }
 
 // blitRows copies pixel rows from source to destination with alpha blending.
-func blitRows(dst, src *core.Buffer, srcX, srcY, dstX, dstY, width, height int) {
+func blitRows(dst, src *primitives.Buffer, srcX, srcY, dstX, dstY, width, height int) {
 	for row := 0; row < height; row++ {
 		srcOffset := (srcY+row)*src.Stride + srcX*4
 		dstOffset := (dstY+row)*dst.Stride + dstX*4
@@ -104,8 +104,8 @@ func blitRow(dstRow, srcRow []byte, width int) {
 // The destination rectangle is defined by (dstX, dstY, dstWidth, dstHeight).
 // Bilinear interpolation is applied for smooth scaling.
 // Coordinates are automatically clipped to buffer bounds.
-func BlitScaled(dst *core.Buffer, dstX, dstY, dstWidth, dstHeight int,
-	src *core.Buffer, srcX, srcY, srcWidth, srcHeight int,
+func BlitScaled(dst *primitives.Buffer, dstX, dstY, dstWidth, dstHeight int,
+	src *primitives.Buffer, srcX, srcY, srcWidth, srcHeight int,
 ) {
 	if dst == nil || src == nil || dstWidth <= 0 || dstHeight <= 0 || srcWidth <= 0 || srcHeight <= 0 {
 		return
@@ -161,7 +161,7 @@ func BlitScaled(dst *core.Buffer, dstX, dstY, dstWidth, dstHeight int,
 }
 
 // samplePixel reads a pixel from the buffer at (x, y) and returns it as [4]byte.
-func samplePixel(buf *core.Buffer, xPos, yPos int) [4]byte {
+func samplePixel(buf *primitives.Buffer, xPos, yPos int) [4]byte {
 	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return [4]byte{0, 0, 0, 0}
 	}

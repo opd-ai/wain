@@ -27,7 +27,7 @@ import (
 
 	"github.com/opd-ai/wain/internal/buffer"
 	"github.com/opd-ai/wain/internal/demo"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
@@ -291,7 +291,7 @@ func renderFrame(pixels []byte, frameNum int) {
 	height := windowHeight
 	stride := width * 4
 
-	buf := &core.Buffer{
+	buf := &primitives.Buffer{
 		Pixels: pixels,
 		Width:  width,
 		Height: height,
@@ -299,7 +299,7 @@ func renderFrame(pixels []byte, frameNum int) {
 	}
 
 	// Clear to background color (dark blue-gray)
-	bgColor := core.Color{R: 0x2C, G: 0x3E, B: 0x50, A: 0xFF}
+	bgColor := primitives.Color{R: 0x2C, G: 0x3E, B: 0x50, A: 0xFF}
 	buf.FillRect(0, 0, width, height, bgColor)
 
 	// Draw animated rectangle
@@ -308,13 +308,13 @@ func renderFrame(pixels []byte, frameNum int) {
 	rectY := height/2 - rectSize/2
 
 	// Render rectangle using software rasterizer (red)
-	rectColor := core.Color{R: 0xE7, G: 0x4C, B: 0x3C, A: 0xFF}
+	rectColor := primitives.Color{R: 0xE7, G: 0x4C, B: 0x3C, A: 0xFF}
 	buf.FillRect(rectX, rectY, rectSize, rectSize, rectColor)
 
 	// Draw frame counter indicator (light gray bar)
 	textX := 10
 	textY := 10
-	textColor := core.Color{R: 0xEC, G: 0xF0, B: 0xF1, A: 0xFF}
+	textColor := primitives.Color{R: 0xEC, G: 0xF0, B: 0xF1, A: 0xFF}
 	buf.FillRect(textX, textY, 50, 10, textColor)
 }
 

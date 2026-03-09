@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
@@ -295,5 +295,5 @@ func appendVertex(data []byte, v Vertex) []byte {
 	return data
 }
 
-// unused placeholder to satisfy the compiler for core.Color usage
-var _ = core.Color{}
+// unused placeholder to satisfy the compiler for primitives.Color usage
+var _ = primitives.Color{}

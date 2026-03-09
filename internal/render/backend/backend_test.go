@@ -3,13 +3,13 @@ package backend
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
 func TestBatchCommands(t *testing.T) {
-	red := core.Color{R: 255, G: 0, B: 0, A: 255}
-	green := core.Color{R: 0, G: 255, B: 0, A: 255}
+	red := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	green := primitives.Color{R: 0, G: 255, B: 0, A: 255}
 
 	commands := []displaylist.DrawCommand{
 		{Type: displaylist.CmdFillRect, Data: displaylist.FillRectData{X: 0, Y: 0, Width: 100, Height: 100, Color: red}},
@@ -79,7 +79,7 @@ func TestRectToVertices(t *testing.T) {
 		Y:      200,
 		Width:  50,
 		Height: 30,
-		Color:  core.Color{R: 255, G: 128, B: 64, A: 255},
+		Color:  primitives.Color{R: 255, G: 128, B: 64, A: 255},
 	}
 
 	vertices := rectToVertices(data, 800, 600)
@@ -111,7 +111,7 @@ func TestLineToVertices(t *testing.T) {
 		X1:    100,
 		Y1:    100,
 		Width: 2,
-		Color: core.Color{R: 255, G: 0, B: 0, A: 255},
+		Color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 	}
 
 	vertices := lineToVertices(data, 800, 600)

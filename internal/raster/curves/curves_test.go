@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestDrawQuadraticBezier(t *testing.T) {
@@ -14,7 +14,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 		p1    Point
 		p2    Point
 		width float64
-		color core.Color
+		color primitives.Color
 	}{
 		{
 			name:  "simple curve",
@@ -22,7 +22,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{50, 5},
 			p2:    Point{90, 10},
 			width: 2.0,
-			color: core.Color{R: 255, G: 0, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:  "vertical curve",
@@ -30,7 +30,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{30, 50},
 			p2:    Point{50, 90},
 			width: 3.0,
-			color: core.Color{R: 0, G: 255, B: 0, A: 255},
+			color: primitives.Color{R: 0, G: 255, B: 0, A: 255},
 		},
 		{
 			name:  "degenerate curve (straight line)",
@@ -38,7 +38,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{50, 50},
 			p2:    Point{90, 90},
 			width: 1.0,
-			color: core.Color{R: 0, G: 0, B: 255, A: 255},
+			color: primitives.Color{R: 0, G: 0, B: 255, A: 255},
 		},
 		{
 			name:  "degenerate curve (single point)",
@@ -46,7 +46,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{50, 50},
 			p2:    Point{50, 50},
 			width: 1.0,
-			color: core.Color{R: 255, G: 255, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 255, B: 0, A: 255},
 		},
 		{
 			name:  "zero width (should not draw)",
@@ -54,7 +54,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{50, 5},
 			p2:    Point{90, 10},
 			width: 0,
-			color: core.Color{R: 255, G: 0, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:  "negative width (should not draw)",
@@ -62,7 +62,7 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{50, 5},
 			p2:    Point{90, 10},
 			width: -1.0,
-			color: core.Color{R: 255, G: 0, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:  "tight curve",
@@ -70,13 +70,13 @@ func TestDrawQuadraticBezier(t *testing.T) {
 			p1:    Point{60, 10},
 			p2:    Point{70, 50},
 			width: 2.0,
-			color: core.Color{R: 255, G: 128, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 128, B: 0, A: 255},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buf, err := core.NewBuffer(100, 100)
+			buf, err := primitives.NewBuffer(100, 100)
 			if err != nil {
 				t.Fatalf("NewBuffer failed: %v", err)
 			}
@@ -100,7 +100,7 @@ func TestDrawCubicBezier(t *testing.T) {
 		p2    Point
 		p3    Point
 		width float64
-		color core.Color
+		color primitives.Color
 	}{
 		{
 			name:  "simple S-curve",
@@ -109,7 +109,7 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{70, 90},
 			p3:    Point{90, 50},
 			width: 2.0,
-			color: core.Color{R: 255, G: 0, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:  "degenerate curve (straight line)",
@@ -118,7 +118,7 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{60, 60},
 			p3:    Point{90, 90},
 			width: 1.0,
-			color: core.Color{R: 0, G: 255, B: 0, A: 255},
+			color: primitives.Color{R: 0, G: 255, B: 0, A: 255},
 		},
 		{
 			name:  "degenerate curve (single point)",
@@ -127,7 +127,7 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{50, 50},
 			p3:    Point{50, 50},
 			width: 1.0,
-			color: core.Color{R: 0, G: 0, B: 255, A: 255},
+			color: primitives.Color{R: 0, G: 0, B: 255, A: 255},
 		},
 		{
 			name:  "zero width (should not draw)",
@@ -136,7 +136,7 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{70, 90},
 			p3:    Point{90, 50},
 			width: 0,
-			color: core.Color{R: 255, G: 0, B: 0, A: 255},
+			color: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:  "complex curve",
@@ -145,7 +145,7 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{10, 70},
 			p3:    Point{90, 90},
 			width: 3.0,
-			color: core.Color{R: 128, G: 0, B: 128, A: 255},
+			color: primitives.Color{R: 128, G: 0, B: 128, A: 255},
 		},
 		{
 			name:  "tight loop",
@@ -154,13 +154,13 @@ func TestDrawCubicBezier(t *testing.T) {
 			p2:    Point{20, 20},
 			p3:    Point{50, 50},
 			width: 2.0,
-			color: core.Color{R: 0, G: 128, B: 255, A: 255},
+			color: primitives.Color{R: 0, G: 128, B: 255, A: 255},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buf, err := core.NewBuffer(100, 100)
+			buf, err := primitives.NewBuffer(100, 100)
 			if err != nil {
 				t.Fatalf("NewBuffer failed: %v", err)
 			}
@@ -184,7 +184,7 @@ func TestDrawArc(t *testing.T) {
 		startAngle float64
 		endAngle   float64
 		width      float64
-		color      core.Color
+		color      primitives.Color
 	}{
 		{
 			name:       "quarter circle (top-right)",
@@ -195,7 +195,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 0,
 			endAngle:   math.Pi / 2,
 			width:      2.0,
-			color:      core.Color{R: 255, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:       "semicircle",
@@ -206,7 +206,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 0,
 			endAngle:   math.Pi,
 			width:      3.0,
-			color:      core.Color{R: 0, G: 255, B: 0, A: 255},
+			color:      primitives.Color{R: 0, G: 255, B: 0, A: 255},
 		},
 		{
 			name:       "full circle",
@@ -217,7 +217,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 0,
 			endAngle:   2 * math.Pi,
 			width:      1.0,
-			color:      core.Color{R: 0, G: 0, B: 255, A: 255},
+			color:      primitives.Color{R: 0, G: 0, B: 255, A: 255},
 		},
 		{
 			name:       "elliptical arc",
@@ -228,7 +228,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: math.Pi / 4,
 			endAngle:   3 * math.Pi / 4,
 			width:      2.0,
-			color:      core.Color{R: 255, G: 255, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 255, B: 0, A: 255},
 		},
 		{
 			name:       "wraparound arc",
@@ -239,7 +239,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 3 * math.Pi / 2,
 			endAngle:   math.Pi / 2,
 			width:      2.0,
-			color:      core.Color{R: 255, G: 0, B: 255, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 255, A: 255},
 		},
 		{
 			name:       "zero width (should not draw)",
@@ -250,7 +250,7 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 0,
 			endAngle:   math.Pi,
 			width:      0,
-			color:      core.Color{R: 255, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:       "zero radius (should not draw)",
@@ -261,13 +261,13 @@ func TestDrawArc(t *testing.T) {
 			startAngle: 0,
 			endAngle:   math.Pi,
 			width:      2.0,
-			color:      core.Color{R: 255, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buf, err := core.NewBuffer(100, 100)
+			buf, err := primitives.NewBuffer(100, 100)
 			if err != nil {
 				t.Fatalf("NewBuffer failed: %v", err)
 			}
@@ -290,7 +290,7 @@ func TestFillArc(t *testing.T) {
 		rx, ry     float64
 		startAngle float64
 		endAngle   float64
-		color      core.Color
+		color      primitives.Color
 	}{
 		{
 			name:       "quarter pie slice",
@@ -300,7 +300,7 @@ func TestFillArc(t *testing.T) {
 			ry:         30,
 			startAngle: 0,
 			endAngle:   math.Pi / 2,
-			color:      core.Color{R: 255, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:       "half ellipse",
@@ -310,7 +310,7 @@ func TestFillArc(t *testing.T) {
 			ry:         20,
 			startAngle: 0,
 			endAngle:   math.Pi,
-			color:      core.Color{R: 0, G: 255, B: 0, A: 255},
+			color:      primitives.Color{R: 0, G: 255, B: 0, A: 255},
 		},
 		{
 			name:       "full circle",
@@ -320,7 +320,7 @@ func TestFillArc(t *testing.T) {
 			ry:         25,
 			startAngle: 0,
 			endAngle:   2 * math.Pi,
-			color:      core.Color{R: 0, G: 0, B: 255, A: 255},
+			color:      primitives.Color{R: 0, G: 0, B: 255, A: 255},
 		},
 		{
 			name:       "small wedge",
@@ -330,7 +330,7 @@ func TestFillArc(t *testing.T) {
 			ry:         30,
 			startAngle: 0,
 			endAngle:   math.Pi / 6,
-			color:      core.Color{R: 255, G: 255, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 255, B: 0, A: 255},
 		},
 		{
 			name:       "wraparound wedge",
@@ -340,7 +340,7 @@ func TestFillArc(t *testing.T) {
 			ry:         30,
 			startAngle: 5 * math.Pi / 4,
 			endAngle:   math.Pi / 4,
-			color:      core.Color{R: 255, G: 0, B: 255, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 255, A: 255},
 		},
 		{
 			name:       "zero radius (should not draw)",
@@ -350,13 +350,13 @@ func TestFillArc(t *testing.T) {
 			ry:         0,
 			startAngle: 0,
 			endAngle:   math.Pi,
-			color:      core.Color{R: 255, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			buf, err := core.NewBuffer(100, 100)
+			buf, err := primitives.NewBuffer(100, 100)
 			if err != nil {
 				t.Fatalf("NewBuffer failed: %v", err)
 			}
@@ -575,7 +575,7 @@ func TestArcCoverage(t *testing.T) {
 }
 
 // isBufferClear checks if all pixels in the buffer are transparent black.
-func isBufferClear(buf *core.Buffer) bool {
+func isBufferClear(buf *primitives.Buffer) bool {
 	for i := 0; i < len(buf.Pixels); i++ {
 		if buf.Pixels[i] != 0 {
 			return false
@@ -586,11 +586,11 @@ func isBufferClear(buf *core.Buffer) bool {
 
 // Benchmark tests
 func BenchmarkDrawQuadraticBezier(b *testing.B) {
-	buf, _ := core.NewBuffer(500, 500)
+	buf, _ := primitives.NewBuffer(500, 500)
 	p0 := Point{50, 50}
 	p1 := Point{250, 10}
 	p2 := Point{450, 50}
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -599,12 +599,12 @@ func BenchmarkDrawQuadraticBezier(b *testing.B) {
 }
 
 func BenchmarkDrawCubicBezier(b *testing.B) {
-	buf, _ := core.NewBuffer(500, 500)
+	buf, _ := primitives.NewBuffer(500, 500)
 	p0 := Point{50, 250}
 	p1 := Point{150, 50}
 	p2 := Point{350, 450}
 	p3 := Point{450, 250}
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -613,8 +613,8 @@ func BenchmarkDrawCubicBezier(b *testing.B) {
 }
 
 func BenchmarkDrawArc(b *testing.B) {
-	buf, _ := core.NewBuffer(500, 500)
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	buf, _ := primitives.NewBuffer(500, 500)
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -623,8 +623,8 @@ func BenchmarkDrawArc(b *testing.B) {
 }
 
 func BenchmarkFillArc(b *testing.B) {
-	buf, _ := core.NewBuffer(500, 500)
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	buf, _ := primitives.NewBuffer(500, 500)
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

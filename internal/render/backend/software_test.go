@@ -3,7 +3,7 @@ package backend
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
@@ -68,7 +68,7 @@ func TestSoftwareBackendRender(t *testing.T) {
 
 	// Create a simple display list
 	dl := displaylist.New()
-	dl.AddFillRect(10, 10, 100, 100, core.Color{R: 255, G: 0, B: 0, A: 255}) // Red rectangle
+	dl.AddFillRect(10, 10, 100, 100, primitives.Color{R: 255, G: 0, B: 0, A: 255}) // Red rectangle
 
 	// Render it
 	err = backend.Render(dl)
@@ -97,8 +97,8 @@ func TestSoftwareBackendRenderWithDamage(t *testing.T) {
 
 	// Create display list with multiple rects
 	dl := displaylist.New()
-	dl.AddFillRect(10, 10, 50, 50, core.Color{R: 255, G: 0, B: 0, A: 255})   // Red - top left
-	dl.AddFillRect(200, 150, 50, 50, core.Color{R: 0, G: 255, B: 0, A: 255}) // Green - bottom right
+	dl.AddFillRect(10, 10, 50, 50, primitives.Color{R: 255, G: 0, B: 0, A: 255})   // Red - top left
+	dl.AddFillRect(200, 150, 50, 50, primitives.Color{R: 0, G: 255, B: 0, A: 255}) // Green - bottom right
 
 	// Render with damage only covering top-left rect
 	damage := []displaylist.Rect{

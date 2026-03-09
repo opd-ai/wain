@@ -3,7 +3,7 @@ package pctwidget
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // ---------------------------------------------------------------------------
@@ -126,10 +126,10 @@ func TestRetroStyleImplementsStyle(t *testing.T) {
 
 func TestCustomStyle(t *testing.T) {
 	custom := &RetroStyle{
-		BgColor:      core.Color{R: 255, G: 0, B: 0, A: 255},
-		FgColor:      core.Color{R: 0, G: 255, B: 0, A: 255},
-		AccentColor:  core.Color{R: 0, G: 0, B: 255, A: 255},
-		BorderColor:  core.Color{R: 128, G: 128, B: 128, A: 255},
+		BgColor:      primitives.Color{R: 255, G: 0, B: 0, A: 255},
+		FgColor:      primitives.Color{R: 0, G: 255, B: 0, A: 255},
+		AccentColor:  primitives.Color{R: 0, G: 0, B: 255, A: 255},
+		BorderColor:  primitives.Color{R: 128, G: 128, B: 128, A: 255},
 		BaseFontSize: 16.0,
 		BasePadding:  10,
 		BaseGap:      8,
@@ -252,7 +252,7 @@ func TestPanelAddChild(t *testing.T) {
 }
 
 func TestPanelDraw(t *testing.T) {
-	buf, err := core.NewBuffer(200, 200)
+	buf, err := primitives.NewBuffer(200, 200)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestPanelDrawNilBuffer(t *testing.T) {
 }
 
 func TestPanelDrawInvisible(t *testing.T) {
-	buf, _ := core.NewBuffer(200, 200)
+	buf, _ := primitives.NewBuffer(200, 200)
 	p := NewPanel(100, 100)
 	p.SetVisible(false)
 	if err := p.Draw(buf); err != nil {
@@ -465,7 +465,7 @@ func TestDefaultStyleSingleton(t *testing.T) {
 }
 
 func TestPanelDrawBorderClamped(t *testing.T) {
-	buf, err := core.NewBuffer(200, 200)
+	buf, err := primitives.NewBuffer(200, 200)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -473,8 +473,8 @@ func TestPanelDrawBorderClamped(t *testing.T) {
 	p := NewPanel(100, 100)
 	p.SetPosition(0, 0, 4, 4)
 	bigBorder := &RetroStyle{
-		BgColor:     core.Color{R: 30, G: 30, B: 46, A: 255},
-		BorderColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+		BgColor:     primitives.Color{R: 30, G: 30, B: 46, A: 255},
+		BorderColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		BaseBorderW: 10, // much larger than the 4x4 panel
 	}
 	p.SetStyle(bigBorder)
@@ -510,7 +510,7 @@ func BenchmarkAutoLayout(b *testing.B) {
 }
 
 func BenchmarkPanelDraw(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
+	buf, _ := primitives.NewBuffer(800, 600)
 	p := NewPanel(100, 100)
 	p.SetPosition(0, 0, 800, 600)
 	b.ResetTimer()

@@ -3,7 +3,7 @@ package composite
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestBlit(t *testing.T) {
@@ -13,8 +13,8 @@ func TestBlit(t *testing.T) {
 		srcW, srcH             int
 		dstX, dstY             int
 		srcX, srcY, w, h       int
-		srcColor               core.Color
-		dstColor               core.Color
+		srcColor               primitives.Color
+		dstColor               primitives.Color
 		expectCopied           bool
 		expectDstX, expectDstY int
 	}{
@@ -24,8 +24,8 @@ func TestBlit(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10,
 			srcX: 0, srcY: 0, w: 20, h: 20,
-			srcColor:     core.Color{R: 255, G: 0, B: 0, A: 255},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: true,
 			expectDstX:   10, expectDstY: 10,
 		},
@@ -35,8 +35,8 @@ func TestBlit(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 20, dstY: 20,
 			srcX: 10, srcY: 10, w: 15, h: 15,
-			srcColor:     core.Color{R: 0, G: 255, B: 0, A: 255},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 0, G: 255, B: 0, A: 255},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: true,
 			expectDstX:   20, expectDstY: 20,
 		},
@@ -46,8 +46,8 @@ func TestBlit(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10,
 			srcX: 40, srcY: 40, w: 20, h: 20,
-			srcColor:     core.Color{R: 255, G: 255, B: 0, A: 255},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 255, G: 255, B: 0, A: 255},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: true,
 			expectDstX:   10, expectDstY: 10,
 		},
@@ -57,8 +57,8 @@ func TestBlit(t *testing.T) {
 			srcW: 100, srcH: 100,
 			dstX: 40, dstY: 40,
 			srcX: 0, srcY: 0, w: 20, h: 20,
-			srcColor:     core.Color{R: 255, G: 0, B: 255, A: 255},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 255, G: 0, B: 255, A: 255},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: true,
 			expectDstX:   40, expectDstY: 40,
 		},
@@ -68,8 +68,8 @@ func TestBlit(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10,
 			srcX: 0, srcY: 0, w: 20, h: 20,
-			srcColor:     core.Color{R: 255, G: 0, B: 0, A: 0},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 255, G: 0, B: 0, A: 0},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: false,
 			expectDstX:   10, expectDstY: 10,
 		},
@@ -79,8 +79,8 @@ func TestBlit(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10,
 			srcX: 0, srcY: 0, w: 20, h: 20,
-			srcColor:     core.Color{R: 255, G: 0, B: 0, A: 128},
-			dstColor:     core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:     primitives.Color{R: 255, G: 0, B: 0, A: 128},
+			dstColor:     primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectCopied: true,
 			expectDstX:   10, expectDstY: 10,
 		},
@@ -88,13 +88,13 @@ func TestBlit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dst, err := core.NewBuffer(tt.dstW, tt.dstH)
+			dst, err := primitives.NewBuffer(tt.dstW, tt.dstH)
 			if err != nil {
 				t.Fatalf("NewBuffer(dst) failed: %v", err)
 			}
 			dst.Clear(tt.dstColor)
 
-			src, err := core.NewBuffer(tt.srcW, tt.srcH)
+			src, err := primitives.NewBuffer(tt.srcW, tt.srcH)
 			if err != nil {
 				t.Fatalf("NewBuffer(src) failed: %v", err)
 			}
@@ -137,8 +137,8 @@ func TestBlit(t *testing.T) {
 }
 
 func TestBlitNilBuffers(t *testing.T) {
-	dst, _ := core.NewBuffer(10, 10)
-	src, _ := core.NewBuffer(10, 10)
+	dst, _ := primitives.NewBuffer(10, 10)
+	src, _ := primitives.NewBuffer(10, 10)
 
 	Blit(nil, 0, 0, src, 0, 0, 5, 5)
 	Blit(dst, 0, 0, nil, 0, 0, 5, 5)
@@ -146,8 +146,8 @@ func TestBlitNilBuffers(t *testing.T) {
 }
 
 func TestBlitInvalidDimensions(t *testing.T) {
-	dst, _ := core.NewBuffer(10, 10)
-	src, _ := core.NewBuffer(10, 10)
+	dst, _ := primitives.NewBuffer(10, 10)
+	src, _ := primitives.NewBuffer(10, 10)
 
 	Blit(dst, 0, 0, src, 0, 0, 0, 5)
 	Blit(dst, 0, 0, src, 0, 0, 5, 0)
@@ -162,7 +162,7 @@ func TestBlitScaled(t *testing.T) {
 		srcW, srcH               int
 		dstX, dstY, dstW2, dstH2 int
 		srcX, srcY, srcW2, srcH2 int
-		srcColor                 core.Color
+		srcColor                 primitives.Color
 		expectInterpolation      bool
 	}{
 		{
@@ -171,7 +171,7 @@ func TestBlitScaled(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10, dstW2: 40, dstH2: 40,
 			srcX: 0, srcY: 0, srcW2: 20, srcH2: 20,
-			srcColor:            core.Color{R: 255, G: 0, B: 0, A: 255},
+			srcColor:            primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			expectInterpolation: true,
 		},
 		{
@@ -180,7 +180,7 @@ func TestBlitScaled(t *testing.T) {
 			srcW: 100, srcH: 100,
 			dstX: 10, dstY: 10, dstW2: 20, dstH2: 20,
 			srcX: 0, srcY: 0, srcW2: 40, srcH2: 40,
-			srcColor:            core.Color{R: 0, G: 255, B: 0, A: 255},
+			srcColor:            primitives.Color{R: 0, G: 255, B: 0, A: 255},
 			expectInterpolation: true,
 		},
 		{
@@ -189,20 +189,20 @@ func TestBlitScaled(t *testing.T) {
 			srcW: 50, srcH: 50,
 			dstX: 10, dstY: 10, dstW2: 20, dstH2: 20,
 			srcX: 0, srcY: 0, srcW2: 20, srcH2: 20,
-			srcColor:            core.Color{R: 0, G: 0, B: 255, A: 255},
+			srcColor:            primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			expectInterpolation: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dst, err := core.NewBuffer(tt.dstW, tt.dstH)
+			dst, err := primitives.NewBuffer(tt.dstW, tt.dstH)
 			if err != nil {
 				t.Fatalf("NewBuffer(dst) failed: %v", err)
 			}
-			dst.Clear(core.Color{R: 0, G: 0, B: 0, A: 255})
+			dst.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 255})
 
-			src, err := core.NewBuffer(tt.srcW, tt.srcH)
+			src, err := primitives.NewBuffer(tt.srcW, tt.srcH)
 			if err != nil {
 				t.Fatalf("NewBuffer(src) failed: %v", err)
 			}
@@ -226,8 +226,8 @@ func TestBlitScaled(t *testing.T) {
 }
 
 func TestBlitScaledNilBuffers(t *testing.T) {
-	dst, _ := core.NewBuffer(10, 10)
-	src, _ := core.NewBuffer(10, 10)
+	dst, _ := primitives.NewBuffer(10, 10)
+	src, _ := primitives.NewBuffer(10, 10)
 
 	BlitScaled(nil, 0, 0, 5, 5, src, 0, 0, 5, 5)
 	BlitScaled(dst, 0, 0, 5, 5, nil, 0, 0, 5, 5)
@@ -235,8 +235,8 @@ func TestBlitScaledNilBuffers(t *testing.T) {
 }
 
 func TestBlitScaledInvalidDimensions(t *testing.T) {
-	dst, _ := core.NewBuffer(10, 10)
-	src, _ := core.NewBuffer(10, 10)
+	dst, _ := primitives.NewBuffer(10, 10)
+	src, _ := primitives.NewBuffer(10, 10)
 
 	BlitScaled(dst, 0, 0, 0, 5, src, 0, 0, 5, 5)
 	BlitScaled(dst, 0, 0, 5, 0, src, 0, 0, 5, 5)
@@ -247,11 +247,11 @@ func TestBlitScaledInvalidDimensions(t *testing.T) {
 }
 
 func TestSamplePixel(t *testing.T) {
-	buf, err := core.NewBuffer(10, 10)
+	buf, err := primitives.NewBuffer(10, 10)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}
-	buf.Clear(core.Color{R: 255, G: 128, B: 64, A: 200})
+	buf.Clear(primitives.Color{R: 255, G: 128, B: 64, A: 200})
 
 	tests := []struct {
 		name       string
@@ -429,9 +429,9 @@ func TestBlendPixelDirect(t *testing.T) {
 }
 
 func BenchmarkBlit(b *testing.B) {
-	dst, _ := core.NewBuffer(1920, 1080)
-	src, _ := core.NewBuffer(800, 600)
-	src.Clear(core.Color{R: 255, G: 128, B: 64, A: 255})
+	dst, _ := primitives.NewBuffer(1920, 1080)
+	src, _ := primitives.NewBuffer(800, 600)
+	src.Clear(primitives.Color{R: 255, G: 128, B: 64, A: 255})
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -440,9 +440,9 @@ func BenchmarkBlit(b *testing.B) {
 }
 
 func BenchmarkBlitScaled(b *testing.B) {
-	dst, _ := core.NewBuffer(1920, 1080)
-	src, _ := core.NewBuffer(800, 600)
-	src.Clear(core.Color{R: 255, G: 128, B: 64, A: 255})
+	dst, _ := primitives.NewBuffer(1920, 1080)
+	src, _ := primitives.NewBuffer(800, 600)
+	src.Clear(primitives.Color{R: 255, G: 128, B: 64, A: 255})
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

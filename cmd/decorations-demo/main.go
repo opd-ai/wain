@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/opd-ai/wain/internal/demo"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/decorations"
@@ -39,7 +39,7 @@ func main() {
 	windowFrame.SetAtlas(atlas)
 
 	// Create buffer for rendering
-	buf, err := core.NewBuffer(width, height)
+	buf, err := primitives.NewBuffer(width, height)
 	if err != nil {
 		log.Fatalf("Failed to create buffer: %v", err)
 	}
@@ -85,9 +85,9 @@ func main() {
 	fmt.Println("\n✓ Demo complete!")
 }
 
-func renderFrame(buf *core.Buffer, windowFrame *decorations.WindowFrame, width, height int) {
+func renderFrame(buf *primitives.Buffer, windowFrame *decorations.WindowFrame, width, height int) {
 	// Clear background
-	bgColor := core.Color{R: 255, G: 255, B: 255, A: 255}
+	bgColor := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 	buf.FillRect(0, 0, width, height, bgColor)
 
 	// Render window frame (title bar + resize handles)
@@ -99,11 +99,11 @@ func renderFrame(buf *core.Buffer, windowFrame *decorations.WindowFrame, width, 
 	offsetX, offsetY := windowFrame.ContentOffset()
 	contentW, contentH := windowFrame.ContentBounds()
 
-	contentColor := core.Color{R: 250, G: 250, B: 250, A: 255}
+	contentColor := primitives.Color{R: 250, G: 250, B: 250, A: 255}
 	buf.FillRect(offsetX, offsetY, contentW, contentH, contentColor)
 
 	// Draw some example content
-	exampleColor := core.Color{R: 100, G: 150, B: 200, A: 255}
+	exampleColor := primitives.Color{R: 100, G: 150, B: 200, A: 255}
 	buf.FillRect(offsetX+50, offsetY+50, 200, 100, exampleColor)
 
 	// Draw resize handle demonstration (simulate hover on corner)
@@ -114,7 +114,7 @@ func renderFrameWithDisplayList(windowFrame *decorations.WindowFrame, width, hei
 	dl := displaylist.New()
 
 	// Background
-	bgColor := core.Color{R: 255, G: 255, B: 255, A: 255}
+	bgColor := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 	dl.AddFillRect(0, 0, width, height, bgColor)
 
 	// Window frame (title bar + resize handles)
@@ -124,11 +124,11 @@ func renderFrameWithDisplayList(windowFrame *decorations.WindowFrame, width, hei
 	offsetX, offsetY := windowFrame.ContentOffset()
 	contentW, contentH := windowFrame.ContentBounds()
 
-	contentColor := core.Color{R: 250, G: 250, B: 250, A: 255}
+	contentColor := primitives.Color{R: 250, G: 250, B: 250, A: 255}
 	dl.AddFillRect(offsetX, offsetY, contentW, contentH, contentColor)
 
 	// Example content
-	exampleColor := core.Color{R: 100, G: 150, B: 200, A: 255}
+	exampleColor := primitives.Color{R: 100, G: 150, B: 200, A: 255}
 	dl.AddFillRect(offsetX+50, offsetY+50, 200, 100, exampleColor)
 
 	return dl

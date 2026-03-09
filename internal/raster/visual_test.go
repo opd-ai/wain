@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/opd-ai/wain/internal/raster/consumer"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -34,7 +34,7 @@ func TestVisual(t *testing.T) {
 			height: 100,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddFillRect(20, 20, 60, 60, core.Color{R: 255, G: 0, B: 0, A: 255})
+				dl.AddFillRect(20, 20, 60, 60, primitives.Color{R: 255, G: 0, B: 0, A: 255})
 				return dl
 			},
 		},
@@ -44,7 +44,7 @@ func TestVisual(t *testing.T) {
 			height: 100,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddFillRoundedRect(20, 20, 60, 60, 10, core.Color{R: 0, G: 255, B: 0, A: 255})
+				dl.AddFillRoundedRect(20, 20, 60, 60, 10, primitives.Color{R: 0, G: 255, B: 0, A: 255})
 				return dl
 			},
 		},
@@ -54,7 +54,7 @@ func TestVisual(t *testing.T) {
 			height: 100,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddDrawLine(10, 10, 90, 90, 3, core.Color{R: 0, G: 0, B: 255, A: 255})
+				dl.AddDrawLine(10, 10, 90, 90, 3, primitives.Color{R: 0, G: 0, B: 255, A: 255})
 				return dl
 			},
 		},
@@ -64,7 +64,7 @@ func TestVisual(t *testing.T) {
 			height: 50,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddDrawText("Hello", 10, 30, 16, core.Color{R: 255, G: 255, B: 255, A: 255}, 0)
+				dl.AddDrawText("Hello", 10, 30, 16, primitives.Color{R: 255, G: 255, B: 255, A: 255}, 0)
 				return dl
 			},
 		},
@@ -77,8 +77,8 @@ func TestVisual(t *testing.T) {
 				dl.AddLinearGradient(
 					10, 10, 80, 80,
 					10, 10, 90, 90,
-					core.Color{R: 255, G: 0, B: 0, A: 255},
-					core.Color{R: 0, G: 0, B: 255, A: 255},
+					primitives.Color{R: 255, G: 0, B: 0, A: 255},
+					primitives.Color{R: 0, G: 0, B: 255, A: 255},
 				)
 				return dl
 			},
@@ -92,8 +92,8 @@ func TestVisual(t *testing.T) {
 				dl.AddRadialGradient(
 					10, 10, 80, 80,
 					50, 50, 40,
-					core.Color{R: 255, G: 255, B: 0, A: 255},
-					core.Color{R: 255, G: 0, B: 255, A: 255},
+					primitives.Color{R: 255, G: 255, B: 0, A: 255},
+					primitives.Color{R: 255, G: 0, B: 255, A: 255},
 				)
 				return dl
 			},
@@ -104,7 +104,7 @@ func TestVisual(t *testing.T) {
 			height: 150,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddBoxShadow(50, 50, 50, 50, 10, 5, core.Color{R: 0, G: 0, B: 0, A: 128})
+				dl.AddBoxShadow(50, 50, 50, 50, 10, 5, primitives.Color{R: 0, G: 0, B: 0, A: 128})
 				return dl
 			},
 		},
@@ -114,10 +114,10 @@ func TestVisual(t *testing.T) {
 			height: 200,
 			commands: func() *displaylist.DisplayList {
 				dl := displaylist.New()
-				dl.AddFillRect(10, 10, 60, 60, core.Color{R: 255, G: 0, B: 0, A: 255})
-				dl.AddFillRoundedRect(80, 10, 60, 60, 8, core.Color{R: 0, G: 255, B: 0, A: 255})
-				dl.AddDrawLine(10, 100, 190, 100, 2, core.Color{R: 0, G: 0, B: 255, A: 255})
-				dl.AddFillRect(10, 120, 180, 70, core.Color{R: 128, G: 128, B: 128, A: 255})
+				dl.AddFillRect(10, 10, 60, 60, primitives.Color{R: 255, G: 0, B: 0, A: 255})
+				dl.AddFillRoundedRect(80, 10, 60, 60, 8, primitives.Color{R: 0, G: 255, B: 0, A: 255})
+				dl.AddDrawLine(10, 100, 190, 100, 2, primitives.Color{R: 0, G: 0, B: 255, A: 255})
+				dl.AddFillRect(10, 120, 180, 70, primitives.Color{R: 128, G: 128, B: 128, A: 255})
 				return dl
 			},
 		},
@@ -126,12 +126,12 @@ func TestVisual(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Generate the image
-			buf, err := core.NewBuffer(tt.width, tt.height)
+			buf, err := primitives.NewBuffer(tt.width, tt.height)
 			if err != nil {
 				t.Fatalf("Failed to create buffer: %v", err)
 			}
 
-			buf.Clear(core.Color{R: 0, G: 0, B: 0, A: 0})
+			buf.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 0})
 
 			// Create display list and render
 			dl := tt.commands()
@@ -159,8 +159,8 @@ func TestVisual(t *testing.T) {
 	}
 }
 
-// bufferToImage converts a core.Buffer to an image.Image.
-func bufferToImage(buf *core.Buffer) image.Image {
+// bufferToImage converts a primitives.Buffer to an image.Image.
+func bufferToImage(buf *primitives.Buffer) image.Image {
 	bounds := image.Rect(0, 0, buf.Width, buf.Height)
 	img := image.NewRGBA(bounds)
 
@@ -305,18 +305,18 @@ func loadImage(path string) (image.Image, error) {
 
 // BenchmarkVisualRender benchmarks the rendering of all primitives.
 func BenchmarkVisualRender(b *testing.B) {
-	buf, _ := core.NewBuffer(200, 200)
+	buf, _ := primitives.NewBuffer(200, 200)
 	dl := displaylist.New()
-	dl.AddFillRect(10, 10, 60, 60, core.Color{R: 255, G: 0, B: 0, A: 255})
-	dl.AddFillRoundedRect(80, 10, 60, 60, 8, core.Color{R: 0, G: 255, B: 0, A: 255})
-	dl.AddDrawLine(10, 100, 190, 100, 2, core.Color{R: 0, G: 0, B: 255, A: 255})
+	dl.AddFillRect(10, 10, 60, 60, primitives.Color{R: 255, G: 0, B: 0, A: 255})
+	dl.AddFillRoundedRect(80, 10, 60, 60, 8, primitives.Color{R: 0, G: 255, B: 0, A: 255})
+	dl.AddDrawLine(10, 100, 190, 100, 2, primitives.Color{R: 0, G: 0, B: 255, A: 255})
 
 	atlas, _ := text.NewAtlas()
 	sw := consumer.NewSoftwareConsumer(atlas)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		buf.Clear(core.Color{R: 0, G: 0, B: 0, A: 0})
+		buf.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 0})
 		sw.Render(dl, buf)
 	}
 }

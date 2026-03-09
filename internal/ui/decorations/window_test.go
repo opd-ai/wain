@@ -3,7 +3,7 @@ package decorations
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
@@ -192,7 +192,7 @@ func TestWindowFrame_HandlePointerMotion(t *testing.T) {
 
 func TestWindowFrame_Draw(t *testing.T) {
 	wf := NewWindowFrame("Test", 640, 480)
-	buf, err := core.NewBuffer(640, 480)
+	buf, err := primitives.NewBuffer(640, 480)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}

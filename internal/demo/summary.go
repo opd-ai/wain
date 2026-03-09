@@ -3,11 +3,11 @@ package demo
 import (
 	"fmt"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // PrintBufferStats prints statistics about a render buffer.
-func PrintBufferStats(width, height int, buf *core.Buffer) {
+func PrintBufferStats(width, height int, buf *primitives.Buffer) {
 	fmt.Println("Buffer Stats:")
 	fmt.Printf("  Pixels rendered: %d\n", width*height)
 	fmt.Printf("  Buffer size: %d bytes\n", len(buf.Pixels))

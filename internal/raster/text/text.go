@@ -3,7 +3,7 @@ package text
 import (
 	"math"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // DrawText renders a text string to the buffer using SDF-based rendering.
@@ -21,7 +21,7 @@ import (
 //
 // SDF rendering provides smooth antialiasing at any scale. The size parameter
 // controls the final rendered height.
-func DrawText(buf *core.Buffer, text string, x, y, size float64, color core.Color, atlas *Atlas) {
+func DrawText(buf *primitives.Buffer, text string, x, y, size float64, color primitives.Color, atlas *Atlas) {
 	if atlas == nil || buf == nil {
 		return
 	}
@@ -44,7 +44,7 @@ func DrawText(buf *core.Buffer, text string, x, y, size float64, color core.Colo
 }
 
 // drawGlyph renders a single glyph to the buffer.
-func drawGlyph(buf *core.Buffer, g *Glyph, x, y, scale float64, color core.Color, atlas *Atlas) {
+func drawGlyph(buf *primitives.Buffer, g *Glyph, x, y, scale float64, color primitives.Color, atlas *Atlas) {
 	glyphX, glyphY, glyphW, glyphH := calculateGlyphBounds(g, x, y, scale)
 	x0, y0, x1, y1 := clipGlyphToBounds(buf, glyphX, glyphY, glyphW, glyphH)
 
@@ -62,7 +62,7 @@ func calculateGlyphBounds(g *Glyph, x, y, scale float64) (glyphX, glyphY, glyphW
 }
 
 // clipGlyphToBounds clips glyph bounds to buffer dimensions.
-func clipGlyphToBounds(buf *core.Buffer, glyphX, glyphY, glyphW, glyphH float64) (x0, y0, x1, y1 int) {
+func clipGlyphToBounds(buf *primitives.Buffer, glyphX, glyphY, glyphW, glyphH float64) (x0, y0, x1, y1 int) {
 	x0 = max(0, int(math.Floor(glyphX)))
 	y0 = max(0, int(math.Floor(glyphY)))
 	x1 = min(buf.Width, int(math.Ceil(glyphX+glyphW)))
@@ -71,8 +71,8 @@ func clipGlyphToBounds(buf *core.Buffer, glyphX, glyphY, glyphW, glyphH float64)
 }
 
 // renderGlyphPixel renders a single pixel of a glyph using SDF sampling.
-func renderGlyphPixel(buf *core.Buffer, atlas *Atlas, g *Glyph, px, py int,
-	glyphX, glyphY, glyphW, glyphH float64, color core.Color, scale float64,
+func renderGlyphPixel(buf *primitives.Buffer, atlas *Atlas, g *Glyph, px, py int,
+	glyphX, glyphY, glyphW, glyphH float64, color primitives.Color, scale float64,
 ) {
 	normX := (float64(px) - glyphX) / glyphW
 	normY := (float64(py) - glyphY) / glyphH
@@ -131,7 +131,7 @@ func clamp(x, min, max float64) float64 {
 }
 
 // blendPixel blends a color onto a buffer pixel using SrcOver compositing.
-func blendPixel(buf *core.Buffer, xPos, yPos int, color core.Color, alpha uint8) {
+func blendPixel(buf *primitives.Buffer, xPos, yPos int, color primitives.Color, alpha uint8) {
 	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return
 	}

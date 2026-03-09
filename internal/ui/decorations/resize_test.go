@@ -3,7 +3,7 @@ package decorations
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestResizeHandles_HitTest_Corners(t *testing.T) {
@@ -126,13 +126,13 @@ func TestResizeHandles_HandlePointerEnterLeave(t *testing.T) {
 
 func TestResizeHandles_Draw(t *testing.T) {
 	rh := NewResizeHandles(640, 480)
-	buf, err := core.NewBuffer(640, 480)
+	buf, err := primitives.NewBuffer(640, 480)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
 
 	// Fill buffer with a known background color first
-	bgColor := core.Color{R: 255, G: 255, B: 255, A: 255}
+	bgColor := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 	buf.FillRect(0, 0, 640, 480, bgColor)
 
 	// Draw with no hover - should be no-op
@@ -180,7 +180,7 @@ func TestResizeHandles_SetTheme(t *testing.T) {
 
 	newTheme := &Theme{
 		ResizeHandleWidth: 12,
-		ResizeHandleColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+		ResizeHandleColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 	}
 
 	rh.SetTheme(newTheme)

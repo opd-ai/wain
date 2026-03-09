@@ -147,7 +147,7 @@
     - `PixmapFromBuffers`: Extracted `validatePixmapFromBuffersParams`, `buildPixmapFromBuffersRequest` helpers
   - Note: Target acceptance of ≤14 functions >30 lines was overly ambitious (would require refactoring 44 additional functions). The 8 longest functions were successfully refactored as specified in the deliverable.
 
-### Step 9: Fix Package Naming Violations
+### Step 9: Fix Package Naming Violations ✅ COMPLETE
 - **Deliverable**: 
   - Rename `internal/raster/core` to `internal/raster/rastercore` (or document exception)
   - Document root package `wain` directory structure rationale in README.md
@@ -155,6 +155,17 @@
 - **Acceptance**: Package naming score improved
 - **Validation**: Package `core` no longer exists or is documented as intentional
 - **Rationale**: Naming gate; `core` is too generic for a library package
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Renamed `internal/raster/core` to `internal/raster/primitives` (more descriptive than `rastercore`)
+  - Updated package declarations in all 7 source files (buffer.go, line.go, rect.go, doc.go, and test files)
+  - Updated all 39 import statements across the codebase
+  - Updated all qualifiers from `core.` to `primitives.` in 39 files
+  - Updated README.md Project Structure section to reflect the rename
+  - Added comprehensive documentation explaining the root package (`package wain`) design pattern
+  - Documented rationale: idiomatic for single-product Go libraries, avoids nested stuttering
+  - Package naming violations reduced from 2 to 1 (only root package `wain` remains, now documented as intentional)
+  - All tests pass: `make test-go` → ok
+  - Zero compilation errors, go vet passes (only known shm.go false positive)
 
 ### Step 10: Add Rust Documentation Comments
 - **Deliverable**: Add `///` doc comments to 52+ undocumented public Rust types in `amd.rs`, `i915.rs`, `xe.rs`, `allocator.rs`, `pipeline.rs`, `surface.rs`

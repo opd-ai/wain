@@ -3,7 +3,7 @@ package effects
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestBoxShadow(t *testing.T) {
@@ -13,7 +13,7 @@ func TestBoxShadow(t *testing.T) {
 		x, y       int
 		w, h       int
 		blurRadius int
-		color      core.Color
+		color      primitives.Color
 		shouldDraw bool
 	}{
 		{
@@ -25,7 +25,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: true,
 		},
 		{
@@ -37,7 +37,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 15,
-			color:      core.Color{R: 64, G: 64, B: 64, A: 200},
+			color:      primitives.Color{R: 64, G: 64, B: 64, A: 200},
 			shouldDraw: true,
 		},
 		{
@@ -49,7 +49,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          40,
 			h:          40,
 			blurRadius: 100, // Should be clamped to 50
-			color:      core.Color{R: 0, G: 0, B: 0, A: 255},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 255},
 			shouldDraw: true,
 		},
 		{
@@ -61,7 +61,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          10,
 			h:          10,
 			blurRadius: 3,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 100},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 100},
 			shouldDraw: true,
 		},
 		{
@@ -73,7 +73,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 		{
@@ -85,7 +85,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          0,
 			h:          20,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 		{
@@ -97,7 +97,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          0,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 		{
@@ -109,7 +109,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 0,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 		{
@@ -121,7 +121,7 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 		{
@@ -133,23 +133,23 @@ func TestBoxShadow(t *testing.T) {
 			w:          20,
 			h:          20,
 			blurRadius: 5,
-			color:      core.Color{R: 0, G: 0, B: 0, A: 128},
+			color:      primitives.Color{R: 0, G: 0, B: 0, A: 128},
 			shouldDraw: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf *core.Buffer
+			var buf *primitives.Buffer
 			var err error
 
 			if tt.bufW > 0 && tt.bufH > 0 {
-				buf, err = core.NewBuffer(tt.bufW, tt.bufH)
+				buf, err = primitives.NewBuffer(tt.bufW, tt.bufH)
 				if err != nil {
 					t.Fatalf("NewBuffer failed: %v", err)
 				}
 				// Clear to white background
-				buf.Clear(core.Color{R: 255, G: 255, B: 255, A: 255})
+				buf.Clear(primitives.Color{R: 255, G: 255, B: 255, A: 255})
 			}
 
 			// Should not panic
@@ -181,13 +181,13 @@ func TestLinearGradient(t *testing.T) {
 		bufW, bufH     int
 		x, y, w, h     int
 		startX, startY int
-		startColor     core.Color
+		startColor     primitives.Color
 		endX, endY     int
-		endColor       core.Color
+		endColor       primitives.Color
 		shouldFill     bool
 		checkColor     bool
 		checkX, checkY int
-		expectedApprox core.Color
+		expectedApprox primitives.Color
 		tolerance      uint8
 	}{
 		{
@@ -200,15 +200,15 @@ func TestLinearGradient(t *testing.T) {
 			h:              20,
 			startX:         10,
 			startY:         20,
-			startColor:     core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor:     primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:           90,
 			endY:           20,
-			endColor:       core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:       primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:     true,
 			checkColor:     true,
 			checkX:         10,
 			checkY:         20,
-			expectedApprox: core.Color{R: 255, G: 0, B: 0, A: 255},
+			expectedApprox: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			tolerance:      5,
 		},
 		{
@@ -221,15 +221,15 @@ func TestLinearGradient(t *testing.T) {
 			h:              80,
 			startX:         30,
 			startY:         10,
-			startColor:     core.Color{R: 0, G: 255, B: 0, A: 255},
+			startColor:     primitives.Color{R: 0, G: 255, B: 0, A: 255},
 			endX:           30,
 			endY:           90,
-			endColor:       core.Color{R: 255, G: 255, B: 0, A: 255},
+			endColor:       primitives.Color{R: 255, G: 255, B: 0, A: 255},
 			shouldFill:     true,
 			checkColor:     true,
 			checkX:         30,
 			checkY:         10,
-			expectedApprox: core.Color{R: 0, G: 255, B: 0, A: 255},
+			expectedApprox: primitives.Color{R: 0, G: 255, B: 0, A: 255},
 			tolerance:      5,
 		},
 		{
@@ -242,10 +242,10 @@ func TestLinearGradient(t *testing.T) {
 			h:          100,
 			startX:     0,
 			startY:     0,
-			startColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:       100,
 			endY:       100,
-			endColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill: true,
 		},
 		{
@@ -258,15 +258,15 @@ func TestLinearGradient(t *testing.T) {
 			h:              30,
 			startX:         25,
 			startY:         25,
-			startColor:     core.Color{R: 128, G: 128, B: 128, A: 255},
+			startColor:     primitives.Color{R: 128, G: 128, B: 128, A: 255},
 			endX:           25,
 			endY:           25,
-			endColor:       core.Color{R: 0, G: 0, B: 0, A: 255},
+			endColor:       primitives.Color{R: 0, G: 0, B: 0, A: 255},
 			shouldFill:     true,
 			checkColor:     true,
 			checkX:         25,
 			checkY:         25,
-			expectedApprox: core.Color{R: 128, G: 128, B: 128, A: 255},
+			expectedApprox: primitives.Color{R: 128, G: 128, B: 128, A: 255},
 			tolerance:      1,
 		},
 		{
@@ -279,10 +279,10 @@ func TestLinearGradient(t *testing.T) {
 			h:          20,
 			startX:     10,
 			startY:     10,
-			startColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:       30,
 			endY:       10,
-			endColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill: false,
 		},
 		{
@@ -295,10 +295,10 @@ func TestLinearGradient(t *testing.T) {
 			h:          20,
 			startX:     10,
 			startY:     10,
-			startColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:       30,
 			endY:       10,
-			endColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill: false,
 		},
 		{
@@ -311,10 +311,10 @@ func TestLinearGradient(t *testing.T) {
 			h:          0,
 			startX:     10,
 			startY:     10,
-			startColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:       30,
 			endY:       10,
-			endColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill: false,
 		},
 		{
@@ -327,25 +327,25 @@ func TestLinearGradient(t *testing.T) {
 			h:          20,
 			startX:     100,
 			startY:     100,
-			startColor: core.Color{R: 255, G: 0, B: 0, A: 255},
+			startColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 			endX:       120,
 			endY:       100,
-			endColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			endColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf *core.Buffer
+			var buf *primitives.Buffer
 			var err error
 
 			if tt.bufW > 0 && tt.bufH > 0 {
-				buf, err = core.NewBuffer(tt.bufW, tt.bufH)
+				buf, err = primitives.NewBuffer(tt.bufW, tt.bufH)
 				if err != nil {
 					t.Fatalf("NewBuffer failed: %v", err)
 				}
-				buf.Clear(core.Color{R: 0, G: 0, B: 0, A: 0})
+				buf.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 0})
 			}
 
 			// Should not panic
@@ -385,13 +385,13 @@ func TestRadialGradient(t *testing.T) {
 		centerX        int
 		centerY        int
 		radius         int
-		centerColor    core.Color
-		edgeColor      core.Color
+		centerColor    primitives.Color
+		edgeColor      primitives.Color
 		shouldFill     bool
 		checkColor     bool
 		checkX         int
 		checkY         int
-		expectedApprox core.Color
+		expectedApprox primitives.Color
 		tolerance      uint8
 	}{
 		{
@@ -405,13 +405,13 @@ func TestRadialGradient(t *testing.T) {
 			centerX:        50,
 			centerY:        50,
 			radius:         30,
-			centerColor:    core.Color{R: 255, G: 255, B: 255, A: 255},
-			edgeColor:      core.Color{R: 0, G: 0, B: 0, A: 255},
+			centerColor:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
+			edgeColor:      primitives.Color{R: 0, G: 0, B: 0, A: 255},
 			shouldFill:     true,
 			checkColor:     true,
 			checkX:         50,
 			checkY:         50,
-			expectedApprox: core.Color{R: 255, G: 255, B: 255, A: 255},
+			expectedApprox: primitives.Color{R: 255, G: 255, B: 255, A: 255},
 			tolerance:      5,
 		},
 		{
@@ -425,8 +425,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     40,
 			centerY:     40,
 			radius:      10,
-			centerColor: core.Color{R: 255, G: 0, B: 0, A: 255},
-			edgeColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			centerColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:  true,
 		},
 		{
@@ -440,8 +440,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     100,
 			centerY:     100,
 			radius:      100,
-			centerColor: core.Color{R: 0, G: 255, B: 0, A: 255},
-			edgeColor:   core.Color{R: 255, G: 255, B: 0, A: 255},
+			centerColor: primitives.Color{R: 0, G: 255, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 255, G: 255, B: 0, A: 255},
 			shouldFill:  true,
 		},
 		{
@@ -455,8 +455,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     25,
 			centerY:     25,
 			radius:      50,
-			centerColor: core.Color{R: 128, G: 0, B: 128, A: 255},
-			edgeColor:   core.Color{R: 0, G: 128, B: 128, A: 255},
+			centerColor: primitives.Color{R: 128, G: 0, B: 128, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 128, B: 128, A: 255},
 			shouldFill:  true,
 		},
 		{
@@ -470,8 +470,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     20,
 			centerY:     20,
 			radius:      10,
-			centerColor: core.Color{R: 255, G: 0, B: 0, A: 255},
-			edgeColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			centerColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:  false,
 		},
 		{
@@ -485,8 +485,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     20,
 			centerY:     20,
 			radius:      10,
-			centerColor: core.Color{R: 255, G: 0, B: 0, A: 255},
-			edgeColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			centerColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:  false,
 		},
 		{
@@ -500,8 +500,8 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     20,
 			centerY:     20,
 			radius:      10,
-			centerColor: core.Color{R: 255, G: 0, B: 0, A: 255},
-			edgeColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			centerColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:  false,
 		},
 		{
@@ -515,23 +515,23 @@ func TestRadialGradient(t *testing.T) {
 			centerX:     20,
 			centerY:     20,
 			radius:      0,
-			centerColor: core.Color{R: 255, G: 0, B: 0, A: 255},
-			edgeColor:   core.Color{R: 0, G: 0, B: 255, A: 255},
+			centerColor: primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			edgeColor:   primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			shouldFill:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var buf *core.Buffer
+			var buf *primitives.Buffer
 			var err error
 
 			if tt.bufW > 0 && tt.bufH > 0 {
-				buf, err = core.NewBuffer(tt.bufW, tt.bufH)
+				buf, err = primitives.NewBuffer(tt.bufW, tt.bufH)
 				if err != nil {
 					t.Fatalf("NewBuffer failed: %v", err)
 				}
-				buf.Clear(core.Color{R: 0, G: 0, B: 0, A: 0})
+				buf.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 0})
 			}
 
 			// Should not panic
@@ -801,37 +801,37 @@ func TestScissor(t *testing.T) {
 func TestInterpolateColor(t *testing.T) {
 	tests := []struct {
 		name     string
-		c1, c2   core.Color
+		c1, c2   primitives.Color
 		t        float64
-		expected core.Color
+		expected primitives.Color
 	}{
 		{
 			name:     "t=0 returns c1",
-			c1:       core.Color{R: 255, G: 0, B: 0, A: 255},
-			c2:       core.Color{R: 0, G: 0, B: 255, A: 255},
+			c1:       primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			c2:       primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			t:        0.0,
-			expected: core.Color{R: 255, G: 0, B: 0, A: 255},
+			expected: primitives.Color{R: 255, G: 0, B: 0, A: 255},
 		},
 		{
 			name:     "t=1 returns c2",
-			c1:       core.Color{R: 255, G: 0, B: 0, A: 255},
-			c2:       core.Color{R: 0, G: 0, B: 255, A: 255},
+			c1:       primitives.Color{R: 255, G: 0, B: 0, A: 255},
+			c2:       primitives.Color{R: 0, G: 0, B: 255, A: 255},
 			t:        1.0,
-			expected: core.Color{R: 0, G: 0, B: 255, A: 255},
+			expected: primitives.Color{R: 0, G: 0, B: 255, A: 255},
 		},
 		{
 			name:     "t=0.5 returns midpoint",
-			c1:       core.Color{R: 0, G: 0, B: 0, A: 0},
-			c2:       core.Color{R: 200, G: 100, B: 50, A: 200},
+			c1:       primitives.Color{R: 0, G: 0, B: 0, A: 0},
+			c2:       primitives.Color{R: 200, G: 100, B: 50, A: 200},
 			t:        0.5,
-			expected: core.Color{R: 100, G: 50, B: 25, A: 100},
+			expected: primitives.Color{R: 100, G: 50, B: 25, A: 100},
 		},
 		{
 			name:     "t=0.25 interpolates correctly",
-			c1:       core.Color{R: 0, G: 0, B: 0, A: 255},
-			c2:       core.Color{R: 100, G: 200, B: 100, A: 255},
+			c1:       primitives.Color{R: 0, G: 0, B: 0, A: 255},
+			c2:       primitives.Color{R: 100, G: 200, B: 100, A: 255},
 			t:        0.25,
-			expected: core.Color{R: 25, G: 50, B: 25, A: 255},
+			expected: primitives.Color{R: 25, G: 50, B: 25, A: 255},
 		},
 	}
 
@@ -922,8 +922,8 @@ func colorApproxEqual(a, b, tolerance uint8) bool {
 // Benchmarks
 
 func BenchmarkBoxShadow(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
-	color := core.Color{R: 0, G: 0, B: 0, A: 128}
+	buf, _ := primitives.NewBuffer(800, 600)
+	color := primitives.Color{R: 0, G: 0, B: 0, A: 128}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -932,9 +932,9 @@ func BenchmarkBoxShadow(b *testing.B) {
 }
 
 func BenchmarkLinearGradient(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
-	startColor := core.Color{R: 255, G: 0, B: 0, A: 255}
-	endColor := core.Color{R: 0, G: 0, B: 255, A: 255}
+	buf, _ := primitives.NewBuffer(800, 600)
+	startColor := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	endColor := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -943,9 +943,9 @@ func BenchmarkLinearGradient(b *testing.B) {
 }
 
 func BenchmarkRadialGradient(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
-	centerColor := core.Color{R: 255, G: 255, B: 255, A: 255}
-	edgeColor := core.Color{R: 0, G: 0, B: 0, A: 255}
+	buf, _ := primitives.NewBuffer(800, 600)
+	centerColor := primitives.Color{R: 255, G: 255, B: 255, A: 255}
+	edgeColor := primitives.Color{R: 0, G: 0, B: 0, A: 255}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

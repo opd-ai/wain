@@ -2,7 +2,7 @@
 package decorations
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
@@ -147,7 +147,7 @@ func (r *ResizeHandles) HandlePointerLeave() {
 
 // Draw renders the resize handles to a buffer.
 // Only draws visible handles in hover state for visual feedback.
-func (r *ResizeHandles) Draw(buf *core.Buffer, x, y int) error {
+func (r *ResizeHandles) Draw(buf *primitives.Buffer, x, y int) error {
 	// Resize handles are typically invisible unless hovered.
 	// We draw them only in hover state for visual feedback.
 	if r.hoverEdge == ResizeEdgeNone {

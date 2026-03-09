@@ -23,7 +23,7 @@ package curves
 import (
 	"math"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 const (
@@ -48,7 +48,7 @@ type Point struct {
 //	B(t) = (1-t)²·p0 + 2(1-t)t·p1 + t²·p2, where t ∈ [0, 1]
 //
 // The curve is adaptively subdivided until each segment is approximately flat.
-func DrawQuadraticBezier(b *core.Buffer, p0, p1, p2 Point, width float64, c core.Color) {
+func DrawQuadraticBezier(b *primitives.Buffer, p0, p1, p2 Point, width float64, c primitives.Color) {
 	if width <= 0 {
 		return
 	}
@@ -63,7 +63,7 @@ func DrawQuadraticBezier(b *core.Buffer, p0, p1, p2 Point, width float64, c core
 //	B(t) = (1-t)³·p0 + 3(1-t)²t·p1 + 3(1-t)t²·p2 + t³·p3, where t ∈ [0, 1]
 //
 // The curve is adaptively subdivided until each segment is approximately flat.
-func DrawCubicBezier(b *core.Buffer, p0, p1, p2, p3 Point, width float64, c core.Color) {
+func DrawCubicBezier(b *primitives.Buffer, p0, p1, p2, p3 Point, width float64, c primitives.Color) {
 	if width <= 0 {
 		return
 	}
@@ -76,7 +76,7 @@ func DrawCubicBezier(b *core.Buffer, p0, p1, p2, p3 Point, width float64, c core
 //
 // Angles are measured clockwise from the positive X axis (right direction).
 // For example: 0 = right, π/2 = down, π = left, 3π/2 = up.
-func DrawArc(b *core.Buffer, cx, cy, rx, ry, startAngle, endAngle, width float64, c core.Color) {
+func DrawArc(b *primitives.Buffer, cx, cy, rx, ry, startAngle, endAngle, width float64, c primitives.Color) {
 	if width <= 0 || rx <= 0 || ry <= 0 {
 		return
 	}
@@ -126,7 +126,7 @@ func DrawArc(b *core.Buffer, cx, cy, rx, ry, startAngle, endAngle, width float64
 
 // FillArc renders a filled elliptical arc (pie slice) centered at (cx, cy).
 // The arc is filled from the center point to the arc perimeter, creating a wedge shape.
-func FillArc(b *core.Buffer, cx, cy, rx, ry, startAngle, endAngle float64, c core.Color) {
+func FillArc(b *primitives.Buffer, cx, cy, rx, ry, startAngle, endAngle float64, c primitives.Color) {
 	if rx <= 0 || ry <= 0 {
 		return
 	}
@@ -164,15 +164,15 @@ func FillArc(b *core.Buffer, cx, cy, rx, ry, startAngle, endAngle float64, c cor
 				continue
 			}
 
-			pixelColor := core.Color{R: c.R, G: c.G, B: c.B, A: alpha}
+			pixelColor := primitives.Color{R: c.R, G: c.G, B: c.B, A: alpha}
 			idx := y*b.Stride + x*4
-			core.BlendPixel(b.Pixels[idx:idx+4], pixelColor)
+			primitives.BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 		}
 	}
 }
 
 // subdivideQuadratic recursively subdivides a quadratic Bezier curve until it's flat enough.
-func subdivideQuadratic(buf *core.Buffer, p0, p1, p2 Point, width float64, c core.Color, depth int) {
+func subdivideQuadratic(buf *primitives.Buffer, p0, p1, p2 Point, width float64, c primitives.Color, depth int) {
 	if depth >= maxSubdivisionDepth || isQuadraticFlat(p0, p1, p2) {
 		buf.DrawLine(
 			int(math.Round(p0.X)),
@@ -195,7 +195,7 @@ func subdivideQuadratic(buf *core.Buffer, p0, p1, p2 Point, width float64, c cor
 }
 
 // subdivideCubic recursively subdivides a cubic Bezier curve until it's flat enough.
-func subdivideCubic(buf *core.Buffer, p0, p1, p2, p3 Point, width float64, c core.Color, depth int) {
+func subdivideCubic(buf *primitives.Buffer, p0, p1, p2, p3 Point, width float64, c primitives.Color, depth int) {
 	if depth >= maxSubdivisionDepth || isCubicFlat(p0, p1, p2, p3) {
 		buf.DrawLine(
 			int(math.Round(p0.X)),

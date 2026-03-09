@@ -3,7 +3,7 @@ package widgets
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestNewButton(t *testing.T) {
@@ -99,7 +99,7 @@ func TestButtonDisabled(t *testing.T) {
 }
 
 func TestButtonDraw(t *testing.T) {
-	buf, err := core.NewBuffer(200, 100)
+	buf, err := primitives.NewBuffer(200, 100)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}
@@ -288,7 +288,7 @@ func TestTextInputOnChange(t *testing.T) {
 }
 
 func TestTextInputDraw(t *testing.T) {
-	buf, err := core.NewBuffer(300, 100)
+	buf, err := primitives.NewBuffer(300, 100)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}
@@ -413,7 +413,7 @@ func TestScrollContainerNoOverflow(t *testing.T) {
 }
 
 func TestScrollContainerDraw(t *testing.T) {
-	buf, err := core.NewBuffer(500, 400)
+	buf, err := primitives.NewBuffer(500, 400)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}
@@ -461,7 +461,7 @@ func TestWidgetInterface(t *testing.T) {
 }
 
 func BenchmarkButtonDraw(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
+	buf, _ := primitives.NewBuffer(800, 600)
 	btn := NewButton("Click me", 100, 30)
 
 	b.ResetTimer()
@@ -471,7 +471,7 @@ func BenchmarkButtonDraw(b *testing.B) {
 }
 
 func BenchmarkTextInputDraw(b *testing.B) {
-	buf, _ := core.NewBuffer(800, 600)
+	buf, _ := primitives.NewBuffer(800, 600)
 	input := NewTextInput("Placeholder", 200, 30)
 	input.SetText("Some text content")
 

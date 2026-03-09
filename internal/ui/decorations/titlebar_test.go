@@ -3,7 +3,7 @@ package decorations
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/ui/widgets"
 )
@@ -53,7 +53,7 @@ func TestWindowButton_PointerState(t *testing.T) {
 }
 
 func TestWindowButton_Draw(t *testing.T) {
-	buf, err := core.NewBuffer(100, 100)
+	buf, err := primitives.NewBuffer(100, 100)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestTitleBar_Dragging(t *testing.T) {
 }
 
 func TestTitleBar_Draw(t *testing.T) {
-	buf, err := core.NewBuffer(400, 32)
+	buf, err := primitives.NewBuffer(400, 32)
 	if err != nil {
 		t.Fatalf("NewBuffer failed: %v", err)
 	}

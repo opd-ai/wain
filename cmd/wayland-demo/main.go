@@ -16,7 +16,7 @@ import (
 	"log"
 
 	"github.com/opd-ai/wain/internal/demo"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/ui/widgets"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/shm"
@@ -158,7 +158,7 @@ func createWidgets() (*widgets.Button, *widgets.TextInput) {
 }
 
 // renderContent renders UI content to a buffer using the software rasterizer.
-func renderContent(btn *widgets.Button, input *widgets.TextInput) (*core.Buffer, error) {
+func renderContent(btn *widgets.Button, input *widgets.TextInput) (*primitives.Buffer, error) {
 	fmt.Println("\n[5/6] Rendering content to framebuffer...")
 	renderBuffer, err := demo.CreateDemoBuffer(windowWidth, windowHeight)
 	if err != nil {
@@ -170,7 +170,7 @@ func renderContent(btn *widgets.Button, input *widgets.TextInput) (*core.Buffer,
 }
 
 // displayBuffer copies the render buffer to shared memory and displays it.
-func displayBuffer(ctx *demoContext, surface *client.Surface, renderBuffer *core.Buffer) error {
+func displayBuffer(ctx *demoContext, surface *client.Surface, renderBuffer *primitives.Buffer) error {
 	if err := demo.AttachAndDisplayBuffer(ctx.shmObj, surface, renderBuffer, windowWidth, windowHeight); err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func displayBuffer(ctx *demoContext, surface *client.Surface, renderBuffer *core
 }
 
 // printFeatureSummary displays a summary of demonstrated Phase 1 features.
-func printFeatureSummary(renderBuffer *core.Buffer) {
+func printFeatureSummary(renderBuffer *primitives.Buffer) {
 	fmt.Println("\n[6/6] Phase 1 Features Demonstrated:")
 	fmt.Println()
 	fmt.Println("      PROTOCOL LAYER (Wayland)")

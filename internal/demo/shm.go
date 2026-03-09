@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 )
@@ -16,7 +16,7 @@ import (
 //  3. Creating a wl_buffer
 //  4. Copying pixel data
 //  5. Attaching and committing to the surface
-func AttachAndDisplayBuffer(shmObj *shm.SHM, surface *client.Surface, renderBuffer *core.Buffer, width, height int) error {
+func AttachAndDisplayBuffer(shmObj *shm.SHM, surface *client.Surface, renderBuffer *primitives.Buffer, width, height int) error {
 	fd, err := shm.CreateMemfd("wain-demo-buffer")
 	if err != nil {
 		return fmt.Errorf("create memfd: %w", err)

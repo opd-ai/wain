@@ -1,6 +1,6 @@
 package pctwidget
 
-import "github.com/opd-ai/wain/internal/raster/core"
+import "github.com/opd-ai/wain/internal/raster/primitives"
 
 // Style defines the visual appearance contract for the widget system.
 //
@@ -13,13 +13,13 @@ import "github.com/opd-ai/wain/internal/raster/core"
 // [DefaultStyle].
 type Style interface {
 	// Background returns the primary background color.
-	Background() core.Color
+	Background() primitives.Color
 	// Foreground returns the primary text / foreground color.
-	Foreground() core.Color
+	Foreground() primitives.Color
 	// Accent returns the accent / highlight color.
-	Accent() core.Color
+	Accent() primitives.Color
 	// Border returns the border color.
-	Border() core.Color
+	Border() primitives.Color
 	// FontSize returns the base font size in pixels.
 	FontSize() float64
 	// Padding returns the default inner padding in pixels.
@@ -33,10 +33,10 @@ type Style interface {
 // RetroStyle is the default [Style] implementation.
 // It combines pixel-art aesthetics with modern high-resolution colors.
 type RetroStyle struct {
-	BgColor      core.Color
-	FgColor      core.Color
-	AccentColor  core.Color
-	BorderColor  core.Color
+	BgColor      primitives.Color
+	FgColor      primitives.Color
+	AccentColor  primitives.Color
+	BorderColor  primitives.Color
 	BaseFontSize float64
 	BasePadding  int
 	BaseGap      int
@@ -44,16 +44,16 @@ type RetroStyle struct {
 }
 
 // Background implements [Style].
-func (s *RetroStyle) Background() core.Color { return s.BgColor }
+func (s *RetroStyle) Background() primitives.Color { return s.BgColor }
 
 // Foreground implements [Style].
-func (s *RetroStyle) Foreground() core.Color { return s.FgColor }
+func (s *RetroStyle) Foreground() primitives.Color { return s.FgColor }
 
 // Accent implements [Style].
-func (s *RetroStyle) Accent() core.Color { return s.AccentColor }
+func (s *RetroStyle) Accent() primitives.Color { return s.AccentColor }
 
 // Border implements [Style].
-func (s *RetroStyle) Border() core.Color { return s.BorderColor }
+func (s *RetroStyle) Border() primitives.Color { return s.BorderColor }
 
 // FontSize implements [Style].
 func (s *RetroStyle) FontSize() float64 { return s.BaseFontSize }
@@ -70,10 +70,10 @@ func (s *RetroStyle) BorderWidth() int { return s.BaseBorderW }
 // defaultStyle is the package-level singleton for the default retro style.
 // It is created once and reused to avoid per-call heap allocations.
 var defaultStyle Style = &RetroStyle{
-	BgColor:      core.Color{R: 30, G: 30, B: 46, A: 255},    // dark blue-gray
-	FgColor:      core.Color{R: 205, G: 214, B: 244, A: 255}, // soft white
-	AccentColor:  core.Color{R: 137, G: 180, B: 250, A: 255}, // bright blue
-	BorderColor:  core.Color{R: 88, G: 91, B: 112, A: 255},   // muted gray
+	BgColor:      primitives.Color{R: 30, G: 30, B: 46, A: 255},    // dark blue-gray
+	FgColor:      primitives.Color{R: 205, G: 214, B: 244, A: 255}, // soft white
+	AccentColor:  primitives.Color{R: 137, G: 180, B: 250, A: 255}, // bright blue
+	BorderColor:  primitives.Color{R: 88, G: 91, B: 112, A: 255},   // muted gray
 	BaseFontSize: 14.0,
 	BasePadding:  8,
 	BaseGap:      6,

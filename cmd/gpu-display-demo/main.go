@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/opd-ai/wain/internal/demo"
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/render/display"
@@ -352,7 +352,7 @@ func createAnimatedDisplayList(frame, totalFrames int) *displaylist.DisplayList 
 
 	// Background: interpolate from blue to purple
 	progress := float32(frame) / float32(totalFrames)
-	bg := core.Color{
+	bg := primitives.Color{
 		R: uint8(progress * 128),
 		G: 0,
 		B: 255,
@@ -366,7 +366,7 @@ func createAnimatedDisplayList(frame, totalFrames int) *displaylist.DisplayList 
 	x := int(progress * float32(windowWidth-200))
 	y := windowHeight/2 - 50
 
-	dl.AddFillRect(x, y, 200, 100, core.Color{R: 255, G: 255, B: 255, A: 255})
+	dl.AddFillRect(x, y, 200, 100, primitives.Color{R: 255, G: 255, B: 255, A: 255})
 
 	return dl
 }

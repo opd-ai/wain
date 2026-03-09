@@ -2,7 +2,7 @@
 package decorations
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/widgets"
@@ -70,7 +70,7 @@ func (b *WindowButton) HandlePointerUp(button uint32) {
 }
 
 // getStateColors returns background and foreground colors based on button state.
-func (b *WindowButton) getStateColors() (bg, fg core.Color) {
+func (b *WindowButton) getStateColors() (bg, fg primitives.Color) {
 	bg = b.theme.ButtonBackgroundNormal
 	fg = b.theme.ButtonForegroundNormal
 
@@ -86,7 +86,7 @@ func (b *WindowButton) getStateColors() (bg, fg core.Color) {
 }
 
 // Draw renders the button to a buffer.
-func (b *WindowButton) Draw(buf *core.Buffer, x, y int) error {
+func (b *WindowButton) Draw(buf *primitives.Buffer, x, y int) error {
 	bg, fg := b.getStateColors()
 
 	// Draw background
@@ -279,7 +279,7 @@ func (t *TitleBar) HitTest(x, y int) *WindowButton {
 }
 
 // Draw renders the title bar to a buffer.
-func (t *TitleBar) Draw(buf *core.Buffer, x, y int) error {
+func (t *TitleBar) Draw(buf *primitives.Buffer, x, y int) error {
 	// Draw title bar background
 	buf.FillRect(x, y, t.width, t.height, t.theme.TitleBarBackground)
 

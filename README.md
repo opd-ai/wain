@@ -244,6 +244,22 @@ required `CGO_LDFLAGS` to link the Rust static library.
 
 ## Project Structure
 
+### Package Organization
+
+The project follows Go conventions with a **root package** (`github.com/opd-ai/wain`)
+containing the **public API**, while implementation details live in `internal/`.
+
+**Root Package (`package wain`):** The root directory contains the public API surface
+(`app.go`, `widget.go`, `event.go`, etc.) as package `wain`. This design pattern is
+idiomatic for single-product Go libraries where the module path matches the primary
+package (e.g., `github.com/spf13/cobra` provides `package cobra`). It provides a clean
+import experience (`import "github.com/opd-ai/wain"`) and avoids nested package
+stuttering (`wain.wain.App`).
+
+**Internal Packages:** Implementation details are in `internal/` to enforce encapsulation.
+Consumers import only `github.com/opd-ai/wain` and access the public API. Internal
+packages handle protocol details (Wayland, X11), rendering backends, and UI widgets.
+
 ```text
 wain/
 ├── app.go                     # Public API: App, Window, AppConfig
@@ -304,7 +320,7 @@ wain/
 │   │   ├── dpi/               # DPI detection and scaling
 │   │   └── selection/         # Selection and clipboard handling
 │   ├── raster/                # Software 2D rasterizer (7 packages)
-│   │   ├── core/              # Rectangles, rounded rects, lines
+│   │   ├── primitives/        # Rectangles, rounded rects, lines
 │   │   ├── curves/            # Bézier curves, arc fills
 │   │   ├── composite/         # Alpha blending, image filtering
 │   │   ├── effects/           # Box shadow, gradients

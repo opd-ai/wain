@@ -22,7 +22,7 @@ package effects
 import (
 	"math"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // BoxShadow renders a box shadow with Gaussian blur.
@@ -30,7 +30,7 @@ import (
 // The blur radius controls the blur amount (in pixels).
 // The color specifies the shadow color and opacity.
 // The shadow is drawn underneath the specified rectangle (not on top).
-func BoxShadow(buf *core.Buffer, x, y, width, height, blurRadius int, color core.Color) {
+func BoxShadow(buf *primitives.Buffer, x, y, width, height, blurRadius int, color primitives.Color) {
 	if buf == nil || width <= 0 || height <= 0 || blurRadius <= 0 {
 		return
 	}
@@ -56,7 +56,7 @@ func BoxShadow(buf *core.Buffer, x, y, width, height, blurRadius int, color core
 }
 
 // clipShadowBounds computes the clipped bounds of the shadow area.
-func clipShadowBounds(buf *core.Buffer, shadowX, shadowY, shadowWidth, shadowHeight int) (int, int, int, int) {
+func clipShadowBounds(buf *primitives.Buffer, shadowX, shadowY, shadowWidth, shadowHeight int) (int, int, int, int) {
 	if shadowX >= buf.Width || shadowY >= buf.Height {
 		return 0, 0, 0, 0
 	}
@@ -97,7 +97,7 @@ func createShadowMask(x, y, width, height, shadowX, shadowY, shadowWidth, shadow
 }
 
 // applyShadowToBuffer composites the blurred shadow mask onto the buffer.
-func applyShadowToBuffer(buf *core.Buffer, mask []uint8, maskWidth, maskHeight, x1, y1 int, color core.Color) {
+func applyShadowToBuffer(buf *primitives.Buffer, mask []uint8, maskWidth, maskHeight, x1, y1 int, color primitives.Color) {
 	for row := 0; row < maskHeight; row++ {
 		bufY := y1 + row
 		if bufY < 0 || bufY >= buf.Height {
@@ -206,9 +206,9 @@ func blurColumn(mask, temp []uint8, col, width, height, radius int) {
 // The gradient interpolates from startColor to endColor along the line
 // from (startX, startY) to (endX, endY).
 // The rectangle is defined by (x, y, width, height).
-func LinearGradient(buf *core.Buffer, x, y, width, height int,
-	startX, startY int, startColor core.Color,
-	endX, endY int, endColor core.Color,
+func LinearGradient(buf *primitives.Buffer, x, y, width, height int,
+	startX, startY int, startColor primitives.Color,
+	endX, endY int, endColor primitives.Color,
 ) {
 	if buf == nil || width <= 0 || height <= 0 {
 		return
@@ -241,7 +241,7 @@ func LinearGradient(buf *core.Buffer, x, y, width, height int,
 }
 
 // clipRectToBounds clips a rectangle to buffer bounds.
-func clipRectToBounds(buf *core.Buffer, x, y, width, height int) (x1, y1, x2, y2 int) {
+func clipRectToBounds(buf *primitives.Buffer, x, y, width, height int) (x1, y1, x2, y2 int) {
 	x1 = max(0, x)
 	y1 = max(0, y)
 	x2 = min(buf.Width, x+width)
@@ -250,7 +250,7 @@ func clipRectToBounds(buf *core.Buffer, x, y, width, height int) (x1, y1, x2, y2
 }
 
 // fillSolidRect fills a rectangle with a solid color.
-func fillSolidRect(buf *core.Buffer, x1, y1, x2, y2 int, color core.Color) {
+func fillSolidRect(buf *primitives.Buffer, x1, y1, x2, y2 int, color primitives.Color) {
 	for row := y1; row < y2; row++ {
 		for col := x1; col < x2; col++ {
 			setPixel(buf, col, row, color)
@@ -277,9 +277,9 @@ func computeGradientPosition(x, y, startX, startY int, dx, dy, length float64) f
 // The gradient interpolates from centerColor to edgeColor, radiating from
 // (centerX, centerY) with the specified radius.
 // The rectangle is defined by (x, y, width, height).
-func RadialGradient(buf *core.Buffer, x, y, width, height int,
+func RadialGradient(buf *primitives.Buffer, x, y, width, height int,
 	centerX, centerY, radius int,
-	centerColor, edgeColor core.Color,
+	centerColor, edgeColor primitives.Color,
 ) {
 	if buf == nil || width <= 0 || height <= 0 || radius <= 0 {
 		return
@@ -341,10 +341,10 @@ func (s Scissor) Contains(x, y int) bool {
 
 // interpolateColor linearly interpolates between two colors.
 // t should be in the range [0, 1].
-func interpolateColor(c1, c2 core.Color, t float64) core.Color {
+func interpolateColor(c1, c2 primitives.Color, t float64) primitives.Color {
 	inv := 1.0 - t
 
-	return core.Color{
+	return primitives.Color{
 		R: uint8(float64(c1.R)*inv + float64(c2.R)*t + 0.5),
 		G: uint8(float64(c1.G)*inv + float64(c2.G)*t + 0.5),
 		B: uint8(float64(c1.B)*inv + float64(c2.B)*t + 0.5),
@@ -353,7 +353,7 @@ func interpolateColor(c1, c2 core.Color, t float64) core.Color {
 }
 
 // setPixel sets a pixel with SrcOver compositing.
-func setPixel(buf *core.Buffer, xPos, yPos int, color core.Color) {
+func setPixel(buf *primitives.Buffer, xPos, yPos int, color primitives.Color) {
 	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return
 	}

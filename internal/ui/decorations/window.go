@@ -2,7 +2,7 @@
 package decorations
 
 import (
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
@@ -150,7 +150,7 @@ func (w *WindowFrame) TitleBar() *TitleBar {
 }
 
 // Draw renders the window frame to a buffer.
-func (w *WindowFrame) Draw(buf *core.Buffer, x, y int) error {
+func (w *WindowFrame) Draw(buf *primitives.Buffer, x, y int) error {
 	handleWidth := w.theme.ResizeHandleWidth
 
 	// Draw resize handles

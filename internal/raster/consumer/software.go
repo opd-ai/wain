@@ -15,7 +15,7 @@ package consumer
 import (
 	"fmt"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/effects"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -34,7 +34,7 @@ func NewSoftwareConsumer(atlas *text.Atlas) *SoftwareConsumer {
 }
 
 // Render executes all commands in the display list using software rasterization.
-func (sc *SoftwareConsumer) Render(dl *displaylist.DisplayList, buf *core.Buffer) error {
+func (sc *SoftwareConsumer) Render(dl *displaylist.DisplayList, buf *primitives.Buffer) error {
 	if dl == nil {
 		return fmt.Errorf("consumer: nil display list")
 	}
@@ -52,7 +52,7 @@ func (sc *SoftwareConsumer) Render(dl *displaylist.DisplayList, buf *core.Buffer
 }
 
 // renderCommand executes a single draw command.
-func (sc *SoftwareConsumer) renderCommand(cmd displaylist.DrawCommand, buf *core.Buffer) error {
+func (sc *SoftwareConsumer) renderCommand(cmd displaylist.DrawCommand, buf *primitives.Buffer) error {
 	switch cmd.Type {
 	case displaylist.CmdFillRect:
 		data := cmd.Data.(displaylist.FillRectData)

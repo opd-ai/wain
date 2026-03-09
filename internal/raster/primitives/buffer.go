@@ -28,7 +28,7 @@
 //
 // Drawing operations are automatically clipped to buffer bounds. Out-of-bounds
 // coordinates are safely ignored without panic.
-package core
+package primitives
 
 import (
 	"errors"

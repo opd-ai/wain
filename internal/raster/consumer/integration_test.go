@@ -3,7 +3,7 @@ package consumer
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/widgets"
@@ -45,7 +45,7 @@ func TestButtonRenderParity(t *testing.T) {
 	btn.SetAtlas(atlas)
 
 	// Direct rendering
-	bufDirect, err := core.NewBuffer(200, 100)
+	bufDirect, err := primitives.NewBuffer(200, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestButtonRenderParity(t *testing.T) {
 	}
 
 	// DisplayList rendering
-	bufDisplayList, err := core.NewBuffer(200, 100)
+	bufDisplayList, err := primitives.NewBuffer(200, 100)
 	if err != nil {
 		t.Fatalf("Failed to create buffer: %v", err)
 	}

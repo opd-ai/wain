@@ -3,7 +3,7 @@ package text
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestNewAtlas(t *testing.T) {
@@ -98,12 +98,12 @@ func TestDrawText(t *testing.T) {
 		t.Fatalf("NewAtlas() error = %v", err)
 	}
 
-	buf, err := core.NewBuffer(200, 100)
+	buf, err := primitives.NewBuffer(200, 100)
 	if err != nil {
 		t.Fatalf("NewBuffer() error = %v", err)
 	}
 
-	color := core.Color{R: 255, G: 255, B: 255, A: 255}
+	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 
 	tests := []struct {
 		name string
@@ -129,8 +129,8 @@ func TestDrawText(t *testing.T) {
 
 func TestDrawTextNilInputs(t *testing.T) {
 	atlas, _ := NewAtlas()
-	buf, _ := core.NewBuffer(100, 100)
-	color := core.Color{R: 255, G: 255, B: 255, A: 255}
+	buf, _ := primitives.NewBuffer(100, 100)
+	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 
 	// Should not panic with nil inputs
 	DrawText(nil, "test", 10, 10, 16, color, atlas)
@@ -261,7 +261,7 @@ func TestClamp(t *testing.T) {
 }
 
 func TestBlendPixel(t *testing.T) {
-	buf, err := core.NewBuffer(10, 10)
+	buf, err := primitives.NewBuffer(10, 10)
 	if err != nil {
 		t.Fatalf("NewBuffer() error = %v", err)
 	}
@@ -271,7 +271,7 @@ func TestBlendPixel(t *testing.T) {
 		buf.Pixels[i] = 128
 	}
 
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	// Blend at various alpha levels
 	blendPixel(buf, 5, 5, color, 255) // Full coverage
@@ -289,12 +289,12 @@ func BenchmarkDrawText(b *testing.B) {
 		b.Fatalf("NewAtlas() error = %v", err)
 	}
 
-	buf, err := core.NewBuffer(800, 600)
+	buf, err := primitives.NewBuffer(800, 600)
 	if err != nil {
 		b.Fatalf("NewBuffer() error = %v", err)
 	}
 
-	color := core.Color{R: 255, G: 255, B: 255, A: 255}
+	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 	text := "The quick brown fox jumps over the lazy dog"
 
 	b.ResetTimer()

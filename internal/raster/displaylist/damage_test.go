@@ -3,7 +3,7 @@ package displaylist
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestNewDamageTracker(t *testing.T) {
@@ -174,7 +174,7 @@ func TestCoalesceSingleRegion(t *testing.T) {
 func TestComputeDamageForFillRect(t *testing.T) {
 	cmd := DrawCommand{
 		Type: CmdFillRect,
-		Data: FillRectData{X: 10, Y: 20, Width: 100, Height: 50, Color: core.Color{}},
+		Data: FillRectData{X: 10, Y: 20, Width: 100, Height: 50, Color: primitives.Color{}},
 	}
 
 	rect := ComputeDamageForCommand(cmd)
@@ -188,7 +188,7 @@ func TestComputeDamageForFillRect(t *testing.T) {
 func TestComputeDamageForDrawLine(t *testing.T) {
 	cmd := DrawCommand{
 		Type: CmdDrawLine,
-		Data: DrawLineData{X0: 10, Y0: 20, X1: 110, Y1: 120, Width: 4, Color: core.Color{}},
+		Data: DrawLineData{X0: 10, Y0: 20, X1: 110, Y1: 120, Width: 4, Color: primitives.Color{}},
 	}
 
 	rect := ComputeDamageForCommand(cmd)
@@ -210,7 +210,7 @@ func TestComputeDamageForBoxShadow(t *testing.T) {
 		Type: CmdBoxShadow,
 		Data: BoxShadowData{
 			X: 10, Y: 20, Width: 100, Height: 50,
-			BlurRadius: 5, SpreadRadius: 2, Color: core.Color{},
+			BlurRadius: 5, SpreadRadius: 2, Color: primitives.Color{},
 		},
 	}
 
@@ -231,7 +231,7 @@ func TestComputeDamageForDrawText(t *testing.T) {
 	cmd := DrawCommand{
 		Type: CmdDrawText,
 		Data: DrawTextData{
-			Text: "Hello", X: 10, Y: 50, FontSize: 16, Color: core.Color{}, AtlasID: 0,
+			Text: "Hello", X: 10, Y: 50, FontSize: 16, Color: primitives.Color{}, AtlasID: 0,
 		},
 	}
 
@@ -260,9 +260,9 @@ func TestComputeDamageForDrawText(t *testing.T) {
 
 func TestFilterCommandsByDamage(t *testing.T) {
 	dl := New()
-	red := core.Color{R: 255, G: 0, B: 0, A: 255}
-	green := core.Color{R: 0, G: 255, B: 0, A: 255}
-	blue := core.Color{R: 0, G: 0, B: 255, A: 255}
+	red := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	green := primitives.Color{R: 0, G: 255, B: 0, A: 255}
+	blue := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	// Add commands at different locations
 	dl.AddFillRect(0, 0, 50, 50, red)       // Top-left
@@ -291,9 +291,9 @@ func TestFilterCommandsByDamage(t *testing.T) {
 
 func TestFilterCommandsByMultipleDamageRegions(t *testing.T) {
 	dl := New()
-	red := core.Color{R: 255, G: 0, B: 0, A: 255}
-	green := core.Color{R: 0, G: 255, B: 0, A: 255}
-	blue := core.Color{R: 0, G: 0, B: 255, A: 255}
+	red := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	green := primitives.Color{R: 0, G: 255, B: 0, A: 255}
+	blue := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	dl.AddFillRect(0, 0, 50, 50, red)
 	dl.AddFillRect(200, 200, 50, 50, green)
@@ -315,7 +315,7 @@ func TestFilterCommandsByMultipleDamageRegions(t *testing.T) {
 
 func TestFilterCommandsByDamageEmpty(t *testing.T) {
 	dl := New()
-	dl.AddFillRect(0, 0, 100, 100, core.Color{})
+	dl.AddFillRect(0, 0, 100, 100, primitives.Color{})
 
 	// No damage regions
 	filtered := FilterCommandsByDamage(dl.Commands(), []Rect{})

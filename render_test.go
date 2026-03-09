@@ -3,7 +3,7 @@ package wain
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
@@ -68,7 +68,7 @@ func (mw *mockWidget) EmitDisplayList(dl *displaylist.DisplayList) error {
 	}
 
 	for i := 0; i < mw.emittedCommands; i++ {
-		dl.AddFillRect(10+i*10, 10, 50, 30, core.Color{R: 255, G: 0, B: 0, A: 255})
+		dl.AddFillRect(10+i*10, 10, 50, 30, primitives.Color{R: 255, G: 0, B: 0, A: 255})
 	}
 	return nil
 }

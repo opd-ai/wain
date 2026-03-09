@@ -1,6 +1,6 @@
 package wain
 
-import "github.com/opd-ai/wain/internal/raster/core"
+import "github.com/opd-ai/wain/internal/raster/primitives"
 
 // Color represents an RGBA color with 8-bit channels.
 //
@@ -25,9 +25,9 @@ func RGBA(r, g, b, a uint8) Color {
 	return Color{R: r, G: g, B: b, A: a}
 }
 
-// toInternal converts a public Color to the internal core.Color representation.
-func (c Color) toInternal() core.Color {
-	return core.Color{R: c.R, G: c.G, B: c.B, A: c.A}
+// toInternal converts a public Color to the internal primitives.Color representation.
+func (c Color) toInternal() primitives.Color {
+	return primitives.Color{R: c.R, G: c.G, B: c.B, A: c.A}
 }
 
 // toU32 converts the color to a 32-bit ARGB value for display list commands.

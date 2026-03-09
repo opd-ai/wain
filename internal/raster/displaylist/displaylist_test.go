@@ -3,7 +3,7 @@ package displaylist
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestNew(t *testing.T) {
@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 
 func TestAddFillRect(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 255, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
 	dl.AddFillRect(10, 20, 100, 50, color)
 
@@ -48,7 +48,7 @@ func TestAddFillRect(t *testing.T) {
 
 func TestAddFillRoundedRect(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 0, G: 255, B: 0, A: 255}
+	color := primitives.Color{R: 0, G: 255, B: 0, A: 255}
 
 	dl.AddFillRoundedRect(5, 10, 200, 100, 15, color)
 
@@ -73,7 +73,7 @@ func TestAddFillRoundedRect(t *testing.T) {
 
 func TestAddDrawLine(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 0, G: 0, B: 255, A: 255}
+	color := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	dl.AddDrawLine(0, 0, 100, 100, 2, color)
 
@@ -103,7 +103,7 @@ func TestAddDrawLine(t *testing.T) {
 
 func TestAddDrawText(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 0, G: 0, B: 0, A: 255}
+	color := primitives.Color{R: 0, G: 0, B: 0, A: 255}
 
 	dl.AddDrawText("Hello, World!", 10, 20, 16, color, 0)
 
@@ -132,8 +132,8 @@ func TestAddDrawText(t *testing.T) {
 
 func TestAddLinearGradient(t *testing.T) {
 	dl := New()
-	color0 := core.Color{R: 255, G: 0, B: 0, A: 255}
-	color1 := core.Color{R: 0, G: 0, B: 255, A: 255}
+	color0 := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	color1 := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	dl.AddLinearGradient(0, 0, 200, 100, 0, 0, 200, 0, color0, color1)
 
@@ -158,8 +158,8 @@ func TestAddLinearGradient(t *testing.T) {
 
 func TestAddRadialGradient(t *testing.T) {
 	dl := New()
-	color0 := core.Color{R: 255, G: 255, B: 0, A: 255}
-	color1 := core.Color{R: 255, G: 0, B: 255, A: 255}
+	color0 := primitives.Color{R: 255, G: 255, B: 0, A: 255}
+	color1 := primitives.Color{R: 255, G: 0, B: 255, A: 255}
 
 	dl.AddRadialGradient(0, 0, 200, 200, 100, 100, 80, color0, color1)
 
@@ -184,7 +184,7 @@ func TestAddRadialGradient(t *testing.T) {
 
 func TestAddBoxShadow(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 0, G: 0, B: 0, A: 128}
+	color := primitives.Color{R: 0, G: 0, B: 0, A: 128}
 
 	dl.AddBoxShadow(10, 10, 100, 50, 5, 2, color)
 
@@ -239,9 +239,9 @@ func TestAddDrawImage(t *testing.T) {
 
 func TestMultipleCommands(t *testing.T) {
 	dl := New()
-	red := core.Color{R: 255, G: 0, B: 0, A: 255}
-	green := core.Color{R: 0, G: 255, B: 0, A: 255}
-	blue := core.Color{R: 0, G: 0, B: 255, A: 255}
+	red := primitives.Color{R: 255, G: 0, B: 0, A: 255}
+	green := primitives.Color{R: 0, G: 255, B: 0, A: 255}
+	blue := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
 	dl.AddFillRect(0, 0, 100, 100, red)
 	dl.AddFillRect(50, 50, 100, 100, green)
@@ -259,7 +259,7 @@ func TestMultipleCommands(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	dl := New()
-	color := core.Color{R: 255, G: 255, B: 255, A: 255}
+	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 
 	dl.AddFillRect(0, 0, 100, 100, color)
 	dl.AddFillRect(10, 10, 50, 50, color)

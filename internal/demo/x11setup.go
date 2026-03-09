@@ -3,7 +3,7 @@ package demo
 import (
 	"fmt"
 
-	"github.com/opd-ai/wain/internal/raster/core"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/wire"
 )
@@ -121,7 +121,7 @@ func ConnectAndSetupX11Window(width, height int) (*x11client.Connection, x11clie
 
 // RenderAndDisplayDemo creates widgets, renders them to a buffer, and prints summaries.
 // Returns the render buffer for further use.
-func RenderAndDisplayDemo(width, height int) (*core.Buffer, error) {
+func RenderAndDisplayDemo(width, height int) (*primitives.Buffer, error) {
 	btn, input := StandardWidgets()
 	renderBuffer, err := CreateDemoBuffer(width, height)
 	if err != nil {
