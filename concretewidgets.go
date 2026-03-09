@@ -62,19 +62,19 @@ func (a *widgetAdapter) HandlePointerUp(button uint32) {
 func (a *widgetAdapter) Draw(buf *primitives.Buffer, x, y int) error {
 	// Create a buffer-backed Canvas that offsets all drawing by (x, y)
 	canvas := newBufferCanvas(buf, x, y)
-	
+
 	// Let the public widget draw to the canvas
 	a.public.Draw(canvas)
-	
+
 	return nil
 }
 
 // bufferCanvas implements Canvas by drawing directly to a primitives.Buffer.
 // It translates the public Canvas API calls into buffer drawing operations.
 type bufferCanvas struct {
-	buf    *primitives.Buffer
-	xOff   int
-	yOff   int
+	buf  *primitives.Buffer
+	xOff int
+	yOff int
 }
 
 // newBufferCanvas creates a Canvas that draws to a buffer with an offset.
@@ -516,7 +516,7 @@ func (s *ScrollView) Add(child PublicWidget) {
 	// Wrap the public widget in an adapter that implements the internal Widget interface
 	adapter := newWidgetAdapter(child)
 	s.internal.AddChild(adapter)
-	
+
 	// Also track in the public widget's children list for consistency
 	s.children = append(s.children, child)
 }
