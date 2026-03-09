@@ -249,6 +249,22 @@ func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 	width, height uint16, fourcc, modifier uint32, depth, bpp uint8,
 	strides, offsets []uint32, fds []int,
 ) error {
+	if err := e.validatePixmapFromBuffersParams(strides, offsets, fds); err != nil {
+		return err
+	}
+
+	request := e.buildPixmapFromBuffersRequest(pixmap, drawable, width, height,
+		fourcc, modifier, depth, bpp, strides, offsets, fds)
+
+	if err := conn.SendRequestWithFDs(request, fds); err != nil {
+		return fmt.Errorf("%w: %v", ErrPixmapCreationFailed, err)
+	}
+
+	return nil
+}
+
+// validatePixmapFromBuffersParams validates parameters for PixmapFromBuffers.
+func (e *Extension) validatePixmapFromBuffersParams(strides, offsets []uint32, fds []int) error {
 	if !e.SupportsModifiers() {
 		return fmt.Errorf("dri3: PixmapFromBuffers requires version 1.2+ (have %d.%d)",
 			e.majorVersion, e.minorVersion)
@@ -265,27 +281,27 @@ func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 		}
 	}
 
-	var buf bytes.Buffer
+	return nil
+}
 
-	// Calculate message length
-	numBuffers := uint8(len(fds))
-	// header(4) + pixmap(4) + drawable(4) + num_buffers(1) + pad(3) +
-	// width(2) + height(2) + stride0(4) + offset0(4) + ... + strideN + offsetN +
-	// depth(1) + bpp(1) + pad(2) + modifier(8)
+// buildPixmapFromBuffersRequest constructs the DRI3 PixmapFromBuffers request.
+func (e *Extension) buildPixmapFromBuffersRequest(pixmap, drawable XID,
+	width, height uint16, fourcc, modifier uint32, depth, bpp uint8,
+	strides, offsets []uint32, fds []int,
+) []byte {
+	var buf bytes.Buffer
 	msgLen := uint16(5 + 2*len(fds))
 
 	wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffers, 0, msgLen)
 	wire.EncodeUint32(&buf, uint32(pixmap))
-	// DRI3 pixmap geometry fields
 	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint8(&buf, numBuffers)
+	wire.EncodeUint8(&buf, uint8(len(fds)))
 	wire.EncodePadding(&buf, 3)
 	wire.EncodeUint16(&buf, width)
 	wire.EncodeUint16(&buf, height)
 	wire.EncodeUint32(&buf, fourcc)
 
-	// Encode strides and offsets
-	for i := 0; i < len(strides); i++ {
+	for i := range strides {
 		wire.EncodeUint32(&buf, strides[i])
 		wire.EncodeUint32(&buf, offsets[i])
 	}
@@ -293,13 +309,7 @@ func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 	wire.EncodeUint8(&buf, depth)
 	wire.EncodeUint8(&buf, bpp)
 	wire.EncodePadding(&buf, 2)
-	// Modifier is 64-bit (little-endian)
 	wire.EncodeUint64(&buf, uint64(modifier))
 
-	// Send request with fd attachments
-	if err := conn.SendRequestWithFDs(buf.Bytes(), fds); err != nil {
-		return fmt.Errorf("%w: %v", ErrPixmapCreationFailed, err)
-	}
-
-	return nil
+	return buf.Bytes()
 }

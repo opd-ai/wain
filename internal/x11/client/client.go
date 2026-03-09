@@ -69,22 +69,34 @@ type Connection struct {
 // Connect establishes a connection to the X server on the specified display.
 // The display string is typically "0" for the local display :0.
 func Connect(display string) (*Connection, error) {
-	// Connect to X server Unix socket
+	conn, err := dialX11Server(display)
+	if err != nil {
+		return nil, err
+	}
+
+	setupReply, err := performSetup(conn, display)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+
+	return createConnection(conn, setupReply)
+}
+
+// dialX11Server connects to the X server Unix socket.
+func dialX11Server(display string) (net.Conn, error) {
 	socketPath := "/tmp/.X11-unix/X" + display
 	conn, err := net.Dial("unix", socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("client: failed to connect to X server: %w", err)
 	}
+	return conn, nil
+}
 
-	// Read authentication data
-	authName, authData, err := wire.ReadAuthority(display)
-	if err != nil {
-		// Allow connection without auth (for some X servers)
-		authName = ""
-		authData = nil
-	}
+// performSetup sends setup request and receives reply.
+func performSetup(conn net.Conn, display string) (wire.SetupReply, error) {
+	authName, authData, _ := wire.ReadAuthority(display)
 
-	// Send setup request
 	setupReq := wire.SetupRequest{
 		ByteOrder:            wire.ByteOrderLSB,
 		ProtocolMajorVersion: wire.ProtocolMajorVersion,
@@ -94,31 +106,29 @@ func Connect(display string) (*Connection, error) {
 	}
 
 	if err := wire.EncodeSetupRequest(conn, setupReq); err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("client: failed to send setup request: %w", err)
+		return wire.SetupReply{}, fmt.Errorf("client: failed to send setup request: %w", err)
 	}
 
-	// Receive setup reply
 	setupReply, err := wire.DecodeSetupReply(conn)
 	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("client: setup failed: %w", err)
+		return wire.SetupReply{}, fmt.Errorf("client: setup failed: %w", err)
 	}
 
 	if setupReply.Status != wire.SetupStatusSuccess {
-		conn.Close()
-		return nil, fmt.Errorf("client: setup failed with status %d", setupReply.Status)
+		return wire.SetupReply{}, fmt.Errorf("client: setup failed with status %d", setupReply.Status)
 	}
 
-	// Extract root window information
 	if len(setupReply.Screens) == 0 {
-		conn.Close()
-		return nil, errors.New("client: no screens in setup reply")
+		return wire.SetupReply{}, errors.New("client: no screens in setup reply")
 	}
 
-	screen := setupReply.Screens[0]
+	return setupReply, nil
+}
 
-	c := &Connection{
+// createConnection builds a Connection from setup reply.
+func createConnection(conn net.Conn, setupReply wire.SetupReply) (*Connection, error) {
+	screen := setupReply.Screens[0]
+	return &Connection{
 		conn:           conn,
 		resourceIDBase: setupReply.ResourceIDBase,
 		resourceIDMask: setupReply.ResourceIDMask,
@@ -127,9 +137,7 @@ func Connect(display string) (*Connection, error) {
 		rootVisual:     screen.RootVisual,
 		rootDepth:      screen.RootDepth,
 		screens:        setupReply.Screens,
-	}
-
-	return c, nil
+	}, nil
 }
 
 // Close closes the connection to the X server.

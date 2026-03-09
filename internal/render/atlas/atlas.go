@@ -261,70 +261,67 @@ func calculateUVCoordinates(region *Region, page *ImagePage) (u0, v0, u1, v1 flo
 func (ta *TextureAtlas) tryAllocateInPage(page *ImagePage, width, height int) *Region {
 	// Try to find an existing shelf that fits
 	for _, shelf := range page.Shelves {
-		if shelf.Height >= height && shelf.X+width <= page.Width {
-			region := &Region{
-				PageID: page.ID,
-				Rect: Rect{
-					X:      shelf.X,
-					Y:      shelf.Y,
-					Width:  width,
-					Height: height,
-				},
-			}
-			shelf.X += width
-			shelf.Regions = append(shelf.Regions, region)
-
-			// Mark page as dirty
-			page.Dirty = true
-			if page.DirtyRect.Width == 0 {
-				page.DirtyRect = region.Rect
-			} else {
-				page.DirtyRect = unionRect(page.DirtyRect, region.Rect)
-			}
-
+		if region := ta.tryAllocateInShelf(page, shelf, width, height); region != nil {
 			return region
 		}
 	}
 
 	// Try to create a new shelf
-	var topY int
-	if len(page.Shelves) > 0 {
-		lastShelf := page.Shelves[len(page.Shelves)-1]
-		topY = lastShelf.Y + lastShelf.Height
-	}
+	return ta.allocateNewShelf(page, width, height)
+}
 
-	if topY+height > page.Height {
-		return nil // No space for a new shelf
-	}
-
-	shelf := &Shelf{
-		Y:      topY,
-		Height: height,
-		X:      width,
+// tryAllocateInShelf attempts to allocate a region in an existing shelf.
+func (ta *TextureAtlas) tryAllocateInShelf(page *ImagePage, shelf *Shelf, width, height int) *Region {
+	if shelf.Height < height || shelf.X+width > page.Width {
+		return nil
 	}
 
 	region := &Region{
 		PageID: page.ID,
-		Rect: Rect{
-			X:      0,
-			Y:      topY,
-			Width:  width,
-			Height: height,
-		},
+		Rect:   Rect{X: shelf.X, Y: shelf.Y, Width: width, Height: height},
+	}
+	shelf.X += width
+	shelf.Regions = append(shelf.Regions, region)
+	markPageDirty(page, region.Rect)
+	return region
+}
+
+// allocateNewShelf creates a new shelf and allocates a region in it.
+func (ta *TextureAtlas) allocateNewShelf(page *ImagePage, width, height int) *Region {
+	topY := calculateShelfTop(page.Shelves)
+	if topY+height > page.Height {
+		return nil
+	}
+
+	shelf := &Shelf{Y: topY, Height: height, X: width}
+	region := &Region{
+		PageID: page.ID,
+		Rect:   Rect{X: 0, Y: topY, Width: width, Height: height},
 	}
 
 	shelf.Regions = append(shelf.Regions, region)
 	page.Shelves = append(page.Shelves, shelf)
+	markPageDirty(page, region.Rect)
+	return region
+}
 
-	// Mark page as dirty
+// calculateShelfTop calculates the Y position for a new shelf.
+func calculateShelfTop(shelves []*Shelf) int {
+	if len(shelves) == 0 {
+		return 0
+	}
+	lastShelf := shelves[len(shelves)-1]
+	return lastShelf.Y + lastShelf.Height
+}
+
+// markPageDirty marks a page as dirty and updates its dirty rectangle.
+func markPageDirty(page *ImagePage, rect Rect) {
 	page.Dirty = true
 	if page.DirtyRect.Width == 0 {
-		page.DirtyRect = region.Rect
+		page.DirtyRect = rect
 	} else {
-		page.DirtyRect = unionRect(page.DirtyRect, region.Rect)
+		page.DirtyRect = unionRect(page.DirtyRect, rect)
 	}
-
-	return region
 }
 
 // allocateNewPage creates a new image atlas page.

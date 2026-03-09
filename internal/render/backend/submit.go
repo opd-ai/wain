@@ -113,60 +113,54 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 	commands := make([]uint32, 0, 2048)
 	relocs := make([]render.Relocation, 0, 16)
 
-	// PIPELINE_SELECT: Select 3D pipeline mode
-	commands = append(commands, 0x69040000)
+	commands = encodePipelineHeader(commands, scissorRects)
+	commands, relocs = b.encodeBatchDrawCalls(commands, relocs, batches, vertexOffset)
+	commands = encodePipelineFooter(commands)
 
-	// STATE_BASE_ADDRESS: Configure base pointers
-	commands = encodeStateBaseAddress(commands)
+	return commandsToBytes(commands), relocs
+}
 
-	// 3DSTATE_VF_STATISTICS: Enable vertex fetch statistics
-	commands = append(commands, 0x780B0000)
-
-	// Phase 5.4: Encode scissor state if damage tracking is active
+// encodePipelineHeader encodes pipeline setup commands.
+func encodePipelineHeader(commands []uint32, scissorRects []ScissorRect) []uint32 {
+	commands = append(commands, 0x69040000)     // PIPELINE_SELECT
+	commands = encodeStateBaseAddress(commands) // STATE_BASE_ADDRESS
+	commands = append(commands, 0x780B0000)     // 3DSTATE_VF_STATISTICS
 	if len(scissorRects) > 0 {
 		commands = encodeScissorCommands(commands, scissorRects)
 	}
+	return commands
+}
 
-	// Encode pipeline state and draw calls for each batch
-	vertexStart := vertexOffset / 20 // Vertex size is 20 bytes
+// encodeBatchDrawCalls encodes pipeline state and draw calls for all batches.
+func (b *GPUBackend) encodeBatchDrawCalls(commands []uint32, relocs []render.Relocation, batches []Batch, vertexOffset uint32) ([]uint32, []render.Relocation) {
+	vertexStart := vertexOffset / 20
 	for _, batch := range batches {
-		vertexCount := len(batch.Commands) * 6 // 6 vertices per quad
-
-		// Configure vertex buffers and add relocations
+		vertexCount := len(batch.Commands) * 6
 		commands, relocs = b.encodeVertexBuffers(commands, relocs)
-
-		// Define vertex attribute layout
 		commands = encodeVertexElements(commands)
-
-		// Encode minimal pipeline state (detailed state in Phase 5.2)
 		commands = b.encodePipelineState(commands, batch.Pipeline)
-
-		// Issue draw call
 		commands = encodePrimitive(commands, uint32(vertexCount), vertexStart)
-
 		vertexStart += uint32(vertexCount)
 	}
+	return commands, relocs
+}
 
-	// PIPE_CONTROL: Full pipeline flush before end
+// encodePipelineFooter encodes pipeline flush and batch termination.
+func encodePipelineFooter(commands []uint32) []uint32 {
 	commands = append(commands,
-		0x7A000004, // Opcode, length=5 dwords
-		0x00100000, // DC flush enable
-		0x00000000, // Address low
-		0x00000000, // Address high
-		0x00000000, // Immediate data low
-		0x00000000, // Immediate data high
+		0x7A000004, 0x00100000, 0, 0, 0, 0, // PIPE_CONTROL
 	)
+	commands = append(commands, 0x0A000000) // MI_BATCH_BUFFER_END
+	return commands
+}
 
-	// MI_BATCH_BUFFER_END: Terminate batch
-	commands = append(commands, 0x0A000000)
-
-	// Convert to byte array
+// commandsToBytes converts uint32 commands to byte array.
+func commandsToBytes(commands []uint32) []byte {
 	data := make([]byte, len(commands)*4)
 	for i, cmd := range commands {
 		binary.LittleEndian.PutUint32(data[i*4:], cmd)
 	}
-
-	return data, relocs
+	return data
 }
 
 // encodeStateBaseAddress configures GPU base pointers for state buffers.

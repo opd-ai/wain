@@ -37,63 +37,65 @@ func Blit(dst *core.Buffer, dstX, dstY int, src *core.Buffer, srcX, srcY, width,
 		return
 	}
 
-	srcX1 := max(0, srcX)
-	srcY1 := max(0, srcY)
+	srcX1, srcY1, copyWidth, copyHeight := calculateClippedRegion(
+		dst, dstX, dstY, src, srcX, srcY, width, height,
+	)
+	if copyWidth <= 0 || copyHeight <= 0 {
+		return
+	}
+
+	blitRows(dst, src, srcX1, srcY1, dstX, dstY, copyWidth, copyHeight)
+}
+
+// calculateClippedRegion computes clipped source coordinates and copy dimensions.
+func calculateClippedRegion(dst *core.Buffer, dstX, dstY int, src *core.Buffer, srcX, srcY, width, height int) (srcX1, srcY1, copyWidth, copyHeight int) {
+	srcX1 = max(0, srcX)
+	srcY1 = max(0, srcY)
 	srcX2 := min(src.Width, srcX+width)
 	srcY2 := min(src.Height, srcY+height)
 
 	if srcX1 >= srcX2 || srcY1 >= srcY2 {
-		return
+		return 0, 0, 0, 0
 	}
 
-	dstX1 := dstX + (srcX1 - srcX)
-	dstY1 := dstY + (srcY1 - srcY)
-	dstX2 := dstX + (srcX2 - srcX)
-	dstY2 := dstY + (srcY2 - srcY)
-
-	dstX1 = max(0, dstX1)
-	dstY1 = max(0, dstY1)
-	dstX2 = min(dst.Width, dstX2)
-	dstY2 = min(dst.Height, dstY2)
+	dstX1 := max(0, dstX+(srcX1-srcX))
+	dstY1 := max(0, dstY+(srcY1-srcY))
+	dstX2 := min(dst.Width, dstX+(srcX2-srcX))
+	dstY2 := min(dst.Height, dstY+(srcY2-srcY))
 
 	if dstX1 >= dstX2 || dstY1 >= dstY2 {
-		return
+		return 0, 0, 0, 0
 	}
 
-	srcX1 += (dstX1 - (dstX + (srcX1 - srcX)))
-	srcY1 += (dstY1 - (dstY + (srcY1 - srcY)))
+	srcX1 += dstX1 - (dstX + (srcX1 - srcX))
+	srcY1 += dstY1 - (dstY + (srcY1 - srcY))
+	return srcX1, srcY1, dstX2 - dstX1, dstY2 - dstY1
+}
 
-	copyWidth := dstX2 - dstX1
-	copyHeight := dstY2 - dstY1
+// blitRows copies pixel rows from source to destination with alpha blending.
+func blitRows(dst, src *core.Buffer, srcX, srcY, dstX, dstY, width, height int) {
+	for row := 0; row < height; row++ {
+		srcOffset := (srcY+row)*src.Stride + srcX*4
+		dstOffset := (dstY+row)*dst.Stride + dstX*4
+		blitRow(dst.Pixels[dstOffset:], src.Pixels[srcOffset:], width)
+	}
+}
 
-	for row := 0; row < copyHeight; row++ {
-		srcRow := srcY1 + row
-		dstRow := dstY1 + row
-		srcOffset := srcRow*src.Stride + srcX1*4
-		dstOffset := dstRow*dst.Stride + dstX1*4
+// blitRow copies a single row of pixels with alpha blending.
+func blitRow(dstRow, srcRow []byte, width int) {
+	for col := 0; col < width; col++ {
+		srcIdx := col * 4
+		dstIdx := col * 4
+		srcA := srcRow[srcIdx+3]
 
-		for col := 0; col < copyWidth; col++ {
-			srcIdx := srcOffset + col*4
-			dstIdx := dstOffset + col*4
-
-			srcA := src.Pixels[srcIdx+3]
-			if srcA == 0 {
-				continue
-			}
-
-			if srcA == 255 {
-				dst.Pixels[dstIdx] = src.Pixels[srcIdx]
-				dst.Pixels[dstIdx+1] = src.Pixels[srcIdx+1]
-				dst.Pixels[dstIdx+2] = src.Pixels[srcIdx+2]
-				dst.Pixels[dstIdx+3] = src.Pixels[srcIdx+3]
-				continue
-			}
-
-			blendPixelDirect(
-				dst.Pixels[dstIdx:dstIdx+4],
-				src.Pixels[srcIdx:srcIdx+4],
-			)
+		if srcA == 0 {
+			continue
 		}
+		if srcA == 255 {
+			copy(dstRow[dstIdx:dstIdx+4], srcRow[srcIdx:srcIdx+4])
+			continue
+		}
+		blendPixelDirect(dstRow[dstIdx:dstIdx+4], srcRow[srcIdx:srcIdx+4])
 	}
 }
 

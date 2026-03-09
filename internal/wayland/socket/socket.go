@@ -247,36 +247,52 @@ func MakePair() (*Conn, *Conn, error) {
 		return nil, nil, fmt.Errorf("socket: socketpair failed: %w", err)
 	}
 
+	conn1, conn2, err := createSocketPair(fds)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	c1, c2, err := wrapConnections(conn1, conn2)
+	if err != nil {
+		conn1.Close()
+		conn2.Close()
+		return nil, nil, err
+	}
+
+	return c1, c2, nil
+}
+
+// createSocketPair creates net.Conn from socket file descriptors.
+func createSocketPair(fds [2]int) (net.Conn, net.Conn, error) {
 	file1 := os.NewFile(uintptr(fds[0]), "socket1")
 	file2 := os.NewFile(uintptr(fds[1]), "socket2")
 
 	conn1, err := net.FileConn(file1)
+	file1.Close()
 	if err != nil {
-		file1.Close()
 		file2.Close()
 		return nil, nil, fmt.Errorf("socket: failed to create conn1: %w", err)
 	}
-	file1.Close()
 
 	conn2, err := net.FileConn(file2)
+	file2.Close()
 	if err != nil {
 		conn1.Close()
-		file2.Close()
 		return nil, nil, fmt.Errorf("socket: failed to create conn2: %w", err)
 	}
-	file2.Close()
 
+	return conn1, conn2, nil
+}
+
+// wrapConnections wraps net.Conn as Unix connections and creates Conn wrappers.
+func wrapConnections(conn1, conn2 net.Conn) (*Conn, *Conn, error) {
 	unix1, ok := conn1.(*net.UnixConn)
 	if !ok {
-		conn1.Close()
-		conn2.Close()
 		return nil, nil, ErrInvalidSocket
 	}
 
 	unix2, ok := conn2.(*net.UnixConn)
 	if !ok {
-		conn1.Close()
-		conn2.Close()
 		return nil, nil, ErrInvalidSocket
 	}
 

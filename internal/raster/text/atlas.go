@@ -85,62 +85,82 @@ func NewAtlas() (*Atlas, error) {
 		return nil, ErrInvalidAtlas
 	}
 
-	// Parse atlas header
+	header, offset, err := parseAtlasHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	sdf, offset, err := extractSDFData(offset, header.width*header.height)
+	if err != nil {
+		return nil, err
+	}
+
+	glyphs, err := parseGlyphMetadata(offset, header.glyphCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Atlas{
+		Width:      header.width,
+		Height:     header.height,
+		SDF:        sdf,
+		Glyphs:     glyphs,
+		LineHeight: header.lineHeight,
+		Baseline:   header.lineHeight * 0.75,
+	}, nil
+}
+
+type atlasHeader struct {
+	width, height int
+	glyphCount    int
+	lineHeight    float64
+}
+
+// parseAtlasHeader parses the atlas binary header.
+func parseAtlasHeader() (*atlasHeader, int, error) {
 	width := int(binary.LittleEndian.Uint32(atlasData[0:4]))
 	height := int(binary.LittleEndian.Uint32(atlasData[4:8]))
 	glyphCount := int(binary.LittleEndian.Uint32(atlasData[8:12]))
 	lineHeight := float64(binary.LittleEndian.Uint32(atlasData[12:16])) / 64.0
+	return &atlasHeader{width, height, glyphCount, lineHeight}, 16, nil
+}
 
-	offset := 16
-	expectedSDFSize := width * height
-	if len(atlasData) < offset+expectedSDFSize {
-		return nil, ErrInvalidAtlas
+// extractSDFData extracts SDF bitmap from atlas data.
+func extractSDFData(offset, size int) ([]uint8, int, error) {
+	if len(atlasData) < offset+size {
+		return nil, 0, ErrInvalidAtlas
 	}
+	sdf := make([]uint8, size)
+	copy(sdf, atlasData[offset:offset+size])
+	return sdf, offset + size, nil
+}
 
-	// Extract SDF data
-	sdf := make([]uint8, expectedSDFSize)
-	copy(sdf, atlasData[offset:offset+expectedSDFSize])
-	offset += expectedSDFSize
-
-	// Parse glyph metadata (each glyph: 36 bytes)
-	glyphs := make(map[rune]*Glyph, glyphCount)
-	for i := 0; i < glyphCount; i++ {
+// parseGlyphMetadata parses glyph metadata (each glyph: 36 bytes).
+func parseGlyphMetadata(offset, count int) (map[rune]*Glyph, error) {
+	glyphs := make(map[rune]*Glyph, count)
+	for i := 0; i < count; i++ {
 		if len(atlasData) < offset+36 {
 			return nil, ErrInvalidAtlas
 		}
-
-		r := rune(binary.LittleEndian.Uint32(atlasData[offset : offset+4]))
-		x := int(binary.LittleEndian.Uint32(atlasData[offset+4 : offset+8]))
-		y := int(binary.LittleEndian.Uint32(atlasData[offset+8 : offset+12]))
-		w := int(binary.LittleEndian.Uint32(atlasData[offset+12 : offset+16]))
-		h := int(binary.LittleEndian.Uint32(atlasData[offset+16 : offset+20]))
-
-		// Fixed-point values (divide by 64 to get float)
-		ox := float64(int32(binary.LittleEndian.Uint32(atlasData[offset+20:offset+24]))) / 64.0
-		oy := float64(int32(binary.LittleEndian.Uint32(atlasData[offset+24:offset+28]))) / 64.0
-		adv := float64(binary.LittleEndian.Uint32(atlasData[offset+28:offset+32])) / 64.0
-
-		glyphs[r] = &Glyph{
-			Rune:    r,
-			X:       x,
-			Y:       y,
-			Width:   w,
-			Height:  h,
-			OffsetX: ox,
-			OffsetY: oy,
-			Advance: adv,
-		}
+		g := parseGlyph(atlasData[offset : offset+36])
+		glyphs[g.Rune] = g
 		offset += 36
 	}
+	return glyphs, nil
+}
 
-	return &Atlas{
-		Width:      width,
-		Height:     height,
-		SDF:        sdf,
-		Glyphs:     glyphs,
-		LineHeight: lineHeight,
-		Baseline:   lineHeight * 0.75, // Typical baseline is ~75% of line height
-	}, nil
+// parseGlyph parses a single glyph from 36 bytes of data.
+func parseGlyph(data []byte) *Glyph {
+	return &Glyph{
+		Rune:    rune(binary.LittleEndian.Uint32(data[0:4])),
+		X:       int(binary.LittleEndian.Uint32(data[4:8])),
+		Y:       int(binary.LittleEndian.Uint32(data[8:12])),
+		Width:   int(binary.LittleEndian.Uint32(data[12:16])),
+		Height:  int(binary.LittleEndian.Uint32(data[16:20])),
+		OffsetX: float64(int32(binary.LittleEndian.Uint32(data[20:24]))) / 64.0,
+		OffsetY: float64(int32(binary.LittleEndian.Uint32(data[24:28]))) / 64.0,
+		Advance: float64(binary.LittleEndian.Uint32(data[28:32])) / 64.0,
+	}
 }
 
 // GetGlyph returns the glyph metadata for a rune.

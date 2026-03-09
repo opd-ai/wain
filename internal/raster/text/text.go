@@ -45,58 +45,49 @@ func DrawText(buf *core.Buffer, text string, x, y, size float64, color core.Colo
 
 // drawGlyph renders a single glyph to the buffer.
 func drawGlyph(buf *core.Buffer, g *Glyph, x, y, scale float64, color core.Color, atlas *Atlas) {
-	// Calculate scaled glyph dimensions
-	glyphX := x + g.OffsetX*scale
-	glyphY := y + g.OffsetY*scale
-	glyphW := float64(g.Width) * scale
-	glyphH := float64(g.Height) * scale
+	glyphX, glyphY, glyphW, glyphH := calculateGlyphBounds(g, x, y, scale)
+	x0, y0, x1, y1 := clipGlyphToBounds(buf, glyphX, glyphY, glyphW, glyphH)
 
-	// Integer bounds for pixel iteration
-	x0 := int(math.Floor(glyphX))
-	y0 := int(math.Floor(glyphY))
-	x1 := int(math.Ceil(glyphX + glyphW))
-	y1 := int(math.Ceil(glyphY + glyphH))
-
-	// Clip to buffer bounds
-	if x0 < 0 {
-		x0 = 0
-	}
-	if y0 < 0 {
-		y0 = 0
-	}
-	if x1 > buf.Width {
-		x1 = buf.Width
-	}
-	if y1 > buf.Height {
-		y1 = buf.Height
-	}
-
-	// Render each pixel
 	for py := y0; py < y1; py++ {
 		for px := x0; px < x1; px++ {
-			// Map buffer pixel to atlas coordinates
-			normX := (float64(px) - glyphX) / glyphW
-			normY := (float64(py) - glyphY) / glyphH
-
-			if normX < 0 || normX > 1 || normY < 0 || normY > 1 {
-				continue
-			}
-
-			// Sample SDF at atlas position
-			atlasX := int(normX*float64(g.Width)) + g.X
-			atlasY := int(normY*float64(g.Height)) + g.Y
-
-			sdfValue := atlas.SampleSDF(atlasX, atlasY)
-
-			// Convert SDF to coverage (alpha)
-			// SDF: 128 = edge, >128 = inside, <128 = outside
-			// Apply smoothing for antialiasing
-			alpha := sdfToCoverage(sdfValue, scale)
-
-			if alpha > 0 {
-				blendPixel(buf, px, py, color, alpha)
-			}
+			renderGlyphPixel(buf, atlas, g, px, py, glyphX, glyphY, glyphW, glyphH, color, scale)
 		}
+	}
+}
+
+// calculateGlyphBounds computes glyph position and dimensions.
+func calculateGlyphBounds(g *Glyph, x, y, scale float64) (glyphX, glyphY, glyphW, glyphH float64) {
+	return x + g.OffsetX*scale, y + g.OffsetY*scale,
+		float64(g.Width) * scale, float64(g.Height) * scale
+}
+
+// clipGlyphToBounds clips glyph bounds to buffer dimensions.
+func clipGlyphToBounds(buf *core.Buffer, glyphX, glyphY, glyphW, glyphH float64) (x0, y0, x1, y1 int) {
+	x0 = max(0, int(math.Floor(glyphX)))
+	y0 = max(0, int(math.Floor(glyphY)))
+	x1 = min(buf.Width, int(math.Ceil(glyphX+glyphW)))
+	y1 = min(buf.Height, int(math.Ceil(glyphY+glyphH)))
+	return x0, y0, x1, y1
+}
+
+// renderGlyphPixel renders a single pixel of a glyph using SDF sampling.
+func renderGlyphPixel(buf *core.Buffer, atlas *Atlas, g *Glyph, px, py int,
+	glyphX, glyphY, glyphW, glyphH float64, color core.Color, scale float64,
+) {
+	normX := (float64(px) - glyphX) / glyphW
+	normY := (float64(py) - glyphY) / glyphH
+
+	if normX < 0 || normX > 1 || normY < 0 || normY > 1 {
+		return
+	}
+
+	atlasX := int(normX*float64(g.Width)) + g.X
+	atlasY := int(normY*float64(g.Height)) + g.Y
+	sdfValue := atlas.SampleSDF(atlasX, atlasY)
+	alpha := sdfToCoverage(sdfValue, scale)
+
+	if alpha > 0 {
+		blendPixel(buf, px, py, color, alpha)
 	}
 }
 
