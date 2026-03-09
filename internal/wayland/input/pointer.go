@@ -146,150 +146,173 @@ func (p *Pointer) HandleAxisDiscrete(axis uint32, discrete int32) {
 func (p *Pointer) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
 	case pointerEventEnter:
-		if len(args) < 4 {
-			return fmt.Errorf("pointer: enter event requires 4 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: enter serial must be uint32")
-		}
-		surfaceID, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: enter surface must be uint32")
-		}
-		surfaceX, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: enter surface_x must be fixed")
-		}
-		surfaceY, ok := args[3].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: enter surface_y must be fixed")
-		}
-		p.HandleEnter(serial, surfaceID, surfaceX, surfaceY)
-		return nil
-
+		return p.handleEnterEvent(args)
 	case pointerEventLeave:
-		if len(args) < 2 {
-			return fmt.Errorf("pointer: leave event requires 2 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: leave serial must be uint32")
-		}
-		surfaceID, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: leave surface must be uint32")
-		}
-		p.HandleLeave(serial, surfaceID)
-		return nil
-
+		return p.handleLeaveEvent(args)
 	case pointerEventMotion:
-		if len(args) < 3 {
-			return fmt.Errorf("pointer: motion event requires 3 arguments, got %d", len(args))
-		}
-		time, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: motion time must be uint32")
-		}
-		surfaceX, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: motion surface_x must be fixed")
-		}
-		surfaceY, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: motion surface_y must be fixed")
-		}
-		p.HandleMotion(time, surfaceX, surfaceY)
-		return nil
-
+		return p.handleMotionEvent(args)
 	case pointerEventButton:
-		if len(args) < 4 {
-			return fmt.Errorf("pointer: button event requires 4 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: button serial must be uint32")
-		}
-		time, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: button time must be uint32")
-		}
-		button, ok := args[2].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: button code must be uint32")
-		}
-		state, ok := args[3].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: button state must be uint32")
-		}
-		p.HandleButton(serial, time, button, state)
-		return nil
-
+		return p.handleButtonEvent(args)
 	case pointerEventAxis:
-		if len(args) < 3 {
-			return fmt.Errorf("pointer: axis event requires 3 arguments, got %d", len(args))
-		}
-		time, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis time must be uint32")
-		}
-		axis, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis type must be uint32")
-		}
-		value, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: axis value must be fixed")
-		}
-		p.HandleAxis(time, axis, value)
-		return nil
-
+		return p.handleAxisEvent(args)
 	case pointerEventFrame:
 		p.HandleFrame()
 		return nil
-
 	case pointerEventAxisSource:
-		if len(args) < 1 {
-			return fmt.Errorf("pointer: axis_source event requires 1 argument, got %d", len(args))
-		}
-		axisSource, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis_source must be uint32")
-		}
-		p.HandleAxisSource(axisSource)
-		return nil
-
+		return p.handleAxisSourceEvent(args)
 	case pointerEventAxisStop:
-		if len(args) < 2 {
-			return fmt.Errorf("pointer: axis_stop event requires 2 arguments, got %d", len(args))
-		}
-		time, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis_stop time must be uint32")
-		}
-		axis, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis_stop axis must be uint32")
-		}
-		p.HandleAxisStop(time, axis)
-		return nil
-
+		return p.handleAxisStopEvent(args)
 	case pointerEventAxisDiscrete:
-		if len(args) < 2 {
-			return fmt.Errorf("pointer: axis_discrete event requires 2 arguments, got %d", len(args))
-		}
-		axis, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("pointer: axis_discrete axis must be uint32")
-		}
-		discrete, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("pointer: axis_discrete discrete must be int32")
-		}
-		p.HandleAxisDiscrete(axis, discrete)
-		return nil
-
+		return p.handleAxisDiscreteEvent(args)
 	default:
 		return fmt.Errorf("pointer: unknown event opcode %d", opcode)
 	}
+}
+
+func (p *Pointer) handleEnterEvent(args []wire.Argument) error {
+	if len(args) < 4 {
+		return fmt.Errorf("pointer: enter event requires 4 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: enter serial must be uint32")
+	}
+	surfaceID, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: enter surface must be uint32")
+	}
+	surfaceX, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: enter surface_x must be fixed")
+	}
+	surfaceY, ok := args[3].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: enter surface_y must be fixed")
+	}
+	p.HandleEnter(serial, surfaceID, surfaceX, surfaceY)
+	return nil
+}
+
+func (p *Pointer) handleLeaveEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("pointer: leave event requires 2 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: leave serial must be uint32")
+	}
+	surfaceID, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: leave surface must be uint32")
+	}
+	p.HandleLeave(serial, surfaceID)
+	return nil
+}
+
+func (p *Pointer) handleMotionEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("pointer: motion event requires 3 arguments, got %d", len(args))
+	}
+	time, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: motion time must be uint32")
+	}
+	surfaceX, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: motion surface_x must be fixed")
+	}
+	surfaceY, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: motion surface_y must be fixed")
+	}
+	p.HandleMotion(time, surfaceX, surfaceY)
+	return nil
+}
+
+func (p *Pointer) handleButtonEvent(args []wire.Argument) error {
+	if len(args) < 4 {
+		return fmt.Errorf("pointer: button event requires 4 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: button serial must be uint32")
+	}
+	time, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: button time must be uint32")
+	}
+	button, ok := args[2].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: button code must be uint32")
+	}
+	state, ok := args[3].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: button state must be uint32")
+	}
+	p.HandleButton(serial, time, button, state)
+	return nil
+}
+
+func (p *Pointer) handleAxisEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("pointer: axis event requires 3 arguments, got %d", len(args))
+	}
+	time, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis time must be uint32")
+	}
+	axis, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis type must be uint32")
+	}
+	value, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: axis value must be fixed")
+	}
+	p.HandleAxis(time, axis, value)
+	return nil
+}
+
+func (p *Pointer) handleAxisSourceEvent(args []wire.Argument) error {
+	if len(args) < 1 {
+		return fmt.Errorf("pointer: axis_source event requires 1 argument, got %d", len(args))
+	}
+	axisSource, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis_source must be uint32")
+	}
+	p.HandleAxisSource(axisSource)
+	return nil
+}
+
+func (p *Pointer) handleAxisStopEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("pointer: axis_stop event requires 2 arguments, got %d", len(args))
+	}
+	time, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis_stop time must be uint32")
+	}
+	axis, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis_stop axis must be uint32")
+	}
+	p.HandleAxisStop(time, axis)
+	return nil
+}
+
+func (p *Pointer) handleAxisDiscreteEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("pointer: axis_discrete event requires 2 arguments, got %d", len(args))
+	}
+	axis, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("pointer: axis_discrete axis must be uint32")
+	}
+	discrete, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("pointer: axis_discrete discrete must be int32")
+	}
+	p.HandleAxisDiscrete(axis, discrete)
+	return nil
 }

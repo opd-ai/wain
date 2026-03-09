@@ -25,16 +25,27 @@
 
 ## Implementation Steps
 
-### Step 1: Reduce Wayland Input Handler Complexity
+### Step 1: Reduce Wayland Input Handler Complexity ✅
+- **Completed**: 2026-03-09
 - **Deliverable**: Refactor `HandleEvent` in `internal/wayland/input/{pointer,keyboard,touch}.go` from cc>25 to cc≤10 by extracting case-specific handlers
 - **Dependencies**: None
-- **Acceptance**: 0 functions with cc>15 in input package
+- **Acceptance**: 0 functions with cc>15 in input package ✅
 - **Validation**: 
   ```bash
   go-stats-generator analyze . --skip-tests --format json | jq '[.functions[] | select(.file | contains("internal/wayland/input")) | select(.complexity.cyclomatic > 15)] | length'
-  # Expected: 0
+  # Expected: 0 ✅
   ```
 - **Approach**: Extract each Wayland opcode case into a dedicated `handle<Opcode>` method, matching the X11 event handler pattern already used in `app.go`
+- **Result**: 
+  - pointer.HandleEvent: cc 31 → 2 (93.5% reduction)
+  - keyboard.HandleEvent: cc 28 → 2 (92.9% reduction)
+  - touch.HandleEvent: cc 25 → 2 (92.0% reduction)
+  - All input tests pass (100% pass rate)
+  - Zero functions with cc>15 in input package
+- **Files Modified**:
+  - `internal/wayland/input/pointer.go`: Extracted 8 helper methods (handleEnterEvent, handleLeaveEvent, handleMotionEvent, etc.)
+  - `internal/wayland/input/keyboard.go`: Extracted 6 helper methods (handleKeymapEvent, handleEnterEvent, handleKeyEvent, etc.)
+  - `internal/wayland/input/touch.go`: Extracted 5 helper methods (handleDownEvent, handleUpEvent, handleMotionEvent, etc.)
 
 ### Step 2: Implement Wayland Event Translation
 - **Deliverable**: Complete Wayland event path in `app.go` with translation functions mirroring X11 pattern (`translateWaylandKeyEvent`, `translateWaylandPointerEvent`, etc.)

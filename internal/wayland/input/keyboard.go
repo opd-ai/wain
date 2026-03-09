@@ -102,133 +102,150 @@ func (k *Keyboard) HandleRepeatInfo(rate, delay int32) {
 func (k *Keyboard) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
 	case keyboardEventKeymap:
-		if len(args) < 3 {
-			return fmt.Errorf("keyboard: keymap event requires 3 arguments, got %d", len(args))
-		}
-		format, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: keymap format must be uint32")
-		}
-		fd, ok := args[1].Value.(int)
-		if !ok {
-			return fmt.Errorf("keyboard: keymap fd must be int")
-		}
-		size, ok := args[2].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: keymap size must be uint32")
-		}
-		k.HandleKeymap(format, uint32(fd), size)
-		return nil
-
+		return k.handleKeymapEvent(args)
 	case keyboardEventEnter:
-		if len(args) < 3 {
-			return fmt.Errorf("keyboard: enter event requires 3 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: enter serial must be uint32")
-		}
-		surfaceID, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: enter surface must be uint32")
-		}
-		keysArray, ok := args[2].Value.([]byte)
-		if !ok {
-			return fmt.Errorf("keyboard: enter keys must be array")
-		}
-		// Convert byte array to uint32 array
-		keys := make([]uint32, len(keysArray)/4)
-		for i := range keys {
-			offset := i * 4
-			keys[i] = uint32(keysArray[offset]) | uint32(keysArray[offset+1])<<8 |
-				uint32(keysArray[offset+2])<<16 | uint32(keysArray[offset+3])<<24
-		}
-		k.HandleEnter(serial, surfaceID, keys)
-		return nil
-
+		return k.handleEnterEvent(args)
 	case keyboardEventLeave:
-		if len(args) < 2 {
-			return fmt.Errorf("keyboard: leave event requires 2 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: leave serial must be uint32")
-		}
-		surfaceID, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: leave surface must be uint32")
-		}
-		k.HandleLeave(serial, surfaceID)
-		return nil
-
+		return k.handleLeaveEvent(args)
 	case keyboardEventKey:
-		if len(args) < 4 {
-			return fmt.Errorf("keyboard: key event requires 4 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: key serial must be uint32")
-		}
-		time, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: key time must be uint32")
-		}
-		key, ok := args[2].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: key code must be uint32")
-		}
-		state, ok := args[3].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: key state must be uint32")
-		}
-		k.HandleKey(serial, time, key, state)
-		return nil
-
+		return k.handleKeyEvent(args)
 	case keyboardEventModifiers:
-		if len(args) < 5 {
-			return fmt.Errorf("keyboard: modifiers event requires 5 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: modifiers serial must be uint32")
-		}
-		modsDepressed, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: modifiers depressed must be uint32")
-		}
-		modsLatched, ok := args[2].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: modifiers latched must be uint32")
-		}
-		modsLocked, ok := args[3].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: modifiers locked must be uint32")
-		}
-		group, ok := args[4].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("keyboard: modifiers group must be uint32")
-		}
-		k.HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group)
-		return nil
-
+		return k.handleModifiersEvent(args)
 	case keyboardEventRepeatInfo:
-		if len(args) < 2 {
-			return fmt.Errorf("keyboard: repeat_info event requires 2 arguments, got %d", len(args))
-		}
-		rate, ok := args[0].Value.(int32)
-		if !ok {
-			return fmt.Errorf("keyboard: repeat_info rate must be int32")
-		}
-		delay, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("keyboard: repeat_info delay must be int32")
-		}
-		k.HandleRepeatInfo(rate, delay)
-		return nil
-
+		return k.handleRepeatInfoEvent(args)
 	default:
 		return fmt.Errorf("keyboard: unknown event opcode %d", opcode)
 	}
+}
+
+func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("keyboard: keymap event requires 3 arguments, got %d", len(args))
+	}
+	format, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: keymap format must be uint32")
+	}
+	fd, ok := args[1].Value.(int)
+	if !ok {
+		return fmt.Errorf("keyboard: keymap fd must be int")
+	}
+	size, ok := args[2].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: keymap size must be uint32")
+	}
+	k.HandleKeymap(format, uint32(fd), size)
+	return nil
+}
+
+func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("keyboard: enter event requires 3 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: enter serial must be uint32")
+	}
+	surfaceID, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: enter surface must be uint32")
+	}
+	keysArray, ok := args[2].Value.([]byte)
+	if !ok {
+		return fmt.Errorf("keyboard: enter keys must be array")
+	}
+	keys := make([]uint32, len(keysArray)/4)
+	for i := range keys {
+		offset := i * 4
+		keys[i] = uint32(keysArray[offset]) | uint32(keysArray[offset+1])<<8 |
+			uint32(keysArray[offset+2])<<16 | uint32(keysArray[offset+3])<<24
+	}
+	k.HandleEnter(serial, surfaceID, keys)
+	return nil
+}
+
+func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("keyboard: leave event requires 2 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: leave serial must be uint32")
+	}
+	surfaceID, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: leave surface must be uint32")
+	}
+	k.HandleLeave(serial, surfaceID)
+	return nil
+}
+
+func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
+	if len(args) < 4 {
+		return fmt.Errorf("keyboard: key event requires 4 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: key serial must be uint32")
+	}
+	time, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: key time must be uint32")
+	}
+	key, ok := args[2].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: key code must be uint32")
+	}
+	state, ok := args[3].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: key state must be uint32")
+	}
+	k.HandleKey(serial, time, key, state)
+	return nil
+}
+
+func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
+	if len(args) < 5 {
+		return fmt.Errorf("keyboard: modifiers event requires 5 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: modifiers serial must be uint32")
+	}
+	modsDepressed, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: modifiers depressed must be uint32")
+	}
+	modsLatched, ok := args[2].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: modifiers latched must be uint32")
+	}
+	modsLocked, ok := args[3].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: modifiers locked must be uint32")
+	}
+	group, ok := args[4].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("keyboard: modifiers group must be uint32")
+	}
+	k.HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group)
+	return nil
+}
+
+func (k *Keyboard) handleRepeatInfoEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("keyboard: repeat_info event requires 2 arguments, got %d", len(args))
+	}
+	rate, ok := args[0].Value.(int32)
+	if !ok {
+		return fmt.Errorf("keyboard: repeat_info rate must be int32")
+	}
+	delay, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("keyboard: repeat_info delay must be int32")
+	}
+	k.HandleRepeatInfo(rate, delay)
+	return nil
 }
 
 // decodeModifiers converts Wayland modifier bitmasks (depressed, latched, locked) into a ModifierState.

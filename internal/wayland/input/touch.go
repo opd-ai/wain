@@ -85,121 +85,134 @@ func (t *Touch) HandleOrientation(id, orientation int32) {
 func (t *Touch) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
 	case touchEventDown:
-		if len(args) < 6 {
-			return fmt.Errorf("touch: down event requires 6 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: down serial must be uint32")
-		}
-		time, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: down time must be uint32")
-		}
-		surfaceID, ok := args[2].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: down surface must be uint32")
-		}
-		id, ok := args[3].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: down id must be int32")
-		}
-		x, ok := args[4].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: down x must be fixed")
-		}
-		y, ok := args[5].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: down y must be fixed")
-		}
-		t.HandleDown(serial, time, surfaceID, id, x, y)
-		return nil
-
+		return t.handleDownEvent(args)
 	case touchEventUp:
-		if len(args) < 3 {
-			return fmt.Errorf("touch: up event requires 3 arguments, got %d", len(args))
-		}
-		serial, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: up serial must be uint32")
-		}
-		time, ok := args[1].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: up time must be uint32")
-		}
-		id, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: up id must be int32")
-		}
-		t.HandleUp(serial, time, id)
-		return nil
-
+		return t.handleUpEvent(args)
 	case touchEventMotion:
-		if len(args) < 4 {
-			return fmt.Errorf("touch: motion event requires 4 arguments, got %d", len(args))
-		}
-		time, ok := args[0].Value.(uint32)
-		if !ok {
-			return fmt.Errorf("touch: motion time must be uint32")
-		}
-		id, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: motion id must be int32")
-		}
-		x, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: motion x must be fixed")
-		}
-		y, ok := args[3].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: motion y must be fixed")
-		}
-		t.HandleMotion(time, id, x, y)
-		return nil
-
+		return t.handleMotionEvent(args)
 	case touchEventFrame:
 		t.HandleFrame()
 		return nil
-
 	case touchEventCancel:
 		t.HandleCancel()
 		return nil
-
 	case touchEventShape:
-		if len(args) < 3 {
-			return fmt.Errorf("touch: shape event requires 3 arguments, got %d", len(args))
-		}
-		id, ok := args[0].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: shape id must be int32")
-		}
-		major, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: shape major must be fixed")
-		}
-		minor, ok := args[2].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: shape minor must be fixed")
-		}
-		t.HandleShape(id, major, minor)
-		return nil
-
+		return t.handleShapeEvent(args)
 	case touchEventOrientation:
-		if len(args) < 2 {
-			return fmt.Errorf("touch: orientation event requires 2 arguments, got %d", len(args))
-		}
-		id, ok := args[0].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: orientation id must be int32")
-		}
-		orientation, ok := args[1].Value.(int32)
-		if !ok {
-			return fmt.Errorf("touch: orientation value must be fixed")
-		}
-		t.HandleOrientation(id, orientation)
-		return nil
-
+		return t.handleOrientationEvent(args)
 	default:
 		return fmt.Errorf("touch: unknown event opcode %d", opcode)
 	}
+}
+
+func (t *Touch) handleDownEvent(args []wire.Argument) error {
+	if len(args) < 6 {
+		return fmt.Errorf("touch: down event requires 6 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: down serial must be uint32")
+	}
+	time, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: down time must be uint32")
+	}
+	surfaceID, ok := args[2].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: down surface must be uint32")
+	}
+	id, ok := args[3].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: down id must be int32")
+	}
+	x, ok := args[4].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: down x must be fixed")
+	}
+	y, ok := args[5].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: down y must be fixed")
+	}
+	t.HandleDown(serial, time, surfaceID, id, x, y)
+	return nil
+}
+
+func (t *Touch) handleUpEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("touch: up event requires 3 arguments, got %d", len(args))
+	}
+	serial, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: up serial must be uint32")
+	}
+	time, ok := args[1].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: up time must be uint32")
+	}
+	id, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: up id must be int32")
+	}
+	t.HandleUp(serial, time, id)
+	return nil
+}
+
+func (t *Touch) handleMotionEvent(args []wire.Argument) error {
+	if len(args) < 4 {
+		return fmt.Errorf("touch: motion event requires 4 arguments, got %d", len(args))
+	}
+	time, ok := args[0].Value.(uint32)
+	if !ok {
+		return fmt.Errorf("touch: motion time must be uint32")
+	}
+	id, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: motion id must be int32")
+	}
+	x, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: motion x must be fixed")
+	}
+	y, ok := args[3].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: motion y must be fixed")
+	}
+	t.HandleMotion(time, id, x, y)
+	return nil
+}
+
+func (t *Touch) handleShapeEvent(args []wire.Argument) error {
+	if len(args) < 3 {
+		return fmt.Errorf("touch: shape event requires 3 arguments, got %d", len(args))
+	}
+	id, ok := args[0].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: shape id must be int32")
+	}
+	major, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: shape major must be fixed")
+	}
+	minor, ok := args[2].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: shape minor must be fixed")
+	}
+	t.HandleShape(id, major, minor)
+	return nil
+}
+
+func (t *Touch) handleOrientationEvent(args []wire.Argument) error {
+	if len(args) < 2 {
+		return fmt.Errorf("touch: orientation event requires 2 arguments, got %d", len(args))
+	}
+	id, ok := args[0].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: orientation id must be int32")
+	}
+	orientation, ok := args[1].Value.(int32)
+	if !ok {
+		return fmt.Errorf("touch: orientation value must be fixed")
+	}
+	t.HandleOrientation(id, orientation)
+	return nil
 }
