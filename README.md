@@ -224,7 +224,7 @@ and `CGO_LDFLAGS_ALLOW` when used with
 
 ## Project Structure
 
-```
+```text
 wain/
 ├── app.go                     # Public API: App, Window, AppConfig
 ├── event.go                   # Event types: Pointer, Key, Touch, Window, Custom
