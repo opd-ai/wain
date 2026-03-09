@@ -50,7 +50,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Graphics context: CreateGC, PutImage, CreatePixmap
 - ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
 - ✅ MIT-SHM extension: zero-copy shared memory image transfers
-- ✅ DRI3 extension: GPU buffer sharing via DMA-BUF file descriptors
+- ✅ DRI3 extension (1.0+): GPU buffer sharing via DMA-BUF file descriptors (single-plane ARGB buffers; multi-planar support deferred)
 - ✅ Present extension: frame synchronization and swap control
 
 ### Buffer Infrastructure (Phase 2) — ✅ Complete

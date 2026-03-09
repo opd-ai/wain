@@ -26,12 +26,13 @@
 //
 // # Version Support
 //
-// This implementation targets DRI3 version 1.2, which adds:
-//   - DRI3PixmapFromBuffers (multi-planar buffers)
-//   - DRI3BuffersFromPixmap (multi-planar export)
-//   - Modifier support for tiled/compressed formats
+// This implementation supports DRI3 1.0 with basic single-plane buffer sharing.
+// Version 1.2 features (multi-planar buffers via DRI3PixmapFromBuffers,
+// DRI3BuffersFromPixmap, and modifier support for tiled/compressed formats)
+// are deferred to Phase 6.
 //
-// DRI3 1.0 is sufficient for basic single-plane ARGB buffers.
+// DRI3 1.0 provides all functionality needed for ARGB buffer sharing with
+// the Present extension for tear-free rendering.
 //
 // # Thread Safety
 //
