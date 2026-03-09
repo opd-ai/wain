@@ -225,7 +225,7 @@ No CRITICAL or HIGH security findings. Address MEDIUM findings:
 
 - [x] **S-001:** Add error checking to all `binary.Write()` and `f.Write()` calls in `cmd/gen-atlas/main.go:68-83`
 - [x] **S-002:** Replace `.unwrap()` with `.expect("valid layout: align=1")` or return null guard in `render-sys/src/lib.rs:686,714` ✅ COMPLETED (2026-03-09)
-- [ ] **S-003:** Run `go mod tidy` to reconcile stale `golang.org/x/sys` entries in go.sum
+- [x] **S-003:** Run `go mod tidy` to reconcile stale `golang.org/x/sys` entries in go.sum ✅ COMPLETED (2026-03-09)
 - [x] **S-006:** Add zero-size allocation guard in `render-sys/src/lib.rs` FFI functions ✅ COMPLETED (2026-03-09)
 
 ### Phase 2: Documentation & Naming (Highest-Weight Failed Gates for Library/Framework)
