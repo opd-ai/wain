@@ -174,11 +174,11 @@ func TestTextInputKeyPress(t *testing.T) {
 	input.focused = true
 
 	// Type some text
-	input.HandleKeyPress('H')
-	input.HandleKeyPress('e')
-	input.HandleKeyPress('l')
-	input.HandleKeyPress('l')
-	input.HandleKeyPress('o')
+	input.HandleKeyPress('H', "H")
+	input.HandleKeyPress('e', "e")
+	input.HandleKeyPress('l', "l")
+	input.HandleKeyPress('l', "l")
+	input.HandleKeyPress('o', "o")
 
 	if input.Text() != "Hello" {
 		t.Errorf("text = %q, want %q", input.Text(), "Hello")
@@ -276,7 +276,7 @@ func TestTextInputOnChange(t *testing.T) {
 		lastText = text
 	})
 
-	input.HandleKeyPress('A')
+	input.HandleKeyPress('A', "A")
 	if changeCount != 1 || lastText != "A" {
 		t.Errorf("onChange not called correctly: count=%d, text=%q", changeCount, lastText)
 	}

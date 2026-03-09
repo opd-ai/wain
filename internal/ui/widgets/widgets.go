@@ -331,6 +331,21 @@ func (b *Button) RenderToDisplayList(dl *displaylist.DisplayList, x, y int) {
 	}
 }
 
+// Text returns the button's current text.
+func (b *Button) Text() string {
+	return b.text
+}
+
+// SetText changes the button's text.
+func (b *Button) SetText(text string) {
+	b.text = text
+}
+
+// Theme returns the button's current theme.
+func (b *Button) Theme() *Theme {
+	return b.theme
+}
+
 // measureTextWidth estimates the width of text in pixels.
 func (b *Button) measureTextWidth(s string) int {
 	if b.atlas == nil {
@@ -461,15 +476,16 @@ func (t *TextInput) HandlePointerUp(button uint32) {
 }
 
 // HandleKeyPress processes keyboard input.
-func (t *TextInput) HandleKeyPress(key rune) {
+// key is the key code, text is the printable character (if any).
+func (t *TextInput) HandleKeyPress(key int, text string) {
 	if !t.enabled || !t.focused {
 		return
 	}
 
-	// Insert character at cursor position
-	if key >= 32 && key < 127 {
-		t.text = t.text[:t.cursorPos] + string(key) + t.text[t.cursorPos:]
-		t.cursorPos++
+	// Insert character at cursor position if text is provided
+	if text != "" {
+		t.text = t.text[:t.cursorPos] + text + t.text[t.cursorPos:]
+		t.cursorPos += len(text)
 		if t.onChange != nil {
 			t.onChange(t.text)
 		}
@@ -514,6 +530,16 @@ func (t *TextInput) HandleCursorMove(delta int) {
 	if t.cursorPos > len(t.text) {
 		t.cursorPos = len(t.text)
 	}
+}
+
+// HandleFocus sets the input to focused state.
+func (t *TextInput) HandleFocus() {
+	t.focused = true
+}
+
+// HandleBlur removes focus from the input.
+func (t *TextInput) HandleBlur() {
+	t.focused = false
 }
 
 // textInputDisplay holds the display text and color for rendering.
@@ -714,6 +740,27 @@ func (s *ScrollContainer) HandleScroll(delta int) {
 		maxScroll = 0
 	}
 
+	if s.scrollOffset < 0 {
+		s.scrollOffset = 0
+	}
+	if s.scrollOffset > maxScroll {
+		s.scrollOffset = maxScroll
+	}
+}
+
+// ScrollOffset returns the current scroll position.
+func (s *ScrollContainer) ScrollOffset() int {
+	return s.scrollOffset
+}
+
+// SetScrollOffset sets the scroll position.
+func (s *ScrollContainer) SetScrollOffset(offset int) {
+	maxScroll := s.contentHeight - s.height
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+
+	s.scrollOffset = offset
 	if s.scrollOffset < 0 {
 		s.scrollOffset = 0
 	}
