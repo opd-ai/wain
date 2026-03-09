@@ -1,20 +1,20 @@
 {
   "metadata": {
     "repository": "/home/user/go/src/github.com/opd-ai/wain",
-    "generated_at": "2026-03-09T10:23:59.980535094-04:00",
-    "analysis_time": 2104956315,
-    "files_processed": 249,
+    "generated_at": "2026-03-09T11:23:30.802236003-04:00",
+    "analysis_time": 1158985883,
+    "files_processed": 168,
     "tool_version": "1.0.0",
     "go_version": ""
   },
   "overview": {
-    "total_lines_of_code": 30206,
-    "total_functions": 1300,
-    "total_methods": 987,
-    "total_structs": 242,
+    "total_lines_of_code": 12506,
+    "total_functions": 495,
+    "total_methods": 887,
+    "total_structs": 209,
     "total_interfaces": 28,
-    "total_packages": 42,
-    "total_files": 249
+    "total_packages": 37,
+    "total_files": 168
   },
   "functions": null,
   "structs": null,
@@ -119,37 +119,23 @@
     "clones": null
   },
   "naming": {
-    "file_name_violations": 61,
-    "identifier_violations": 198,
-    "package_name_violations": 11,
-    "overall_naming_score": 0.9610933518432674,
+    "file_name_violations": 30,
+    "identifier_violations": 44,
+    "package_name_violations": 1,
+    "overall_naming_score": 0.9907484679241491,
     "file_name_issues": [
       {
-        "file": "internal/x11/wire/wire_fuzz_test.go",
+        "file": "internal/wayland/input/input.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "fuzz_test.go",
+        "suggested_name": "input.go",
         "severity": "low"
       },
       {
-        "file": "internal/ui/layout/layout_test.go",
+        "file": "internal/raster/text/text.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "layout_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/datadevice/datadevice_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "datadevice_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/dmabuf/dmabuf.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "dmabuf.go",
+        "suggested_name": "text.go",
         "severity": "low"
       },
       {
@@ -160,24 +146,24 @@
         "severity": "low"
       },
       {
-        "file": "internal/ui/widgets/widgets_test.go",
+        "file": "internal/ui/widgets/widgets.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "widgets_test.go",
+        "suggested_name": "widgets.go",
         "severity": "low"
       },
       {
-        "file": "internal/render/atlas/atlas_test.go",
+        "file": "internal/x11/shm/shm.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "atlas_test.go",
+        "suggested_name": "shm.go",
         "severity": "low"
       },
       {
-        "file": "internal/raster/effects/effects_test.go",
+        "file": "internal/wayland/xdg/xdg.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "effects_test.go",
+        "suggested_name": "xdg.go",
         "severity": "low"
       },
       {
@@ -188,6 +174,20 @@
         "severity": "low"
       },
       {
+        "file": "internal/ui/layout/layout.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "layout.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/render/present/present.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "present.go",
+        "severity": "low"
+      },
+      {
         "file": "internal/x11/selection/selection.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
@@ -195,17 +195,24 @@
         "severity": "low"
       },
       {
-        "file": "internal/x11/selection/selection_test.go",
+        "file": "internal/x11/wire/wire.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "selection_test.go",
+        "suggested_name": "wire.go",
         "severity": "low"
       },
       {
-        "file": "internal/x11/wire/wire_test.go",
+        "file": "internal/raster/displaylist/displaylist.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "wire_test.go",
+        "suggested_name": "displaylist.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/wayland/shm/shm.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "shm.go",
         "severity": "low"
       },
       {
@@ -216,13 +223,6 @@
         "severity": "low"
       },
       {
-        "file": "internal/raster/curves/curves.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "curves.go",
-        "severity": "low"
-      },
-      {
         "file": "internal/wayland/output/output.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
@@ -230,63 +230,98 @@
         "severity": "low"
       },
       {
-        "file": "internal/x11/events/events_test.go",
+        "file": "internal/render/atlas/atlas.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "events_test.go",
+        "suggested_name": "atlas.go",
         "severity": "low"
       },
       {
-        "file": "internal/render/render_test.go",
+        "file": "internal/x11/dri3/dri3.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "render_test.go",
+        "suggested_name": "dri3.go",
         "severity": "low"
       },
       {
-        "file": "internal/wayland/wire/wire_fuzz_test.go",
+        "file": "internal/raster/effects/effects.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "fuzz_test.go",
+        "suggested_name": "effects.go",
         "severity": "low"
       },
       {
-        "file": "internal/ui/widgets/widgets.go",
+        "file": "internal/render/backend/backend.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "widgets.go",
+        "suggested_name": "backend.go",
         "severity": "low"
       },
       {
-        "file": "internal/x11/gc/gc_test.go",
+        "file": "internal/raster/composite/composite.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "gc_test.go",
+        "suggested_name": "composite.go",
         "severity": "low"
       },
       {
-        "file": "internal/ui/scale/scale_test.go",
+        "file": "internal/wayland/wire/wire.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "scale_test.go",
+        "suggested_name": "wire.go",
         "severity": "low"
       },
       {
-        "file": "internal/wayland/client/client_test.go",
+        "file": "internal/demo/constants.go",
+        "violation_type": "generic_name",
+        "description": "File name is too generic; use a name that describes what the code does",
+        "suggested_name": "",
+        "severity": "low"
+      },
+      {
+        "file": "internal/wayland/datadevice/datadevice.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "client_test.go",
+        "suggested_name": "datadevice.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/ui/scale/scale.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "scale.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/x11/events/events.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "events.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/raster/curves/curves.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "curves.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/wayland/client/client.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "client.go",
+        "severity": "low"
+      },
+      {
+        "file": "internal/wayland/dmabuf/dmabuf.go",
+        "violation_type": "stuttering",
+        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
+        "suggested_name": "dmabuf.go",
         "severity": "low"
       },
       {
         "file": "internal/x11/present/present.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "present.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/render/present/present.go",
         "violation_type": "stuttering",
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
         "suggested_name": "present.go",
@@ -298,375 +333,23 @@
         "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
         "suggested_name": "socket.go",
         "severity": "low"
-      },
-      {
-        "file": "internal/raster/composite/composite_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "composite_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/ui/layout/layout.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "layout.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/text/text.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "text.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/dpi/dpi_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "dpi_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/dri3/dri3.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "dri3.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/wire/wire.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "wire.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/ui/scale/scale.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "scale.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/shm/shm.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "shm.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/output/output_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "output_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/dri3/dri3_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "dri3_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/shm/shm_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "shm_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/shm/shm_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "shm_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/input/input_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "input_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/input/input.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "input.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/curves/curves_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "curves_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/client/client_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "client_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/present/present_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "present_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/wire/wire.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "wire.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/datadevice/datadevice.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "datadevice.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/render/backend/backend_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "backend_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/render/atlas/atlas.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "atlas.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/xdg/xdg_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "xdg_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/demo/constants.go",
-        "violation_type": "generic_name",
-        "description": "File name is too generic; use a name that describes what the code does",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/composite/composite.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "composite.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/xdg/xdg.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "xdg.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/render/backend/backend.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "backend.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/client/client.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "client.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/shm/shm.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "shm.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/displaylist/displaylist.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "displaylist.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/displaylist/displaylist_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "displaylist_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/effects/effects.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "effects.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/raster/text/text_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "text_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/wire/wire_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "wire_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/socket/socket_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "socket_test.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/x11/events/events.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "events.go",
-        "severity": "low"
-      },
-      {
-        "file": "internal/wayland/dmabuf/dmabuf_test.go",
-        "violation_type": "stuttering",
-        "description": "File name repeats package/directory name (e.g., http/http_client.go should be http/client.go)",
-        "suggested_name": "dmabuf_test.go",
-        "severity": "low"
       }
     ],
     "identifier_issues": [
       {
-        "name": "x",
-        "file": "cmd/gpu-display-demo/main.go",
-        "line": 317,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
+        "name": "ArgTypeUint32",
+        "file": "internal/wayland/wire/wire.go",
+        "line": 75,
+        "type": "const",
+        "violation_type": "acronym_casing",
+        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
+        "suggested_name": "ArgTypeUInt32",
         "severity": "low"
       },
       {
-        "name": "y",
-        "file": "cmd/gpu-display-demo/main.go",
-        "line": 318,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "x",
-        "file": "cmd/x11-dmabuf-demo/main.go",
-        "line": 212,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "y",
-        "file": "cmd/x11-dmabuf-demo/main.go",
-        "line": 213,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "TestX11BufferHandler_WrongPixmap",
-        "file": "internal/integration/x11_sync_test.go",
-        "line": 65,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestX11BufferHandlerWrongPixmap",
-        "severity": "medium"
-      },
-      {
-        "name": "TestX11BufferHandler_MultipleHandlers",
-        "file": "internal/integration/x11_sync_test.go",
-        "line": 107,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestX11BufferHandlerMultipleHandlers",
-        "severity": "medium"
-      },
-      {
-        "name": "TestX11BufferHandler_DuplicateRegistration",
-        "file": "internal/integration/x11_sync_test.go",
-        "line": 167,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestX11BufferHandlerDuplicateRegistration",
-        "severity": "medium"
-      },
-      {
-        "name": "TestNewWindow_NotRunning",
-        "file": "window_test.go",
+        "name": "h",
+        "file": "internal/wayland/wire/wire.go",
         "line": 98,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestNewWindowNotRunning",
-        "severity": "medium"
-      },
-      {
-        "name": "TestNewWindow_InvalidConfig",
-        "file": "window_test.go",
-        "line": 111,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestNewWindowInvalidConfig",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindow_GettersBeforeInit",
-        "file": "window_test.go",
-        "line": 167,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowGettersBeforeInit",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindow_EventHandlers",
-        "file": "window_test.go",
-        "line": 201,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowEventHandlers",
-        "severity": "medium"
-      },
-      {
-        "name": "x",
-        "file": "cmd/gpu-triangle-demo/main.go",
-        "line": 171,
         "type": "",
         "violation_type": "single_letter_name",
         "description": "Single-letter names should be reserved for short loop variables and receivers",
@@ -674,844 +357,84 @@
         "severity": "low"
       },
       {
-        "name": "y",
-        "file": "cmd/gpu-triangle-demo/main.go",
-        "line": 172,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "FramebufferPool",
-        "file": "internal/render/display/framebuffer.go",
-        "line": 115,
-        "type": "type",
-        "violation_type": "stuttering",
-        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
-        "suggested_name": "Pool",
-        "severity": "low"
-      },
-      {
-        "name": "TestBasePublicWidget_Bounds",
-        "file": "publicwidget_test.go",
-        "line": 26,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetBounds",
-        "severity": "medium"
-      },
-      {
-        "name": "TestBasePublicWidget_Position",
-        "file": "publicwidget_test.go",
-        "line": 35,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetPosition",
-        "severity": "medium"
-      },
-      {
-        "name": "TestBasePublicWidget_SetBounds",
-        "file": "publicwidget_test.go",
-        "line": 45,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetSetBounds",
-        "severity": "medium"
-      },
-      {
-        "name": "TestBasePublicWidget_Visibility",
-        "file": "publicwidget_test.go",
-        "line": 59,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetVisibility",
-        "severity": "medium"
-      },
-      {
-        "name": "TestBasePublicWidget_Children",
-        "file": "publicwidget_test.go",
-        "line": 77,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetChildren",
-        "severity": "medium"
-      },
-      {
-        "name": "TestBasePublicWidget_HandleEvent",
-        "file": "publicwidget_test.go",
-        "line": 98,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestBasePublicWidgetHandleEvent",
-        "severity": "medium"
-      },
-      {
-        "name": "FuzzDecodeUint32",
-        "file": "internal/x11/wire/wire_fuzz_test.go",
-        "line": 11,
+        "name": "DecodeUint32",
+        "file": "internal/wayland/wire/wire.go",
+        "line": 157,
         "type": "function",
         "violation_type": "acronym_casing",
         "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "FuzzDecodeUInt32",
+        "suggested_name": "DecodeUInt32",
         "severity": "low"
       },
       {
-        "name": "FuzzDecodeUint16",
-        "file": "internal/x11/wire/wire_fuzz_test.go",
-        "line": 44,
+        "name": "EncodeUint32",
+        "file": "internal/wayland/wire/wire.go",
+        "line": 166,
         "type": "function",
         "violation_type": "acronym_casing",
         "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "FuzzDecodeUInt16",
+        "suggested_name": "EncodeUInt32",
         "severity": "low"
       },
       {
-        "name": "FuzzDecodeUint8",
-        "file": "internal/x11/wire/wire_fuzz_test.go",
-        "line": 77,
+        "name": "encodeUint32Arg",
+        "file": "internal/wayland/wire/wire.go",
+        "line": 418,
         "type": "function",
         "violation_type": "acronym_casing",
         "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "FuzzDecodeUInt8",
+        "suggested_name": "encodeUInt32Arg",
         "severity": "low"
       },
       {
-        "name": "OnPixmapIdle",
-        "file": "internal/render/display/x11.go",
-        "line": 270,
+        "name": "HandleIdleNotify",
+        "file": "internal/integration/x11_sync.go",
+        "line": 33,
         "type": "method",
         "violation_type": "acronym_casing",
         "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "OnPixmapIDle",
+        "suggested_name": "HandleIDleNotify",
         "severity": "low"
       },
       {
-        "name": "TestSynchronizer_RegisterBuffer",
-        "file": "internal/buffer/sync_test.go",
-        "line": 29,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerRegisterBuffer",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_UnregisterBuffer",
-        "file": "internal/buffer/sync_test.go",
-        "line": 66,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerUnregisterBuffer",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_OnReleaseEvent",
-        "file": "internal/buffer/sync_test.go",
-        "line": 95,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerOnReleaseEvent",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_OnReleaseEvent_UnknownID",
-        "file": "internal/buffer/sync_test.go",
-        "line": 132,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerOnReleaseEventUnknownID",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_OnReleaseEvent_InvalidState",
-        "file": "internal/buffer/sync_test.go",
-        "line": 147,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerOnReleaseEventInvalidState",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_Reset",
-        "file": "internal/buffer/sync_test.go",
-        "line": 173,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerReset",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_FullCycle",
-        "file": "internal/buffer/sync_test.go",
-        "line": 211,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerFullCycle",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSynchronizer_ConcurrentAccess",
-        "file": "internal/buffer/sync_test.go",
-        "line": 269,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSynchronizerConcurrentAccess",
-        "severity": "medium"
-      },
-      {
-        "name": "TestMemoryStats_RecordAllocation",
-        "file": "internal/render/stats_test.go",
-        "line": 7,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestMemoryStatsRecordAllocation",
-        "severity": "medium"
-      },
-      {
-        "name": "TestMemoryStats_RecordDeallocation",
-        "file": "internal/render/stats_test.go",
-        "line": 45,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestMemoryStatsRecordDeallocation",
-        "severity": "medium"
-      },
-      {
-        "name": "TestMemoryStats_PeakTracking",
-        "file": "internal/render/stats_test.go",
-        "line": 68,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestMemoryStatsPeakTracking",
-        "severity": "medium"
-      },
-      {
-        "name": "TestMemoryStats_DeallocateUnknown",
-        "file": "internal/render/stats_test.go",
-        "line": 89,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestMemoryStatsDeallocateUnknown",
-        "severity": "medium"
-      },
-      {
-        "name": "TestMemoryStats_Reset",
-        "file": "internal/render/stats_test.go",
-        "line": 104,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestMemoryStatsReset",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkMemoryStats_RecordAllocation",
-        "file": "internal/render/stats_test.go",
-        "line": 151,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkMemoryStatsRecordAllocation",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkMemoryStats_RecordDeallocation",
-        "file": "internal/render/stats_test.go",
-        "line": 160,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkMemoryStatsRecordDeallocation",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkMemoryStats_Snapshot",
-        "file": "internal/render/stats_test.go",
-        "line": 174,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkMemoryStatsSnapshot",
-        "severity": "medium"
-      },
-      {
-        "name": "decode5Uint32",
-        "file": "internal/x11/wire/setup.go",
-        "line": 339,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "decode5UInt32",
+        "name": "ScaleInt",
+        "file": "internal/ui/scale/scale.go",
+        "line": 53,
+        "type": "method",
+        "violation_type": "package_stuttering",
+        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
+        "suggested_name": "Int",
         "severity": "low"
       },
       {
-        "name": "decode6Uint16",
-        "file": "internal/x11/wire/setup.go",
-        "line": 360,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "decode6UInt16",
+        "name": "ScaleFloat",
+        "file": "internal/ui/scale/scale.go",
+        "line": 58,
+        "type": "method",
+        "violation_type": "package_stuttering",
+        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
+        "suggested_name": "Float",
         "severity": "low"
       },
       {
-        "name": "decode6Uint8",
-        "file": "internal/x11/wire/setup.go",
-        "line": 384,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "decode6UInt8",
+        "name": "x",
+        "file": "cmd/x11-dmabuf-demo/main.go",
+        "line": 140,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
         "severity": "low"
       },
       {
-        "name": "TestWindowFrame_NewWindowFrame",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 10,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameNewWindowFrame",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_Bounds",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 33,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameBounds",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_ContentBounds",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 42,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameContentBounds",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_ContentOffset",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 55,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameContentOffset",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_Resize",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 68,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameResize",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_SetTitle",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 93,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameSetTitle",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_HitTestResize",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 104,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameHitTestResize",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_HitTestTitleBarButton",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 120,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameHitTestTitleBarButton",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_IsTitleBarDragArea",
-        "file": "internal/ui/decorations/window_test.go",
+        "name": "y",
+        "file": "cmd/x11-dmabuf-demo/main.go",
         "line": 141,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameIsTitleBarDragArea",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_HandlePointerMotion",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 171,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameHandlePointerMotion",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_Draw",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 193,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameDraw",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_RenderToDisplayList",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 206,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameRenderToDisplayList",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_TitleBar",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 217,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameTitleBar",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowFrame_SetTheme",
-        "file": "internal/ui/decorations/window_test.go",
-        "line": 229,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowFrameSetTheme",
-        "severity": "medium"
-      },
-      {
-        "name": "TestEncodeUint32",
-        "file": "internal/x11/wire/wire_test.go",
-        "line": 57,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestEncodeUInt32",
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
         "severity": "low"
-      },
-      {
-        "name": "TestEncodeUint16",
-        "file": "internal/x11/wire/wire_test.go",
-        "line": 101,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestEncodeUInt16",
-        "severity": "low"
-      },
-      {
-        "name": "TestDecodeUint32",
-        "file": "internal/x11/wire/wire_test.go",
-        "line": 179,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestDecodeUInt32",
-        "severity": "low"
-      },
-      {
-        "name": "TestFrameProfiler_BasicTiming",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 8,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerBasicTiming",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFrameProfiler_MultipleFrames",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 38,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerMultipleFrames",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFrameProfiler_MinMax",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 62,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerMinMax",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFrameProfiler_RecentAverage",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 92,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerRecentAverage",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFrameProfiler_Reset",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 120,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerReset",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFrameProfiler_NoGPUMark",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 147,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFrameProfilerNoGPUMark",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkFrameProfiler_SingleFrame",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 169,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkFrameProfilerSingleFrame",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkFrameProfiler_GetStats",
-        "file": "internal/render/backend/profiler_test.go",
-        "line": 180,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkFrameProfilerGetStats",
-        "severity": "medium"
-      },
-      {
-        "name": "FuzzDecodeUint32",
-        "file": "internal/wayland/wire/wire_fuzz_test.go",
-        "line": 68,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "FuzzDecodeUInt32",
-        "severity": "low"
-      },
-      {
-        "name": "buttonColors",
-        "file": "internal/ui/widgets/widgets.go",
-        "line": 232,
-        "type": "type",
-        "violation_type": "stuttering",
-        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
-        "suggested_name": "Colors",
-        "severity": "low"
-      },
-      {
-        "name": "textInputDisplay",
-        "file": "internal/ui/widgets/widgets.go",
-        "line": 546,
-        "type": "type",
-        "violation_type": "stuttering",
-        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
-        "suggested_name": "Display",
-        "severity": "low"
-      },
-      {
-        "name": "TestRegistry_BindXdgDecorationManager_WrongInterface",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 299,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindXdgDecorationManagerWrongInterface",
-        "severity": "medium"
-      },
-      {
-        "name": "TestConnect_InvalidPath",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 330,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestConnectInvalidPath",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSync_ObjectCreation",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 338,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSyncObjectCreation",
-        "severity": "medium"
-      },
-      {
-        "name": "TestGetRegistry_ObjectCreation",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 376,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestGetRegistryObjectCreation",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindCompositor_Success",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 403,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindCompositorSuccess",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindXdgWmBase_Success",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 437,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindXdgWmBaseSuccess",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindDmabuf_WrongInterface",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 469,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindDmabufWrongInterface",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindOutput_WrongInterface",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 500,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindOutputWrongInterface",
-        "severity": "medium"
-      },
-      {
-        "name": "TestConnection_Close",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 531,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestConnectionClose",
-        "severity": "medium"
-      },
-      {
-        "name": "TestAllocID_Uniqueness",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 546,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestAllocIDUniqueness",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSendRequest_ClosedConnection",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 595,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSendRequestClosedConnection",
-        "severity": "medium"
-      },
-      {
-        "name": "TestDisplay_DisplayObject",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 607,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestDisplayDisplayObject",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFlush_Success",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 631,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFlushSuccess",
-        "severity": "medium"
-      },
-      {
-        "name": "TestClose_WithObjectsRegistered",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 643,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestCloseWithObjectsRegistered",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSync_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 732,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSyncWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestGetRegistry_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 779,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestGetRegistryWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_Bind_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 823,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindCompositor_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 860,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindCompositorWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestCompositor_CreateSurface_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 909,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestCompositorCreateSurfaceWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSurface_OperationsWithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 952,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSurfaceOperationsWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindXdgWmBase_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 1021,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindXdgWmBaseWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindDmabuf_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 1065,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindDmabufWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindOutput_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 1106,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindOutputWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRegistry_BindXdgDecorationManager_WithRealSocket",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 1150,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRegistryBindXdgDecorationManagerWithRealSocket",
-        "severity": "medium"
-      },
-      {
-        "name": "TestSendRequest_MessageEncoding",
-        "file": "internal/wayland/client/client_test.go",
-        "line": 1194,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSendRequestMessageEncoding",
-        "severity": "medium"
       },
       {
         "name": "PresentIdleNotify",
@@ -1564,284 +487,114 @@
         "severity": "low"
       },
       {
-        "name": "BackendType",
-        "file": "internal/render/backend/interface.go",
-        "line": 37,
-        "type": "type",
-        "violation_type": "package_stuttering",
-        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
-        "suggested_name": "Type",
+        "name": "x",
+        "file": "cmd/gpu-display-demo/main.go",
+        "line": 317,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
         "severity": "low"
       },
       {
-        "name": "panelStyle",
-        "file": "layout.go",
-        "line": 395,
+        "name": "y",
+        "file": "cmd/gpu-display-demo/main.go",
+        "line": 318,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
+        "severity": "low"
+      },
+      {
+        "name": "buttonColors",
+        "file": "internal/ui/widgets/widgets.go",
+        "line": 232,
         "type": "type",
         "violation_type": "stuttering",
         "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
-        "suggested_name": "Style",
+        "suggested_name": "Colors",
         "severity": "low"
       },
       {
-        "name": "TestWindowButton_PointerState",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 27,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowButtonPointerState",
-        "severity": "medium"
+        "name": "textInputDisplay",
+        "file": "internal/ui/widgets/widgets.go",
+        "line": 551,
+        "type": "type",
+        "violation_type": "stuttering",
+        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
+        "suggested_name": "Display",
+        "severity": "low"
       },
       {
-        "name": "TestWindowButton_Draw",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 55,
+        "name": "decode5Uint32",
+        "file": "internal/x11/wire/setup.go",
+        "line": 339,
         "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowButtonDraw",
-        "severity": "medium"
+        "violation_type": "acronym_casing",
+        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
+        "suggested_name": "decode5UInt32",
+        "severity": "low"
       },
       {
-        "name": "TestWindowButton_RenderToDisplayList",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 68,
+        "name": "decode6Uint16",
+        "file": "internal/x11/wire/setup.go",
+        "line": 360,
         "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowButtonRenderToDisplayList",
-        "severity": "medium"
+        "violation_type": "acronym_casing",
+        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
+        "suggested_name": "decode6UInt16",
+        "severity": "low"
       },
       {
-        "name": "TestTitleBar_SetTitle",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 106,
+        "name": "decode6Uint8",
+        "file": "internal/x11/wire/setup.go",
+        "line": 384,
         "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarSetTitle",
-        "severity": "medium"
+        "violation_type": "acronym_casing",
+        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
+        "suggested_name": "decode6UInt8",
+        "severity": "low"
       },
       {
-        "name": "TestTitleBar_Resize",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 115,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarResize",
-        "severity": "medium"
+        "name": "x",
+        "file": "internal/demo/x11setup.go",
+        "line": 28,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
+        "severity": "low"
       },
       {
-        "name": "TestTitleBar_HitTest",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 125,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarHitTest",
-        "severity": "medium"
+        "name": "y",
+        "file": "internal/demo/x11setup.go",
+        "line": 29,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
+        "severity": "low"
       },
       {
-        "name": "TestTitleBar_Dragging",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 167,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarDragging",
-        "severity": "medium"
-      },
-      {
-        "name": "TestTitleBar_Draw",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 204,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarDraw",
-        "severity": "medium"
-      },
-      {
-        "name": "TestTitleBar_RenderToDisplayList",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 217,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarRenderToDisplayList",
-        "severity": "medium"
-      },
-      {
-        "name": "TestWindowButton_SetTheme",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 259,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestWindowButtonSetTheme",
-        "severity": "medium"
-      },
-      {
-        "name": "TestTitleBar_SetTheme",
-        "file": "internal/ui/decorations/titlebar_test.go",
-        "line": 270,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestTitleBarSetTheme",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_MarkDirty",
-        "file": "render_test.go",
+        "name": "x",
+        "file": "internal/demo/x11setup.go",
         "line": 97,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeMarkDirty",
-        "severity": "medium"
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
+        "severity": "low"
       },
       {
-        "name": "TestRenderBridge_MarkRegionDirty",
-        "file": "render_test.go",
-        "line": 115,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeMarkRegionDirty",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_MarkRegionDirty_Union",
-        "file": "render_test.go",
-        "line": 138,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeMarkRegionDirtyUnion",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_NoRenderer",
-        "file": "render_test.go",
-        "line": 155,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderNoRenderer",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_NoRootWidget",
-        "file": "render_test.go",
-        "line": 165,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderNoRootWidget",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_NotDirty",
-        "file": "render_test.go",
-        "line": 175,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderNotDirty",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_FullRedraw",
-        "file": "render_test.go",
-        "line": 196,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderFullRedraw",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_RegionalDamage",
-        "file": "render_test.go",
-        "line": 225,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderRegionalDamage",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Render_WalkChildren",
-        "file": "render_test.go",
-        "line": 258,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeRenderWalkChildren",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Present",
-        "file": "render_test.go",
-        "line": 288,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgePresent",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Present_NoRenderer",
-        "file": "render_test.go",
-        "line": 306,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgePresentNoRenderer",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_Destroy",
-        "file": "render_test.go",
-        "line": 319,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeDestroy",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRenderBridge_ThreadSafety",
-        "file": "render_test.go",
-        "line": 333,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRenderBridgeThreadSafety",
-        "severity": "medium"
-      },
-      {
-        "name": "TestDetectDPI_FromScreenDimensions",
-        "file": "internal/x11/dpi/dpi_test.go",
-        "line": 21,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestDetectDPIFromScreenDimensions",
-        "severity": "medium"
-      },
-      {
-        "name": "TestDetectDPI_FallbackTo96",
-        "file": "internal/x11/dpi/dpi_test.go",
-        "line": 85,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestDetectDPIFallbackTo96",
-        "severity": "medium"
+        "name": "y",
+        "file": "internal/demo/x11setup.go",
+        "line": 98,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
+        "severity": "low"
       },
       {
         "name": "EncodeUint64",
@@ -1944,29 +697,29 @@
         "severity": "low"
       },
       {
-        "name": "ScaleInt",
-        "file": "internal/ui/scale/scale.go",
-        "line": 53,
-        "type": "method",
-        "violation_type": "package_stuttering",
-        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
-        "suggested_name": "Int",
+        "name": "x",
+        "file": "cmd/gpu-triangle-demo/main.go",
+        "line": 171,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
         "severity": "low"
       },
       {
-        "name": "ScaleFloat",
-        "file": "internal/ui/scale/scale.go",
-        "line": 58,
-        "type": "method",
-        "violation_type": "package_stuttering",
-        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
-        "suggested_name": "Float",
+        "name": "y",
+        "file": "cmd/gpu-triangle-demo/main.go",
+        "line": 172,
+        "type": "",
+        "violation_type": "single_letter_name",
+        "description": "Single-letter names should be reserved for short loop variables and receivers",
+        "suggested_name": "",
         "severity": "low"
       },
       {
         "name": "x",
         "file": "cmd/amd-triangle-demo/main.go",
-        "line": 253,
+        "line": 183,
         "type": "",
         "violation_type": "single_letter_name",
         "description": "Single-letter names should be reserved for short loop variables and receivers",
@@ -1976,7 +729,7 @@
       {
         "name": "y",
         "file": "cmd/amd-triangle-demo/main.go",
-        "line": 254,
+        "line": 184,
         "type": "",
         "violation_type": "single_letter_name",
         "description": "Single-letter names should be reserved for short loop variables and receivers",
@@ -1984,643 +737,53 @@
         "severity": "low"
       },
       {
-        "name": "TestParseIdleNotify",
-        "file": "internal/x11/present/present_test.go",
-        "line": 431,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestParseIDleNotify",
-        "severity": "low"
-      },
-      {
-        "name": "makeIdleNotifyEvent",
-        "file": "internal/x11/present/present_test.go",
-        "line": 504,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "makeIDleNotifyEvent",
-        "severity": "low"
-      },
-      {
-        "name": "ArgTypeUint32",
-        "file": "internal/wayland/wire/wire.go",
-        "line": 75,
-        "type": "const",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "ArgTypeUInt32",
-        "severity": "low"
-      },
-      {
-        "name": "h",
-        "file": "internal/wayland/wire/wire.go",
-        "line": 98,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "DecodeUint32",
-        "file": "internal/wayland/wire/wire.go",
-        "line": 157,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "DecodeUInt32",
-        "severity": "low"
-      },
-      {
-        "name": "EncodeUint32",
-        "file": "internal/wayland/wire/wire.go",
-        "line": 166,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "EncodeUInt32",
-        "severity": "low"
-      },
-      {
-        "name": "encodeUint32Arg",
-        "file": "internal/wayland/wire/wire.go",
-        "line": 418,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "encodeUInt32Arg",
-        "severity": "low"
-      },
-      {
-        "name": "TestResizeHandles_HitTest_Corners",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 9,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesHitTestCorners",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_HitTest_Edges",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 34,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesHitTestEdges",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_HitTest_Interior",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 59,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesHitTestInterior",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_Resize",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 90,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesResize",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_HandlePointerEnterLeave",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 109,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesHandlePointerEnterLeave",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_Draw",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 127,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesDraw",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_SetTheme",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 177,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesSetTheme",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeEdge_String",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 199,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeEdgeString",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResizeHandles_CornersPriority",
-        "file": "internal/ui/decorations/resize_test.go",
-        "line": 225,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResizeHandlesCornersPriority",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_DefaultFont",
-        "file": "resource_test.go",
-        "line": 13,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerDefaultFont",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_LoadFont",
-        "file": "resource_test.go",
-        "line": 33,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerLoadFont",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_LoadImage",
-        "file": "resource_test.go",
-        "line": 60,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerLoadImage",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_LoadImageFromReader",
-        "file": "resource_test.go",
-        "line": 100,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerLoadImageFromReader",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_LoadImageUnsupportedFormat",
-        "file": "resource_test.go",
-        "line": 127,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerLoadImageUnsupportedFormat",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_Cleanup",
-        "file": "resource_test.go",
-        "line": 137,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerCleanup",
-        "severity": "medium"
-      },
-      {
-        "name": "TestFont_Size",
-        "file": "resource_test.go",
-        "line": 166,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestFontSize",
-        "severity": "medium"
-      },
-      {
-        "name": "TestImage_Size",
-        "file": "resource_test.go",
-        "line": 173,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestImageSize",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_LoadFontBeforeInit",
-        "file": "resource_test.go",
-        "line": 208,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerLoadFontBeforeInit",
-        "severity": "medium"
-      },
-      {
-        "name": "TestResourceManager_MultipleImageLoads",
-        "file": "resource_test.go",
-        "line": 218,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestResourceManagerMultipleImageLoads",
-        "severity": "medium"
-      },
-      {
-        "name": "x",
-        "file": "internal/demo/x11setup.go",
-        "line": 28,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "y",
-        "file": "internal/demo/x11setup.go",
-        "line": 29,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "x",
-        "file": "internal/demo/x11setup.go",
-        "line": 97,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "y",
-        "file": "internal/demo/x11setup.go",
-        "line": 98,
-        "type": "",
-        "violation_type": "single_letter_name",
-        "description": "Single-letter names should be reserved for short loop variables and receivers",
-        "suggested_name": "",
-        "severity": "low"
-      },
-      {
-        "name": "TestDecorationManager_GetToplevelDecoration",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 24,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestDecorationManagerGetToplevelDecoration",
-        "severity": "medium"
-      },
-      {
-        "name": "TestToplevelDecoration_SetMode",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 80,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestToplevelDecorationSetMode",
-        "severity": "medium"
-      },
-      {
-        "name": "TestToplevelDecoration_UnsetMode",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 110,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestToplevelDecorationUnsetMode",
-        "severity": "medium"
-      },
-      {
-        "name": "TestToplevelDecoration_HandleEvent_Configure",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 131,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestToplevelDecorationHandleEventConfigure",
-        "severity": "medium"
-      },
-      {
-        "name": "TestToplevelDecoration_HandleEvent_UnknownOpcode",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 149,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestToplevelDecorationHandleEventUnknownOpcode",
-        "severity": "medium"
-      },
-      {
-        "name": "TestDecorationManager_Destroy",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 159,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestDecorationManagerDestroy",
-        "severity": "medium"
-      },
-      {
-        "name": "TestToplevelDecoration_Destroy",
-        "file": "internal/wayland/xdg/decoration_test.go",
-        "line": 180,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestToplevelDecorationDestroy",
-        "severity": "medium"
-      },
-      {
-        "name": "HandleIdleNotify",
-        "file": "internal/integration/x11_sync.go",
-        "line": 33,
+        "name": "OnPixmapIdle",
+        "file": "internal/render/display/x11.go",
+        "line": 270,
         "type": "method",
         "violation_type": "acronym_casing",
         "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "HandleIDleNotify",
+        "suggested_name": "OnPixmapIDle",
         "severity": "low"
       },
       {
-        "name": "TestSlotState_String",
-        "file": "internal/buffer/ring_test.go",
-        "line": 43,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestSlotStateString",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_BasicFlow",
-        "file": "internal/buffer/ring_test.go",
-        "line": 64,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingBasicFlow",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_AcquireTimeout",
-        "file": "internal/buffer/ring_test.go",
-        "line": 121,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingAcquireTimeout",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_WaitRelease",
-        "file": "internal/buffer/ring_test.go",
-        "line": 155,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingWaitRelease",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_WaitReleaseTimeout",
-        "file": "internal/buffer/ring_test.go",
-        "line": 195,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingWaitReleaseTimeout",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_ConcurrentAcquire",
-        "file": "internal/buffer/ring_test.go",
-        "line": 218,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingConcurrentAcquire",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_InvalidStateTransitions",
-        "file": "internal/buffer/ring_test.go",
-        "line": 277,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingInvalidStateTransitions",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_Reset",
-        "file": "internal/buffer/ring_test.go",
-        "line": 305,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingReset",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_UserData",
-        "file": "internal/buffer/ring_test.go",
-        "line": 336,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingUserData",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_GetSlot_Bounds",
-        "file": "internal/buffer/ring_test.go",
-        "line": 366,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingGetSlotBounds",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_GetSlot_OutOfBoundsUpper",
-        "file": "internal/buffer/ring_test.go",
-        "line": 390,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingGetSlotOutOfBoundsUpper",
-        "severity": "medium"
-      },
-      {
-        "name": "TestRing_Stats",
-        "file": "internal/buffer/ring_test.go",
-        "line": 402,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "TestRingStats",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkRing_AcquireRelease",
-        "file": "internal/buffer/ring_test.go",
-        "line": 438,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkRingAcquireRelease",
-        "severity": "medium"
-      },
-      {
-        "name": "BenchmarkRing_ConcurrentAcquireRelease",
-        "file": "internal/buffer/ring_test.go",
-        "line": 457,
-        "type": "function",
-        "violation_type": "underscore_in_name",
-        "description": "Go identifiers should use MixedCaps, not underscores (except Test_ functions)",
-        "suggested_name": "BenchmarkRingConcurrentAcquireRelease",
-        "severity": "medium"
-      },
-      {
-        "name": "TestDecodeUint32",
-        "file": "internal/wayland/wire/wire_test.go",
-        "line": 264,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestDecodeUInt32",
+        "name": "BackendType",
+        "file": "internal/render/backend/interface.go",
+        "line": 37,
+        "type": "type",
+        "violation_type": "package_stuttering",
+        "description": "Exported name repeats package name (e.g., user.UserService should be user.Service)",
+        "suggested_name": "Type",
         "severity": "low"
       },
       {
-        "name": "TestEncodeUint32",
-        "file": "internal/wayland/wire/wire_test.go",
-        "line": 300,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestEncodeUInt32",
+        "name": "FramebufferPool",
+        "file": "internal/render/display/framebuffer.go",
+        "line": 115,
+        "type": "type",
+        "violation_type": "stuttering",
+        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
+        "suggested_name": "Pool",
         "severity": "low"
       },
       {
-        "name": "TestUint32Roundtrip",
-        "file": "internal/wayland/wire/wire_test.go",
-        "line": 326,
-        "type": "function",
-        "violation_type": "acronym_casing",
-        "description": "Acronyms should be all caps (e.g., URL, HTTP, ID, API, JSON)",
-        "suggested_name": "TestUInt32Roundtrip",
+        "name": "panelStyle",
+        "file": "layout.go",
+        "line": 395,
+        "type": "type",
+        "violation_type": "stuttering",
+        "description": "Method name repeats receiver type (e.g., User.UserName should be User.Name)",
+        "suggested_name": "Style",
         "severity": "low"
       }
     ],
     "package_name_issues": [
-      {
-        "package": "render_test",
-        "directory": "internal/render",
-        "violation_type": "non_conventional_name",
-        "description": "Package names should not contain underscores; use lowercase concatenation",
-        "suggested_name": "rendertest",
-        "severity": "medium"
-      },
-      {
-        "package": "render_test",
-        "directory": "internal/render",
-        "violation_type": "directory_mismatch",
-        "description": "Package name does not match directory name; they should be the same",
-        "suggested_name": "render",
-        "severity": "medium"
-      },
       {
         "package": "wain",
         "directory": ".",
         "violation_type": "directory_mismatch",
         "description": "Package name does not match directory name; they should be the same",
         "suggested_name": ".",
-        "severity": "medium"
-      },
-      {
-        "package": "wain_test",
-        "directory": ".",
-        "violation_type": "non_conventional_name",
-        "description": "Package names should not contain underscores; use lowercase concatenation",
-        "suggested_name": "waintest",
-        "severity": "medium"
-      },
-      {
-        "package": "wain_test",
-        "directory": ".",
-        "violation_type": "directory_mismatch",
-        "description": "Package name does not match directory name; they should be the same",
-        "suggested_name": ".",
-        "severity": "medium"
-      },
-      {
-        "package": "gc_test",
-        "directory": "internal/x11/gc",
-        "violation_type": "non_conventional_name",
-        "description": "Package names should not contain underscores; use lowercase concatenation",
-        "suggested_name": "gctest",
-        "severity": "medium"
-      },
-      {
-        "package": "gc_test",
-        "directory": "internal/x11/gc",
-        "violation_type": "directory_mismatch",
-        "description": "Package name does not match directory name; they should be the same",
-        "suggested_name": "gc",
-        "severity": "medium"
-      },
-      {
-        "package": "client_test",
-        "directory": "internal/x11/client",
-        "violation_type": "non_conventional_name",
-        "description": "Package names should not contain underscores; use lowercase concatenation",
-        "suggested_name": "clienttest",
-        "severity": "medium"
-      },
-      {
-        "package": "client_test",
-        "directory": "internal/x11/client",
-        "violation_type": "directory_mismatch",
-        "description": "Package name does not match directory name; they should be the same",
-        "suggested_name": "client",
-        "severity": "medium"
-      },
-      {
-        "package": "wire_test",
-        "directory": "internal/x11/wire",
-        "violation_type": "non_conventional_name",
-        "description": "Package names should not contain underscores; use lowercase concatenation",
-        "suggested_name": "wiretest",
-        "severity": "medium"
-      },
-      {
-        "package": "wire_test",
-        "directory": "internal/x11/wire",
-        "violation_type": "directory_mismatch",
-        "description": "Package name does not match directory name; they should be the same",
-        "suggested_name": "wire",
         "severity": "medium"
       }
     ]
