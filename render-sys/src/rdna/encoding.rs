@@ -9,6 +9,80 @@
 
 use super::instruction::*;
 
+/// RDNA instruction opcode values
+///
+/// These constants define the opcode field for various RDNA instruction formats.
+/// VOP1, VOP2, SOP1, and SOP2 instructions have variable-length opcode fields.
+///
+/// Reference: AMD RDNA ISA Architecture Manual, Instruction Set Reference
+pub mod rdna_opcodes {
+    // VOP1 opcodes (8-bit)
+    pub const VOP1_MOV_B32: u8 = 0x01;
+    pub const VOP1_CVT_F32_I32: u8 = 0x0B;
+    pub const VOP1_ABS_F32: u8 = 0x0C;
+    pub const VOP1_CVT_I32_F32: u8 = 0x0D;
+    pub const VOP1_NEG_F32: u8 = 0x0E;
+    pub const VOP1_RCP_F32: u8 = 0x2A;
+    pub const VOP1_RSQ_F32: u8 = 0x2E;
+    pub const VOP1_SQRT_F32: u8 = 0x33;
+    
+    // VOP2 opcodes (6-bit)
+    pub const VOP2_ADD_F32: u8 = 0x03;
+    pub const VOP2_SUB_F32: u8 = 0x04;
+    pub const VOP2_MUL_F32: u8 = 0x08;
+    pub const VOP2_MIN_F32: u8 = 0x0A;
+    pub const VOP2_MAX_F32: u8 = 0x0B;
+    pub const VOP2_AND_B32: u8 = 0x15;
+    pub const VOP2_OR_B32: u8 = 0x16;
+    pub const VOP2_XOR_B32: u8 = 0x17;
+    pub const VOP2_ADD_U32: u8 = 0x19;
+    pub const VOP2_SUB_U32: u8 = 0x1A;
+    pub const VOP2_MUL_LO_U32: u8 = 0x1C;
+    
+    // VOP3 opcodes (10-bit)
+    pub const VOP3_CNDMASK_B32: u16 = 0x101;
+    pub const VOP3_FMA_F32: u16 = 0x1C3;
+    
+    // SOP1 opcodes (8-bit)
+    pub const SOP1_MOV_B32: u8 = 0x03;
+    pub const SOP1_NOT_B32: u8 = 0x07;
+    
+    // SOP2 opcodes (7-bit)
+    pub const SOP2_ADD_U32: u8 = 0x00;
+    pub const SOP2_SUB_U32: u8 = 0x01;
+    pub const SOP2_AND_B32: u8 = 0x0E;
+    pub const SOP2_OR_B32: u8 = 0x0F;
+}
+
+/// Bitfield constants and encoding prefixes for RDNA instruction formats
+pub mod bitfields {
+    // Instruction encoding prefixes (high bits)
+    pub const VOP1_PREFIX: u32 = 0x7E;
+    pub const VOP3_PREFIX: u32 = 0xD1000000;
+    pub const SOP1_PREFIX: u32 = 0xBE800000;
+    pub const SOP2_PREFIX: u32 = 0x80000000;
+    pub const MIMG_PREFIX: u32 = 0xF0000000;
+    pub const EXP_PREFIX: u32 = 0xC4000000;
+    
+    // VOP3 opcode mask
+    pub const VOP3_OPCODE_MASK: u32 = 0x3FF;
+    
+    // ImageDim encoding values
+    pub const DIM_1D: u8 = 0x08;
+    pub const DIM_2D: u8 = 0x09;
+    pub const DIM_3D: u8 = 0x0A;
+    pub const DIM_CUBE: u8 = 0x0C;
+    
+    // Export target encoding
+    pub const EXPORT_MRT_MASK: u8 = 0x7;
+    pub const EXPORT_POSITION: u8 = 0x0C;
+    pub const EXPORT_PARAM_BASE: u8 = 0x20;
+    pub const EXPORT_PARAM_MASK: u8 = 0x1F;
+    
+    // MIMG DMASK (RGBA enable mask)
+    pub const RGBA_ENABLE_MASK: u32 = 0xF;
+}
+
 /// Encode a RDNA instruction to binary machine code
 pub fn encode_instruction(inst: &RDNAInstruction) -> Vec<u8> {
     match inst {
@@ -25,40 +99,42 @@ pub fn encode_instruction(inst: &RDNAInstruction) -> Vec<u8> {
 /// Encode VOP1 instruction (32-bit format)
 /// Format: [opcode:8][dst:8][src:9][encoding:7]
 fn encode_vop1(inst: &VOP1) -> Vec<u8> {
+    use rdna_opcodes::*;
+    
     let (opcode, dst, src) = match inst {
-        VOP1::MovB32 { dst, src } => (0x01, dst.index(), src.index()),
-        VOP1::CvtF32I32 { dst, src } => (0x0B, dst.index(), src.index()),
-        VOP1::CvtI32F32 { dst, src } => (0x0D, dst.index(), src.index()),
-        VOP1::RcpF32 { dst, src } => (0x2A, dst.index(), src.index()),
-        VOP1::RsqF32 { dst, src } => (0x2E, dst.index(), src.index()),
-        VOP1::SqrtF32 { dst, src } => (0x33, dst.index(), src.index()),
-        VOP1::AbsF32 { dst, src } => (0x0C, dst.index(), src.index()),
-        VOP1::NegF32 { dst, src } => (0x0E, dst.index(), src.index()),
+        VOP1::MovB32 { dst, src } => (VOP1_MOV_B32, dst.index(), src.index()),
+        VOP1::CvtF32I32 { dst, src } => (VOP1_CVT_F32_I32, dst.index(), src.index()),
+        VOP1::CvtI32F32 { dst, src } => (VOP1_CVT_I32_F32, dst.index(), src.index()),
+        VOP1::RcpF32 { dst, src } => (VOP1_RCP_F32, dst.index(), src.index()),
+        VOP1::RsqF32 { dst, src } => (VOP1_RSQ_F32, dst.index(), src.index()),
+        VOP1::SqrtF32 { dst, src } => (VOP1_SQRT_F32, dst.index(), src.index()),
+        VOP1::AbsF32 { dst, src } => (VOP1_ABS_F32, dst.index(), src.index()),
+        VOP1::NegF32 { dst, src } => (VOP1_NEG_F32, dst.index(), src.index()),
     };
 
-    // VOP1 encoding: 0x7E prefix
-    let encoding: u32 = 0x7E | ((opcode as u32) << 9) | ((dst as u32) << 17) | ((src as u32) << 0);
+    let encoding: u32 = bitfields::VOP1_PREFIX | ((opcode as u32) << 9) | ((dst as u32) << 17) | ((src as u32) << 0);
     encoding.to_le_bytes().to_vec()
 }
 
 /// Encode VOP2 instruction (32-bit format)
 /// Format: [opcode:6][dst:8][src0:9][src1:9]
 fn encode_vop2(inst: &VOP2) -> Vec<u8> {
+    use rdna_opcodes::*;
+    
     let (opcode, dst, src0, src1) = match inst {
-        VOP2::AddF32 { dst, src0, src1 } => (0x03, dst.index(), src0.index(), src1.index()),
-        VOP2::SubF32 { dst, src0, src1 } => (0x04, dst.index(), src0.index(), src1.index()),
-        VOP2::MulF32 { dst, src0, src1 } => (0x08, dst.index(), src0.index(), src1.index()),
-        VOP2::MinF32 { dst, src0, src1 } => (0x0A, dst.index(), src0.index(), src1.index()),
-        VOP2::MaxF32 { dst, src0, src1 } => (0x0B, dst.index(), src0.index(), src1.index()),
-        VOP2::AddU32 { dst, src0, src1 } => (0x19, dst.index(), src0.index(), src1.index()),
-        VOP2::SubU32 { dst, src0, src1 } => (0x1A, dst.index(), src0.index(), src1.index()),
-        VOP2::MulLoU32 { dst, src0, src1 } => (0x1C, dst.index(), src0.index(), src1.index()),
-        VOP2::AndB32 { dst, src0, src1 } => (0x15, dst.index(), src0.index(), src1.index()),
-        VOP2::OrB32 { dst, src0, src1 } => (0x16, dst.index(), src0.index(), src1.index()),
-        VOP2::XorB32 { dst, src0, src1 } => (0x17, dst.index(), src0.index(), src1.index()),
+        VOP2::AddF32 { dst, src0, src1 } => (VOP2_ADD_F32, dst.index(), src0.index(), src1.index()),
+        VOP2::SubF32 { dst, src0, src1 } => (VOP2_SUB_F32, dst.index(), src0.index(), src1.index()),
+        VOP2::MulF32 { dst, src0, src1 } => (VOP2_MUL_F32, dst.index(), src0.index(), src1.index()),
+        VOP2::MinF32 { dst, src0, src1 } => (VOP2_MIN_F32, dst.index(), src0.index(), src1.index()),
+        VOP2::MaxF32 { dst, src0, src1 } => (VOP2_MAX_F32, dst.index(), src0.index(), src1.index()),
+        VOP2::AddU32 { dst, src0, src1 } => (VOP2_ADD_U32, dst.index(), src0.index(), src1.index()),
+        VOP2::SubU32 { dst, src0, src1 } => (VOP2_SUB_U32, dst.index(), src0.index(), src1.index()),
+        VOP2::MulLoU32 { dst, src0, src1 } => (VOP2_MUL_LO_U32, dst.index(), src0.index(), src1.index()),
+        VOP2::AndB32 { dst, src0, src1 } => (VOP2_AND_B32, dst.index(), src0.index(), src1.index()),
+        VOP2::OrB32 { dst, src0, src1 } => (VOP2_OR_B32, dst.index(), src0.index(), src1.index()),
+        VOP2::XorB32 { dst, src0, src1 } => (VOP2_XOR_B32, dst.index(), src0.index(), src1.index()),
     };
 
-    // VOP2 encoding format
     let encoding: u32 = ((opcode as u32) << 25) | ((src1 as u32) << 9) | ((dst as u32) << 17) | (src0 as u32);
     encoding.to_le_bytes().to_vec()
 }
@@ -66,17 +142,18 @@ fn encode_vop2(inst: &VOP2) -> Vec<u8> {
 /// Encode VOP3 instruction (64-bit format)
 /// Format: [opcode:10][dst:8][abs:3][src0:9][src1:9][src2:9][omod:2][neg:3]
 fn encode_vop3(inst: &VOP3) -> Vec<u8> {
+    use rdna_opcodes::*;
+    
     let (opcode, dst, src0, src1, src2) = match inst {
         VOP3::FmaF32 { dst, src0, src1, src2 } => {
-            (0x1C3, dst.index(), src0.index(), src1.index(), src2.index())
+            (VOP3_FMA_F32, dst.index(), src0.index(), src1.index(), src2.index())
         }
         VOP3::CndmaskB32 { dst, src0, src1, src2 } => {
-            (0x101, dst.index(), src0.index(), src1.index(), src2.index())
+            (VOP3_CNDMASK_B32, dst.index(), src0.index(), src1.index(), src2.index())
         }
     };
 
-    // VOP3 encoding: 0xD1 prefix (64-bit)
-    let word0: u32 = 0xD1000000 | ((opcode as u32 & 0x3FF) << 16) | (dst as u32);
+    let word0: u32 = bitfields::VOP3_PREFIX | ((opcode as u32 & bitfields::VOP3_OPCODE_MASK) << 16) | (dst as u32);
     let word1: u32 = ((src2 as u32) << 18) | ((src1 as u32) << 9) | (src0 as u32);
     
     let mut bytes = Vec::with_capacity(8);
@@ -87,42 +164,45 @@ fn encode_vop3(inst: &VOP3) -> Vec<u8> {
 
 /// Encode SOP1 instruction (32-bit format)
 fn encode_sop1(inst: &SOP1) -> Vec<u8> {
+    use rdna_opcodes::*;
+    
     let (opcode, dst, src) = match inst {
-        SOP1::MovB32 { dst, src } => (0x03, dst.index(), src.index()),
-        SOP1::NotB32 { dst, src } => (0x07, dst.index(), src.index()),
+        SOP1::MovB32 { dst, src } => (SOP1_MOV_B32, dst.index(), src.index()),
+        SOP1::NotB32 { dst, src } => (SOP1_NOT_B32, dst.index(), src.index()),
     };
 
-    // SOP1 encoding: 0xBE prefix
-    let encoding: u32 = 0xBE800000 | ((opcode as u32) << 8) | ((dst as u32) << 16) | (src as u32);
+    let encoding: u32 = bitfields::SOP1_PREFIX | ((opcode as u32) << 8) | ((dst as u32) << 16) | (src as u32);
     encoding.to_le_bytes().to_vec()
 }
 
 /// Encode SOP2 instruction (32-bit format)
 fn encode_sop2(inst: &SOP2) -> Vec<u8> {
+    use rdna_opcodes::*;
+    
     let (opcode, dst, src0, src1) = match inst {
-        SOP2::AddU32 { dst, src0, src1 } => (0x00, dst.index(), src0.index(), src1.index()),
-        SOP2::SubU32 { dst, src0, src1 } => (0x01, dst.index(), src0.index(), src1.index()),
-        SOP2::AndB32 { dst, src0, src1 } => (0x0E, dst.index(), src0.index(), src1.index()),
-        SOP2::OrB32 { dst, src0, src1 } => (0x0F, dst.index(), src0.index(), src1.index()),
+        SOP2::AddU32 { dst, src0, src1 } => (SOP2_ADD_U32, dst.index(), src0.index(), src1.index()),
+        SOP2::SubU32 { dst, src0, src1 } => (SOP2_SUB_U32, dst.index(), src0.index(), src1.index()),
+        SOP2::AndB32 { dst, src0, src1 } => (SOP2_AND_B32, dst.index(), src0.index(), src1.index()),
+        SOP2::OrB32 { dst, src0, src1 } => (SOP2_OR_B32, dst.index(), src0.index(), src1.index()),
     };
 
-    // SOP2 encoding: 0x80 prefix
-    let encoding: u32 = 0x80000000 | ((opcode as u32) << 23) | ((dst as u32) << 16) | ((src1 as u32) << 8) | (src0 as u32);
+    let encoding: u32 = bitfields::SOP2_PREFIX | ((opcode as u32) << 23) | ((dst as u32) << 16) | ((src1 as u32) << 8) | (src0 as u32);
     encoding.to_le_bytes().to_vec()
 }
 
 /// Encode MIMG (image sample) instruction (64-bit format)
 fn encode_image_sample(inst: &ImageSample) -> Vec<u8> {
-    let dmask = 0xF; // RGBA enable mask
+    use bitfields::*;
+    
+    let dmask = RGBA_ENABLE_MASK;
     let dim_bits = match inst.dim {
-        ImageDim::Dim1D => 0x08,
-        ImageDim::Dim2D => 0x09,
-        ImageDim::Dim3D => 0x0A,
-        ImageDim::Cube => 0x0C,
+        ImageDim::Dim1D => DIM_1D,
+        ImageDim::Dim2D => DIM_2D,
+        ImageDim::Dim3D => DIM_3D,
+        ImageDim::Cube => DIM_CUBE,
     };
 
-    // MIMG encoding: 0xF0 prefix, opcode for sample instruction
-    let word0: u32 = 0xF0000000 | (dmask << 8) | (dim_bits << 0);
+    let word0: u32 = MIMG_PREFIX | (dmask << 8) | ((dim_bits as u32) << 0);
     let word1: u32 = ((inst.texture.index() as u32) << 16) 
                    | ((inst.sampler.index() as u32) << 8)
                    | ((inst.dst.index() as u32) << 0);
@@ -135,17 +215,18 @@ fn encode_image_sample(inst: &ImageSample) -> Vec<u8> {
 
 /// Encode EXP (export) instruction (64-bit format)
 fn encode_export(inst: &Export) -> Vec<u8> {
+    use bitfields::*;
+    
     let target_bits = match inst.target {
-        ExportTarget::MRT(n) => n & 0x7,
-        ExportTarget::Position => 0x0C,
-        ExportTarget::Parameter(n) => 0x20 + (n & 0x1F),
+        ExportTarget::MRT(n) => n & EXPORT_MRT_MASK,
+        ExportTarget::Position => EXPORT_POSITION,
+        ExportTarget::Parameter(n) => EXPORT_PARAM_BASE + (n & EXPORT_PARAM_MASK),
     };
 
     let done_bit = if inst.done { 1u32 } else { 0 };
     let compressed_bit = if inst.compressed { 1u32 } else { 0 };
 
-    // EXP encoding: 0xC4 prefix
-    let word0: u32 = 0xC4000000 
+    let word0: u32 = EXP_PREFIX
                    | ((done_bit) << 11)
                    | ((compressed_bit) << 10)
                    | ((inst.enable_mask as u32) << 12)

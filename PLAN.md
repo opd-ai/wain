@@ -92,12 +92,29 @@
   - All encoding tests pass: `cargo test --lib eu::encoding` → 7 passed
   - Build verified: `make build` succeeds
 
-### Step 7: Extract AMD RDNA Opcode Constants
+### Step 7: Extract AMD RDNA Opcode Constants ✅ COMPLETE
 - **Deliverable**: Create `mod rdna_opcodes` and `mod bitfields` in `render-sys/src/rdna/encoding.rs` replacing 50+ bare hex literals
 - **Dependencies**: None (parallel to Step 6)
 - **Acceptance**: Zero bare hex opcode literals in RDNA encoding.rs
 - **Validation**: `grep -cE "0x[0-9a-fA-F]{2}" render-sys/src/rdna/encoding.rs` < 10
 - **Rationale**: Slop SL-004 (HIGH severity); same issue as Step 6 for AMD backend
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Created `rdna_opcodes` module with 30 named constants for all RDNA instruction opcodes:
+    - VOP1: 8 opcodes (MOV_B32, CVT_F32_I32, CVT_I32_F32, RCP_F32, RSQ_F32, SQRT_F32, ABS_F32, NEG_F32)
+    - VOP2: 11 opcodes (ADD_F32, SUB_F32, MUL_F32, MIN_F32, MAX_F32, AND_B32, OR_B32, XOR_B32, ADD_U32, SUB_U32, MUL_LO_U32)
+    - VOP3: 2 opcodes (CNDMASK_B32, FMA_F32)
+    - SOP1: 2 opcodes (MOV_B32, NOT_B32)
+    - SOP2: 4 opcodes (ADD_U32, SUB_U32, AND_B32, OR_B32)
+  - Created `bitfields` module with 13 named constants for encoding masks and prefixes:
+    - Instruction prefixes: VOP1_PREFIX, VOP3_PREFIX, SOP1_PREFIX, SOP2_PREFIX, MIMG_PREFIX, EXP_PREFIX
+    - Masks: VOP3_OPCODE_MASK, EXPORT_MRT_MASK, EXPORT_PARAM_MASK
+    - ImageDim values: DIM_1D, DIM_2D, DIM_3D, DIM_CUBE
+    - Export targets: EXPORT_POSITION, EXPORT_PARAM_BASE
+    - RGBA_ENABLE_MASK
+  - Refactored all encoding functions to use named constants instead of bare hex literals
+  - Only 1 bare hex literal remains in test code (test data)
+  - Build verified: `make build` succeeds
+  - All Go tests pass: `make test-go` → ok
 
 ### Step 8: Refactor Long Functions in `internal/`
 - **Deliverable**: Refactor top 8 longest functions in `internal/` packages to ≤30 lines each:
