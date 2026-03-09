@@ -99,13 +99,26 @@ type pointerEvent struct {
 	timestamp time.Time
 }
 
+// EventType indicates the type of pointer event (motion, button press/release, axis scroll).
 func (e *pointerEvent) EventType() PointerEventType { return e.eventType }
-func (e *pointerEvent) X() float64                  { return e.x }
-func (e *pointerEvent) Y() float64                  { return e.y }
-func (e *pointerEvent) Button() uint32              { return e.button }
-func (e *pointerEvent) Axis() uint32                { return e.axis }
-func (e *pointerEvent) Value() float64              { return e.value }
-func (e *pointerEvent) Timestamp() time.Time        { return e.timestamp }
+
+// X is the horizontal pointer coordinate in surface-local space.
+func (e *pointerEvent) X() float64 { return e.x }
+
+// Y is the vertical pointer coordinate in surface-local space.
+func (e *pointerEvent) Y() float64 { return e.y }
+
+// Button is the button number for button press/release events (BTN_LEFT=0x110, BTN_RIGHT=0x111, BTN_MIDDLE=0x112).
+func (e *pointerEvent) Button() uint32 { return e.button }
+
+// Axis is the axis type for scroll events (vertical=0, horizontal=1).
+func (e *pointerEvent) Axis() uint32 { return e.axis }
+
+// Value is the scroll amount in surface-local coordinates (positive=down/right, negative=up/left).
+func (e *pointerEvent) Value() float64 { return e.value }
+
+// Timestamp is the event timestamp from the display server.
+func (e *pointerEvent) Timestamp() time.Time { return e.timestamp }
 
 // keyEvent implements the KeyEvent interface.
 type keyEvent struct {
@@ -115,10 +128,17 @@ type keyEvent struct {
 	timestamp time.Time
 }
 
+// EventType indicates the type of key event (press or release).
 func (e *keyEvent) EventType() KeyEventType { return e.eventType }
-func (e *keyEvent) Key() uint32             { return e.key }
-func (e *keyEvent) Modifiers() uint32       { return e.modifiers }
-func (e *keyEvent) Timestamp() time.Time    { return e.timestamp }
+
+// Key is the Linux keycode (evdev scancode) for the key that was pressed or released.
+func (e *keyEvent) Key() uint32 { return e.key }
+
+// Modifiers is a bitmask of active modifier keys (Shift, Ctrl, Alt, Super).
+func (e *keyEvent) Modifiers() uint32 { return e.modifiers }
+
+// Timestamp is the event timestamp from the display server.
+func (e *keyEvent) Timestamp() time.Time { return e.timestamp }
 
 // TranslateWaylandPointer converts Wayland pointer events to public pointer events.
 func TranslateWaylandPointer(evt WaylandPointerEvent) PointerEvent {
