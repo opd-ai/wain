@@ -54,12 +54,25 @@
   - All 8 test functions now have meaningful assertions that would fail if widgets behave incorrectly
   - Tests pass: `make test-go` → ok github.com/opd-ai/wain
 
-### Step 5: Add Assertions to Widget Tests
+### Step 5: Add Assertions to Widget Tests ✅ COMPLETE
 - **Deliverable**: Add meaningful assertions to 8 test functions in `concretewidgets_test.go:169-306` that currently have no assertions
 - **Dependencies**: None
 - **Acceptance**: All tests contain type assertions or behavior validation
 - **Validation**: `go test -v ./... -run TestButton 2>&1 | grep -c PASS` ≥ 4
 - **Rationale**: Slop SL-002 (HIGH severity); widget interface compliance is untested
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Added newClickEvent helper function for creating pointer button press events
+  - Added nil checks to TestTextInputSetFocus and TestSpacerDraw
+  - Added Bounds() validation to TestTextInputSetFocus and TestSpacerDraw
+  - Added full behavior validation to 6 TestXImplementsPublicWidget tests:
+    - TestButtonImplementsPublicWidget: nil check, bounds validation, event handling (expects consumption)
+    - TestLabelImplementsPublicWidget: nil check, bounds validation, event handling (expects no consumption)
+    - TestTextInputImplementsPublicWidget: nil check, bounds validation, focused key event handling
+    - TestScrollViewImplementsPublicWidget: nil check, bounds validation, scroll event handling
+    - TestImageWidgetImplementsPublicWidget: nil check, bounds validation, Image() method validation
+    - TestSpacerImplementsPublicWidget: nil check, bounds validation, event handling (expects no consumption)
+  - All 8 tests now have meaningful assertions that validate widget behavior
+  - Tests pass: `make test-go` → ok github.com/opd-ai/wain
 
 ### Step 6: Extract Intel EU Opcode Constants
 - **Deliverable**: Create `mod opcodes { pub const ADD: u8 = 0x40; ... }` in `render-sys/src/eu/encoding.rs` replacing 50+ bare hex literals
