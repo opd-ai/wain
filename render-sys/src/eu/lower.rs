@@ -572,30 +572,33 @@ impl<'a> LoweringContext<'a> {
                 let dst_r = Register { file: RegFile::GRF, num: dst_phys.grf_num, subreg: 0 };
 
                 // Step 1: tmp1 = 1.0 - a
-                // We need to load 1.0 first, then subtract a
-                // For simplicity, use MOV to load 1.0, then ADD with negate
-                // TODO(TD-5): Implement immediate loading properly
-                // For now, use a simplified approach with MAD: tmp1 = -a + 1
-                // This requires implementing MAD or using a constant register
+                // Implemented using two instructions:
+                // 1a. MOV tmp1, 1.0       (load immediate 1.0 into tmp1)
+                // 1b. ADD tmp1, tmp1, -a  (add negated a to get 1.0 - a)
                 
-                // Simplified: Use ADD with immediate (requires immediate support)
-                // For this implementation, we'll use: tmp1 = 0 + (1 - a)
-                // which requires proper immediate handling
+                // Create immediate register for 1.0
+                let imm_one = Register::imm_float(1.0);
                 
-                // Alternative: Use MAD (multiply-add): tmp1 = (-1) * a + 1
-                // But this also needs immediate support
+                // Instruction 1a: tmp1 = 1.0
+                let mut inst1a = EUInstruction::new(EUOpcode::Mov);
+                inst1a.set_dst(tmp1_r);
+                inst1a.set_src0(imm_one);
+                inst1a.set_exec_size(ExecSize::Scalar);
+                inst1a.set_dst_type(DataType::F);
+                inst1a.set_src0_type(DataType::F);
+                self.instructions.push(inst1a);
                 
-                // Pragmatic approach for this iteration:
-                // Assume we have a way to negate: tmp1 = -a, then we need to add 1
-                // Use ADD with src0 negated
-                let mut inst1 = EUInstruction::new(EUOpcode::Mov);
-                inst1.set_dst(tmp1_r);
-                inst1.set_src0(a_r);
-                inst1.set_src0_negate(true);  // tmp1 = -a (we'll refine this later for proper 1-a)
-                inst1.set_exec_size(ExecSize::Scalar);
-                inst1.set_dst_type(DataType::F);
-                inst1.set_src0_type(DataType::F);
-                self.instructions.push(inst1);
+                // Instruction 1b: tmp1 = tmp1 + (-a) = 1.0 - a
+                let mut inst1b = EUInstruction::new(EUOpcode::Add);
+                inst1b.set_dst(tmp1_r);
+                inst1b.set_src0(tmp1_r);
+                inst1b.set_src1(a_r);
+                inst1b.set_src1_negate(true);  // Negate a to get subtraction
+                inst1b.set_exec_size(ExecSize::Scalar);
+                inst1b.set_dst_type(DataType::F);
+                inst1b.set_src0_type(DataType::F);
+                inst1b.set_src1_type(DataType::F);
+                self.instructions.push(inst1b);
                 
                 // Step 2: tmp2 = x * tmp1
                 let mut inst2 = EUInstruction::new(EUOpcode::Mul);
@@ -2594,7 +2597,7 @@ mod tests {
         assert!(res.is_ok(), "Mix lowering should succeed");
 
         let instructions = ctx.instructions();
-        assert_eq!(instructions.len(), 4, "Mix should generate 4 instructions (MOV, MUL, MUL, ADD)");
+        assert_eq!(instructions.len(), 5, "Mix should generate 5 instructions (MOV 1.0, ADD -a, MUL, MUL, ADD)");
     }
 
     #[test]

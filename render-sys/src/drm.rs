@@ -19,7 +19,7 @@ pub(crate) fn checked_ioctl<T>(fd: RawFd, request: nix::libc::c_ulong, arg: *mut
     // - arg points to initialized memory of type matching the ioctl request (caller responsibility)
     // - arg remains valid for call duration (synchronous syscall)
     // - On failure, arg contents are undefined (documented in function comment)
-    let ret = unsafe { nix::libc::ioctl(fd, request as nix::libc::c_int, arg) };
+    let ret = unsafe { nix::libc::ioctl(fd, request, arg) };
     if ret < 0 {
         Err(io::Error::last_os_error())
     } else {

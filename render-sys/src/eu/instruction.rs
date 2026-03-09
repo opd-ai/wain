@@ -85,6 +85,19 @@ pub struct Register {
     pub subreg: u8,  // Sub-register offset
 }
 
+impl Register {
+    /// Create an immediate float register
+    /// The bits of the float value are stored in num/subreg fields for encoding
+    pub fn imm_float(value: f32) -> Self {
+        let bits = value.to_bits();
+        Register {
+            file: RegFile::Imm,
+            num: (bits & 0xFF) as u8,
+            subreg: ((bits >> 8) & 0xFF) as u8,
+        }
+    }
+}
+
 /// Shared Function ID for SEND instructions
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 // Used dynamically during SEND instruction encoding for GPU memory/texture operations
@@ -132,6 +145,11 @@ pub struct EUInstruction {
     src1: Option<Register>,
     src2: Option<Register>,
     
+    // Immediate values (used when source register is RegFile::Imm)
+    src0_imm: Option<u32>,
+    src1_imm: Option<u32>,
+    src2_imm: Option<u32>,
+    
     // Instruction modifiers
     exec_size: ExecSize,
     dst_type: DataType,
@@ -158,6 +176,9 @@ impl EUInstruction {
             src0: None,
             src1: None,
             src2: None,
+            src0_imm: None,
+            src1_imm: None,
+            src2_imm: None,
             exec_size: ExecSize::Size8,
             dst_type: DataType::F,
             src0_type: DataType::F,
