@@ -41,7 +41,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
 - ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
 - ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
-- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded QWERTY layout)
+- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded US QWERTY layout — non-US keyboards not supported)
 - ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
 
 **X11 Client** (9 packages, ~7,735 LOC):
@@ -123,6 +123,9 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ⚠️ All packages marked `internal/` — no public API for external users yet
 - ⚠️ No platform abstraction layer (users must choose Wayland or X11 explicitly)
 - ⚠️ No production-ready event loop (demos have basic event handling only)
+
+**Input:**
+- ⚠️ Wayland input handling only supports US QWERTY keyboard layout. International keyboards require XKB parser implementation (planned for Phase 8.1)
 
 **Rendering:**
 - ⚠️ CPU-only software rendering (GPU rendering pipeline not yet connected)
@@ -428,7 +431,7 @@ Protocol Implementations (~6,280 LOC)
 │   ├── client/      → Display, Registry, Compositor, Surface
 │   ├── shm/         → Shared memory buffers (memfd)
 │   ├── xdg/         → Window management (xdg-shell)
-│   ├── input/       → Seat, Pointer, Keyboard (hardcoded QWERTY)
+│   ├── input/       → Seat, Pointer, Keyboard (hardcoded US QWERTY)
 │   ├── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
 │   ├── datadevice/  → Data device manager for clipboard/DnD
 │   └── output/      → Output configuration and mode handling
