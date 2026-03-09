@@ -105,8 +105,9 @@ const (
 // XID represents an X11 resource identifier.
 type XID uint32
 
-// Shmseg represents a shared memory segment identifier on the X server side.
-type Shmseg uint32
+// Seg represents an X11 MIT-SHM segment ID (SHMSEG in the protocol).
+// It is a server-side identifier for a shared memory segment.
+type Seg uint32
 
 // Connection represents the minimal interface needed for SHM operations.
 type Connection interface {
@@ -118,7 +119,7 @@ type Connection interface {
 
 // Segment represents an attached shared memory segment.
 type Segment struct {
-	ID       Shmseg         // X server segment ID
+	ID       Seg            // X server segment ID
 	ShmID    int            // System V shared memory ID
 	Addr     unsafe.Pointer // Attached memory address
 	Size     int            // Segment size in bytes
@@ -133,7 +134,7 @@ type Extension struct {
 	minorVersion  uint16
 	sharedPixmaps bool
 	pixmapFormat  uint8
-	segments      map[Shmseg]*Segment
+	segments      map[Seg]*Segment
 }
 
 // QueryExtension checks if MIT-SHM extension is available on the X server.
@@ -148,7 +149,7 @@ func QueryExtension(conn Connection) (*Extension, error) {
 	ext := &Extension{
 		baseOpcode: baseOpcode,
 		supported:  true,
-		segments:   make(map[Shmseg]*Segment),
+		segments:   make(map[Seg]*Segment),
 	}
 
 	// Query extension version
@@ -219,7 +220,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	}
 
 	seg := &Segment{
-		ID:       Shmseg(xid),
+		ID:       Seg(xid),
 		ShmID:    int(shmID),
 		Addr:     addr,
 		Size:     size,

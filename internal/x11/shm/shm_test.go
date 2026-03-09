@@ -337,7 +337,7 @@ func TestCreateSegment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ext := &Extension{
 				supported: tt.supported,
-				segments:  make(map[Shmseg]*Segment),
+				segments:  make(map[Seg]*Segment),
 			}
 
 			conn := &mockConnection{
@@ -439,7 +439,7 @@ func TestAttachSegment(t *testing.T) {
 			ext := &Extension{
 				supported:  tt.supported,
 				baseOpcode: 130,
-				segments:   make(map[Shmseg]*Segment),
+				segments:   make(map[Seg]*Segment),
 			}
 
 			conn := &mockConnection{
@@ -545,7 +545,7 @@ func TestDetachSegment(t *testing.T) {
 			ext := &Extension{
 				supported:  tt.supported,
 				baseOpcode: 130,
-				segments:   make(map[Shmseg]*Segment),
+				segments:   make(map[Seg]*Segment),
 			}
 			ext.segments[tt.segment.ID] = tt.segment
 
