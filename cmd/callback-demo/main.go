@@ -62,12 +62,8 @@ func main() {
 	fmt.Println("=== Callback Demonstration ===")
 	fmt.Println()
 
-	fmt.Println("1. Simulating button clicks:")
-	for i := 0; i < 3; i++ {
-		if btn.OnClick != nil {
-			// Internal onClick is already set up
-		}
-	}
+	fmt.Println("1. Button callbacks are registered")
+	fmt.Println("   (In a real app, callbacks fire on user interaction)")
 	fmt.Println()
 
 	fmt.Println("2. Simulating text input changes:")
