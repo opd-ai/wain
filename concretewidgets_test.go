@@ -182,10 +182,10 @@ func TestTextInputSetFocus(t *testing.T) {
 	if input == nil {
 		t.Fatal("NewTextInput returned nil")
 	}
-	
+
 	input.SetFocus(true)
 	input.SetFocus(false)
-	
+
 	width, height := input.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("expected non-zero bounds, got width=%d height=%d", width, height)
@@ -301,7 +301,7 @@ func TestSpacerDraw(t *testing.T) {
 	if spacer == nil {
 		t.Fatal("NewSpacer returned nil")
 	}
-	
+
 	width, height := spacer.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("expected non-zero bounds, got width=%d height=%d", width, height)
@@ -310,17 +310,17 @@ func TestSpacerDraw(t *testing.T) {
 
 func TestButtonImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &Button{}
-	
+
 	btn := NewButton("Test", Size{Width: 30, Height: 8})
 	if btn == nil {
 		t.Fatal("NewButton returned nil")
 	}
-	
+
 	width, height := btn.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("button must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	consumed := btn.HandleEvent(newClickEvent(5, 5))
 	if !consumed {
 		t.Error("button should consume pointer events")
@@ -329,17 +329,17 @@ func TestButtonImplementsPublicWidget(t *testing.T) {
 
 func TestLabelImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &Label{}
-	
+
 	label := NewLabel("Test", Size{Width: 20, Height: 4})
 	if label == nil {
 		t.Fatal("NewLabel returned nil")
 	}
-	
+
 	width, height := label.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("label must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	consumed := label.HandleEvent(newClickEvent(5, 5))
 	if consumed {
 		t.Error("label should not consume click events")
@@ -348,17 +348,17 @@ func TestLabelImplementsPublicWidget(t *testing.T) {
 
 func TestTextInputImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &TextInput{}
-	
+
 	input := NewTextInput("", Size{Width: 50, Height: 6})
 	if input == nil {
 		t.Fatal("NewTextInput returned nil")
 	}
-	
+
 	width, height := input.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("text input must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	input.SetFocus(true)
 	consumed := input.HandleEvent(newKeyEvent(KeyPress, Key('a'), 'a'))
 	if !consumed {
@@ -368,17 +368,17 @@ func TestTextInputImplementsPublicWidget(t *testing.T) {
 
 func TestScrollViewImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &ScrollView{}
-	
+
 	scroll := NewScrollView(Size{Width: 100, Height: 80})
 	if scroll == nil {
 		t.Fatal("NewScrollView returned nil")
 	}
-	
+
 	width, height := scroll.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("scroll view must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	consumed := scroll.HandleEvent(newScrollEvent(5.0))
 	if !consumed {
 		t.Error("scroll view should consume scroll events")
@@ -387,18 +387,18 @@ func TestScrollViewImplementsPublicWidget(t *testing.T) {
 
 func TestImageWidgetImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &ImageWidget{}
-	
+
 	img := &Image{id: 1}
 	widget := NewImageWidget(img, Size{Width: 20, Height: 20})
 	if widget == nil {
 		t.Fatal("NewImageWidget returned nil")
 	}
-	
+
 	width, height := widget.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("image widget must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	if widget.Image() != img {
 		t.Error("image widget should return the correct image")
 	}
@@ -406,17 +406,17 @@ func TestImageWidgetImplementsPublicWidget(t *testing.T) {
 
 func TestSpacerImplementsPublicWidget(t *testing.T) {
 	var _ PublicWidget = &Spacer{}
-	
+
 	spacer := NewSpacer(Size{Width: 60, Height: 10})
 	if spacer == nil {
 		t.Fatal("NewSpacer returned nil")
 	}
-	
+
 	width, height := spacer.Bounds()
 	if width == 0 || height == 0 {
 		t.Errorf("spacer must have non-zero bounds, got width=%d height=%d", width, height)
 	}
-	
+
 	consumed := spacer.HandleEvent(newClickEvent(5, 5))
 	if consumed {
 		t.Error("spacer should not consume events")
