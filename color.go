@@ -30,11 +30,6 @@ func (c Color) toInternal() primitives.Color {
 	return primitives.Color{R: c.R, G: c.G, B: c.B, A: c.A}
 }
 
-// toU32 converts the color to a 32-bit ARGB value for display list commands.
-func (c Color) toU32() uint32 {
-	return uint32(c.A)<<24 | uint32(c.R)<<16 | uint32(c.G)<<8 | uint32(c.B)
-}
-
 // WithAlpha returns a new color with the specified alpha value.
 func (c Color) WithAlpha(a uint8) Color {
 	return Color{R: c.R, G: c.G, B: c.B, A: a}
