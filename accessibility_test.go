@@ -31,7 +31,7 @@ func TestKeyboardNavigation(t *testing.T) {
 	if len(widgets) != 4 {
 		t.Fatalf("Expected 4 widgets, got %d", len(widgets))
 	}
-	
+
 	for i, widget := range widgets {
 		if widget == nil {
 			t.Fatalf("Widget %d is nil", i)
@@ -54,7 +54,7 @@ func TestEnterKeyActivation(t *testing.T) {
 	if button == nil {
 		t.Fatal("NewButton returned nil")
 	}
-	
+
 	button.OnClick(func() {
 		activated = true
 	})
@@ -88,7 +88,7 @@ func TestTextInputKeyboardInteraction(t *testing.T) {
 	ptrEvt := &wain.PointerEvent{}
 	handled = input.HandleEvent(ptrEvt)
 	_ = handled
-	
+
 	// Verify the input widget has expected properties
 	if input.Text() != "" {
 		t.Errorf("Expected empty text, got '%s'", input.Text())
@@ -126,7 +126,7 @@ func TestButtonAccessibility(t *testing.T) {
 	if button == nil {
 		t.Fatal("NewButton returned nil")
 	}
-	
+
 	button.OnClick(func() {
 		clicked = true
 	})
@@ -177,7 +177,7 @@ func TestScrollViewKeyboardScroll(t *testing.T) {
 	if width == 0 || height == 0 {
 		t.Errorf("Expected non-zero bounds, got Width=%d Height=%d", width, height)
 	}
-	
+
 	// Note: ScrollView.Children() is not yet implemented (see API.md known limitations)
 	// Just verify the widget was created successfully above
 }
@@ -252,7 +252,7 @@ func TestAccessibilityBaseline(t *testing.T) {
 			if tt.widget == nil {
 				t.Fatalf("%s widget is nil", tt.name)
 			}
-			
+
 			// Test keyboard event handling
 			keyEvt := &wain.KeyEvent{}
 			handled := tt.widget.HandleEvent(keyEvt)
@@ -262,7 +262,7 @@ func TestAccessibilityBaseline(t *testing.T) {
 			ptrEvt := &wain.PointerEvent{}
 			handled = tt.widget.HandleEvent(ptrEvt)
 			_ = handled
-			
+
 			// Verify widget has non-zero bounds
 			width, height := tt.widget.Bounds()
 			if width == 0 || height == 0 {
