@@ -197,6 +197,18 @@ go: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o $(GO_BIN) $(GO_PKG)
+	@echo "Verifying static linkage…"
+	@if ! ldd $(GO_BIN) 2>&1 | grep -q "not a dynamic executable"; then \
+		echo ""; \
+		echo "ERROR: Binary has dynamic dependencies:"; \
+		echo ""; \
+		ldd $(GO_BIN); \
+		echo ""; \
+		echo "Ensure CC=$(CC) and CGO_LDFLAGS are correctly set for static linking."; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ Binary is fully statically linked."
 
 build: go
 
@@ -220,6 +232,9 @@ x11-dmabuf-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/x11-dmabuf-demo github.com/opd-ai/wain/cmd/x11-dmabuf-demo
+	@if ! ldd bin/x11-dmabuf-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/x11-dmabuf-demo has dynamic dependencies:" && ldd bin/x11-dmabuf-demo && exit 1; \
+	fi
 
 widget-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -229,6 +244,9 @@ widget-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/widget-demo github.com/opd-ai/wain/cmd/widget-demo
+	@if ! ldd bin/widget-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/widget-demo has dynamic dependencies:" && ldd bin/widget-demo && exit 1; \
+	fi
 
 dmabuf-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -238,6 +256,9 @@ dmabuf-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/dmabuf-demo github.com/opd-ai/wain/cmd/dmabuf-demo
+	@if ! ldd bin/dmabuf-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/dmabuf-demo has dynamic dependencies:" && ldd bin/dmabuf-demo && exit 1; \
+	fi
 
 gpu-triangle-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -247,6 +268,9 @@ gpu-triangle-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/gpu-triangle-demo github.com/opd-ai/wain/cmd/gpu-triangle-demo
+	@if ! ldd bin/gpu-triangle-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/gpu-triangle-demo has dynamic dependencies:" && ldd bin/gpu-triangle-demo && exit 1; \
+	fi
 
 gen-atlas: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -256,6 +280,9 @@ gen-atlas: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o $(GEN_ATLAS_BIN) $(GEN_ATLAS_PKG)
+	@if ! ldd $(GEN_ATLAS_BIN) 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: $(GEN_ATLAS_BIN) has dynamic dependencies:" && ldd $(GEN_ATLAS_BIN) && exit 1; \
+	fi
 
 double-buffer-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -265,6 +292,9 @@ double-buffer-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/double-buffer-demo github.com/opd-ai/wain/cmd/double-buffer-demo
+	@if ! ldd bin/double-buffer-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/double-buffer-demo has dynamic dependencies:" && ldd bin/double-buffer-demo && exit 1; \
+	fi
 
 wain-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -274,6 +304,9 @@ wain-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/wain-demo github.com/opd-ai/wain/cmd/wain-demo
+	@if ! ldd bin/wain-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/wain-demo has dynamic dependencies:" && ldd bin/wain-demo && exit 1; \
+	fi
 
 event-demo: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -283,6 +316,9 @@ event-demo: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/event-demo github.com/opd-ai/wain/cmd/event-demo
+	@if ! ldd bin/event-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/event-demo has dynamic dependencies:" && ldd bin/event-demo && exit 1; \
+	fi
 
 example-app: rust $(DL_STUB_OBJ)
 	mkdir -p bin
@@ -292,6 +328,9 @@ example-app: rust $(DL_STUB_OBJ)
 	  go build \
 	    -ldflags "-extldflags '-static'" \
 	    -o bin/example-app github.com/opd-ai/wain/cmd/example-app
+	@if ! ldd bin/example-app 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/example-app has dynamic dependencies:" && ldd bin/example-app && exit 1; \
+	fi
 
 ## ── Tests ────────────────────────────────────────────────────────────────────
 
