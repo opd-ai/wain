@@ -93,10 +93,17 @@ type poolAdapter struct {
 	pool *FramebufferPool
 }
 
+// Acquire obtains an available framebuffer from the pool, blocking if necessary.
+// It delegates to the underlying FramebufferPool's Acquire method and returns
+// the framebuffer as an interface{} to satisfy the presentpkg.FramebufferPool contract.
 func (a *poolAdapter) Acquire(ctx context.Context) (interface{}, error) {
 	return a.pool.Acquire(ctx)
 }
 
+// MarkDisplaying marks the framebuffer as actively being displayed by the compositor.
+// It type-asserts the interface{} back to *Framebuffer and delegates to the underlying
+// pool's MarkDisplaying method. This prevents the framebuffer from being recycled while
+// still visible on screen.
 func (a *poolAdapter) MarkDisplaying(fb interface{}) error {
 	return a.pool.MarkDisplaying(fb.(*Framebuffer))
 }

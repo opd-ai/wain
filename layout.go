@@ -397,6 +397,8 @@ type panelStyle struct {
 	override *StyleOverride
 }
 
+// Background returns the background color, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Background.
 func (s *panelStyle) Background() primitives.Color {
 	if s.override != nil && s.override.Background != nil {
 		return s.override.Background.toInternal()
@@ -404,6 +406,8 @@ func (s *panelStyle) Background() primitives.Color {
 	return s.base.Background.toInternal()
 }
 
+// Foreground returns the foreground (text) color, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Foreground.
 func (s *panelStyle) Foreground() primitives.Color {
 	if s.override != nil && s.override.Foreground != nil {
 		return s.override.Foreground.toInternal()
@@ -411,6 +415,8 @@ func (s *panelStyle) Foreground() primitives.Color {
 	return s.base.Foreground.toInternal()
 }
 
+// Accent returns the accent/highlight color, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Accent.
 func (s *panelStyle) Accent() primitives.Color {
 	if s.override != nil && s.override.Accent != nil {
 		return s.override.Accent.toInternal()
@@ -418,6 +424,8 @@ func (s *panelStyle) Accent() primitives.Color {
 	return s.base.Accent.toInternal()
 }
 
+// Border returns the border color, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Border.
 func (s *panelStyle) Border() primitives.Color {
 	if s.override != nil && s.override.Border != nil {
 		return s.override.Border.toInternal()
@@ -425,6 +433,8 @@ func (s *panelStyle) Border() primitives.Color {
 	return s.base.Border.toInternal()
 }
 
+// FontSize returns the base font size in pixels, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.FontSize.
 func (s *panelStyle) FontSize() float64 {
 	if s.override != nil && s.override.FontSize != nil {
 		return *s.override.FontSize
@@ -432,6 +442,8 @@ func (s *panelStyle) FontSize() float64 {
 	return s.base.FontSize
 }
 
+// Padding returns the default inner padding in pixels, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Padding.
 func (s *panelStyle) Padding() int {
 	if s.override != nil && s.override.Padding != nil {
 		return *s.override.Padding
@@ -439,6 +451,8 @@ func (s *panelStyle) Padding() int {
 	return s.base.Padding
 }
 
+// Gap returns the default gap between sibling widgets in pixels, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.Gap.
 func (s *panelStyle) Gap() int {
 	if s.override != nil && s.override.Gap != nil {
 		return *s.override.Gap
@@ -446,6 +460,8 @@ func (s *panelStyle) Gap() int {
 	return s.base.Gap
 }
 
+// BorderWidth returns the default border width in pixels, using the override if present or the base theme otherwise.
+// This implements pctwidget.Style.BorderWidth.
 func (s *panelStyle) BorderWidth() int {
 	if s.override != nil && s.override.BorderWidth != nil {
 		return *s.override.BorderWidth
