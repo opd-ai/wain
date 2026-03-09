@@ -865,10 +865,10 @@ func TestShmAttachPointerConversion(t *testing.T) {
 	// We can't actually call shmAttach with a valid SHM ID without setting up
 	// real kernel SHM resources, but we can verify the code compiles and the
 	// conversion pattern doesn't cause runtime issues with go vet.
-	
+
 	// Verify the function signature is correct
 	var _ func(uintptr) (unsafe.Pointer, syscall.Errno) = shmAttach
-	
+
 	// Note: Calling shmAttach with an invalid ID will return an error from
 	// the syscall, which is expected behavior. The important thing is that
 	// the conversion pattern itself is sound and satisfies go vet.

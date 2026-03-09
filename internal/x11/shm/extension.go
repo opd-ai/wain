@@ -182,7 +182,7 @@ func shmAttach(shmID uintptr) (ptr unsafe.Pointer, err syscall.Errno) {
 	var addr uintptr
 	addr, _, err = syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
 	ptr = *(*unsafe.Pointer)(unsafe.Pointer(&addr))
-	return
+	return ptr, err
 }
 
 // CreateSegment creates a new shared memory segment.
