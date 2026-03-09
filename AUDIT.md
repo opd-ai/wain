@@ -249,7 +249,7 @@ Documentation gate passes, but naming is critical for a library/framework:
     ```go
     const AtlasTextureSize = 1024
     ```
-- [ ] **SL-013:** Add `testing.Short()` skip guards to all 13 timing-dependent tests in `internal/render/backend/profiler_test.go`
+- [x] **SL-013:** Add `testing.Short()` skip guards to all 13 timing-dependent tests in `internal/render/backend/profiler_test.go`
 
 ### Phase 4: Remaining Readiness Gates
 

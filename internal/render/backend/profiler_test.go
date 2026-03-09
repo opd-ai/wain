@@ -6,6 +6,9 @@ import (
 )
 
 func TestFrameProfiler_BasicTiming(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Simulate a frame
@@ -36,6 +39,9 @@ func TestFrameProfiler_BasicTiming(t *testing.T) {
 }
 
 func TestFrameProfiler_MultipleFrames(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Simulate 3 frames
@@ -60,6 +66,9 @@ func TestFrameProfiler_MultipleFrames(t *testing.T) {
 }
 
 func TestFrameProfiler_MinMax(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Fast frame
@@ -90,6 +99,9 @@ func TestFrameProfiler_MinMax(t *testing.T) {
 }
 
 func TestFrameProfiler_RecentAverage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Simulate 70 frames (more than the 60-frame buffer)
@@ -118,6 +130,9 @@ func TestFrameProfiler_RecentAverage(t *testing.T) {
 }
 
 func TestFrameProfiler_Reset(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Simulate some frames
@@ -145,6 +160,9 @@ func TestFrameProfiler_Reset(t *testing.T) {
 }
 
 func TestFrameProfiler_NoGPUMark(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping timing-dependent test in short mode")
+	}
 	profiler := NewFrameProfiler()
 
 	// Begin and end frame without marking GPU submit
