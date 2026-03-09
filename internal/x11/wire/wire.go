@@ -58,6 +58,25 @@ const (
 
 	// MaxMessageSize is the maximum message size (64KB for safety).
 	MaxMessageSize = 65536
+
+	// Protocol field offsets within message buffers.
+	offsetType     = 0  // Message type byte (reply/event/error)
+	offsetData     = 1  // Data/detail/code byte
+	offsetSequence = 2  // Sequence number (uint16)
+	offsetLength   = 4  // Length field (uint32)
+	offsetBadValue = 4  // Error bad value (uint32)
+	offsetMinor    = 8  // Error minor opcode (uint16)
+	offsetMajor    = 10 // Error major opcode (uint8)
+
+	// Data section offsets for reply and event messages.
+	replyInlineDataOffset = 8  // Reply inline data starts after 8-byte header
+	eventDataOffset       = 4  // Event data starts after 4-byte header
+	replyInlineDataSize   = 24 // Reply inline data is 24 bytes
+	eventDataSize         = 28 // Event data is 28 bytes
+
+	// Protocol constants.
+	sendEventMask  = 0x7F // Mask to clear SendEvent flag from event type
+	alignmentBytes = 4    // X11 protocol uses 4-byte alignment
 )
 
 // Request opcodes for core X11 protocol operations.
@@ -129,9 +148,9 @@ type RequestHeader struct {
 // EncodeRequestHeader writes a request header to w.
 func EncodeRequestHeader(w io.Writer, opcode, data uint8, length uint16) error {
 	var buf [RequestHeaderSize]byte
-	buf[0] = opcode
-	buf[1] = data
-	binary.LittleEndian.PutUint16(buf[2:4], length)
+	buf[offsetType] = opcode
+	buf[offsetData] = data
+	binary.LittleEndian.PutUint16(buf[offsetSequence:offsetLength], length)
 
 	if _, err := w.Write(buf[:]); err != nil {
 		return fmt.Errorf("wire: failed to write request header: %w", err)
@@ -244,7 +263,7 @@ func DecodeUint8(r io.Reader) (uint8, error) {
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
 		return 0, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
-	return buf[0], nil
+	return buf[offsetType], nil
 }
 
 // MessageType represents the type of a server message.
@@ -278,13 +297,13 @@ func DecodeReplyHeader(r io.Reader) (ReplyHeader, []byte, error) {
 		return header, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	header.Type = MessageType(buf[0])
-	header.Data = buf[1]
-	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
-	header.Length = binary.LittleEndian.Uint32(buf[4:8])
+	header.Type = MessageType(buf[offsetType])
+	header.Data = buf[offsetData]
+	header.Sequence = binary.LittleEndian.Uint16(buf[offsetSequence:offsetLength])
+	header.Length = binary.LittleEndian.Uint32(buf[offsetLength:replyInlineDataOffset])
 
 	// Return header and the 24-byte inline data portion
-	return header, buf[8:], nil
+	return header, buf[replyInlineDataOffset:], nil
 }
 
 // EventHeader represents the header of an event message.
@@ -306,12 +325,12 @@ func DecodeEventHeader(r io.Reader) (EventHeader, []byte, error) {
 		return header, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	header.Type = buf[0] & 0x7F // Clear highest bit (SendEvent flag)
-	header.Detail = buf[1]
-	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
+	header.Type = buf[offsetType] & sendEventMask // Clear highest bit (SendEvent flag)
+	header.Detail = buf[offsetData]
+	header.Sequence = binary.LittleEndian.Uint16(buf[offsetSequence:offsetLength])
 
 	// Return header and the 28-byte event data
-	return header, buf[4:], nil
+	return header, buf[eventDataOffset:], nil
 }
 
 // ErrorHeader represents an error message from the server.
@@ -333,17 +352,17 @@ func DecodeErrorHeader(r io.Reader) (ErrorHeader, error) {
 		return header, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	header.Type = MessageType(buf[0])
-	header.Code = buf[1]
-	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
-	header.BadValue = binary.LittleEndian.Uint32(buf[4:8])
-	header.MinorOpcode = binary.LittleEndian.Uint16(buf[8:10])
-	header.MajorOpcode = buf[10]
+	header.Type = MessageType(buf[offsetType])
+	header.Code = buf[offsetData]
+	header.Sequence = binary.LittleEndian.Uint16(buf[offsetSequence:offsetLength])
+	header.BadValue = binary.LittleEndian.Uint32(buf[offsetBadValue:offsetMinor])
+	header.MinorOpcode = binary.LittleEndian.Uint16(buf[offsetMinor:offsetMajor])
+	header.MajorOpcode = buf[offsetMajor]
 
 	return header, nil
 }
 
 // Pad calculates the number of padding bytes needed for 4-byte alignment.
 func Pad(length int) int {
-	return (4 - (length % 4)) % 4
+	return (alignmentBytes - (length % alignmentBytes)) % alignmentBytes
 }
