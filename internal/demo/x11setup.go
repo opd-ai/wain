@@ -25,8 +25,8 @@ func RunX11Demo(width, height int) error {
 	root := conn.RootWindow()
 
 	const (
-		x           = 100
-		y           = 100
+		windowX     = 100
+		windowY     = 100
 		borderWidth = 0
 		windowClass = wire.WindowClassInputOutput
 		visual      = 0 // CopyFromParent
@@ -36,7 +36,7 @@ func RunX11Demo(width, height int) error {
 	mask := uint32(wire.CWEventMask)
 	attrs := []uint32{eventMask}
 
-	wid, err := conn.CreateWindow(root, x, y, uint16(width), uint16(height), borderWidth, windowClass, visual, mask, attrs)
+	wid, err := conn.CreateWindow(root, windowX, windowY, uint16(width), uint16(height), borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
 		return fmt.Errorf("create window: %w", err)
 	}
@@ -94,8 +94,8 @@ func ConnectAndSetupX11Window(width, height int) (*x11client.Connection, x11clie
 
 	root := conn.RootWindow()
 	const (
-		x           = 100
-		y           = 100
+		windowX     = 100
+		windowY     = 100
 		borderWidth = 0
 		windowClass = wire.WindowClassInputOutput
 		visual      = 0 // CopyFromParent
@@ -105,7 +105,7 @@ func ConnectAndSetupX11Window(width, height int) (*x11client.Connection, x11clie
 	mask := uint32(wire.CWEventMask)
 	attrs := []uint32{eventMask}
 
-	wid, err := conn.CreateWindow(root, x, y, uint16(width), uint16(height), borderWidth, windowClass, visual, mask, attrs)
+	wid, err := conn.CreateWindow(root, windowX, windowY, uint16(width), uint16(height), borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
 		conn.Close()
 		return nil, 0, fmt.Errorf("create window: %w", err)

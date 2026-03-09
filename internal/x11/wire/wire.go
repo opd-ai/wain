@@ -268,23 +268,23 @@ type ReplyHeader struct {
 
 // DecodeReplyHeader reads a reply header from r.
 func DecodeReplyHeader(r io.Reader) (ReplyHeader, []byte, error) {
-	var h ReplyHeader
+	var header ReplyHeader
 	var buf [ReplyHeaderSize]byte
 
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
 		if err == io.EOF {
-			return h, nil, io.EOF
+			return header, nil, io.EOF
 		}
-		return h, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
+		return header, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	h.Type = MessageType(buf[0])
-	h.Data = buf[1]
-	h.Sequence = binary.LittleEndian.Uint16(buf[2:4])
-	h.Length = binary.LittleEndian.Uint32(buf[4:8])
+	header.Type = MessageType(buf[0])
+	header.Data = buf[1]
+	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
+	header.Length = binary.LittleEndian.Uint32(buf[4:8])
 
 	// Return header and the 24-byte inline data portion
-	return h, buf[8:], nil
+	return header, buf[8:], nil
 }
 
 // EventHeader represents the header of an event message.
@@ -296,22 +296,22 @@ type EventHeader struct {
 
 // DecodeEventHeader reads an event from r (32 bytes total).
 func DecodeEventHeader(r io.Reader) (EventHeader, []byte, error) {
-	var h EventHeader
+	var header EventHeader
 	var buf [ReplyHeaderSize]byte
 
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
 		if err == io.EOF {
-			return h, nil, io.EOF
+			return header, nil, io.EOF
 		}
-		return h, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
+		return header, nil, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	h.Type = buf[0] & 0x7F // Clear highest bit (SendEvent flag)
-	h.Detail = buf[1]
-	h.Sequence = binary.LittleEndian.Uint16(buf[2:4])
+	header.Type = buf[0] & 0x7F // Clear highest bit (SendEvent flag)
+	header.Detail = buf[1]
+	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
 
 	// Return header and the 28-byte event data
-	return h, buf[4:], nil
+	return header, buf[4:], nil
 }
 
 // ErrorHeader represents an error message from the server.
@@ -326,21 +326,21 @@ type ErrorHeader struct {
 
 // DecodeErrorHeader reads an error message from r.
 func DecodeErrorHeader(r io.Reader) (ErrorHeader, error) {
-	var h ErrorHeader
+	var header ErrorHeader
 	var buf [ReplyHeaderSize]byte
 
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
-		return h, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
+		return header, fmt.Errorf("%w: %v", ErrMessageTooShort, err)
 	}
 
-	h.Type = MessageType(buf[0])
-	h.Code = buf[1]
-	h.Sequence = binary.LittleEndian.Uint16(buf[2:4])
-	h.BadValue = binary.LittleEndian.Uint32(buf[4:8])
-	h.MinorOpcode = binary.LittleEndian.Uint16(buf[8:10])
-	h.MajorOpcode = buf[10]
+	header.Type = MessageType(buf[0])
+	header.Code = buf[1]
+	header.Sequence = binary.LittleEndian.Uint16(buf[2:4])
+	header.BadValue = binary.LittleEndian.Uint32(buf[4:8])
+	header.MinorOpcode = binary.LittleEndian.Uint16(buf[8:10])
+	header.MajorOpcode = buf[10]
 
-	return h, nil
+	return header, nil
 }
 
 // Pad calculates the number of padding bytes needed for 4-byte alignment.

@@ -314,8 +314,8 @@ func createX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	root := conn.RootWindow()
 
 	const (
-		x           = 100
-		y           = 100
+		windowX     = 100
+		windowY     = 100
 		borderWidth = 0
 		windowClass = wire.WindowClassInputOutput
 		visual      = 0 // CopyFromParent
@@ -325,7 +325,7 @@ func createX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	mask := uint32(wire.CWEventMask)
 	attrs := []uint32{eventMask}
 
-	window, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
+	window, err := conn.CreateWindow(root, windowX, windowY, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create window: %w", err)
 	}

@@ -168,8 +168,8 @@ func setupGPU() (*render.Allocator, *render.GpuContext, error) {
 func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	fmt.Println("\n[8/12] Creating X11 window...")
 	const (
-		x           = 100
-		y           = 100
+		windowX     = 100
+		windowY     = 100
 		borderWidth = 0
 		windowClass = wire.WindowClassInputOutput
 		visual      = 0 // CopyFromParent
@@ -180,7 +180,7 @@ func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	attrs := []uint32{eventMask}
 	root := conn.RootWindow()
 
-	wid, err := conn.CreateWindow(root, x, y, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
+	wid, err := conn.CreateWindow(root, windowX, windowY, windowWidth, windowHeight, borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
 		return 0, fmt.Errorf("create window: %w", err)
 	}

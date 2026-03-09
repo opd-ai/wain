@@ -95,26 +95,26 @@ type Argument struct {
 
 // DecodeHeader reads a message header from r.
 func DecodeHeader(r io.Reader) (Header, error) {
-	var h Header
+	var header Header
 	var buf [HeaderSize]byte
 
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
 		if err == io.EOF {
-			return h, io.EOF
+			return header, io.EOF
 		}
-		return h, fmt.Errorf("%w: %v", ErrInvalidHeader, err)
+		return header, fmt.Errorf("%w: %v", ErrInvalidHeader, err)
 	}
 
-	h.ObjectID = binary.LittleEndian.Uint32(buf[0:4])
+	header.ObjectID = binary.LittleEndian.Uint32(buf[0:4])
 	combined := binary.LittleEndian.Uint32(buf[4:8])
-	h.Size = uint16(combined >> 16)
-	h.Opcode = uint16(combined & 0xFFFF)
+	header.Size = uint16(combined >> 16)
+	header.Opcode = uint16(combined & 0xFFFF)
 
-	if h.Size < MinMessageSize || h.Size > MaxMessageSize {
-		return h, fmt.Errorf("%w: size %d out of range", ErrInvalidHeader, h.Size)
+	if header.Size < MinMessageSize || header.Size > MaxMessageSize {
+		return header, fmt.Errorf("%w: size %d out of range", ErrInvalidHeader, header.Size)
 	}
 
-	return h, nil
+	return header, nil
 }
 
 // EncodeHeader writes a message header to w.
