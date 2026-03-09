@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 
 	"github.com/opd-ai/wain"
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
@@ -21,14 +22,7 @@ func main() {
 	app := wain.NewApp()
 
 	// Create a demo window
-	win, err := app.NewWindow(wain.WindowConfig{
-		Title:  "Resource Management Demo",
-		Width:  800,
-		Height: 600,
-	})
-	if err != nil {
-		log.Fatalf("Failed to create window: %v", err)
-	}
+	win := demo.CreateDefaultWindow(app, "Resource Management Demo")
 
 	// Get default font
 	defaultFont := app.DefaultFont()

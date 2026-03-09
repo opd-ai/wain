@@ -49,20 +49,7 @@ func main() {
 
 	// Create a window with custom configuration
 	log.Println("Creating window...")
-	win, err := app.NewWindow(wain.WindowConfig{
-		Title:     "wain Window Demo",
-		Width:     1024,
-		Height:    768,
-		MinWidth:  640,
-		MinHeight: 480,
-		MaxWidth:  1920,
-		MaxHeight: 1080,
-	})
-	if err != nil {
-		log.Printf("Failed to create window: %v", err)
-		app.Quit()
-		os.Exit(1)
-	}
+	win := demo.CreateLargeWindow(app, "wain Window Demo")
 
 	log.Printf("Window created: %s", win.Title())
 	w, h := win.Size()

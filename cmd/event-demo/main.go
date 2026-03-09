@@ -32,14 +32,7 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
-	win, err := app.NewWindow(wain.WindowConfig{
-		Title:  "Event System Demo",
-		Width:  800,
-		Height: 600,
-	})
-	if err != nil {
-		log.Fatalf("Failed to create window: %v", err)
-	}
+	win := demo.CreateDefaultWindow(app, "Event System Demo")
 
 	setupEventHandlers(win, app)
 

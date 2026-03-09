@@ -266,7 +266,7 @@ Priority: focus on library code (60 functions), defer demo code (34 functions):
 
 ### Phase 5: Medium/Low Slop Cleanup
 - [x] **SL-004:** Extract event handler stubs from 10+ demo files into `internal/demo/logging.go`
-- [ ] **SL-005:** Extract common window configuration blocks from 7+ demo files into `internal/demo/config.go`
+- [x] **SL-005:** Extract common window configuration blocks from 7+ demo files into `internal/demo/config.go`
 - [ ] **SL-010:** Extract remaining bare X11 protocol constants in `internal/x11/wire/wire.go` to named constants
 - [ ] **SL-014:** Add GPU device skip guards in `internal/integration/gpu_test.go`
 - [ ] **SL-015:** Replace blank identifier test assertions in `accessibility_test.go` and `integration_test.go` with explicit value checks
