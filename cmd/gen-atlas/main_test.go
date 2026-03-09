@@ -19,7 +19,7 @@ func TestGenAtlasSmoke(t *testing.T) {
 
 	// Create internal/raster/text/data directory structure in temp dir
 	dataDir := filepath.Join(tmpDir, "internal", "raster", "text", "data")
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		t.Fatalf("failed to create data directory: %v", err)
 	}
 
@@ -51,12 +51,12 @@ func TestGetCharPattern(t *testing.T) {
 		char rune
 		want int // expected pattern length
 	}{
-		{' ', 0},  // space has empty pattern
-		{'!', 6},  // exclamation has pattern
-		{'A', 6},  // A has pattern
-		{'H', 5},  // H has pattern
-		{'e', 5},  // e has pattern
-		{'Z', 5},  // unknown char gets default pattern
+		{' ', 0}, // space has empty pattern
+		{'!', 6}, // exclamation has pattern
+		{'A', 6}, // A has pattern
+		{'H', 5}, // H has pattern
+		{'e', 5}, // e has pattern
+		{'Z', 5}, // unknown char gets default pattern
 	}
 
 	for _, tt := range tests {
