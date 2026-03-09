@@ -145,9 +145,11 @@ go build .
 As an alternative to `make`, build using Go's native workflow:
 
 ```bash
+# Ensure RUST_MUSL_TARGET matches the target used by scripts/build-rust.sh / the Makefile,
+# for example: export RUST_MUSL_TARGET=x86_64-unknown-linux-musl
 go generate ./...
 CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender_sys.a \
+  CGO_LDFLAGS="$(pwd)/render-sys/target/${RUST_MUSL_TARGET}/release/librender_sys.a \
   $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
   CGO_LDFLAGS_ALLOW=".*" \
   go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
