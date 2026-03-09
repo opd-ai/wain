@@ -30,7 +30,9 @@
 
 ## Implementation Steps
 
-### Step 1: Fix GPU Integration Tests (CRITICAL)
+### Step 1: Fix GPU Integration Tests (CRITICAL) ✅
+
+**Status**: COMPLETE (2026-03-09)
 
 **Deliverable**: GPU tests skip gracefully on systems without compatible hardware instead of failing the entire test suite.
 
@@ -52,7 +54,9 @@ make test-go 2>&1 | grep -E "^(ok|PASS|---)" | head -5
 
 ---
 
-### Step 2: Fix go vet Warning (HIGH)
+### Step 2: Fix go vet Warning (HIGH) ✅
+
+**Status**: COMPLETE (2026-03-09)
 
 **Deliverable**: Zero `go vet` warnings in the codebase.
 
@@ -73,19 +77,21 @@ go vet ./... 2>&1 | wc -l
 
 ---
 
-### Step 3: Reduce Complexity of bindWaylandGlobals (MEDIUM)
+### Step 3: Reduce Complexity of bindWaylandGlobals (MEDIUM) ✅
+
+**Status**: COMPLETE (2026-03-09, commit abe7010)
 
 **Deliverable**: Split `bindWaylandGlobals` (app.go:1204) into focused helper functions, reducing cyclomatic complexity from 11 to <9.
 
 **Dependencies**: None
 
 **Changes**:
-1. Extract `bindCompositor(registry *Registry, globals map[string]Global) error` — handles compositor and SHM binding
-2. Extract `bindShellProtocols(registry *Registry, globals map[string]Global) error` — handles xdg-shell and xdg-decoration
-3. Extract `bindInputDevices(registry *Registry, globals map[string]Global) error` — handles seat, pointer, keyboard
-4. Reduce main `bindWaylandGlobals` to ~20 lines calling these three helpers
+1. ✅ Extract `bindCompositor(registry *Registry) error` — handles compositor and SHM binding (cc=5)
+2. ✅ Extract `bindShellProtocols(registry *Registry) error` — handles xdg-shell protocols (cc=3)
+3. ✅ Extract `bindInputDevices(registry *Registry) error` — handles seat, pointer, keyboard (cc=5)
+4. ✅ Reduce main `bindWaylandGlobals` to 10 lines (achieved: cc=4, down from cc=11)
 
-**Acceptance**: Function cyclomatic complexity below 9
+**Acceptance**: Function cyclomatic complexity below 9 ✅ (achieved: cc=4)
 
 **Validation**:
 ```bash
