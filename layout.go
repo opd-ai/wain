@@ -452,4 +452,3 @@ func (s *panelStyle) BorderWidth() int {
 	}
 	return s.base.BorderWidth
 }
-
