@@ -381,15 +381,18 @@ func newDRI3Adapter(conn *x11client.Connection) *dri3Adapter {
 	return &dri3Adapter{Connection: conn}
 }
 
+// AllocXID allocates a new X11 identifier from the connection's XID pool.
 func (a *dri3Adapter) AllocXID() (dri3.XID, error) {
 	xid, err := a.Connection.AllocXID()
 	return dri3.XID(xid), err
 }
 
+// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and waits for the reply.
 func (a *dri3Adapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
 	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
 }
 
+// SendRequestWithFDs sends an X11 request with file descriptors without waiting for a reply.
 func (a *dri3Adapter) SendRequestWithFDs(req []byte, fds []int) error {
 	return a.Connection.SendRequestWithFDs(req, fds)
 }
@@ -402,6 +405,7 @@ func newPresentAdapter(conn *x11client.Connection) *presentAdapter {
 	return &presentAdapter{Connection: conn}
 }
 
+// AllocXID allocates a new X11 identifier from the connection's XID pool.
 func (a *presentAdapter) AllocXID() (present.XID, error) {
 	xid, err := a.Connection.AllocXID()
 	return present.XID(xid), err
