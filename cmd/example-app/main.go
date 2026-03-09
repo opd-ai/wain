@@ -29,7 +29,6 @@ import (
 	"log"
 
 	"github.com/opd-ai/wain"
-	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
@@ -79,7 +78,7 @@ func main() {
 
 	// Report success
 	log.Println("=== Example Complete ===")
-	demo.PrintFeatureList("This example demonstrates the public wain API structure:", []string{
+	printFeatureList("This example demonstrates the public wain API structure:", []string{
 		"Percentage-based layout (Row, Column, ScrollView)",
 		"Widget types (Panel, Button, Label, TextInput, Spacer)",
 		"Theme system (DefaultDark, DefaultLight, HighContrast)",
@@ -230,7 +229,7 @@ func buildFooter(app *wain.App) *wain.Row {
 // printLayoutStructure displays the UI hierarchy
 func printLayoutStructure() {
 	log.Println("=== UI Layout Structure ===")
-	demo.PrintFeatureList("Root (Column, 100% × 100%)", []string{
+	printFeatureList("Root (Column, 100% × 100%)", []string{
 		"Header (Row, 100% × auto)",
 		"  ├── Title (Label, 70% × 100%)",
 		"  ├── Spacer (5% × 100%)",
@@ -279,5 +278,14 @@ func demonstrateThemes(app *wain.App) {
 		log.Printf("  Accent:     RGB(%d, %d, %d)", theme.Accent.R, theme.Accent.G, theme.Accent.B)
 		log.Printf("  FontSize:   %.1f", theme.FontSize)
 		log.Println()
+	}
+}
+
+// printFeatureList prints a header followed by bullet-pointed items.
+func printFeatureList(header string, items []string) {
+	fmt.Println()
+	fmt.Println(header)
+	for _, item := range items {
+		fmt.Println("  • " + item)
 	}
 }
