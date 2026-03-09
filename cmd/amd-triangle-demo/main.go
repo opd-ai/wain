@@ -55,76 +55,6 @@ type demoContext struct {
 	window     x11client.XID
 }
 
-type dri3ConnectionAdapter struct {
-	*x11client.Connection
-}
-
-// AllocXID allocates an X11 resource ID and returns it as a DRI3 XID.
-func (a *dri3ConnectionAdapter) AllocXID() (dri3.XID, error) {
-	xid, err := a.Connection.AllocXID()
-	return dri3.XID(xid), err
-}
-
-// SendRequest forwards an X11 protocol request through the underlying connection.
-func (a *dri3ConnectionAdapter) SendRequest(buf []byte) error {
-	return a.Connection.SendRequest(buf)
-}
-
-// SendRequestAndReply sends an X11 request and waits for a reply.
-func (a *dri3ConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
-	return a.Connection.SendRequestAndReply(req)
-}
-
-// SendRequestWithFDs sends an X11 request with file descriptors attached.
-func (a *dri3ConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
-	return a.Connection.SendRequestWithFDs(req, fds)
-}
-
-// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and returns the reply and fds.
-func (a *dri3ConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
-	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
-}
-
-// ExtensionOpcode returns the major opcode for an X11 extension by name.
-func (a *dri3ConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
-	return a.Connection.ExtensionOpcode(name)
-}
-
-type presentConnectionAdapter struct {
-	*x11client.Connection
-}
-
-// AllocXID allocates an X11 resource ID and returns it as a Present XID.
-func (a *presentConnectionAdapter) AllocXID() (present.XID, error) {
-	xid, err := a.Connection.AllocXID()
-	return present.XID(xid), err
-}
-
-// SendRequest forwards an X11 protocol request through the underlying connection.
-func (a *presentConnectionAdapter) SendRequest(buf []byte) error {
-	return a.Connection.SendRequest(buf)
-}
-
-// SendRequestAndReply sends an X11 request and waits for a reply.
-func (a *presentConnectionAdapter) SendRequestAndReply(req []byte) ([]byte, error) {
-	return a.Connection.SendRequestAndReply(req)
-}
-
-// SendRequestWithFDs sends an X11 request with file descriptors attached.
-func (a *presentConnectionAdapter) SendRequestWithFDs(req []byte, fds []int) error {
-	return a.Connection.SendRequestWithFDs(req, fds)
-}
-
-// SendRequestAndReplyWithFDs sends an X11 request with file descriptors and returns the reply and fds.
-func (a *presentConnectionAdapter) SendRequestAndReplyWithFDs(req []byte, fds []int) ([]byte, []int, error) {
-	return a.Connection.SendRequestAndReplyWithFDs(req, fds)
-}
-
-// ExtensionOpcode returns the major opcode for an X11 extension by name.
-func (a *presentConnectionAdapter) ExtensionOpcode(name string) (uint8, error) {
-	return a.Connection.ExtensionOpcode(name)
-}
-
 func runDemo() error {
 	ctx, cleanup, err := setupX11AndGPU()
 	if err != nil {
@@ -162,7 +92,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 	fmt.Println("       ✓ Connected to :0")
 
 	fmt.Println("\n[2/8] Querying DRI3 extension...")
-	dri3Adapter := &dri3ConnectionAdapter{conn}
+	dri3Adapter := demo.NewDRI3ConnectionAdapter(conn)
 	dri3Ext, err := dri3.QueryExtension(dri3Adapter)
 	if err != nil {
 		conn.Close()
@@ -171,7 +101,7 @@ func setupX11AndGPU() (*demoContext, func(), error) {
 	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
 
 	fmt.Println("\n[3/8] Querying Present extension...")
-	presentAdapter := &presentConnectionAdapter{conn}
+	presentAdapter := demo.NewPresentConnectionAdapter(conn)
 	presentExt, err := present.QueryExtension(presentAdapter)
 	if err != nil {
 		conn.Close()
@@ -311,7 +241,7 @@ func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11c
 	}
 
 	size := buffer.Stride * buffer.Height
-	dri3Adapter := &dri3ConnectionAdapter{ctx.conn}
+	dri3Adapter := demo.NewDRI3ConnectionAdapter(ctx.conn)
 	err = ctx.dri3Ext.PixmapFromBuffer(
 		dri3Adapter,
 		dri3.XID(pixmapXID),
@@ -335,7 +265,7 @@ func createPixmapFromBuffer(ctx *demoContext, buffer *render.BufferHandle) (x11c
 func presentPixmapToWindow(ctx *demoContext, pixmap x11client.XID) error {
 	fmt.Println("\n[Present] Presenting pixmap to window...")
 
-	presentAdapter := &presentConnectionAdapter{ctx.conn}
+	presentAdapter := demo.NewPresentConnectionAdapter(ctx.conn)
 	err := ctx.presentExt.PresentPixmap(presentAdapter, present.PixmapPresentOptions{
 		Window:  present.XID(ctx.window),
 		Pixmap:  present.XID(pixmap),

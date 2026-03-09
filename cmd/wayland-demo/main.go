@@ -123,21 +123,12 @@ func createWindow(ctx *demoContext) (*client.Surface, error) {
 	}
 	fmt.Printf("      ✓ Created wl_surface (ID %d)\n", surface.ID())
 
-	xdgSurface, err := ctx.wmBase.GetXdgSurface(surface.ID())
+	xdgSurface, toplevel, err := demo.CreateXdgWindow(ctx.conn, ctx.wmBase, surface, "wain Wayland Demo")
 	if err != nil {
-		return nil, fmt.Errorf("get xdg_surface: %w", err)
+		return nil, err
 	}
 	fmt.Printf("      ✓ Created xdg_surface (ID %d)\n", xdgSurface.ID())
-
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return nil, fmt.Errorf("get toplevel: %w", err)
-	}
 	fmt.Printf("      ✓ Created xdg_toplevel (ID %d)\n", toplevel.ID())
-
-	if err := toplevel.SetTitle("wain Wayland Demo"); err != nil {
-		return nil, fmt.Errorf("set title: %w", err)
-	}
 	fmt.Println("      ✓ Set window title")
 
 	if err := surface.Commit(); err != nil {
