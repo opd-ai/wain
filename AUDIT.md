@@ -232,7 +232,7 @@ No CRITICAL or HIGH security findings. Address MEDIUM findings:
 Documentation gate passes, but naming is critical for a library/framework:
 
 - [x] **Naming (Critical Weight):** Address 44 identifier violations — rename single-letter variables in non-loop contexts (primarily `x`/`y` in demo code outside tight arithmetic loops) ✅ COMPLETED (2026-03-09) — Reduced from 44 to 28 violations by renaming: `h` → `header` in wire protocol decoders (4 instances), `x`/`y` → `windowX`/`windowY` in window setup code (12 instances)
-- [ ] **Naming:** Address file stuttering violations — rename 10 files following Go convention (e.g., `composite/composite.go` → `composite/ops.go`). Low priority — only if refactoring these packages anyway.
+- [x] **Naming:** Address file stuttering violations — rename 10 files following Go convention (e.g., `composite/composite.go` → `composite/ops.go`). Low priority — only if refactoring these packages anyway.
 - [ ] **Naming:** Define `type FramebufferHandle interface{}` in `internal/render/present/` to replace bare `interface{}` (SL-007, SL-011)
 - [ ] **Naming:** Define `type CustomEventPayload interface{}` or use concrete types for `event.go:286` (SL-006)
 
