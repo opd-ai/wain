@@ -105,6 +105,7 @@ func (t *Touch) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleDownEvent processes wl_touch.down event (opcode 0).
 func (t *Touch) handleDownEvent(args []wire.Argument) error {
 	if len(args) < 6 {
 		return fmt.Errorf("touch: down event requires 6 arguments, got %d", len(args))
@@ -137,6 +138,7 @@ func (t *Touch) handleDownEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleUpEvent processes wl_touch.up event (opcode 1).
 func (t *Touch) handleUpEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("touch: up event requires 3 arguments, got %d", len(args))
@@ -157,6 +159,7 @@ func (t *Touch) handleUpEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleMotionEvent processes wl_touch.motion event (opcode 2).
 func (t *Touch) handleMotionEvent(args []wire.Argument) error {
 	if len(args) < 4 {
 		return fmt.Errorf("touch: motion event requires 4 arguments, got %d", len(args))
@@ -181,6 +184,7 @@ func (t *Touch) handleMotionEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleShapeEvent processes wl_touch.shape event (opcode 4).
 func (t *Touch) handleShapeEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("touch: shape event requires 3 arguments, got %d", len(args))
@@ -201,6 +205,7 @@ func (t *Touch) handleShapeEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleOrientationEvent processes wl_touch.orientation event (opcode 5).
 func (t *Touch) handleOrientationEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("touch: orientation event requires 2 arguments, got %d", len(args))

@@ -157,6 +157,7 @@ func (k *Keyboard) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleKeymapEvent processes wl_keyboard.keymap event (opcode 0).
 func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("keyboard: keymap event requires 3 arguments, got %d", len(args))
@@ -177,6 +178,7 @@ func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleEnterEvent processes wl_keyboard.enter event (opcode 1).
 func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("keyboard: enter event requires 3 arguments, got %d", len(args))
@@ -203,6 +205,7 @@ func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleLeaveEvent processes wl_keyboard.leave event (opcode 2).
 func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("keyboard: leave event requires 2 arguments, got %d", len(args))
@@ -219,6 +222,7 @@ func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleKeyEvent processes wl_keyboard.key event (opcode 3).
 func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
 	if len(args) < 4 {
 		return fmt.Errorf("keyboard: key event requires 4 arguments, got %d", len(args))
@@ -243,6 +247,7 @@ func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleModifiersEvent processes wl_keyboard.modifiers event (opcode 4).
 func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
 	if len(args) < 5 {
 		return fmt.Errorf("keyboard: modifiers event requires 5 arguments, got %d", len(args))
@@ -271,6 +276,7 @@ func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleRepeatInfoEvent processes wl_keyboard.repeat_info event (opcode 5).
 func (k *Keyboard) handleRepeatInfoEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("keyboard: repeat_info event requires 2 arguments, got %d", len(args))

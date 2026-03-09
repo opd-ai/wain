@@ -223,6 +223,7 @@ func (p *Pointer) HandleEvent(opcode uint16, args []wire.Argument) error {
 	}
 }
 
+// handleEnterEvent processes wl_pointer.enter event (opcode 0).
 func (p *Pointer) handleEnterEvent(args []wire.Argument) error {
 	if len(args) < 4 {
 		return fmt.Errorf("pointer: enter event requires 4 arguments, got %d", len(args))
@@ -247,6 +248,7 @@ func (p *Pointer) handleEnterEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleLeaveEvent processes wl_pointer.leave event (opcode 1).
 func (p *Pointer) handleLeaveEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("pointer: leave event requires 2 arguments, got %d", len(args))
@@ -263,6 +265,7 @@ func (p *Pointer) handleLeaveEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleMotionEvent processes wl_pointer.motion event (opcode 2).
 func (p *Pointer) handleMotionEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("pointer: motion event requires 3 arguments, got %d", len(args))
@@ -283,6 +286,7 @@ func (p *Pointer) handleMotionEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleButtonEvent processes wl_pointer.button event (opcode 3).
 func (p *Pointer) handleButtonEvent(args []wire.Argument) error {
 	if len(args) < 4 {
 		return fmt.Errorf("pointer: button event requires 4 arguments, got %d", len(args))
@@ -307,6 +311,7 @@ func (p *Pointer) handleButtonEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleAxisEvent processes wl_pointer.axis event (opcode 4).
 func (p *Pointer) handleAxisEvent(args []wire.Argument) error {
 	if len(args) < 3 {
 		return fmt.Errorf("pointer: axis event requires 3 arguments, got %d", len(args))
@@ -327,6 +332,7 @@ func (p *Pointer) handleAxisEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleAxisSourceEvent processes wl_pointer.axis_source event (opcode 5).
 func (p *Pointer) handleAxisSourceEvent(args []wire.Argument) error {
 	if len(args) < 1 {
 		return fmt.Errorf("pointer: axis_source event requires 1 argument, got %d", len(args))
@@ -339,6 +345,7 @@ func (p *Pointer) handleAxisSourceEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleAxisStopEvent processes wl_pointer.axis_stop event (opcode 6).
 func (p *Pointer) handleAxisStopEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("pointer: axis_stop event requires 2 arguments, got %d", len(args))
@@ -355,6 +362,7 @@ func (p *Pointer) handleAxisStopEvent(args []wire.Argument) error {
 	return nil
 }
 
+// handleAxisDiscreteEvent processes wl_pointer.axis_discrete event (opcode 7).
 func (p *Pointer) handleAxisDiscreteEvent(args []wire.Argument) error {
 	if len(args) < 2 {
 		return fmt.Errorf("pointer: axis_discrete event requires 2 arguments, got %d", len(args))

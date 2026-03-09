@@ -116,6 +116,7 @@ func NewAtlas() (*Atlas, error) {
 	}, nil
 }
 
+// atlasHeader holds the binary format header for a font atlas file.
 type atlasHeader struct {
 	width, height int
 	glyphCount    int

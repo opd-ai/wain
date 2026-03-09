@@ -32,6 +32,7 @@ const (
 	KeysymSuperR    Keysym = 0xFFEC
 )
 
+// keymapEntry maps a keycode to its unshifted and shifted keysym values.
 type keymapEntry struct {
 	unshifted Keysym
 	shifted   Keysym
@@ -128,6 +129,7 @@ func (km *Keymap) keycodeToAlphanumeric(keycode uint32, shifted bool) Keysym {
 	return 0
 }
 
+// mapDigitKeycode maps keycodes 2-11 to digit keysyms (0-9 and their shifted variants).
 func mapDigitKeycode(keycode uint32, shifted bool) Keysym {
 	if !shifted {
 		if keycode == 11 {
@@ -139,18 +141,22 @@ func mapDigitKeycode(keycode uint32, shifted bool) Keysym {
 	return Keysym(shiftedDigits[keycode-2])
 }
 
+// mapQwertyRow maps keycodes 16-25 to QWERTY top row letter keysyms.
 func mapQwertyRow(keycode uint32, shifted bool) Keysym {
 	return mapLetterRange("qwertyuiop", keycode, 16, shifted)
 }
 
+// mapHomeRow maps keycodes 30-38 to QWERTY home row letter keysyms.
 func mapHomeRow(keycode uint32, shifted bool) Keysym {
 	return mapLetterRange("asdfghjkl", keycode, 30, shifted)
 }
 
+// mapBottomRow maps keycodes 44-50 to QWERTY bottom row letter keysyms.
 func mapBottomRow(keycode uint32, shifted bool) Keysym {
 	return mapLetterRange("zxcvbnm", keycode, 44, shifted)
 }
 
+// mapLetterRange maps a keycode range to letter keysyms from the provided char string.
 func mapLetterRange(chars string, keycode, offset uint32, shifted bool) Keysym {
 	char := chars[keycode-offset]
 	if shifted {
