@@ -159,11 +159,11 @@ func BlitScaled(dst *core.Buffer, dstX, dstY, dstWidth, dstHeight int,
 }
 
 // samplePixel reads a pixel from the buffer at (x, y) and returns it as [4]byte.
-func samplePixel(buf *core.Buffer, x, y int) [4]byte {
-	if x < 0 || x >= buf.Width || y < 0 || y >= buf.Height {
+func samplePixel(buf *core.Buffer, xPos, yPos int) [4]byte {
+	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return [4]byte{0, 0, 0, 0}
 	}
-	idx := y*buf.Stride + x*4
+	idx := yPos*buf.Stride + xPos*4
 	return [4]byte{
 		buf.Pixels[idx],
 		buf.Pixels[idx+1],

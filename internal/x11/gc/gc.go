@@ -231,7 +231,7 @@ func FreePixmap(conn Connection, pixmap XID) error {
 // The format should be FormatZPixmap for packed pixel data.
 // The depth is the drawable's depth (typically 24 or 32).
 // The data must be in ARGB8888 format (32 bits per pixel) for depth 24/32.
-func PutImage(conn Connection, drawable, gc XID, width, height uint16, x, y int16, depth, format uint8, data []byte) error {
+func PutImage(conn Connection, drawable, gc XID, width, height uint16, xOffset, yOffset int16, depth, format uint8, data []byte) error {
 	if len(data) == 0 {
 		return ErrInvalidImage
 	}
@@ -253,7 +253,7 @@ func PutImage(conn Connection, drawable, gc XID, width, height uint16, x, y int1
 	wire.EncodeRequestHeader(&buf, OpcodePutImage, format, msgLen)
 
 	// Encode parameters
-	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, x, y)
+	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, xOffset, yOffset)
 
 	// leftPad (0 for ZPixmap) and depth
 	buf.WriteByte(0)

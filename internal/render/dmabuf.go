@@ -101,8 +101,8 @@ func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*B
 		return nil, fmt.Errorf("failed to allocate buffer %dx%d", width, height)
 	}
 
-	var w, h, stride C.uint32_t
-	if C.buffer_get_info(handle, &w, &h, &stride) != 0 {
+	var bufWidth, bufHeight, stride C.uint32_t
+	if C.buffer_get_info(handle, &bufWidth, &bufHeight, &stride) != 0 {
 		C.buffer_destroy(a.handle, handle)
 		return nil, fmt.Errorf("failed to get buffer info")
 	}
@@ -110,13 +110,13 @@ func (a *Allocator) Allocate(width, height, bpp uint32, tiling TilingFormat) (*B
 	bufHandle := &BufferHandle{
 		handle:    handle,
 		allocator: a,
-		Width:     uint32(w),
-		Height:    uint32(h),
+		Width:     uint32(bufWidth),
+		Height:    uint32(bufHeight),
 		Stride:    uint32(stride),
 	}
 
 	// Track allocation in global statistics
-	sizeBytes := uint64(stride) * uint64(h)
+	sizeBytes := uint64(stride) * uint64(bufHeight)
 	globalMemStats.RecordAllocation(uintptr(unsafe.Pointer(handle)), sizeBytes)
 
 	return bufHandle, nil

@@ -140,13 +140,13 @@ func clamp(x, min, max float64) float64 {
 }
 
 // blendPixel blends a color onto a buffer pixel using SrcOver compositing.
-func blendPixel(buf *core.Buffer, x, y int, color core.Color, alpha uint8) {
-	if x < 0 || x >= buf.Width || y < 0 || y >= buf.Height {
+func blendPixel(buf *core.Buffer, xPos, yPos int, color core.Color, alpha uint8) {
+	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return
 	}
 
 	// Get destination pixel
-	offset := y*buf.Stride + x*4
+	offset := yPos*buf.Stride + xPos*4
 	dstB := buf.Pixels[offset]
 	dstG := buf.Pixels[offset+1]
 	dstR := buf.Pixels[offset+2]

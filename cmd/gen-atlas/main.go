@@ -86,7 +86,7 @@ func main() {
 	fmt.Printf("Generated atlas: %dx%d, %d glyphs\n", atlasWidth, atlasHeight, len(glyphs))
 }
 
-func drawSimpleGlyph(sdf []uint8, w, h, x, y, size, r int) {
+func drawSimpleGlyph(sdf []uint8, width, height, xPos, yPos, size, r int) {
 	pattern := getCharPattern(r)
 	cellW, cellH := float64(size)/6.0, float64(size)/8.0
 
@@ -104,12 +104,12 @@ func drawSimpleGlyph(sdf []uint8, w, h, x, y, size, r int) {
 			} else {
 				sdfVal = 56
 			}
-			setPixel(sdf, w, h, x+px, y+py, sdfVal)
+			setPixel(sdf, width, height, xPos+px, yPos+py, sdfVal)
 		}
 	}
 }
 
-func drawReplacementGlyph(sdf []uint8, w, h, x, y, size int) {
+func drawReplacementGlyph(sdf []uint8, width, height, xPos, yPos, size int) {
 	for py := 0; py < size; py++ {
 		for px := 0; px < size; px++ {
 			inside := (px >= 2 && px < size-2 && py >= 2 && py < size-2) &&
@@ -120,14 +120,14 @@ func drawReplacementGlyph(sdf []uint8, w, h, x, y, size int) {
 			} else {
 				sdfVal = 56
 			}
-			setPixel(sdf, w, h, x+px, y+py, sdfVal)
+			setPixel(sdf, width, height, xPos+px, yPos+py, sdfVal)
 		}
 	}
 }
 
-func setPixel(sdf []uint8, w, h, x, y int, val uint8) {
-	if x >= 0 && x < w && y >= 0 && y < h {
-		sdf[y*w+x] = val
+func setPixel(sdf []uint8, width, height, xPos, yPos int, val uint8) {
+	if xPos >= 0 && xPos < width && yPos >= 0 && yPos < height {
+		sdf[yPos*width+xPos] = val
 	}
 }
 

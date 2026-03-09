@@ -353,12 +353,12 @@ func interpolateColor(c1, c2 core.Color, t float64) core.Color {
 }
 
 // setPixel sets a pixel with SrcOver compositing.
-func setPixel(buf *core.Buffer, x, y int, color core.Color) {
-	if x < 0 || x >= buf.Width || y < 0 || y >= buf.Height {
+func setPixel(buf *core.Buffer, xPos, yPos int, color core.Color) {
+	if xPos < 0 || xPos >= buf.Width || yPos < 0 || yPos >= buf.Height {
 		return
 	}
 
-	idx := y*buf.Stride + x*4
+	idx := yPos*buf.Stride + xPos*4
 
 	srcA := uint32(color.A)
 	if srcA == 255 {

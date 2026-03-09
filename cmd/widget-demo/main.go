@@ -281,12 +281,12 @@ func pointInRect(px, py, rx, ry, rw, rh int) bool {
 }
 
 // renderText is a simple text rendering helper.
-func renderText(buf *core.Buffer, text string, x, y int, color core.Color) {
+func renderText(buf *core.Buffer, text string, xPos, yPos int, color core.Color) {
 	// For now, just draw a simple rectangle as a placeholder
 	// In a full implementation, this would use the text rasterizer
 	width := len(text) * 8
 	height := 16
-	buf.FillRect(x, y, width, height, core.Color{R: 0, G: 0, B: 0, A: 0})
+	buf.FillRect(xPos, yPos, width, height, core.Color{R: 0, G: 0, B: 0, A: 0})
 }
 
 // generateScrollItems creates dummy items for the scroll container.

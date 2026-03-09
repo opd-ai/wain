@@ -201,7 +201,7 @@ func EncodePadding(w io.Writer, n int) error {
 
 // EncodeDrawableGeometry encodes a common X11 pattern: drawable, gc, width, height, x, y.
 // This pattern appears in multiple image/graphics requests (PutImage, ShmPutImage, etc.).
-func EncodeDrawableGeometry(w io.Writer, drawable, gc uint32, width, height uint16, x, y int16) error {
+func EncodeDrawableGeometry(w io.Writer, drawable, gc uint32, width, height uint16, xOffset, yOffset int16) error {
 	if err := EncodeUint32(w, drawable); err != nil {
 		return err
 	}
@@ -214,10 +214,10 @@ func EncodeDrawableGeometry(w io.Writer, drawable, gc uint32, width, height uint
 	if err := EncodeUint16(w, height); err != nil {
 		return err
 	}
-	if err := EncodeInt16(w, x); err != nil {
+	if err := EncodeInt16(w, xOffset); err != nil {
 		return err
 	}
-	return EncodeInt16(w, y)
+	return EncodeInt16(w, yOffset)
 }
 
 // DecodeUint32 reads a uint32 in little-endian format.
