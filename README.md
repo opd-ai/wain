@@ -178,10 +178,21 @@ Create a window using the public API (`app.go`):
 ```go
 package main
 
-import "github.com/opd-ai/wain"
+import (
+    "time"
+    "github.com/opd-ai/wain"
+)
 
 func main() {
     app := wain.NewApp()
+    
+    // In real applications, Quit() would be called from an event handler
+    // (window close button, menu item, etc.). This demo exits after 5 seconds.
+    go func() {
+        time.Sleep(5 * time.Second)
+        app.Quit()
+    }()
+    
     app.Run() // blocks until app.Quit() is called
 }
 ```
