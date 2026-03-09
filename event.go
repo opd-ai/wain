@@ -423,3 +423,60 @@ func linuxToKeysym(code uint32) Key {
 	}
 	return Key(code)
 }
+
+// translateWaylandKeyEvent converts Wayland key event data to a wain KeyEvent.
+func translateWaylandKeyEvent(key, state uint32) *KeyEvent {
+	eventType := KeyRelease
+	if state == 1 { // KeyStatePressed
+		eventType = KeyPress
+	}
+	return &KeyEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: eventType,
+		key:       linuxToKeysym(key),
+	}
+}
+
+// translateWaylandPointerButtonEvent converts Wayland pointer button event data to a wain PointerEvent.
+func translateWaylandPointerButtonEvent(button, state uint32, x, y float64) *PointerEvent {
+	eventType := PointerButtonRelease
+	if state == 1 { // ButtonStatePressed
+		eventType = PointerButtonPress
+	}
+	return &PointerEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: eventType,
+		x:         x,
+		y:         y,
+		button:    PointerButton(button),
+	}
+}
+
+// translateWaylandPointerMotionEvent converts Wayland pointer motion event data to a wain PointerEvent.
+func translateWaylandPointerMotionEvent(x, y float64) *PointerEvent {
+	return &PointerEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: PointerMove,
+		x:         x,
+		y:         y,
+	}
+}
+
+// translateWaylandPointerAxisEvent converts Wayland pointer axis (scroll) event data to a wain PointerEvent.
+func translateWaylandPointerAxisEvent(axis uint32, value, x, y float64) *PointerEvent {
+	scrollAxis := ScrollAxisVertical
+	if axis == 1 { // AxisHorizontalScroll
+		scrollAxis = ScrollAxisHorizontal
+	}
+	// Wayland axis values are in pixels, convert to scroll steps
+	// Negative value = scroll up/left, positive = scroll down/right
+	scrollValue := value / 10.0
+	return &PointerEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: PointerScroll,
+		x:         x,
+		y:         y,
+		axis:      scrollAxis,
+		value:     scrollValue,
+	}
+}

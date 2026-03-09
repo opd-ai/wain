@@ -23,8 +23,13 @@ const (
 // a seat. It provides events for key presses, releases, and modifier state.
 type Keyboard struct {
 	objectBase
-	keymap    *Keymap
-	modifiers ModifierState
+	keymap         *Keymap
+	modifiers      ModifierState
+	focusedSurface uint32
+	onKey          func(surfaceID, key, state uint32)
+	onEnter        func(surfaceID uint32)
+	onLeave        func(surfaceID uint32)
+	onModifiers    func(modsDepressed, modsLatched, modsLocked uint32)
 }
 
 const (
@@ -55,6 +60,26 @@ func (k *Keyboard) Release() error {
 	return k.conn.SendRequest(k.id, keyboardOpcodeRelease, nil)
 }
 
+// SetKeyCallback sets the callback function for key events.
+func (k *Keyboard) SetKeyCallback(fn func(surfaceID, key, state uint32)) {
+	k.onKey = fn
+}
+
+// SetEnterCallback sets the callback function for focus enter events.
+func (k *Keyboard) SetEnterCallback(fn func(surfaceID uint32)) {
+	k.onEnter = fn
+}
+
+// SetLeaveCallback sets the callback function for focus leave events.
+func (k *Keyboard) SetLeaveCallback(fn func(surfaceID uint32)) {
+	k.onLeave = fn
+}
+
+// SetModifiersCallback sets the callback function for modifier state changes.
+func (k *Keyboard) SetModifiersCallback(fn func(modsDepressed, modsLatched, modsLocked uint32)) {
+	k.onModifiers = fn
+}
+
 // HandleKeymap processes a keymap event from the compositor.
 //
 // This event provides a file descriptor containing the keymap in XKB format.
@@ -69,12 +94,20 @@ func (k *Keyboard) HandleKeymap(format, fd, size uint32) {
 //
 // This event is sent when keyboard focus enters a surface.
 func (k *Keyboard) HandleEnter(serial, surfaceID uint32, keys []uint32) {
+	k.focusedSurface = surfaceID
+	if k.onEnter != nil {
+		k.onEnter(surfaceID)
+	}
 }
 
 // HandleLeave processes a leave event from the compositor.
 //
 // This event is sent when keyboard focus leaves a surface.
 func (k *Keyboard) HandleLeave(serial, surfaceID uint32) {
+	k.focusedSurface = 0
+	if k.onLeave != nil {
+		k.onLeave(surfaceID)
+	}
 }
 
 // HandleKey processes a key event from the compositor.
@@ -82,6 +115,9 @@ func (k *Keyboard) HandleLeave(serial, surfaceID uint32) {
 // This event is sent when a key is pressed or released. The key parameter
 // is a Linux evdev keycode.
 func (k *Keyboard) HandleKey(serial, time, key, state uint32) {
+	if k.onKey != nil && k.focusedSurface != 0 {
+		k.onKey(k.focusedSurface, key, state)
+	}
 }
 
 // HandleModifiers processes a modifiers event from the compositor.
@@ -90,6 +126,9 @@ func (k *Keyboard) HandleKey(serial, time, key, state uint32) {
 // XKB modifier indices.
 func (k *Keyboard) HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group uint32) {
 	k.modifiers = k.decodeModifiers(modsDepressed, modsLatched, modsLocked)
+	if k.onModifiers != nil {
+		k.onModifiers(modsDepressed, modsLatched, modsLocked)
+	}
 }
 
 // HandleRepeatInfo processes a repeat info event from the compositor.

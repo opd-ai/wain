@@ -755,8 +755,11 @@ Go library — `go get github.com/opd-ai/wain` followed by a standard
      - ✅ Keyboard focus management with Tab navigation
      - ✅ Translation functions for X11→public events (translateX11KeyPressEvent,
        translateX11ButtonPressEvent, translateX11MotionNotifyEvent, etc.)
+     - ✅ Translation functions for Wayland→public events (translateWaylandKeyEvent,
+       translateWaylandPointerButtonEvent, translateWaylandPointerMotionEvent,
+       translateWaylandPointerAxisEvent with surfaceID-to-Window mapping)
      - ✅ Window callbacks: OnKeyPress, OnPointer, OnResize, OnClose, OnFocus
-     - **Status**: X11 event path complete; Wayland event path TODO
+     - **Status**: Both X11 and Wayland event paths complete
      - **Complexity**: All new functions ≤10 cyclomatic complexity
      - **Tests**: All 190 Rust + all Go tests passing
 

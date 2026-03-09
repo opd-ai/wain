@@ -37,6 +37,14 @@ const (
 // generated whenever the pointer location crosses the boundary of a surface.
 type Pointer struct {
 	objectBase
+	focusedSurface uint32
+	surfaceX       float64
+	surfaceY       float64
+	onButton       func(surfaceID, button, state uint32, x, y float64)
+	onMotion       func(surfaceID uint32, x, y float64)
+	onAxis         func(surfaceID, axis uint32, value, x, y float64)
+	onEnter        func(surfaceID uint32, x, y float64)
+	onLeave        func(surfaceID uint32)
 }
 
 const (
@@ -84,17 +92,52 @@ func (p *Pointer) Release() error {
 	return p.conn.SendRequest(p.id, pointerOpcodeRelease, nil)
 }
 
+// SetButtonCallback sets the callback function for button events.
+func (p *Pointer) SetButtonCallback(fn func(surfaceID, button, state uint32, x, y float64)) {
+	p.onButton = fn
+}
+
+// SetMotionCallback sets the callback function for motion events.
+func (p *Pointer) SetMotionCallback(fn func(surfaceID uint32, x, y float64)) {
+	p.onMotion = fn
+}
+
+// SetAxisCallback sets the callback function for axis (scroll) events.
+func (p *Pointer) SetAxisCallback(fn func(surfaceID, axis uint32, value, x, y float64)) {
+	p.onAxis = fn
+}
+
+// SetEnterCallback sets the callback function for pointer enter events.
+func (p *Pointer) SetEnterCallback(fn func(surfaceID uint32, x, y float64)) {
+	p.onEnter = fn
+}
+
+// SetLeaveCallback sets the callback function for pointer leave events.
+func (p *Pointer) SetLeaveCallback(fn func(surfaceID uint32)) {
+	p.onLeave = fn
+}
+
 // HandleEnter processes an enter event from the compositor.
 //
 // This event is sent when the pointer enters a surface. The surface-local
 // coordinates are provided in fixed-point format (multiply by 1/256).
 func (p *Pointer) HandleEnter(serial, surfaceID uint32, surfaceX, surfaceY int32) {
+	p.focusedSurface = surfaceID
+	p.surfaceX = float64(surfaceX) / 256.0
+	p.surfaceY = float64(surfaceY) / 256.0
+	if p.onEnter != nil {
+		p.onEnter(surfaceID, p.surfaceX, p.surfaceY)
+	}
 }
 
 // HandleLeave processes a leave event from the compositor.
 //
 // This event is sent when the pointer leaves a surface.
 func (p *Pointer) HandleLeave(serial, surfaceID uint32) {
+	p.focusedSurface = 0
+	if p.onLeave != nil {
+		p.onLeave(surfaceID)
+	}
 }
 
 // HandleMotion processes a motion event from the compositor.
@@ -102,12 +145,20 @@ func (p *Pointer) HandleLeave(serial, surfaceID uint32) {
 // This event is sent when the pointer moves. The coordinates are in
 // surface-local coordinates in fixed-point format.
 func (p *Pointer) HandleMotion(time uint32, surfaceX, surfaceY int32) {
+	p.surfaceX = float64(surfaceX) / 256.0
+	p.surfaceY = float64(surfaceY) / 256.0
+	if p.onMotion != nil && p.focusedSurface != 0 {
+		p.onMotion(p.focusedSurface, p.surfaceX, p.surfaceY)
+	}
 }
 
 // HandleButton processes a button event from the compositor.
 //
 // This event is sent when a pointer button is pressed or released.
 func (p *Pointer) HandleButton(serial, time, button, state uint32) {
+	if p.onButton != nil && p.focusedSurface != 0 {
+		p.onButton(p.focusedSurface, button, state, p.surfaceX, p.surfaceY)
+	}
 }
 
 // HandleAxis processes an axis event from the compositor.
@@ -115,6 +166,9 @@ func (p *Pointer) HandleButton(serial, time, button, state uint32) {
 // This event is sent when a scroll or other axis event occurs. The value
 // is in surface-local coordinates.
 func (p *Pointer) HandleAxis(time, axis uint32, value int32) {
+	if p.onAxis != nil && p.focusedSurface != 0 {
+		p.onAxis(p.focusedSurface, axis, float64(value)/256.0, p.surfaceX, p.surfaceY)
+	}
 }
 
 // HandleFrame processes a frame event from the compositor.

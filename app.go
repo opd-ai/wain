@@ -32,6 +32,7 @@ import (
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/wayland/client"
+	"github.com/opd-ai/wain/internal/wayland/input"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	wlwire "github.com/opd-ai/wain/internal/wayland/wire"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
@@ -97,6 +98,9 @@ type App struct {
 	waylandSurface    *client.Surface
 	waylandXdgSurface *xdg.Surface
 	waylandToplevel   *xdg.Toplevel
+	waylandSeat       *input.Seat
+	waylandKeyboard   *input.Keyboard
+	waylandPointer    *input.Pointer
 
 	// X11-specific objects
 	x11Window x11client.XID
@@ -108,7 +112,8 @@ type App struct {
 	displayList *displaylist.DisplayList
 
 	// Windows
-	windows []*Window
+	windows         []*Window
+	surfaceToWindow map[uint32]*Window // Wayland surface ID to Window mapping
 
 	// Resource management
 	resources *ResourceManager
@@ -181,14 +186,15 @@ func NewAppWithConfig(cfg AppConfig) *App {
 	}
 
 	return &App{
-		width:       cfg.Width,
-		height:      cfg.Height,
-		verbose:     cfg.Verbose,
-		drmPath:     cfg.DRMPath,
-		forceSW:     cfg.ForceSoftware,
-		displayList: displaylist.New(),
-		theme:       DefaultDark(),
-		notifyChan:  make(chan func(), 100),
+		width:           cfg.Width,
+		height:          cfg.Height,
+		verbose:         cfg.Verbose,
+		drmPath:         cfg.DRMPath,
+		forceSW:         cfg.ForceSoftware,
+		displayList:     displaylist.New(),
+		theme:           DefaultDark(),
+		notifyChan:      make(chan func(), 100),
+		surfaceToWindow: make(map[uint32]*Window),
 	}
 }
 
@@ -374,6 +380,11 @@ func (w *Window) createWaylandSurface() error {
 		return fmt.Errorf("failed to create surface: %w", err)
 	}
 	w.waylandSurface = surface
+
+	// Register surface-to-window mapping for event routing
+	w.app.mu.Lock()
+	w.app.surfaceToWindow[surface.ID()] = w
+	w.app.mu.Unlock()
 
 	xdgSurface, err := w.app.waylandWmBase.GetXdgSurface(surface.ID())
 	if err != nil {
@@ -1228,7 +1239,176 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	a.waylandConn.RegisterObject(wmBase)
 	a.waylandWmBase = wmBase
 
+	// Bind seat for input
+	seatGlobal := registry.FindGlobal("wl_seat")
+	if seatGlobal != nil {
+		seatID, err := registry.Bind(seatGlobal.Name, "wl_seat", seatGlobal.Version)
+		if err != nil {
+			return fmt.Errorf("failed to bind seat: %w", err)
+		}
+		seat := input.NewSeat(a.waylandConn, seatID, seatGlobal.Version)
+		a.waylandConn.RegisterObject(seat)
+		a.waylandSeat = seat
+
+		// Get keyboard and pointer capabilities
+		if err := a.setupWaylandInput(seat); err != nil {
+			// Non-fatal: input is optional
+			if a.verbose {
+				log.Printf("Warning: failed to setup input: %v", err)
+			}
+		}
+	}
+
 	return nil
+}
+
+// setupWaylandInput sets up keyboard and pointer input devices and wires event callbacks.
+func (a *App) setupWaylandInput(seat *input.Seat) error {
+	// Get keyboard
+	keyboard, err := seat.GetKeyboard()
+	if err != nil {
+		return fmt.Errorf("failed to get keyboard: %w", err)
+	}
+	a.waylandKeyboard = keyboard
+
+	// Wire keyboard callbacks
+	keyboard.SetKeyCallback(func(surfaceID, key, state uint32) {
+		a.handleWaylandKeyEvent(surfaceID, key, state)
+	})
+	keyboard.SetEnterCallback(func(surfaceID uint32) {
+		a.handleWaylandKeyboardEnter(surfaceID)
+	})
+	keyboard.SetLeaveCallback(func(surfaceID uint32) {
+		a.handleWaylandKeyboardLeave(surfaceID)
+	})
+
+	// Get pointer
+	pointer, err := seat.GetPointer()
+	if err != nil {
+		return fmt.Errorf("failed to get pointer: %w", err)
+	}
+	a.waylandPointer = pointer
+
+	// Wire pointer callbacks
+	pointer.SetButtonCallback(func(surfaceID, button, state uint32, x, y float64) {
+		a.handleWaylandPointerButton(surfaceID, button, state, x, y)
+	})
+	pointer.SetMotionCallback(func(surfaceID uint32, x, y float64) {
+		a.handleWaylandPointerMotion(surfaceID, x, y)
+	})
+	pointer.SetAxisCallback(func(surfaceID, axis uint32, value, x, y float64) {
+		a.handleWaylandPointerAxis(surfaceID, axis, value, x, y)
+	})
+	pointer.SetEnterCallback(func(surfaceID uint32, x, y float64) {
+		a.handleWaylandPointerEnter(surfaceID, x, y)
+	})
+	pointer.SetLeaveCallback(func(surfaceID uint32) {
+		a.handleWaylandPointerLeave(surfaceID)
+	})
+
+	return nil
+}
+
+// handleWaylandKeyEvent processes a Wayland key event.
+func (a *App) handleWaylandKeyEvent(surfaceID, key, state uint32) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := translateWaylandKeyEvent(key, state)
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandKeyboardEnter processes keyboard focus enter.
+func (a *App) handleWaylandKeyboardEnter(surfaceID uint32) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := &WindowEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: WindowFocus,
+	}
+	win.focused = true
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandKeyboardLeave processes keyboard focus leave.
+func (a *App) handleWaylandKeyboardLeave(surfaceID uint32) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := &WindowEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: WindowUnfocus,
+	}
+	win.focused = false
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandPointerButton processes a Wayland pointer button event.
+func (a *App) handleWaylandPointerButton(surfaceID, button, state uint32, x, y float64) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := translateWaylandPointerButtonEvent(button, state, x, y)
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandPointerMotion processes a Wayland pointer motion event.
+func (a *App) handleWaylandPointerMotion(surfaceID uint32, x, y float64) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := translateWaylandPointerMotionEvent(x, y)
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandPointerAxis processes a Wayland pointer axis (scroll) event.
+func (a *App) handleWaylandPointerAxis(surfaceID, axis uint32, value, x, y float64) {
+	a.mu.Lock()
+	win := a.surfaceToWindow[surfaceID]
+	a.mu.Unlock()
+
+	if win == nil {
+		return
+	}
+
+	evt := translateWaylandPointerAxisEvent(axis, value, x, y)
+	win.dispatchEvent(evt)
+}
+
+// handleWaylandPointerEnter processes pointer enter.
+func (a *App) handleWaylandPointerEnter(surfaceID uint32, x, y float64) {
+	// Could be used for hover effects in the future
+}
+
+// handleWaylandPointerLeave processes pointer leave.
+func (a *App) handleWaylandPointerLeave(surfaceID uint32) {
+	// Could be used for hover effects in the future
 }
 
 // connectX11 establishes an X11 connection.
