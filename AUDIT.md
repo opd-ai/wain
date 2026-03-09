@@ -18,7 +18,7 @@
 **Findings Distribution:**
 - **CRITICAL:** 0
 - **HIGH:** 3
-- **MEDIUM:** 7
+- **MEDIUM:** 6
 - **LOW:** 5
 
 **Key Strengths:**
@@ -63,8 +63,6 @@
 - [x] **Widget demo event loops are stubs** — cmd/widget-demo/main.go:301-356 — README line 374 claims "Interactive widget demo (auto-detects X11/Wayland)" implying full functionality, but event loops are explicitly marked as stubs (line 305: "⚠ event loop not yet implemented", line 318: "⚠ event loop not yet implemented"). Auto-detection works correctly but the demo is non-functional beyond platform detection. — **Remediation:** (1) Update README.md line 374 description to: "Interactive widget demo (auto-detects X11/Wayland; event loops not yet implemented)". (2) Update table row on line 374 to add note: "Platform detection functional; event handling deferred". **Validation:** Run `./bin/widget-demo --help` and verify output matches updated README description.
 
 - [x] **X11 Present extension version limitation undocumented** — internal/x11/present/present.go:34-42 — README line 54 claims "Present extension: frame synchronization and swap control" without version qualifications, but implementation only supports Present 1.0, not 1.2+ async flip features. Code documentation states "Version 1.2+ adds async flip support and other advanced features, but 1.0 is sufficient for basic tear-free rendering." This limitation is not surfaced in README. — **Remediation:** Update README.md line 54 to: "Present extension (1.0): frame synchronization and swap control (tear-free rendering; async flip deferred)". **Validation:** Run `grep -n "Present extension" README.md` and verify updated language clarifies version support.
-
-- [ ] **Unsafe.Pointer usage flagged by go vet** — internal/x11/shm/shm.go:186 — `go vet` reports "possible misuse of unsafe.Pointer" for uintptr-to-unsafe.Pointer conversion from syscall return value. Code has `//nolint:govet` comment (line 185) acknowledging the warning, but the suppression is specific to a linter, not `go vet` itself. While the code is technically correct (syscall contract guarantees pointer validity), `go vet` will always flag this. — **Remediation:** (1) Add explicit `//lint:ignore SA4023 Syscall return value is kernel-managed address` directive above line 184. (2) Add comment explaining why this is safe: `// The uintptr-to-unsafe.Pointer conversion is safe here because: (a) the address comes directly from kernel shmat syscall, (b) memory is kernel-managed and not subject to Go GC, (c) we convert immediately in the return statement.` **Validation:** Run `go vet ./internal/x11/shm 2>&1 | grep -c "possible misuse"` and verify count is 0. If warning persists, add `//go:noescape` pragma or restructure to use `syscall.Mmap`.
 
 - [ ] **Documentation coverage gap in 36 packages** — audit-baseline.json:documentation.coverage — 36 packages have 0% documentation quality score despite having exported symbols. Packages include: atlas, backend, buffer, client, composite, consumer, core, curves, datadevice, decorations, demo, display, displaylist, dmabuf, dpi, dri3, effects, events, gc, input, integration, layout, main, output, pctwidget, present, render, scale, selection, shm, socket, text, wain, widgets, wire, xdg. Overall documentation coverage is high (88.76%), but these packages have no package-level documentation. — **Remediation:** Add package documentation (doc.go files) to all 36 packages with 0% quality score. Follow Go convention: create `doc.go` in each package with format `// Package <name> provides <description>.`. Example for internal/buffer: `// Package buffer implements frame buffer ring management for double/triple buffering with compositor synchronization.`. **Validation:** Run `go-stats-generator analyze . --skip-tests --format json --output audit-post.json --sections documentation && jq -r '.packages[] | select(.documentation.quality_score == 0) | .path' audit-post.json | wc -l` and verify count is 0.
 
@@ -132,7 +130,7 @@
 - **CGO Required:** Yes (Rust library linked via musl-gcc)
 - **Binary Size:** 6.2 MB (bin/wain, fully static with Rust library and musl libc)
 - **Build Time:** ~60 seconds (Rust library + Go binary + musl stub)
-- **go vet Issues:** 1 (unsafe.Pointer warning in x11/shm, acknowledged with nolint comment)
+- **go vet Issues:** 0
 
 ### Dependencies
 - **Go Version:** 1.24 (required)
