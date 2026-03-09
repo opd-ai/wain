@@ -1,26 +1,27 @@
 // Package main demonstrates the complete public wain API (Phase 10.7).
 //
 // This reference application showcases all public API features:
-//  - App creation and lifecycle management
-//  - Window creation with custom configuration
-//  - Multi-panel layout using percentage-based sizing
-//  - All container types: Row, Column, ScrollView
-//  - All widget types: Panel, Button, Label, TextInput, Spacer
-//  - Event handling and callbacks
-//  - Theme switching between DefaultDark, DefaultLight, and HighContrast
-//  - Cross-goroutine state updates via App.Notify()
+//   - App creation and lifecycle management
+//   - Window creation with custom configuration
+//   - Multi-panel layout using percentage-based sizing
+//   - All container types: Row, Column, ScrollView
+//   - All widget types: Panel, Button, Label, TextInput, Spacer
+//   - Event handling and callbacks
+//   - Theme switching between DefaultDark, DefaultLight, and HighContrast
+//   - Cross-goroutine state updates via App.Notify()
 //
 // The demo creates a complete UI with:
-//  - Header (Row): title Label and theme toggle buttons
-//  - Main content (Row): sidebar navigation (Column) + content area (ScrollView)
-//  - Footer (Row): status Label
+//   - Header (Row): title Label and theme toggle buttons
+//   - Main content (Row): sidebar navigation (Column) + content area (ScrollView)
+//   - Footer (Row): status Label
 //
 // All sizing is percentage-based, adapting automatically to window resize.
 //
 // NOTE: This example demonstrates the API structure. Full integration with
 // the rendering pipeline is in progress. To run this example:
-//     go generate ./...
-//     go build ./cmd/example-app
+//
+//	go generate ./...
+//	go build ./cmd/example-app
 package main
 
 import (
