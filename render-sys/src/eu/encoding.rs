@@ -14,6 +14,81 @@
 use super::instruction::{EUOpcode, Register, RegFile, SendDescriptor};
 use super::IntelGen;
 
+/// Intel EU instruction opcode values for Gen9+
+///
+/// These constants define the 7-bit opcode field (bits 0-6 of DWord 0)
+/// for Intel Execution Unit instructions. Opcode values may vary slightly
+/// across hardware generations.
+///
+/// Reference: Intel PRM Volume 4, Command Reference, Instruction Opcodes
+pub mod opcodes {
+    // ALU operations
+    pub const ADD: u8 = 0x40;
+    pub const MUL: u8 = 0x41;
+    pub const MAD: u8 = 0x30;  // Multiply-add
+    pub const MOV: u8 = 0x01;
+    pub const SEL: u8 = 0x02;  // Select (conditional move)
+    
+    // Rounding operations
+    pub const RNDD: u8 = 0x45;  // Round down (floor)
+    pub const RNDU: u8 = 0x46;  // Round up (ceil)
+    pub const RNDE: u8 = 0x44;  // Round to nearest even
+    pub const RNDZ: u8 = 0x47;  // Round toward zero (trunc)
+    
+    // Vector operations
+    pub const DP2: u8 = 0x54;  // Dot product 2D
+    pub const DP3: u8 = 0x55;  // Dot product 3D
+    pub const DP4: u8 = 0x56;  // Dot product 4D
+    pub const DPH: u8 = 0x57;  // Dot product homogeneous
+    
+    // Logic operations
+    pub const AND: u8 = 0x05;
+    pub const OR: u8 = 0x06;
+    pub const XOR: u8 = 0x07;
+    pub const NOT: u8 = 0x08;
+    pub const SHL: u8 = 0x09;  // Shift left
+    pub const SHR: u8 = 0x0A;  // Shift right
+    pub const ASR: u8 = 0x0C;  // Arithmetic shift right
+    
+    // Comparison
+    pub const CMP: u8 = 0x10;
+    
+    // Flow control
+    pub const JMPI: u8 = 0x20;  // Jump indirect
+    pub const IF: u8 = 0x22;
+    pub const ELSE: u8 = 0x24;
+    pub const ENDIF: u8 = 0x25;
+    pub const WHILE: u8 = 0x27;
+    pub const BREAK: u8 = 0x28;
+    pub const CONT: u8 = 0x29;  // Continue
+    
+    // SEND instructions
+    pub const SEND: u8 = 0x31;
+    pub const SENDC: u8 = 0x32;  // Conditional send
+    
+    // Special
+    pub const NOP: u8 = 0x00;
+    pub const WAIT: u8 = 0x01;
+}
+
+/// Bitfield constants for instruction encoding
+pub mod bitfields {
+    // Register encoding bitfield masks
+    pub const SUBREG_MASK: u32 = 0x1F00;  // Bits 8-12: subregister offset
+    pub const ARF_BIT: u32 = 0x8000;       // Bit 15: ARF vs GRF
+    pub const REG_NUM_MASK: u32 = 0xFF;    // Bits 0-7: register number
+    
+    // Source modifier bits
+    pub const SRCMOD_ABS: u8 = 0x2;  // Absolute value
+    pub const SRCMOD_NEG: u8 = 0x1;  // Negate
+    
+    // Send descriptor bitfield masks
+    pub const SEND_RESP_LEN_MASK: u32 = 0xF;     // Bits 0-3: response length
+    pub const SEND_MSG_LEN_MASK: u32 = 0x1F;     // Bits 4-8: message length
+    pub const SEND_SFID_MASK: u32 = 0xF;         // Bits 14-17: SFID
+    pub const SEND_FUNC_CTRL_MASK: u32 = 0x7F;   // Bits 18-24: function control
+}
+
 /// Encode opcode to binary format
 ///
 /// Opcodes are 7 bits on Gen9+ (bits 0-6 of DWord 0)
@@ -21,52 +96,52 @@ use super::IntelGen;
 pub fn encode_opcode(opcode: EUOpcode, gen: IntelGen) -> u8 {
     match (opcode, gen) {
         // ALU operations (common across Gen9/11/12)
-        (EUOpcode::Add, _) => 0x40,
-        (EUOpcode::Mul, _) => 0x41,
-        (EUOpcode::Mad, _) => 0x30,  // Multiply-add
-        (EUOpcode::Mov, _) => 0x01,
-        (EUOpcode::Sel, _) => 0x02,
+        (EUOpcode::Add, _) => opcodes::ADD,
+        (EUOpcode::Mul, _) => opcodes::MUL,
+        (EUOpcode::Mad, _) => opcodes::MAD,
+        (EUOpcode::Mov, _) => opcodes::MOV,
+        (EUOpcode::Sel, _) => opcodes::SEL,
         
         // Rounding operations
-        (EUOpcode::Rndd, _) => 0x45,  // Round down (floor)
-        (EUOpcode::Rndu, _) => 0x46,  // Round up (ceil)
-        (EUOpcode::Rnde, _) => 0x44,  // Round to nearest even
-        (EUOpcode::Rndz, _) => 0x47,  // Round toward zero (trunc)
+        (EUOpcode::Rndd, _) => opcodes::RNDD,
+        (EUOpcode::Rndu, _) => opcodes::RNDU,
+        (EUOpcode::Rnde, _) => opcodes::RNDE,
+        (EUOpcode::Rndz, _) => opcodes::RNDZ,
         
         // Vector operations
-        (EUOpcode::Dp2, _) => 0x54,  // Dot product 2D
-        (EUOpcode::Dp3, _) => 0x55,  // Dot product 3D
-        (EUOpcode::Dp4, _) => 0x56,  // Dot product 4D
-        (EUOpcode::Dph, _) => 0x57,  // Dot product homogeneous
+        (EUOpcode::Dp2, _) => opcodes::DP2,
+        (EUOpcode::Dp3, _) => opcodes::DP3,
+        (EUOpcode::Dp4, _) => opcodes::DP4,
+        (EUOpcode::Dph, _) => opcodes::DPH,
         
         // Logic operations
-        (EUOpcode::And, _) => 0x05,
-        (EUOpcode::Or, _) => 0x06,
-        (EUOpcode::Xor, _) => 0x07,
-        (EUOpcode::Not, _) => 0x08,
-        (EUOpcode::Shl, _) => 0x09,  // Shift left
-        (EUOpcode::Shr, _) => 0x0A,  // Shift right
-        (EUOpcode::Asr, _) => 0x0C,  // Arithmetic shift right
+        (EUOpcode::And, _) => opcodes::AND,
+        (EUOpcode::Or, _) => opcodes::OR,
+        (EUOpcode::Xor, _) => opcodes::XOR,
+        (EUOpcode::Not, _) => opcodes::NOT,
+        (EUOpcode::Shl, _) => opcodes::SHL,
+        (EUOpcode::Shr, _) => opcodes::SHR,
+        (EUOpcode::Asr, _) => opcodes::ASR,
         
         // Comparison
-        (EUOpcode::Cmp, _) => 0x10,
+        (EUOpcode::Cmp, _) => opcodes::CMP,
         
         // Flow control
-        (EUOpcode::Jmpi, _) => 0x20,
-        (EUOpcode::If, _) => 0x22,
-        (EUOpcode::Else, _) => 0x24,
-        (EUOpcode::Endif, _) => 0x25,
-        (EUOpcode::While, _) => 0x27,
-        (EUOpcode::Break, _) => 0x28,
-        (EUOpcode::Cont, _) => 0x29,
+        (EUOpcode::Jmpi, _) => opcodes::JMPI,
+        (EUOpcode::If, _) => opcodes::IF,
+        (EUOpcode::Else, _) => opcodes::ELSE,
+        (EUOpcode::Endif, _) => opcodes::ENDIF,
+        (EUOpcode::While, _) => opcodes::WHILE,
+        (EUOpcode::Break, _) => opcodes::BREAK,
+        (EUOpcode::Cont, _) => opcodes::CONT,
         
         // SEND instructions
-        (EUOpcode::Send, _) => 0x31,
-        (EUOpcode::SendC, _) => 0x32,
+        (EUOpcode::Send, _) => opcodes::SEND,
+        (EUOpcode::SendC, _) => opcodes::SENDC,
         
         // Special
-        (EUOpcode::Nop, _) => 0x00,
-        (EUOpcode::Wait, _) => 0x01,
+        (EUOpcode::Nop, _) => opcodes::NOP,
+        (EUOpcode::Wait, _) => opcodes::WAIT,
     }
 }
 
@@ -160,7 +235,7 @@ pub fn encode_register(reg: &Register, dtype: DataType) -> u32 {
             let mut encoded: u32 = reg.num as u32;
             // Subreg is byte offset, needs to be aligned to data type size
             let subreg_aligned = (reg.subreg / dtype.size_bytes() as u8) as u32;
-            encoded |= (subreg_aligned << 8) & 0x1F00;
+            encoded |= (subreg_aligned << 8) & bitfields::SUBREG_MASK;
             // Bit 13 = 0 for direct register, 1 for indirect
             // For now, always direct
             encoded
@@ -168,7 +243,7 @@ pub fn encode_register(reg: &Register, dtype: DataType) -> u32 {
         RegFile::ARF => {
             // ARF encoding: different format for special registers
             // Simplified for now - full implementation needs specific ARF handling
-            let mut encoded: u32 = 0x8000;  // Bit 15 = 1 for ARF
+            let mut encoded: u32 = bitfields::ARF_BIT;
             encoded |= (reg.num as u32) << 8;
             encoded |= reg.subreg as u32;
             encoded
@@ -226,10 +301,10 @@ impl SrcMod {
     pub fn encode(&self) -> u8 {
         let mut encoded = 0u8;
         if self.absolute {
-            encoded |= 0x2;
+            encoded |= bitfields::SRCMOD_ABS;
         }
         if self.negate {
-            encoded |= 0x1;
+            encoded |= bitfields::SRCMOD_NEG;
         }
         encoded
     }
@@ -250,17 +325,17 @@ pub fn encode_send_descriptor(desc: &SendDescriptor) -> u32 {
     let mut encoded: u32 = 0;
     
     // Response length (bits 0-3): how many GRF registers to receive back
-    encoded |= (desc.response_length as u32 & 0xF) << 0;
+    encoded |= (desc.response_length as u32 & bitfields::SEND_RESP_LEN_MASK) << 0;
     
     // Message length (bits 4-8): how many GRF registers to send
-    encoded |= (desc.message_length as u32 & 0x1F) << 4;
+    encoded |= (desc.message_length as u32 & bitfields::SEND_MSG_LEN_MASK) << 4;
     
     // SFID (bits 14-17): which shared function to target
-    encoded |= ((desc.sfid as u32) & 0xF) << 14;
+    encoded |= ((desc.sfid as u32) & bitfields::SEND_SFID_MASK) << 14;
     
     // Function control (bits 18-24): function-specific control bits
     // The exact format depends on the SFID (sampler, URB, etc.)
-    encoded |= (desc.function_control & 0x7F) << 18;
+    encoded |= (desc.function_control & bitfields::SEND_FUNC_CTRL_MASK) << 18;
     
     encoded
 }
@@ -271,10 +346,10 @@ mod tests {
 
     #[test]
     fn test_opcode_encoding() {
-        assert_eq!(encode_opcode(EUOpcode::Add, IntelGen::Gen9), 0x40);
-        assert_eq!(encode_opcode(EUOpcode::Mul, IntelGen::Gen9), 0x41);
-        assert_eq!(encode_opcode(EUOpcode::Mov, IntelGen::Gen9), 0x01);
-        assert_eq!(encode_opcode(EUOpcode::Nop, IntelGen::Gen9), 0x00);
+        assert_eq!(encode_opcode(EUOpcode::Add, IntelGen::Gen9), opcodes::ADD);
+        assert_eq!(encode_opcode(EUOpcode::Mul, IntelGen::Gen9), opcodes::MUL);
+        assert_eq!(encode_opcode(EUOpcode::Mov, IntelGen::Gen9), opcodes::MOV);
+        assert_eq!(encode_opcode(EUOpcode::Nop, IntelGen::Gen9), opcodes::NOP);
     }
 
     #[test]
@@ -301,7 +376,7 @@ mod tests {
             subreg: 0,
         };
         let encoded = encode_register(&reg, DataType::F);
-        assert_eq!(encoded & 0xFF, 5);  // Register number in low byte
+        assert_eq!(encoded & bitfields::REG_NUM_MASK, 5);  // Register number in low byte
     }
 
     #[test]
@@ -339,12 +414,12 @@ mod tests {
         let encoded = encode_send_descriptor(&desc);
         
         // Response length in bits 0-3
-        assert_eq!(encoded & 0xF, 4);
+        assert_eq!(encoded & bitfields::SEND_RESP_LEN_MASK, 4);
         
         // Message length in bits 4-8
-        assert_eq!((encoded >> 4) & 0x1F, 2);
+        assert_eq!((encoded >> 4) & bitfields::SEND_MSG_LEN_MASK, 2);
         
         // SFID in bits 14-17 (Sampler = 0x2)
-        assert_eq!((encoded >> 14) & 0xF, 0x2);
+        assert_eq!((encoded >> 14) & bitfields::SEND_SFID_MASK, 0x2);
     }
 }

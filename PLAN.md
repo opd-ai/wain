@@ -74,12 +74,23 @@
   - All 8 tests now have meaningful assertions that validate widget behavior
   - Tests pass: `make test-go` → ok github.com/opd-ai/wain
 
-### Step 6: Extract Intel EU Opcode Constants
+### Step 6: Extract Intel EU Opcode Constants ✅ COMPLETE
 - **Deliverable**: Create `mod opcodes { pub const ADD: u8 = 0x40; ... }` in `render-sys/src/eu/encoding.rs` replacing 50+ bare hex literals
 - **Dependencies**: None
 - **Acceptance**: Zero bare hex opcode literals in `encoding.rs`
 - **Validation**: `grep -cE "0x[0-9a-fA-F]{2}" render-sys/src/eu/encoding.rs` < 10 (only for non-opcode constants)
 - **Rationale**: Slop SL-003 (HIGH severity); opcode encoding bugs are invisible without named constants
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Created `opcodes` module with 27 named constants for all EU instruction opcodes (ADD, MUL, MAD, MOV, SEL, RNDD, RNDU, RNDE, RNDZ, DP2, DP3, DP4, DPH, AND, OR, XOR, NOT, SHL, SHR, ASR, CMP, JMPI, IF, ELSE, ENDIF, WHILE, BREAK, CONT, SEND, SENDC, NOP, WAIT)
+  - Created `bitfields` module with 9 named constants for encoding masks (SUBREG_MASK, ARF_BIT, REG_NUM_MASK, SRCMOD_ABS, SRCMOD_NEG, SEND_RESP_LEN_MASK, SEND_MSG_LEN_MASK, SEND_SFID_MASK, SEND_FUNC_CTRL_MASK)
+  - Refactored `encode_opcode()` to use named constants instead of bare hex literals
+  - Refactored `encode_register()` to use bitfield masks
+  - Refactored `SrcMod::encode()` to use bitfield masks
+  - Refactored `encode_send_descriptor()` to use bitfield masks
+  - Updated all tests to use named constants
+  - Zero bare hex opcode literals remaining in code (excluding constant definitions)
+  - All encoding tests pass: `cargo test --lib eu::encoding` → 7 passed
+  - Build verified: `make build` succeeds
 
 ### Step 7: Extract AMD RDNA Opcode Constants
 - **Deliverable**: Create `mod rdna_opcodes` and `mod bitfields` in `render-sys/src/rdna/encoding.rs` replacing 50+ bare hex literals
