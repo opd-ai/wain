@@ -2,6 +2,14 @@
 //
 // A consumer takes a DisplayList and renders it to a target surface using either
 // software (CPU) rasterization or GPU acceleration.
+//
+// Software Rasterizer Limitations:
+//
+// The SoftwareConsumer does not implement the CmdDrawImage display list command.
+// Image compositing is available through the composite package's Blit and BlitScaled
+// functions, but DrawImage command execution requires a GPU backend. This is a
+// deliberate design decision to keep the software rasterizer focused on vector
+// primitives while GPU-accelerated texture sampling handles image operations.
 package consumer
 
 import (

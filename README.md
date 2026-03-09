@@ -98,7 +98,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Curves: quadratic/cubic Bezier, arc fills
 - ✅ Text: SDF-based rendering with embedded glyph atlas
 - ✅ Effects: box shadow (Gaussian blur), linear/radial gradients
-- ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering
+- ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering (Blit/BlitScaled only; DrawImage requires GPU backend)
 
 ### UI Framework (Phase 1.5) — ✅ Complete
 **Widget Layer** (5 packages, ~4,893 LOC):
@@ -130,6 +130,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 **Rendering:**
 - ⚠️ CPU-only software rendering (GPU rendering pipeline not yet connected)
 - ⚠️ Single-threaded rasterizer (no tile-based threading)
+- ⚠️ Software rasterizer does not support DrawImage command — image compositing requires GPU backend or manual Blit calls
 
 **Testing:**
 - ✅ Unit tests for all packages (57 test files)
