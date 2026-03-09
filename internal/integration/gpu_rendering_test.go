@@ -1,4 +1,5 @@
 // go:build integration
+//go:build integration
 // +build integration
 
 package integration
@@ -288,7 +289,7 @@ func buildTriangleBatchData(renderTargetHandle uint32) []byte {
 }
 
 // buildClearBatchData creates a GPU command batch for clearing the framebuffer.
-func buildClearBatchData(renderTargetHandle uint32, color uint32) []byte {
+func buildClearBatchData(renderTargetHandle, color uint32) []byte {
 	_ = renderTargetHandle
 	_ = color
 
