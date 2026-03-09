@@ -1,5 +1,16 @@
 package wain
 
+const (
+	// DefaultPadding is the default inner padding in pixels.
+	DefaultPadding = 8
+
+	// DefaultGap is the default gap between sibling widgets in pixels.
+	DefaultGap = 6
+
+	// DefaultBorderRadius is the default border radius for rounded corners in pixels.
+	DefaultBorderRadius = 4
+)
+
 // Theme defines the global visual appearance of the application.
 //
 // A Theme specifies colors, fonts, spacing, and scale that can be applied
@@ -74,10 +85,10 @@ func DefaultDark() Theme {
 		Accent:       RGB(137, 180, 250),
 		Border:       RGB(88, 91, 112),
 		FontSize:     14.0,
-		Padding:      8,
-		Gap:          6,
+		Padding:      DefaultPadding,
+		Gap:          DefaultGap,
 		BorderWidth:  1,
-		BorderRadius: 4,
+		BorderRadius: DefaultBorderRadius,
 		Scale:        1.0,
 	}
 }
@@ -100,10 +111,10 @@ func DefaultLight() Theme {
 		Accent:       RGB(74, 144, 226),
 		Border:       RGB(200, 200, 200),
 		FontSize:     14.0,
-		Padding:      8,
-		Gap:          6,
+		Padding:      DefaultPadding,
+		Gap:          DefaultGap,
 		BorderWidth:  1,
-		BorderRadius: 4,
+		BorderRadius: DefaultBorderRadius,
 		Scale:        1.0,
 	}
 }

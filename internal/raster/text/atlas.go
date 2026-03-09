@@ -25,6 +25,12 @@ import (
 	"errors"
 )
 
+const (
+	// AtlasTextureSize is the size of the embedded SDF font atlas texture in pixels.
+	// The atlas is square (256x256) and contains ASCII printable characters (0x20-0x7E).
+	AtlasTextureSize = 256
+)
+
 var (
 	// ErrInvalidAtlas is returned when the atlas data is malformed.
 	ErrInvalidAtlas = errors.New("text: invalid atlas data")
