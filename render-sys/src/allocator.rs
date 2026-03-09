@@ -226,6 +226,11 @@ impl BufferAllocator {
                 self.device.i915_gem_mmap_offset(&mut mmap_req)?;
 
                 // Map the buffer into userspace
+                // SAFETY: mmap syscall requires:
+                // - Valid file descriptor (device.fd() returns valid DRM fd)
+                // - Valid offset from i915_gem_mmap_offset ioctl
+                // - Size matches allocated buffer size
+                // - File descriptor remains open for lifetime of mapping (held by MappedBuffer)
                 let ptr = unsafe {
                     nix::libc::mmap(
                         std::ptr::null_mut(),
@@ -252,6 +257,11 @@ impl BufferAllocator {
                 let mut mmap_req = i915::GemMmapOffset::new(buffer.handle, i915::I915_MMAP_OFFSET_WB);
                 self.device.i915_gem_mmap_offset(&mut mmap_req)?;
 
+                // SAFETY: mmap syscall requires:
+                // - Valid file descriptor (device.fd() returns valid DRM fd)
+                // - Valid offset from i915_gem_mmap_offset ioctl (Xe uses i915 mmap for now)
+                // - Size matches allocated buffer size
+                // - File descriptor remains open for lifetime of mapping (held by MappedBuffer)
                 let ptr = unsafe {
                     nix::libc::mmap(
                         std::ptr::null_mut(),
@@ -279,6 +289,11 @@ impl BufferAllocator {
                 let mut mmap_req = GemMmap::new(buffer.handle);
                 self.device.amdgpu_gem_mmap(&mut mmap_req)?;
 
+                // SAFETY: mmap syscall requires:
+                // - Valid file descriptor (device.fd() returns valid DRM fd)
+                // - Valid offset from amdgpu_gem_mmap ioctl
+                // - Size matches allocated buffer size
+                // - File descriptor remains open for lifetime of mapping (held by MappedBuffer)
                 let ptr = unsafe {
                     nix::libc::mmap(
                         std::ptr::null_mut(),
@@ -317,6 +332,11 @@ impl MappedBuffer {
         if self.ptr.is_null() {
             return &[];
         }
+        // SAFETY: MappedBuffer ensures:
+        // - ptr is valid (non-null, from successful mmap)
+        // - size is correct (matches mmap'd region size)
+        // - memory remains valid for lifetime of MappedBuffer (munmap'd in Drop)
+        // - data is initialized (kernel zero-initializes GEM buffers)
         unsafe { std::slice::from_raw_parts(self.ptr, self.size) }
     }
 
@@ -324,8 +344,15 @@ impl MappedBuffer {
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         if self.ptr.is_null() {
             let ptr = std::ptr::NonNull::<u8>::dangling().as_ptr();
+            // SAFETY: Creating a zero-length slice from a dangling pointer is safe
+            // because zero-length slices are never dereferenced
             return unsafe { std::slice::from_raw_parts_mut(ptr, 0) };
         }
+        // SAFETY: MappedBuffer ensures:
+        // - ptr is valid (non-null, from successful mmap with PROT_WRITE)
+        // - size is correct (matches mmap'd region size)
+        // - memory remains valid for lifetime of MappedBuffer (munmap'd in Drop)
+        // - exclusive access (&mut self ensures no aliasing)
         unsafe { std::slice::from_raw_parts_mut(self.ptr, self.size) }
     }
 }
@@ -335,6 +362,10 @@ impl Drop for MappedBuffer {
         if self.ptr.is_null() {
             return;
         }
+        // SAFETY: munmap requires:
+        // - ptr from a previous mmap call (guaranteed by MappedBuffer construction)
+        // - size matches the mmap'd region (stored in self.size)
+        // - called exactly once (Drop guarantees single execution)
         let ret = unsafe {
             nix::libc::munmap(self.ptr as *mut nix::libc::c_void, self.size)
         };

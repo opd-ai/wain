@@ -604,6 +604,11 @@ impl DrmDevice {
 
         const DRM_IOCTL_VERSION: nix::libc::Ioctl = nix::request_code_readwrite!(DRM_IOCTL_BASE, 0x00, std::mem::size_of::<DrmVersion>());
         
+        // SAFETY: DRM_IOCTL_VERSION requires:
+        // - Valid DRM file descriptor (self.fd() returns valid fd)
+        // - Initialized DrmVersion struct with valid buffer pointers
+        // - name_buf and date/desc buffers remain valid for call duration (stack allocated)
+        // - Return value is intentionally ignored (driver detection uses name_len == 0 for non-Xe)
         unsafe {
             nix::libc::ioctl(self.fd(), DRM_IOCTL_VERSION as _, &mut version as *mut DrmVersion)
         };

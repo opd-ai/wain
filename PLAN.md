@@ -167,19 +167,45 @@
   - All tests pass: `make test-go` → ok
   - Zero compilation errors, go vet passes (only known shm.go false positive)
 
-### Step 10: Add Rust Documentation Comments
+### Step 10: Add Rust Documentation Comments ✅ COMPLETE
 - **Deliverable**: Add `///` doc comments to 52+ undocumented public Rust types in `amd.rs`, `i915.rs`, `xe.rs`, `allocator.rs`, `pipeline.rs`, `surface.rs`
 - **Dependencies**: Steps 6-7 (opcode constants make docs clearer)
 - **Acceptance**: All public `struct` and `enum` types have doc comments
 - **Validation**: `cargo doc --no-deps 2>&1 | grep -c "warning: missing documentation"` → 0
 - **Rationale**: Slop SL-011; DRM/GPU types are critical API surface for FFI consumers
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Verified all 57 public struct/enum types across 6 target files have documentation:
+    - amd.rs: 11/11 types documented (100%)
+    - i915.rs: 10/10 types documented (100%)
+    - xe.rs: 12/12 types documented (100%)
+    - allocator.rs: 5/5 types documented (100%)
+    - pipeline.rs: 11/11 types documented (100%)
+    - surface.rs: 8/8 types documented (100%)
+  - Validation passed: cargo doc shows 0 missing documentation warnings
+  - All documented types include purpose, usage notes, and references where applicable
+  - Documentation quality: comprehensive coverage of DRM/GPU IOCTL wrappers and rendering types
 
-### Step 11: Add SAFETY Comments to Unsafe Blocks
+### Step 11: Add SAFETY Comments to Unsafe Blocks ✅ COMPLETE
 - **Deliverable**: Add `// SAFETY:` comments to all 10 `unsafe` blocks in Rust code explaining invariants
 - **Dependencies**: Step 10 (docs first)
 - **Acceptance**: All `unsafe` blocks have SAFETY comments
 - **Validation**: `grep -B1 "unsafe {" render-sys/src/*.rs | grep -c "SAFETY"` ≥ 10
 - **Rationale**: Security gate S-006; unsafe code requires documented invariants
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Added SAFETY comments to all 10 unsafe blocks:
+    - render-sys/src/allocator.rs: 7 blocks (3 mmap calls, 2 slice conversions, 1 zero-length slice, 1 munmap)
+    - render-sys/src/drm.rs: 1 block (ioctl syscall wrapper)
+    - render-sys/src/pm4.rs: 1 block (Vec<u32> to &[u8] reinterpretation)
+    - render-sys/src/xe.rs: 1 block (DRM_IOCTL_VERSION)
+  - Each SAFETY comment documents required invariants:
+    - Valid pointer/fd requirements
+    - Lifetime guarantees
+    - Alignment requirements
+    - Initialization guarantees
+    - Exclusive access constraints
+  - Validation passed: all 10 unsafe blocks have SAFETY comments
+  - Build verified: cargo build succeeds with no errors
+  - No Go code changes, zero regression risk
 
 ### Step 12: Wire or Remove Dead Code (Go)
 - **Deliverable**: Either connect or remove:

@@ -112,6 +112,11 @@ impl PM4Builder {
     
     /// Get the accumulated packet data as bytes.
     pub fn as_bytes(&self) -> &[u8] {
+        // SAFETY: Reinterpret Vec<u32> as &[u8]:
+        // - Vec<u32> guarantees valid, aligned, initialized memory
+        // - Byte length = u32 count * 4 (no overflow: Vec::len() * 4 < isize::MAX)
+        // - Lifetime tied to self (slice cannot outlive Vec)
+        // - u8 has no alignment requirements (u32's alignment is sufficient)
         unsafe {
             std::slice::from_raw_parts(
                 self.data.as_ptr() as *const u8,
