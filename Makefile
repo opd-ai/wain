@@ -11,6 +11,7 @@
 #   make widget-demo  – build the interactive widget demonstration binary
 #   make gen-atlas    – build the SDF font atlas generator tool
 #   make test         – run both Rust and Go test suites
+#   make test-visual  – run visual regression tests for rendering primitives
 #   make coverage     – run Go tests with coverage reporting
 #   make coverage-html – generate HTML coverage report (coverage/coverage.html)
 #   make check-static – assert the final binary is fully statically linked
@@ -61,7 +62,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo stats wain-demo event-demo
+.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo double-buffer-demo dmabuf-demo stats wain-demo event-demo
 
 all: build
 
@@ -238,6 +239,15 @@ test-go: rust $(DL_STUB_OBJ)
 	  go test ./...
 
 test: test-rust test-go
+
+test-visual: rust $(DL_STUB_OBJ)
+	@echo "Running visual regression tests…"
+	@CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go test -v ./internal/raster -run TestVisual
+	@echo ""
+	@echo "Visual regression tests passed. Reference images: $(shell ls -1 internal/raster/testdata/*.png 2>/dev/null | wc -l) images"
 
 coverage: rust $(DL_STUB_OBJ)
 	@echo "Running Go tests with coverage…"

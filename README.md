@@ -439,12 +439,29 @@ go test ./...         # run all Go tests
 make test             # run all tests (Rust + Go)
 make test-rust        # run Rust tests only
 make test-go          # run Go tests only
+make test-visual      # run visual regression tests for rendering primitives
 make coverage         # Go tests with per-package coverage summary
 make coverage-html    # HTML coverage report at coverage/coverage.html
 ```
 
 The project contains 61 test files across all packages.
 Authoritative coverage is computed via `scripts/compute-coverage.sh`.
+
+### Visual Regression Tests
+
+The project includes automated screenshot comparison tests for all
+rendering primitives (filled rectangles, rounded rectangles, lines,
+text, gradients, and shadows). Visual tests generate reference images
+on first run and compare subsequent renders against them with a
+99.5% pixel match threshold:
+
+```bash
+make test-visual      # run visual regression tests
+```
+
+Reference images are stored in `internal/raster/testdata/`. If a test
+fails, diff images are saved showing pixel-level differences (red =
+different, green = matching).
 
 **Without direnv:** use `make test-go` instead of `go test ./...`.
 Direct `go test` requires `CGO_LDFLAGS` to link the Rust library
