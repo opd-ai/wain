@@ -155,56 +155,69 @@ func max(a, b int) int {
 func ComputeDamageForCommand(cmd DrawCommand) Rect {
 	switch cmd.Type {
 	case CmdFillRect:
-		data := cmd.Data.(FillRectData)
-		return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
-
+		return damageFillRect(cmd.Data.(FillRectData))
 	case CmdFillRoundedRect:
-		data := cmd.Data.(FillRoundedRectData)
-		return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
-
+		return damageFillRoundedRect(cmd.Data.(FillRoundedRectData))
 	case CmdDrawLine:
-		data := cmd.Data.(DrawLineData)
-		x1 := min(data.X0, data.X1)
-		y1 := min(data.Y0, data.Y1)
-		x2 := max(data.X0, data.X1)
-		y2 := max(data.Y0, data.Y1)
-		// Expand by line width on all sides
-		w := data.Width / 2
-		return Rect{X: x1 - w, Y: y1 - w, Width: x2 - x1 + 2*w, Height: y2 - y1 + 2*w}
-
+		return damageDrawLine(cmd.Data.(DrawLineData))
 	case CmdDrawText:
-		data := cmd.Data.(DrawTextData)
-		// Estimate text bounds (rough approximation)
-		width := len(data.Text) * data.FontSize / 2
-		height := data.FontSize + data.FontSize/4
-		return Rect{X: data.X, Y: data.Y - height, Width: width, Height: height}
-
+		return damageDrawText(cmd.Data.(DrawTextData))
 	case CmdLinearGradient:
-		data := cmd.Data.(LinearGradientData)
-		return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
-
+		return damageLinearGradient(cmd.Data.(LinearGradientData))
 	case CmdRadialGradient:
-		data := cmd.Data.(RadialGradientData)
-		return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
-
+		return damageRadialGradient(cmd.Data.(RadialGradientData))
 	case CmdBoxShadow:
-		data := cmd.Data.(BoxShadowData)
-		// Box shadow extends beyond the rect by blur + spread
-		expand := data.BlurRadius + data.SpreadRadius
-		return Rect{
-			X:      data.X - expand,
-			Y:      data.Y - expand,
-			Width:  data.Width + 2*expand,
-			Height: data.Height + 2*expand,
-		}
-
+		return damageBoxShadow(cmd.Data.(BoxShadowData))
 	case CmdDrawImage:
-		data := cmd.Data.(DrawImageData)
-		return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
-
+		return damageDrawImage(cmd.Data.(DrawImageData))
 	default:
 		return Rect{}
 	}
+}
+
+func damageFillRect(data FillRectData) Rect {
+	return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
+}
+
+func damageFillRoundedRect(data FillRoundedRectData) Rect {
+	return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
+}
+
+func damageDrawLine(data DrawLineData) Rect {
+	x1 := min(data.X0, data.X1)
+	y1 := min(data.Y0, data.Y1)
+	x2 := max(data.X0, data.X1)
+	y2 := max(data.Y0, data.Y1)
+	w := data.Width / 2
+	return Rect{X: x1 - w, Y: y1 - w, Width: x2 - x1 + 2*w, Height: y2 - y1 + 2*w}
+}
+
+func damageDrawText(data DrawTextData) Rect {
+	width := len(data.Text) * data.FontSize / 2
+	height := data.FontSize + data.FontSize/4
+	return Rect{X: data.X, Y: data.Y - height, Width: width, Height: height}
+}
+
+func damageLinearGradient(data LinearGradientData) Rect {
+	return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
+}
+
+func damageRadialGradient(data RadialGradientData) Rect {
+	return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
+}
+
+func damageBoxShadow(data BoxShadowData) Rect {
+	expand := data.BlurRadius + data.SpreadRadius
+	return Rect{
+		X:      data.X - expand,
+		Y:      data.Y - expand,
+		Width:  data.Width + 2*expand,
+		Height: data.Height + 2*expand,
+	}
+}
+
+func damageDrawImage(data DrawImageData) Rect {
+	return Rect{X: data.X, Y: data.Y, Width: data.Width, Height: data.Height}
 }
 
 // FilterCommandsByDamage filters commands to only those that intersect with damage regions.
