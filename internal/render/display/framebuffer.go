@@ -162,6 +162,7 @@ func (p *FramebufferPool) Acquire(ctx context.Context) (*Framebuffer, error) {
 	}
 }
 
+// tryAcquire attempts to acquire the oldest available framebuffer without blocking.
 func (p *FramebufferPool) tryAcquire() (*Framebuffer, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -177,6 +178,7 @@ func (p *FramebufferPool) tryAcquire() (*Framebuffer, error) {
 	return oldest, nil
 }
 
+// findOldestAvailable returns the available framebuffer with the earliest release time.
 func (p *FramebufferPool) findOldestAvailable() *Framebuffer {
 	var oldest *Framebuffer
 	var oldestTime time.Time
@@ -191,6 +193,7 @@ func (p *FramebufferPool) findOldestAvailable() *Framebuffer {
 	return oldest
 }
 
+// waitForRelease blocks briefly to allow pending framebuffer releases to complete.
 func (p *FramebufferPool) waitForRelease(ctx context.Context) error {
 	select {
 	case <-ctx.Done():

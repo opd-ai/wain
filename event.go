@@ -304,6 +304,7 @@ func translateX11KeyPressEvent(e events.KeyPressEvent) *KeyEvent {
 	}
 }
 
+// translateX11KeyReleaseEvent converts an X11 KeyRelease event to a wain KeyEvent.
 func translateX11KeyReleaseEvent(e events.KeyReleaseEvent) *KeyEvent {
 	return &KeyEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
@@ -312,6 +313,7 @@ func translateX11KeyReleaseEvent(e events.KeyReleaseEvent) *KeyEvent {
 	}
 }
 
+// translateX11ButtonPressEvent converts an X11 ButtonPress event to a wain PointerEvent, handling both mouse buttons and scroll wheel.
 func translateX11ButtonPressEvent(e events.ButtonPressEvent) Event {
 	pe := &PointerEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
@@ -335,6 +337,7 @@ func translateX11ButtonPressEvent(e events.ButtonPressEvent) Event {
 	return pe
 }
 
+// translateX11ButtonReleaseEvent converts an X11 ButtonRelease event to a wain PointerEvent, filtering scroll button releases.
 func translateX11ButtonReleaseEvent(e events.ButtonReleaseEvent) Event {
 	// Skip release events for scroll buttons
 	if e.Detail >= 4 && e.Detail <= 5 {
@@ -349,6 +352,7 @@ func translateX11ButtonReleaseEvent(e events.ButtonReleaseEvent) Event {
 	}
 }
 
+// translateX11MotionNotifyEvent converts an X11 MotionNotify event to a wain PointerEvent.
 func translateX11MotionNotifyEvent(e events.MotionNotifyEvent) *PointerEvent {
 	return &PointerEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
@@ -358,6 +362,7 @@ func translateX11MotionNotifyEvent(e events.MotionNotifyEvent) *PointerEvent {
 	}
 }
 
+// translateX11ConfigureNotifyEvent converts an X11 ConfigureNotify event to a wain WindowEvent.
 func translateX11ConfigureNotifyEvent(e events.ConfigureNotifyEvent) *WindowEvent {
 	return &WindowEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},

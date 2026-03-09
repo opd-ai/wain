@@ -100,6 +100,7 @@ func New(cfg Config) (*GPUBackend, error) {
 	return backend, nil
 }
 
+// validateConfig checks that backend configuration values are valid.
 func validateConfig(cfg Config) error {
 	if cfg.Width <= 0 || cfg.Height <= 0 {
 		return fmt.Errorf("backend: invalid dimensions %dx%d", cfg.Width, cfg.Height)
@@ -110,6 +111,7 @@ func validateConfig(cfg Config) error {
 	return nil
 }
 
+// initGPUResources detects and initializes GPU allocator and context for the specified DRM device.
 func initGPUResources(drmPath string) (*render.Allocator, *render.GpuContext, error) {
 	gen := render.DetectGPU(drmPath)
 	if gen < 0 {
@@ -130,6 +132,7 @@ func initGPUResources(drmPath string) (*render.Allocator, *render.GpuContext, er
 	return allocator, ctx, nil
 }
 
+// allocateBuffers creates vertex buffer and render target buffers with the specified configuration.
 func allocateBuffers(allocator *render.Allocator, cfg Config) (*render.BufferHandle, *render.BufferHandle, error) {
 	vertexWidthPx := uint32(cfg.VertexBufferSize / 4)
 	vertexBuffer, err := allocator.Allocate(vertexWidthPx, 1, 32, render.TilingNone)

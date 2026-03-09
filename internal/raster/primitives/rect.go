@@ -156,6 +156,7 @@ func cornerCoverage(px, py, cx, cy float64) float64 {
 	return r + 1 - dist
 }
 
+// min returns the smaller of two int values.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -163,6 +164,7 @@ func min(a, b int) int {
 	return b
 }
 
+// max returns the larger of two int values.
 func max(a, b int) int {
 	if a > b {
 		return a

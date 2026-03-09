@@ -173,11 +173,13 @@ func (p *X11Pipeline) ReleaseFramebuffer(fb interface{}) {
 	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 
+// releaseFramebuffer marks a framebuffer as available after presentation completes.
 func (p *X11Pipeline) releaseFramebuffer(fb *Framebuffer) {
 	fb.setState(FramebufferAvailable)
 	fb.signalRelease()
 }
 
+// renderToFramebuffer renders a display list to a framebuffer using the configured renderer.
 func (p *X11Pipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *Framebuffer) error {
 	if err := p.renderer.Render(dl); err != nil {
 		return fmt.Errorf("display: render failed: %w", err)
@@ -199,6 +201,7 @@ func (p *X11Pipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *Frame
 	return nil
 }
 
+// ensureX11Pixmap creates an X11 pixmap for the framebuffer if one does not exist.
 func (p *X11Pipeline) ensureX11Pixmap(fb *Framebuffer) error {
 	if fb.BufferID != 0 {
 		return nil
@@ -212,6 +215,7 @@ func (p *X11Pipeline) ensureX11Pixmap(fb *Framebuffer) error {
 	return nil
 }
 
+// presentPixmap submits a pixmap to the X11 Present extension for display.
 func (p *X11Pipeline) presentPixmap(fb *Framebuffer) error {
 	if err := p.present.PresentPixmap(p.presentAdapter, present.PixmapPresentOptions{
 		Window:       present.XID(p.window),

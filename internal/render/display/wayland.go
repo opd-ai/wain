@@ -128,11 +128,13 @@ func (p *WaylandPipeline) ReleaseFramebuffer(fb interface{}) {
 	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 
+// releaseFramebuffer marks a framebuffer as available after compositor release.
 func (p *WaylandPipeline) releaseFramebuffer(fb *Framebuffer) {
 	fb.setState(FramebufferAvailable)
 	fb.signalRelease()
 }
 
+// renderToFramebuffer renders a display list to a framebuffer using the configured renderer.
 func (p *WaylandPipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *Framebuffer) error {
 	if err := p.renderer.Render(dl); err != nil {
 		return fmt.Errorf("display: render failed: %w", err)
@@ -154,6 +156,7 @@ func (p *WaylandPipeline) renderToFramebuffer(dl *displaylist.DisplayList, fb *F
 	return nil
 }
 
+// ensureWaylandBuffer creates a wl_buffer for the framebuffer if one does not exist.
 func (p *WaylandPipeline) ensureWaylandBuffer(fb *Framebuffer) error {
 	if fb.BufferID != 0 {
 		return nil
@@ -167,6 +170,7 @@ func (p *WaylandPipeline) ensureWaylandBuffer(fb *Framebuffer) error {
 	return nil
 }
 
+// commitToSurface attaches and commits a framebuffer to the Wayland surface with damage tracking.
 func (p *WaylandPipeline) commitToSurface(fb *Framebuffer) error {
 	if err := p.surface.Attach(fb.BufferID, 0, 0); err != nil {
 		return fmt.Errorf("display: attach failed: %w", err)

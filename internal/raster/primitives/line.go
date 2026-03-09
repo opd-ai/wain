@@ -118,6 +118,7 @@ func endCapCoverage(parallel, px, py, x0, y0, dirX, dirY, length, halfWidth, cov
 	return coverage
 }
 
+// min2f returns the smaller of two float64 values.
 func min2f(a, b float64) float64 {
 	if a < b {
 		return a
@@ -125,6 +126,7 @@ func min2f(a, b float64) float64 {
 	return b
 }
 
+// max2f returns the larger of two float64 values.
 func max2f(a, b float64) float64 {
 	if a > b {
 		return a
@@ -132,6 +134,7 @@ func max2f(a, b float64) float64 {
 	return b
 }
 
+// clamp restricts a value to the range [lo, hi].
 func clamp(v, lo, hi float64) float64 {
 	if v < lo {
 		return lo

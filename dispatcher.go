@@ -91,6 +91,7 @@ func (d *EventDispatcher) Dispatch(evt Event) {
 	}
 }
 
+// dispatchPointer routes pointer events to widgets via hit-testing and registered handlers.
 func (d *EventDispatcher) dispatchPointer(evt *PointerEvent) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -115,6 +116,7 @@ func (d *EventDispatcher) dispatchPointer(evt *PointerEvent) {
 	}
 }
 
+// dispatchKey routes keyboard events to the focused widget and registered handlers.
 func (d *EventDispatcher) dispatchKey(evt *KeyEvent) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -167,6 +169,7 @@ func (d *EventDispatcher) dispatchToKeyHandlers(evt *KeyEvent) {
 	}
 }
 
+// dispatchTouch routes touch events to widgets via hit-testing and registered handlers.
 func (d *EventDispatcher) dispatchTouch(evt *TouchEvent) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -190,6 +193,7 @@ func (d *EventDispatcher) dispatchTouch(evt *TouchEvent) {
 	}
 }
 
+// dispatchWindow routes window events to registered handlers.
 func (d *EventDispatcher) dispatchWindow(evt *WindowEvent) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -203,6 +207,7 @@ func (d *EventDispatcher) dispatchWindow(evt *WindowEvent) {
 	}
 }
 
+// dispatchCustom routes custom events to registered handlers.
 func (d *EventDispatcher) dispatchCustom(evt *CustomEvent) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
