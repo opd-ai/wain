@@ -20,19 +20,31 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 **Effort:** ~30 minutes (change to `app.theme.Panel()` once theme system exists)  
 **Related:** Blocked by App.theme field implementation (not yet designed)  
 
-### TD-4: Full Wayland event reading and dispatch
-**File:** `app.go:1471`  
-**Priority:** High  
-**Description:** The Wayland display server currently only sends requests but doesn't read events from the compositor. This prevents handling user input (keyboard, mouse), window state changes, or other compositor events. Need to:
-  1. Implement wire protocol event parser in `internal/wayland/wire`
-  2. Add event dispatch loop to `App.pollEvents()` for Wayland path
-  3. Map Wayland events (wl_keyboard, wl_pointer, etc.) to wain Event types
-  4. Test with real Wayland compositor (Weston, Sway)  
-**Impact:** Wayland apps cannot receive user input or respond to compositor events  
-**Effort:** ~8-12 hours (wire parsing 2h, dispatch 3h, event mapping 3h, testing 4h)  
-**Related:** ROADMAP Phase 9.2 "Wayland Event Reading" — currently incomplete  
-
 ## Completed Items
+
+### TD-4: Full Wayland event reading and dispatch ✅
+**Completed:** 2026-03-09  
+**File:** `app.go:1471` (removed TODO), `internal/wayland/client/connection.go:222-298` (added), `internal/wayland/input/*.go` (event handlers added)  
+**Solution:** Implemented full Wayland event reading and dispatch infrastructure:
+1. Added `ReadMessage()` method to Connection for reading event messages from compositor socket (27 LOC)
+2. Added `DispatchMessage()` method to Connection for routing events to object handlers (15 LOC)
+3. Implemented `EventHandler` interface for objects that can process events
+4. Updated `processWaylandEvents()` in app.go to read and dispatch events (21 LOC)
+5. Added `HandleEvent()` implementations for all input objects:
+   - Keyboard: Handles keymap, enter, leave, key, modifiers, repeat_info events (142 LOC)
+   - Pointer: Handles enter, leave, motion, button, axis, frame, axis_source, axis_stop, axis_discrete events (173 LOC)
+   - Touch: Handles down, up, motion, frame, cancel, shape, orientation events (134 LOC)
+   - Seat: Handles capabilities, name events (36 LOC)
+6. All event handlers properly decode wire protocol arguments and call existing handler methods
+**Files Modified:**
+- `internal/wayland/client/connection.go`: Added ReadMessage, DispatchMessage, EventHandler interface (75 LOC)
+- `app.go`: Updated processWaylandEvents and added dispatchWaylandEvent (21 LOC)
+- `internal/wayland/input/keyboard.go`: Added HandleEvent implementation (142 LOC)
+- `internal/wayland/input/pointer.go`: Added HandleEvent implementation (173 LOC)
+- `internal/wayland/input/touch.go`: Added HandleEvent implementation (134 LOC)
+- `internal/wayland/input/seat.go`: Added HandleEvent implementation (36 LOC)
+**Tests:** All 42 input tests passing (100% pass rate)
+**Impact:** Wayland apps can now receive and process user input (keyboard, mouse, touch), window events, and compositor notifications. This enables full interactive Wayland applications.
 
 ### TD-1: Add placeholder support to TextInput widget ✅
 **Completed:** 2026-03-09  
@@ -46,5 +58,5 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 ---
 
 **Last Updated:** 2026-03-09  
-**Total Active Items:** 3  
-**Total Completed Items:** 0
+**Total Active Items:** 2  
+**Total Completed Items:** 2

@@ -200,6 +200,36 @@ func (s *Seat) HandleName(name string) {
 	s.name = name
 }
 
+// HandleEvent implements the EventHandler interface for wl_seat events.
+func (s *Seat) HandleEvent(opcode uint16, args []wire.Argument) error {
+	switch opcode {
+	case seatEventCapabilities:
+		if len(args) < 1 {
+			return fmt.Errorf("seat: capabilities event requires 1 argument, got %d", len(args))
+		}
+		caps, ok := args[0].Value.(uint32)
+		if !ok {
+			return fmt.Errorf("seat: capabilities must be uint32")
+		}
+		s.HandleCapabilities(caps)
+		return nil
+
+	case seatEventName:
+		if len(args) < 1 {
+			return fmt.Errorf("seat: name event requires 1 argument, got %d", len(args))
+		}
+		name, ok := args[0].Value.(string)
+		if !ok {
+			return fmt.Errorf("seat: name must be string")
+		}
+		s.HandleName(name)
+		return nil
+
+	default:
+		return fmt.Errorf("seat: unknown event opcode %d", opcode)
+	}
+}
+
 // Capabilities returns the current seat capabilities.
 func (s *Seat) Capabilities() SeatCapability {
 	return s.capabilities

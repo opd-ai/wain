@@ -33,6 +33,7 @@ import (
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/shm"
+	wlwire "github.com/opd-ai/wain/internal/wayland/wire"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	x11events "github.com/opd-ai/wain/internal/x11/events"
@@ -1468,14 +1469,30 @@ func (a *App) processWaylandEvents() error {
 		return fmt.Errorf("flush wayland requests: %w", err)
 	}
 
-	// TODO(TD-4): Implement full Wayland event reading and dispatch
-	// Current limitation: No inbound event processing yet
-	// Required additions:
-	//   1. Read events from socket with proper wire protocol parsing
-	//   2. Dispatch events to registered object handlers
-	//   3. Handle frame callbacks for proper rendering synchronization
-	// For now, this minimal implementation flushes outbound requests
-	// to prevent deadlock and returns immediately.
+	// Read a single event message from the compositor
+	msg, err := a.waylandConn.ReadMessage()
+	if err != nil {
+		return fmt.Errorf("read wayland event: %w", err)
+	}
+	if msg == nil {
+		return nil // No event available
+	}
+
+	// Dispatch the event to the appropriate object handler
+	return a.dispatchWaylandEvent(msg)
+}
+
+// dispatchWaylandEvent routes a Wayland event to the appropriate window handler.
+func (a *App) dispatchWaylandEvent(msg *wlwire.Message) error {
+	// First try to dispatch through the connection's object registry
+	if err := a.waylandConn.DispatchMessage(msg); err != nil {
+		return fmt.Errorf("dispatch wayland event: %w", err)
+	}
+
+	// TODO(future): Also dispatch to window-specific handlers for input events
+	// For now, the object-level handlers (Keyboard, Pointer, etc.) will
+	// handle events and eventually call back to windows through callbacks.
+
 	return nil
 }
 

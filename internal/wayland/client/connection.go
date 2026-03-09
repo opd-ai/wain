@@ -24,6 +24,7 @@
 package client
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -217,4 +218,75 @@ func (c *Connection) RegisterObject(obj interface{}) {
 // Exported for use by extension packages (SHM, XDG, etc.).
 func (c *Connection) SendRequest(objectID uint32, opcode uint16, args []wire.Argument) error {
 	return c.sendRequest(objectID, opcode, args)
+}
+
+// EventHandler is an interface for objects that can handle Wayland events.
+type EventHandler interface {
+	Object
+	HandleEvent(opcode uint16, args []wire.Argument) error
+}
+
+// ReadMessage reads a single event message from the compositor.
+// Returns nil, nil if no message is available (non-blocking read).
+func (c *Connection) ReadMessage() (*wire.Message, error) {
+	if c.closed {
+		return nil, ErrClosed
+	}
+
+	// Try to read a message header
+	n, _, err := c.socket.RecvMsg(c.eventBuffer[:wire.HeaderSize], 0)
+	if err != nil {
+		return nil, fmt.Errorf("client: read header failed: %w", err)
+	}
+	if n == 0 {
+		return nil, nil // No message available
+	}
+	if n < wire.HeaderSize {
+		return nil, fmt.Errorf("client: incomplete header (%d bytes)", n)
+	}
+
+	// Decode header
+	header := wire.Header{
+		ObjectID: binary.LittleEndian.Uint32(c.eventBuffer[0:4]),
+		Opcode:   uint16(binary.LittleEndian.Uint32(c.eventBuffer[4:8]) & 0xFFFF),
+		Size:     uint16(binary.LittleEndian.Uint32(c.eventBuffer[4:8]) >> 16),
+	}
+
+	// Read the rest of the message if needed
+	payloadSize := int(header.Size) - wire.HeaderSize
+	if payloadSize > 0 {
+		n, _, err = c.socket.RecvMsg(c.eventBuffer[wire.HeaderSize:header.Size], 0)
+		if err != nil {
+			return nil, fmt.Errorf("client: read payload failed: %w", err)
+		}
+		if n < payloadSize {
+			return nil, fmt.Errorf("client: incomplete payload (%d of %d bytes)", n, payloadSize)
+		}
+	}
+
+	msg := &wire.Message{
+		Header: header,
+	}
+
+	return msg, nil
+}
+
+// DispatchMessage routes an event message to the appropriate object handler.
+func (c *Connection) DispatchMessage(msg *wire.Message) error {
+	if c.closed {
+		return ErrClosed
+	}
+
+	obj, exists := c.objects[msg.Header.ObjectID]
+	if !exists {
+		return fmt.Errorf("%w: %d", ErrInvalidObjectID, msg.Header.ObjectID)
+	}
+
+	handler, ok := obj.(EventHandler)
+	if !ok {
+		// Object doesn't handle events, silently ignore
+		return nil
+	}
+
+	return handler.HandleEvent(msg.Header.Opcode, msg.Args)
 }
