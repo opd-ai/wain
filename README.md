@@ -51,7 +51,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
 - ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
 - ✅ MIT-SHM extension: zero-copy shared memory image transfers
 - ✅ DRI3 extension (1.0+): GPU buffer sharing via DMA-BUF file descriptors (single-plane ARGB buffers; multi-planar support deferred)
-- ✅ Present extension: frame synchronization and swap control
+- ✅ Present extension (1.0): frame synchronization and swap control (tear-free rendering; async flip deferred)
 
 ### Buffer Infrastructure (Phase 2) — ✅ Complete
 **Rust DRM/KMS Integration** (~9,926 LOC code, ~14,433 LOC total in render-sys):
