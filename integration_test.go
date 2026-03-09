@@ -156,8 +156,8 @@ func TestThemes(t *testing.T) {
 // TestColorConstructors verifies color creation functions.
 func TestColorConstructors(t *testing.T) {
 	tests := []struct {
-		name  string
-		color wain.Color
+		name       string
+		color      wain.Color
 		r, g, b, a uint8
 	}{
 		{"RGB", wain.RGB(255, 128, 64), 255, 128, 64, 255},
