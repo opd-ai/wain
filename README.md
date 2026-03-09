@@ -1,358 +1,165 @@
 # wain
 
-**A statically-compiled Go UI toolkit with GPU rendering via Rust**
+[![CI](https://img.shields.io/github/actions/workflow/status/opd-ai/wain/ci.yml?branch=main&label=CI)](https://github.com/opd-ai/wain/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod-go-version/opd-ai/wain)](go.mod)
+
+Wain is a statically-compiled Go UI toolkit that links a Rust rendering
+library (via CGO and musl) for GPU-accelerated graphics on Linux. It
+implements Wayland and X11 display protocols from scratch, provides a
+software 2D rasterizer, and produces a single fully-static binary with
+zero runtime dependencies.
 
 ## Table of Contents
 
-- [Status](#status)
-- [Current Functionality](#current-functionality)
-- [Known Limitations](#known-limitations)
-- [Documentation](#documentation)
-- [Prerequisites](#prerequisites)
-- [Build](#build)
-- [Using wain as a Dependency](#using-wain-as-a-dependency)
-- [Test](#test)
-- [Verify Static Linking](#verify-static-linking)
-- [Run](#run)
-- [Demonstration Binaries](#demonstration-binaries)
-- [Architecture](#architecture)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
 - [Project Structure](#project-structure)
-- [Manual Build](#manual-build-without-makefile)
+- [Architecture](#architecture)
+- [Demonstration Binaries](#demonstration-binaries)
+- [Testing](#testing)
 - [Font Atlas Generation](#font-atlas-generation)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Status
+## Features
 
-**Phases 0–2** complete, **Phase 3** (GPU Command Submission) and **Phase 4.1** (Shader Frontend IR) partially implemented.
-See [ROADMAP.md](ROADMAP.md) for the full 8-phase implementation plan.
+- **Go–Rust Static Linking** — CGO bridge to a Rust `staticlib`,
+  producing a single binary with no dynamic dependencies
+  (`render-sys/src/lib.rs`, `internal/render/binding.go`)
+- **Wayland Client** — 9-package implementation covering wire format,
+  SHM buffers, xdg-shell window management, pointer/keyboard input,
+  DMA-BUF buffer sharing, data-device clipboard, and output handling
+  (`internal/wayland/`)
+- **X11 Client** — 9-package implementation covering connection setup,
+  window operations, graphics context, MIT-SHM, DRI3 GPU buffer
+  sharing, Present frame sync, DPI scaling, and selection/clipboard
+  (`internal/x11/`)
+- **Software 2D Rasterizer** — Filled and rounded rectangles,
+  anti-aliased lines, quadratic/cubic Bézier curves, arc fills,
+  SDF text rendering, box shadows, gradients, and Porter-Duff alpha
+  compositing (`internal/raster/`)
+- **UI Widget Layer** — Flexbox-like Row/Column layout engine,
+  percentage-based sizing, Button/TextInput/ScrollContainer widgets,
+  client-side window decorations, and DPI-aware scaling
+  (`internal/ui/`)
+- **GPU Buffer Infrastructure** — DRM/KMS ioctl wrappers for Intel
+  i915 and Xe drivers, GPU buffer allocation with tiling, DMA-BUF
+  export, and slab sub-allocation (`render-sys/src/allocator.rs`,
+  `render-sys/src/slab.rs`)
+- **GPU Command Submission** — Batch buffer construction, Intel 3D
+  pipeline command encoding (MI commands, state, vertex, primitive),
+  pipeline state objects, and surface/sampler state encoding
+  (`render-sys/src/batch.rs`, `render-sys/src/cmd/`)
+- **Shader Frontend** — WGSL and GLSL shader parsing and validation
+  via naga 0.14; 7 WGSL shaders for common UI draw operations
+  (`render-sys/src/shader.rs`, `render-sys/shaders/`)
+- **Intel EU Backend** — Register allocator, instruction lowering,
+  and 128-bit binary encoding for Gen9+ execution units
+  (`render-sys/src/eu/`)
+- **AMD RDNA Backend** — RDNA instruction set, register allocation,
+  encoding, and PM4 command stream for AMD GPUs
+  (`render-sys/src/rdna/`, `render-sys/src/amd.rs`,
+  `render-sys/src/pm4.rs`)
+- **Public API** — `App` type with display server auto-detection
+  (Wayland preferred, X11 fallback), renderer auto-detection (Intel →
+  AMD → software), window management, event dispatching, widget tree,
+  canvas drawing, color, and resource management (`app.go`,
+  `event.go`, `widget.go`, `publicwidget.go`, `resource.go`,
+  `color.go`, `dispatcher.go`, `render.go`)
+- **Frame Buffering** — Double/triple buffer ring with compositor
+  synchronization (`internal/buffer/`)
+- **Display List Rendering** — GPU backend with display list consumer,
+  texture atlas management, and frame presentation
+  (`internal/render/backend/`, `internal/render/atlas/`,
+  `internal/render/display/`, `internal/render/present/`)
 
-## Current Functionality
+## Requirements
 
-### Foundation (Phase 0) — ✅ Complete
-- ✅ Go → Rust static library linking (CGO + musl)
-- ✅ C ABI boundary validation (`render_add`, `render_version`)
-- ✅ Fully static binary output (no dynamic dependencies)
+- **Go 1.24** or later
+- **Rust (stable)** with the musl target for your architecture
+- **musl C compiler** (`musl-gcc`)
+- **Linux** (Wayland or X11 display server)
 
-### Protocol Layer (Phase 1.1–1.2) — ✅ Complete
-**Wayland Client** (9 packages, ~9,747 LOC):
-- ✅ Wire format: binary protocol marshaling, fd passing via SCM_RIGHTS
-- ✅ Core objects: wl_display, wl_registry, wl_compositor, wl_surface
-- ✅ Shared memory: wl_shm, wl_shm_pool, wl_buffer (memfd_create)
-- ✅ Window management: xdg_wm_base, xdg_surface, xdg_toplevel
-- ✅ Input handling: wl_seat, wl_pointer, wl_keyboard with basic keycode-to-keysym translation (hardcoded US QWERTY layout — non-US keyboards not supported)
-- ✅ DMA-BUF: zwp_linux_dmabuf_v1 protocol for GPU buffer sharing
+Install prerequisites:
 
-**X11 Client** (9 packages, ~7,735 LOC):
-- ✅ Connection setup: authentication, XID allocation, extension queries
-- ✅ Window operations: CreateWindow, MapWindow, ConfigureWindow
-- ✅ Graphics context: CreateGC, PutImage, CreatePixmap
-- ✅ Event handling: KeyPress, ButtonPress, MotionNotify, Expose
-- ✅ MIT-SHM extension: zero-copy shared memory image transfers
-- ✅ DRI3 extension (1.0+): GPU buffer sharing via DMA-BUF file descriptors (single-plane ARGB buffers; multi-planar support deferred)
-- ✅ Present extension (1.0): frame synchronization and swap control (tear-free rendering; async flip deferred)
-
-### Buffer Infrastructure (Phase 2) — ✅ Complete
-**Rust DRM/KMS Integration** (~9,926 LOC code, ~14,433 LOC total in render-sys):
-- ✅ Kernel ioctl wrappers: i915 and Xe GPU drivers (`i915.rs`, `xe.rs`)
-- ✅ DRM device access and GPU generation detection (`drm.rs`, `detect.rs`)
-- ✅ Buffer allocation: GPU-visible buffers with tiling support (`allocator.rs`)
-- ✅ DMA-BUF export: fd-based buffer sharing across processes
-- ✅ Slab allocator: efficient sub-allocation from large GPU buffers (`slab.rs`)
-
-### GPU Command Submission (Phase 3) — 🔧 In Progress
-**Intel GPU Command Infrastructure** (render-sys):
-- ✅ GPU generation detection via Go bindings (`render.DetectGPU`)
-- ✅ GPU context creation for i915/Xe (`render.CreateContext`)
-- ✅ Batch buffer construction with relocation support (`batch.rs`)
-- ✅ Intel 3D pipeline command encoding: MI commands, pipeline select, state base address, viewport, clip, SF, WM, PS, vertex buffers/elements, 3DPRIMITIVE (`cmd/`)
-- ✅ Pipeline state objects for common UI draw operations (`pipeline.rs`)
-- ✅ Surface state and sampler state encoding (`surface.rs`)
-- ✅ Batch submission via Go bindings (`render.SubmitBatch`)
-- ✅ GPU triangle demonstration binary (`cmd/gpu-triangle-demo/`)
-
-### Shader Frontend (Phase 4.1) — ✅ Complete
-- ✅ WGSL and GLSL shader parsing via naga (`shader.rs`)
-- ✅ Shader validation pipeline
-- ✅ naga 0.14 integrated as Rust dependency
-
-### UI Shaders (Phase 4.2) — ✅ Complete
-- ✅ 7 WGSL shaders authored in `render-sys/shaders/`
-- ✅ All shaders validated with naga (22 shader tests passing, 7 GPU tests ignored)
-- ✅ Comprehensive shader documentation (detailed README with usage examples)
-- ✅ Shaders: solid_fill, textured_quad, sdf_text, box_shadow, rounded_rect, linear_gradient, radial_gradient
-
-### Intel EU Backend (Phase 4.3) — 🔧 In Progress
-**Core Compilation Pipeline** (~4,090 LOC):
-- ✅ Main compile() function implemented
-- ✅ Register allocator (linear-scan, r0-r127 GRF mapping)
-- ✅ Instruction lowering (binary/unary ops, math functions, control flow)
-- ✅ Binary encoding (128-bit EU instruction format for Gen9+)
-- ✅ Basic shader compilation validated (vertex shaders compile to EU binary)
-- ⚠️ Advanced features deferred: URB I/O, texture SEND instructions, optimizations
-
-### Rendering Layer (Phase 1.4) — ✅ Complete
-**Software 2D Rasterizer** (7 packages, ~6,994 LOC):
-- ✅ Primitives: filled rectangles, rounded rectangles, anti-aliased lines
-- ✅ Curves: quadratic/cubic Bezier, arc fills
-- ✅ Text: SDF-based rendering with embedded glyph atlas
-- ✅ Effects: box shadow (Gaussian blur), linear/radial gradients
-- ✅ Compositing: alpha blending (Porter-Duff), bilinear image filtering (Blit/BlitScaled only; DrawImage requires GPU backend)
-
-### UI Framework (Phase 1.5) — ✅ Complete
-**Widget Layer** (5 packages, ~4,893 LOC):
-- ✅ Layout system: flexbox-like Row/Column with flex-grow/shrink, gaps, padding
-- ✅ Widgets: Button, TextInput, ScrollContainer with event handlers
-- ✅ Sizing: percentage-based dimensions with auto-layout
-
-### Integration Status
-- ✅ Demonstration binaries: `wayland-demo`, `x11-demo`, `widget-demo`, `x11-dmabuf-demo`, `dmabuf-demo`, `gpu-triangle-demo`, `double-buffer-demo`
-- ✅ Full protocol → rasterizer → display pipeline verified with integration tests
-- ✅ GPU buffer sharing tested on both X11 (DRI3) and Wayland (dmabuf)
-- ✅ Frame buffer ring management for double/triple buffering with compositor synchronization (`internal/buffer/`, `internal/integration/`)
-- ⚠️ All packages marked `internal/` (public API surface planned for later)
-
-**Not yet implemented:** Full GPU rendering pipeline integration (Phase 5+), advanced EU backend features (URB I/O, texture sampling, shader optimizations - Phase 4.3 cont'd), AMD GPU support (Phase 6). The project currently uses CPU-based software rendering. GPU buffers are allocated and shared, GPU command submission infrastructure exists, and basic shader compilation to EU binary is functional, but GPU rendering is not yet wired into the display pipeline.
-
-## Known Limitations
-
-**Integration status:**
-- ✅ Demonstration binaries showing protocol → rasterizer → display pipeline working
-- ✅ End-to-end integration tests verify full stack functionality
-- ⚠️ All packages marked `internal/` — no public API for external users yet
-- ⚠️ No platform abstraction layer (users must choose Wayland or X11 explicitly)
-- ⚠️ No production-ready event loop (demos have basic event handling only)
-- ⚠️ Widget demo platform detection functional; event handling deferred
-
-**Input:**
-- ⚠️ Wayland input handling only supports US QWERTY keyboard layout. International keyboards require XKB parser implementation (planned for Phase 8.1)
-
-**Rendering:**
-- ⚠️ CPU-only software rendering (GPU rendering pipeline not yet connected)
-- ⚠️ Single-threaded rasterizer (no tile-based threading)
-- ⚠️ Software rasterizer does not support DrawImage command — image compositing requires GPU backend or manual Blit calls
-
-**Testing:**
-- ✅ Unit tests for all packages (57 test files)
-- ✅ End-to-end integration tests for DRI3, GPU, and Wayland subsystems
-- ✅ Fuzz tests for Wayland and X11 wire protocol encoding/decoding
-- ⚠️ No automated screenshot comparison tests
-
-**Future work (Phase 5+):**
-See [ROADMAP.md](ROADMAP.md) for planned GPU rendering backends, AMD support, and polish features.
-
-## Documentation
-
-**Comprehensive documentation is available in the following files:**
-
-- **[API.md](API.md)** — Complete API reference for all internal packages (rendering, protocols, UI widgets, integration)
-- **[HARDWARE.md](HARDWARE.md)** — Supported hardware matrix (Intel/AMD GPUs, kernel versions, display servers, testing matrix)
-- **[ROADMAP.md](ROADMAP.md)** — 8-phase implementation plan with detailed milestones (Phases 0-8)
-- **[ACCESSIBILITY.md](ACCESSIBILITY.md)** — Accessibility support documentation and future AT-SPI2 implementation path
-- **[RECOMMENDED_LIBRARIES.md](RECOMMENDED_LIBRARIES.md)** — Library selection rationale and design constraints
-
-**Quick links:**
-- GPU Support: See [HARDWARE.md § GPU Support](HARDWARE.md#gpu-support)
-- Build Instructions: See [Build](#build) section below
-- Architecture Overview: See [Architecture](#architecture) section below
-- Code Examples: See [Demonstration Binaries](#demonstration-binaries) and `cmd/` directory
-
-## Prerequisites
-
-### Required Tools
-
-1. **Go 1.24+**
-   ```bash
-   go version  # should report 1.24 or later
-   ```
-
-2. **Rust (stable) with musl target**
-   ```bash
-   rustup target add x86_64-unknown-linux-musl
-   # For ARM: rustup target add aarch64-unknown-linux-musl
-   ```
-
-3. **musl C compiler**
-   ```bash
-   # Ubuntu / Debian
-   sudo apt-get install musl-tools
-
-   # Fedora / RHEL
-   sudo dnf install musl-gcc
-
-   # Arch Linux
-   sudo pacman -S musl
-
-   # Alpine Linux
-   apk add musl-dev
-
-   # macOS (cross-compilation)
-   brew install FiloSottile/musl-cross/musl-cross
-   # Then pass CC=x86_64-linux-musl-gcc to make
-   ```
-
-## Build
-
-### Quick Build (Recommended)
 ```bash
-# Build the static binary (checks deps, builds Rust library, builds Go binary)
-make build
+# Go: https://go.dev/dl/
+go version  # verify 1.24+
 
-# Output: ./bin/wain (fully static executable)
+# Rust musl target
+rustup target add x86_64-unknown-linux-musl
+# For ARM64: rustup target add aarch64-unknown-linux-musl
+
+# musl C compiler
+sudo apt-get install musl-tools    # Ubuntu / Debian
+sudo dnf install musl-gcc          # Fedora / RHEL
+sudo pacman -S musl                # Arch Linux
+apk add musl-dev                   # Alpine Linux
 ```
 
-The Makefile auto-detects the host architecture via `rustc -vV` and selects the appropriate musl target (e.g., `x86_64-unknown-linux-musl` or `aarch64-unknown-linux-musl`).
-
-### Alternative: Go Generate Workflow
-
-You can also build using Go's native workflow with `go generate`:
+For macOS cross-compilation:
 
 ```bash
-# Step 1: Generate build artifacts (Rust library + musl stub)
-go generate ./...
+brew install FiloSottile/musl-cross/musl-cross
+make build CC=x86_64-linux-musl-gcc
+```
 
-# Step 2: Build the Go binary
+## Installation
+
+### Build from Source
+
+```bash
+git clone https://github.com/opd-ai/wain.git
+cd wain
+make build
+```
+
+This checks dependencies, builds the Rust static library with the musl
+target, compiles the GCC 14+ musl compatibility stub, and produces a
+fully-static Go binary at `./bin/wain`. The Makefile auto-detects the
+host architecture via `rustc -vV`.
+
+### Use as a Go Dependency
+
+```bash
+go get github.com/opd-ai/wain
+```
+
+To rebuild the Rust backend from source, use the `wain-build` helper
+(`cmd/wain-build/`):
+
+```bash
+go install github.com/opd-ai/wain/cmd/wain-build@latest
+wain-build
+go build .
+```
+
+### Go Generate Workflow
+
+As an alternative to `make`, build using Go's native workflow:
+
+```bash
+go generate ./...
 CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender_sys.a $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
+  CGO_LDFLAGS="$(pwd)/render-sys/target/$(uname -m)-unknown-linux-musl/release/librender_sys.a \
+  $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
   CGO_LDFLAGS_ALLOW=".*" \
   go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
 ```
 
-The `go generate` step:
-1. Checks for required tools (musl-gcc, cargo, rustup)
-2. Auto-detects host architecture
-3. Installs musl Rust target if missing
-4. Builds the Rust static library (`librender_sys.a` per Cargo naming)
-5. Compiles the musl compatibility stub
+The `go generate` step (`internal/render/generate.go`) calls
+`scripts/build-rust.sh`, which checks for required tools, detects the
+host architecture, and builds both the Rust library and the musl stub.
 
-**Recommendation:** Use `make build` for simplicity. The `go generate` workflow is provided for integration with Go-native build systems and CI pipelines that prefer Go tooling over Make.
+## Usage
 
-### Configurable Variables
-
-| Variable      | Default     | Description                                    |
-|---------------|-------------|------------------------------------------------|
-| `CC`          | `musl-gcc`  | musl C compiler; override for cross toolchains |
-| `CARGO_FLAGS` | (empty)     | Extra flags passed to `cargo` commands          |
-
-Example cross-compilation:
-```bash
-make build CC=x86_64-linux-musl-gcc
-```
-
-## Using wain as a Dependency
-
-### Standard Workflow (With Pre-built Libraries)
-
-When wain releases are tagged, they include pre-built static libraries for common platforms. This means you can use wain in your Go projects without needing Rust or musl toolchains:
-
-```bash
-# Add wain to your project
-go get github.com/opd-ai/wain
-
-# Build your application (uses pre-built libraries)
-go build .
-```
-
-The pre-built static libraries are bundled as GitHub release assets for:
-- `x86_64-unknown-linux-musl` (x86_64 Linux)
-- `aarch64-unknown-linux-musl` (ARM64 Linux)
-
-### Rebuilding from Source (Advanced)
-
-Contributors and advanced users can rebuild the Rust backend from source using the `wain-build` helper tool:
-
-```bash
-# Install the builder tool
-go install github.com/opd-ai/wain/cmd/wain-build@latest
-
-# Prerequisites (one-time setup)
-rustup target add x86_64-unknown-linux-musl  # or aarch64-unknown-linux-musl
-sudo apt-get install musl-tools              # or your distro's musl package
-
-# Rebuild Rust libraries in your project directory
-wain-build
-
-# Now build your application with rebuilt libraries
-go build .
-```
-
-The `wain-build` tool:
-1. Locates the wain module (in your project or Go module cache)
-2. Auto-detects your architecture
-3. Checks for required tools (cargo, musl-gcc, musl target)
-4. Builds the Rust library and musl stub
-5. Copies outputs to your working directory
-
-For more options, run `wain-build -h`.
-
-## Test
-
-### Quick Start (direnv)
-
-For the best developer experience, use [direnv](https://direnv.net/) to auto-configure CGO flags:
-
-```bash
-# One-time setup:
-direnv allow
-
-# Now standard Go commands work:
-go test ./...
-go test ./internal/raster/...
-go test -v ./internal/wayland/wire
-```
-
-The `.envrc` file automatically sets `CGO_LDFLAGS` when entering the project directory.
-
-### Using Make Targets
-
-```bash
-# Run all tests (Rust + Go)
-make test
-
-# Run only Rust tests
-make test-rust
-
-# Run only Go tests
-make test-go
-
-# Run Go tests with coverage reporting
-make coverage
-# Shows per-package coverage (average: ~66%)
-
-# Generate HTML coverage report
-make coverage-html
-# HTML report: coverage/coverage.html
-```
-
-**Test Suite Coverage:**
-- **Rust:** 263 tests total (249 passing, 6 hardware-dependent failures, 8 GPU tests ignored)
-  - Includes comprehensive unit tests for shader compilation, EU backend, batch processing, and pipeline management
-  - 22 shader validation tests (naga integration tests for all 7 WGSL shaders)
-- **Go:** 57 test files covering all 40 packages
-  - Protocol implementations (Wayland wire format, X11 protocol)
-  - 2D rasterization (curves, text, effects, compositing)
-  - UI framework (layout, widgets, event handling)
-  - Integration tests (full protocol → rasterizer → display pipeline)
-  - **Code coverage:** ~66% average across 34 library packages (range: 0% to 100%)
-    - High coverage (>90%): buffer, raster, UI layout, X11 present/gc/dpi
-    - Moderate coverage (50-90%): Wayland/X11 protocols, UI widgets, effects
-    - Lower coverage (<50%): render backend, integration tests (hardware-dependent)
-    - Authoritative coverage computed via `scripts/compute-coverage.sh`
-  - **Note:** Test counts verified as of 2026-03-08; run `make test` to see current totals.
-
-**Without direnv:** Use `make test-go` instead of `go test ./...`. Direct `go test` requires `CGO_LDFLAGS` to link the Rust library (see [Troubleshooting](#troubleshooting)).
-
-## Verify Static Linking
-
-```bash
-# Verify the binary has no dynamic dependencies
-make check-static
-
-# Expected output: "✓ Binary is fully statically linked."
-```
-
-## Run
+Run the Phase 0 validation binary to verify the Go–Rust link:
 
 ```bash
 ./bin/wain
@@ -362,263 +169,370 @@ make check-static
 
 ./bin/wain --version
 # Output: wain version: 0.1.0
-
-./bin/wain --help
-# Shows usage information
 ```
 
-## Demonstration Binaries
+Create a window using the public API (`app.go`):
 
-The project includes several demonstration binaries that exercise different subsystems:
+```go
+package main
 
-| Binary              | Make Target          | CGO Required | Description                                             |
-|---------------------|----------------------|--------------|---------------------------------------------------------|
-| `bin/wain`          | `make build`         | Yes          | Phase 0 validation (Go → Rust linkage)                  |
-| `bin/wayland-demo`  | `make wayland-demo`  | No           | Wayland protocol + rasterizer + widgets demo             |
-| `bin/x11-demo`      | `make x11-demo`      | No           | X11 protocol + rasterizer + widgets demo                 |
-| `bin/widget-demo`   | `make widget-demo`   | Yes          | Interactive widget demo (auto-detects X11/Wayland; event loops not yet implemented) |
-| `bin/x11-dmabuf-demo` | `make x11-dmabuf-demo` | Yes      | X11 DRI3/Present GPU buffer sharing demo                 |
-| `bin/dmabuf-demo`   | `make dmabuf-demo`   | Yes          | Wayland DMA-BUF GPU buffer sharing demo                  |
-| `bin/double-buffer-demo` | `make double-buffer-demo` | Yes  | Phase 5.3 double/triple buffering with compositor sync  |
-| `bin/gpu-triangle-demo` | `make gpu-triangle-demo` | Yes  | GPU command submission triangle rendering demo           |
-| `bin/amd-triangle-demo` | `make amd-triangle-demo` | Yes  | Phase 6.4 AMD GPU detection and RDNA backend demo        |
-| `bin/auto-render-demo` | `make auto-render-demo` | Yes   | Phase 7.1 automatic backend selection with fallback      |
-| `bin/clipboard-demo` | `make clipboard-demo` | No         | Phase 8.2 clipboard protocol demo (X11/Wayland)          |
-| `bin/decorations-demo` | `make decorations-demo` | Yes    | Phase 8.3 client-side window decorations demo            |
-| `bin/perf-demo`     | `make perf-demo`     | Yes          | GPU performance profiling with frame time measurements   |
-| `bin/shader-test`   | `make shader-test`   | Yes          | Phase 4.6 shader compilation test for all 7 UI shaders   |
-| `bin/gen-atlas`     | `make gen-atlas`     | Yes          | SDF font atlas generator tool                            |
+import "github.com/opd-ai/wain"
 
-## Architecture
-
-The project consists of five layers (bottom-up):
-
-### 1. Rust Rendering Library (`render-sys/`, ~9,926 LOC code, ~14,433 LOC total)
-
-```
-render-sys/src/
-├── lib.rs          → C ABI exports (render_add, render_version, buffer_*, render_*)
-├── drm.rs          → DRM device access (open, ioctl wrappers)
-├── i915.rs         → i915 GPU driver (GEM create/close, exec, context, mmap)
-├── xe.rs           → Xe GPU driver (VM create, exec queue, exec, mmap)
-├── detect.rs       → GPU generation detection (Gen9/Gen11/Gen12/Xe)
-├── allocator.rs    → Buffer allocation with tiling (None/X/Y)
-├── slab.rs         → Slab sub-allocator for GPU buffers
-├── batch.rs        → Batch buffer builder with relocation support
-├── cmd/            → Intel 3D pipeline command encoding (MI, state, primitive)
-├── pipeline.rs     → Pre-baked pipeline state configurations
-├── surface.rs      → Surface state and sampler state encoding
-└── shader.rs       → WGSL/GLSL shader frontend via naga
+func main() {
+    app := wain.NewApp()
+    app.Run() // blocks until app.Quit() is called
+}
 ```
 
-- **Dependencies:** nix 0.27 (ioctl), naga 0.14 (WGSL/GLSL parsing)
-- **Build:** Compiled as `staticlib` with musl target for static linking
-- **C ABI exports:** `render_add`, `render_version`, `render_detect_gpu`, `buffer_allocator_create`, `buffer_allocator_destroy`, `buffer_allocate`, `buffer_export_dmabuf`, `buffer_get_info`, `buffer_get_handle`, `buffer_destroy`, `render_submit_batch`, `render_create_context`
+Build and run the Wayland or X11 demo (no CGO required):
 
-### 2. Go Bindings (`internal/render/`)
+```bash
+make wayland-demo
+./bin/wayland-demo
 
-Provides Go wrappers for all Rust C ABI exports:
-- `render.Add`, `render.Version` — ABI smoke tests
-- `render.DetectGPU` — GPU generation detection
-- `render.NewAllocator`, `Allocator.Allocate`, `Allocator.ExportDmabuf` — GPU buffer management
-- `render.CreateContext`, `render.SubmitBatch` — GPU command submission
-
-### 3. Protocol Layer (`internal/wayland/`, `internal/x11/`)
-
-```
-Protocol Implementations (~6,280 LOC)
-├── Wayland Client (9 packages, ~3,392 LOC)
-│   ├── wire/        → Binary marshaling + fd passing
-│   ├── socket/      → Unix domain socket + SCM_RIGHTS
-│   ├── client/      → Display, Registry, Compositor, Surface
-│   ├── shm/         → Shared memory buffers (memfd)
-│   ├── xdg/         → Window management (xdg-shell)
-│   ├── input/       → Seat, Pointer, Keyboard (hardcoded US QWERTY)
-│   ├── dmabuf/      → DMA-BUF buffer sharing (linux-dmabuf protocol)
-│   ├── datadevice/  → Data device manager for clipboard/DnD
-│   └── output/      → Output configuration and mode handling
-└── X11 Client (9 packages, ~2,888 LOC)
-    ├── wire/        → Request/reply/event encoding, extension queries
-    ├── client/      → Connection, CreateWindow, MapWindow, extension support
-    ├── events/      → KeyPress, Button, Motion events
-    ├── gc/          → Graphics context, PutImage
-    ├── shm/         → MIT-SHM extension (zero-copy image transfers)
-    ├── dri3/        → DRI3 extension (GPU buffer sharing via DMA-BUF)
-    ├── present/     → Present extension (frame synchronization)
-    ├── dpi/         → DPI detection and scaling
-    └── selection/   → Selection and clipboard handling
+make x11-demo
+./bin/x11-demo
 ```
 
-### 4. Rendering Layer (`internal/raster/`)
+Verify the binary is fully statically linked:
 
-```
-Software 2D Rasterizer (~1,877 LOC)
-├── core/        → Rectangles, rounded rects, lines
-├── curves/      → Quadratic/cubic Bezier, arc fills
-├── composite/   → Alpha blending, image filtering
-├── effects/     → Box shadow, gradients
-└── text/        → SDF-based text rendering
+```bash
+make check-static
+# Expected output: "✓ Binary is fully statically linked."
 ```
 
-### 5. UI Framework (`internal/ui/`)
+## Configuration
 
-```
-Widget Layer (~1,503 LOC)
-├── layout/      → Flexbox-like Row/Column layout
-├── pctwidget/   → Percentage-based sizing
-└── widgets/     → Button, TextInput, ScrollContainer
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CC` | `musl-gcc` | musl C compiler; override for cross toolchains |
+| `CARGO_FLAGS` | *(empty)* | Extra flags passed to `cargo` commands |
+| `CGO_ENABLED` | `1` | Required for binaries linking the Rust library |
+| `CGO_LDFLAGS` | *(set by Makefile)* | Paths to `librender_sys.a`, stub `.o`, and `-ldl -lm -lpthread` |
+| `CGO_LDFLAGS_ALLOW` | `.*` | Regex allowing CGO linker flags |
+
+Cross-compilation example:
+
+```bash
+make build CC=x86_64-linux-musl-gcc
 ```
 
-**Key constraint:** The final binary must be fully static (no libc dependency) to support deployment without system dependencies. This is enforced via:
-- Rust compiled with `x86_64-unknown-linux-musl` (or `aarch64-unknown-linux-musl`) target
-- Go compiled with `musl-gcc` and `-extldflags '-static'`
-- GCC 14+ compatibility stub (`internal/render/dl_find_object_stub.c`) for musl builds
-- Verification: `ldd bin/wain` reports "not a dynamic executable"
+The `.envrc` file auto-configures `CC`, `CGO_ENABLED`, `CGO_LDFLAGS`,
+and `CGO_LDFLAGS_ALLOW` when used with
+[direnv](https://direnv.net/). Run `direnv allow` once, then standard
+`go test ./...` and `go build` commands work without additional flags.
 
 ## Project Structure
 
 ```
 wain/
+├── app.go                     # Public API: App, Window, AppConfig
+├── event.go                   # Event types: Pointer, Key, Touch, Window, Custom
+├── widget.go                  # Widget interface and BaseWidget
+├── publicwidget.go            # PublicWidget, Container, Canvas drawing API
+├── resource.go                # Font/Image resource management
+├── color.go                   # Color type with RGB/RGBA constructors
+├── dispatcher.go              # EventDispatcher and FocusManager
+├── render.go                  # RenderBridge for display list rendering
+├── doc.go                     # Package documentation
 ├── cmd/
-│   ├── wain/              # Phase 0 validation binary
-│   ├── demo/              # Phase 1 X11 rendering pipeline demo
-│   ├── wayland-demo/      # Wayland protocol demo
-│   ├── x11-demo/          # X11 protocol demo
-│   ├── widget-demo/       # Interactive widget demo (X11/Wayland)
-│   ├── x11-dmabuf-demo/   # X11 DRI3 GPU buffer sharing demo
-│   ├── dmabuf-demo/       # Wayland DMA-BUF GPU buffer sharing demo
-│   ├── gpu-triangle-demo/ # GPU command submission triangle demo
-│   └── gen-atlas/         # SDF font atlas generator tool
+│   ├── wain/                  # Phase 0 validation binary (Go → Rust linkage)
+│   ├── wain-build/            # Helper tool to rebuild Rust backend from source
+│   ├── wain-demo/             # Public API demo (display server auto-detection)
+│   ├── event-demo/            # Event handling demonstration
+│   ├── window-demo/           # Public Window API demonstration
+│   ├── resource-demo/         # Resource management API demonstration
+│   ├── wayland-demo/          # Wayland protocol + rasterizer + widgets demo
+│   ├── x11-demo/              # X11 protocol + rasterizer + widgets demo
+│   ├── widget-demo/           # Interactive widget demo (X11/Wayland)
+│   ├── decorations-demo/      # Client-side window decorations demo
+│   ├── clipboard-demo/        # Clipboard protocol demo (X11/Wayland)
+│   ├── dmabuf-demo/           # Wayland DMA-BUF GPU buffer sharing demo
+│   ├── x11-dmabuf-demo/       # X11 DRI3 GPU buffer sharing demo
+│   ├── double-buffer-demo/    # Double/triple buffering with compositor sync
+│   ├── gpu-triangle-demo/     # GPU command submission triangle demo
+│   ├── gpu-display-demo/      # End-to-end GPU rendering to display pipeline
+│   ├── amd-triangle-demo/     # AMD GPU detection and RDNA backend demo
+│   ├── auto-render-demo/      # Automatic backend selection with fallback
+│   ├── perf-demo/             # GPU performance profiling demo
+│   ├── shader-test/           # Shader compilation test for all 7 UI shaders
+│   └── gen-atlas/             # SDF font atlas generator tool
 ├── internal/
-│   ├── render/            # Go CGO bindings to Rust (binding.go, dmabuf.go)
-│   ├── wayland/           # Wayland protocol client (7 packages)
-│   ├── x11/               # X11 protocol client (7 packages)
-│   ├── raster/            # Software 2D rasterizer (5 packages)
-│   ├── ui/                # Widget layer + layout (3 packages)
-│   ├── buffer/            # Frame buffer ring for double/triple buffering
-│   ├── demo/              # Shared utilities for demo binaries
-│   └── integration/       # End-to-end integration tests
-├── render-sys/            # Rust static library (C ABI exports)
-│   ├── Cargo.toml         # Rust package definition (staticlib, nix, naga)
-│   └── src/               # Rust source (32 files, ~9,926 LOC code, ~14,433 LOC total)
-├── Makefile               # Build automation (enforces static linking)
-├── ROADMAP.md             # 8-phase implementation plan
-├── RECOMMENDED_LIBRARIES.md # Approved dependencies reference
-├── go.mod                 # Go module: github.com/opd-ai/wain (Go 1.24)
-├── .github/workflows/ci.yml # CI: build + test + static linkage verification
-└── LICENSE                # MIT License
+│   ├── render/                # Go CGO bindings to Rust rendering library
+│   │   ├── atlas/             # Texture atlas management
+│   │   ├── backend/           # GPU backend and display list consumer
+│   │   ├── display/           # Framebuffer and display integration
+│   │   └── present/           # Frame presentation
+│   ├── wayland/               # Wayland protocol client (9 packages)
+│   │   ├── wire/              # Binary marshaling and fd passing
+│   │   ├── socket/            # Unix domain socket and SCM_RIGHTS
+│   │   ├── client/            # Display, Registry, Compositor, Surface
+│   │   ├── shm/               # Shared memory buffers (memfd)
+│   │   ├── xdg/               # Window management (xdg-shell)
+│   │   ├── input/             # Seat, Pointer, Keyboard
+│   │   ├── dmabuf/            # DMA-BUF buffer sharing
+│   │   ├── datadevice/        # Data device manager (clipboard/DnD)
+│   │   └── output/            # Output configuration and mode handling
+│   ├── x11/                   # X11 protocol client (9 packages)
+│   │   ├── wire/              # Request/reply/event encoding
+│   │   ├── client/            # Connection, window, extension support
+│   │   ├── events/            # KeyPress, Button, Motion events
+│   │   ├── gc/                # Graphics context, PutImage
+│   │   ├── shm/               # MIT-SHM extension
+│   │   ├── dri3/              # DRI3 extension (GPU buffer sharing)
+│   │   ├── present/           # Present extension (frame sync)
+│   │   ├── dpi/               # DPI detection and scaling
+│   │   └── selection/         # Selection and clipboard handling
+│   ├── raster/                # Software 2D rasterizer (7 packages)
+│   │   ├── core/              # Rectangles, rounded rects, lines
+│   │   ├── curves/            # Bézier curves, arc fills
+│   │   ├── composite/         # Alpha blending, image filtering
+│   │   ├── effects/           # Box shadow, gradients
+│   │   ├── text/              # SDF-based text rendering
+│   │   ├── displaylist/       # Display list construction
+│   │   └── consumer/          # Display list execution
+│   ├── ui/                    # UI widget framework (5 packages)
+│   │   ├── layout/            # Flexbox-like Row/Column layout
+│   │   ├── pctwidget/         # Percentage-based sizing
+│   │   ├── widgets/           # Button, TextInput, ScrollContainer
+│   │   ├── decorations/       # Client-side window decorations
+│   │   └── scale/             # DPI-aware scaling
+│   ├── buffer/                # Frame buffer ring (double/triple buffering)
+│   ├── demo/                  # Shared utilities for demo binaries
+│   └── integration/           # End-to-end integration tests
+├── render-sys/                # Rust static library (C ABI exports)
+│   ├── Cargo.toml             # Rust dependencies: nix 0.27, naga 0.14
+│   ├── shaders/               # 7 WGSL shaders for UI rendering
+│   └── src/                   # 32 Rust source files
+│       ├── lib.rs             # C ABI exports
+│       ├── drm.rs             # DRM device access
+│       ├── i915.rs            # Intel i915 GPU driver
+│       ├── xe.rs              # Intel Xe GPU driver
+│       ├── detect.rs          # GPU generation detection
+│       ├── allocator.rs       # GPU buffer allocation
+│       ├── slab.rs            # Slab sub-allocator
+│       ├── batch.rs           # Batch buffer builder
+│       ├── pipeline.rs        # Pipeline state objects
+│       ├── surface.rs         # Surface/sampler state encoding
+│       ├── shader.rs          # WGSL/GLSL shader frontend (naga)
+│       ├── shaders.rs         # Shader source embedding
+│       ├── amd.rs             # AMD GPU driver wrappers
+│       ├── pm4.rs             # AMD PM4 command stream
+│       ├── cmd/               # Intel 3D pipeline commands (5 files)
+│       ├── eu/                # Intel EU backend (6 files)
+│       └── rdna/              # AMD RDNA backend (6 files)
+├── scripts/                   # Build and analysis scripts
+│   ├── build-rust.sh          # Rust library build (called by go generate)
+│   ├── compute-coverage.sh    # Test coverage computation
+│   └── analyze_godoc.go       # Documentation analysis
+├── Makefile                   # Build automation (enforces static linking)
+├── .github/workflows/ci.yml   # CI: build, test, and static linkage check
+├── .envrc                     # direnv configuration for CGO flags
+├── .golangci.yml              # Go linter configuration
+├── .editorconfig              # Editor formatting rules
+├── go.mod                     # Go module (github.com/opd-ai/wain, Go 1.24)
+└── LICENSE                    # MIT License
 ```
 
-## Manual Build (without Makefile)
+## Architecture
 
-If you need to build manually (e.g., for debugging the build process):
+The project is organized in five layers (bottom-up):
+
+### Layer 1: Rust Rendering Library (`render-sys/`)
+
+The `render-sys` crate (~14,400 lines total, ~9,900 lines of code)
+compiles as a C-compatible static library (`staticlib`). It provides
+DRM/KMS ioctl wrappers for Intel i915 and Xe GPU drivers, GPU buffer
+allocation with tiling support, DMA-BUF export, batch buffer
+construction with relocation, Intel 3D pipeline command encoding,
+shader parsing via naga 0.14, Intel EU binary encoding for Gen9+,
+and AMD RDNA instruction encoding.
+
+**Rust dependencies:** nix 0.27 (ioctl), naga 0.14 (WGSL/GLSL parsing)
+
+**C ABI exports:** `render_add`, `render_version`, `render_detect_gpu`,
+`buffer_allocator_create`, `buffer_allocator_destroy`,
+`buffer_allocate`, `buffer_export_dmabuf`, `buffer_get_info`,
+`buffer_get_handle`, `buffer_destroy`, `render_submit_batch`,
+`render_create_context`
+
+### Layer 2: Go Render Bindings (`internal/render/`)
+
+Go wrappers for all Rust C ABI exports, plus sub-packages for GPU
+backend management (`backend/`), texture atlas management (`atlas/`),
+display integration (`display/`), and frame presentation (`present/`).
+
+### Layer 3: Protocol Layer (`internal/wayland/`, `internal/x11/`)
+
+Two independent display-server implementations built from scratch
+with no external Go dependencies. The Wayland client (9 packages)
+covers wire format, shared memory, xdg-shell, input, DMA-BUF, data
+device, and output handling. The X11 client (9 packages) covers
+connection setup, window operations, graphics context, MIT-SHM, DRI3,
+Present, DPI, and selection/clipboard.
+
+### Layer 4: Software Rasterizer (`internal/raster/`)
+
+A 7-package 2D rasterizer providing filled and rounded rectangles,
+anti-aliased lines, Bézier curves, arc fills, SDF text rendering,
+box shadows, gradients, Porter-Duff alpha compositing, display list
+construction, and display list execution.
+
+### Layer 5: UI Framework (`internal/ui/`)
+
+A 5-package widget layer providing flexbox-like Row/Column layout,
+percentage-based sizing, Button/TextInput/ScrollContainer widgets,
+client-side window decorations (title bar, controls, resize handles),
+and DPI-aware scaling.
+
+**Static linking constraint:** The final binary must have zero dynamic
+dependencies. This is enforced by compiling Rust with
+`*-unknown-linux-musl` targets, building Go with `musl-gcc` and
+`-extldflags '-static'`, and including a GCC 14+ compatibility stub
+(`internal/render/dl_find_object_stub.c`). The CI pipeline verifies
+static linkage via `ldd`.
+
+## Demonstration Binaries
+
+Binaries with a **Make Target** can be built using `make <target>`.
+All other binaries can be built with `go build ./cmd/<name>` (with
+appropriate CGO flags for those requiring CGO).
+
+| Binary | Make Target | CGO | Description |
+|--------|-------------|-----|-------------|
+| `wain` | `make build` | Yes | Go → Rust linkage validation |
+| `wayland-demo` | `make wayland-demo` | No | Wayland protocol + rasterizer + widgets |
+| `x11-demo` | `make x11-demo` | No | X11 protocol + rasterizer + widgets |
+| `widget-demo` | `make widget-demo` | Yes | Interactive widgets (auto-detects X11/Wayland) |
+| `dmabuf-demo` | `make dmabuf-demo` | Yes | Wayland DMA-BUF GPU buffer sharing |
+| `x11-dmabuf-demo` | `make x11-dmabuf-demo` | Yes | X11 DRI3 GPU buffer sharing |
+| `double-buffer-demo` | `make double-buffer-demo` | Yes | Double/triple buffering with compositor sync |
+| `gpu-triangle-demo` | `make gpu-triangle-demo` | Yes | GPU command submission triangle rendering |
+| `gen-atlas` | `make gen-atlas` | Yes | SDF font atlas generator |
+| `wain-demo` | `make wain-demo` | Yes | Public API demo (auto-detection) |
+| `event-demo` | `make event-demo` | Yes | Event handling demonstration |
+| `amd-triangle-demo` | — | Yes | AMD GPU detection and RDNA backend |
+| `auto-render-demo` | — | Yes | Automatic backend selection with fallback |
+| `clipboard-demo` | — | No | Clipboard protocol (X11/Wayland) |
+| `decorations-demo` | — | No | Client-side window decorations |
+| `gpu-display-demo` | — | Yes | End-to-end GPU rendering to display |
+| `perf-demo` | — | Yes | GPU performance profiling |
+| `resource-demo` | — | Yes | Resource management API |
+| `shader-test` | — | Yes | Shader compilation for all 7 UI shaders |
+| `window-demo` | — | Yes | Public Window API demonstration |
+| `wain-build` | — | Yes | Rebuild Rust backend from source |
+
+## Testing
+
+### Quick Start with direnv
 
 ```bash
-# 1. Build the Rust static library
-cargo build --release \
-  --target x86_64-unknown-linux-musl \
-  --manifest-path render-sys/Cargo.toml
-
-# 2. Compile the GCC 14+ / musl compatibility stub
-musl-gcc -c -o internal/render/dl_find_object_stub.o \
-  internal/render/dl_find_object_stub.c
-
-# 3. Build the Go binary
-RUST_LIB="render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a"
-DL_STUB="internal/render/dl_find_object_stub.o"
-CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="${PWD}/${RUST_LIB} ${PWD}/${DL_STUB} -ldl -lm -lpthread" \
-  CGO_LDFLAGS_ALLOW=".*" \
-  go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
-
-# 4. Verify
-ldd bin/wain  # should print "not a dynamic executable"
+direnv allow          # one-time setup; auto-configures CGO flags
+go test ./...         # run all Go tests
 ```
+
+### Using Make Targets
+
+```bash
+make test             # run all tests (Rust + Go)
+make test-rust        # run Rust tests only
+make test-go          # run Go tests only
+make coverage         # Go tests with per-package coverage summary
+make coverage-html    # HTML coverage report at coverage/coverage.html
+```
+
+The project contains 61 test files across all packages.
+Authoritative coverage is computed via `scripts/compute-coverage.sh`.
+
+**Without direnv:** use `make test-go` instead of `go test ./...`.
+Direct `go test` requires `CGO_LDFLAGS` to link the Rust library
+(see [Troubleshooting](#troubleshooting)).
 
 ## Font Atlas Generation
 
-The text rasterizer (`internal/raster/text/`) uses SDF (Signed Distance Field) font rendering with a pre-baked atlas embedded in the binary. The `gen-atlas` tool generates this atlas.
+The text rasterizer (`internal/raster/text/`) uses SDF (Signed
+Distance Field) font rendering with a pre-baked glyph atlas. The
+`gen-atlas` tool generates this atlas:
 
-**Building the tool:**
 ```bash
 make gen-atlas
-# Output: ./bin/gen-atlas
-```
-
-**Running the generator:**
-```bash
 ./bin/gen-atlas > atlas.bin
-# Generates: 256x256 SDF atlas covering ASCII printable chars (0x20-0x7E)
 ```
 
-**Atlas format:**
-- 256×256 grayscale bitmap (65,536 bytes)
-- 16×16 glyph grid, each cell is 16×16 pixels
-- Contains 95 printable ASCII characters plus 1 replacement glyph (□)
-- Binary format: raw uint8 array + metadata (rune, position, metrics)
-
-You only need to regenerate the atlas if you change the supported character set, glyph size, atlas dimensions, or font rendering algorithm.
+The output is a 256×256 grayscale bitmap (65,536 bytes) arranged as
+a 16×16 glyph grid covering 95 printable ASCII characters (0x20–0x7E)
+plus one replacement glyph. Regeneration is only needed when changing
+the character set, glyph size, or atlas dimensions.
 
 ## Troubleshooting
 
 ### `make build` fails with "musl-gcc not found"
 
-Install the musl C compiler (see [Prerequisites](#prerequisites) section above).
+Install the musl C compiler for your platform
+(see [Requirements](#requirements)).
 
 ### `go test ./...` fails with linker errors
 
-Go tests require `CGO_LDFLAGS` to be set. You have two options:
+Go tests require `CGO_LDFLAGS` to be set:
 
-**Option 1: Use direnv (recommended for daily development)**
 ```bash
-# Install direnv: https://direnv.net/
-# Then allow the project's .envrc file:
+# Option 1: Use direnv (recommended)
 direnv allow
-
-# Now go test works directly:
 go test ./...
-```
 
-The `.envrc` file automatically configures `CGO_LDFLAGS` when entering the project directory.
-
-**Option 2: Use make wrapper**
-```bash
+# Option 2: Use the Makefile wrapper
 make test-go
 ```
 
-The Makefile sets the required CGO flags and ensures dependencies are built.
+### Binary has dynamic dependencies
 
-### Binary is not static (has dynamic dependencies)
+Verify static linking prerequisites:
 
-Verify you are using:
-- Rust musl target: `rustup show` should list `x86_64-unknown-linux-musl`
-- musl-gcc: `which musl-gcc` should return a path
-- Static ldflags: Check `go build -x` output for `-extldflags '-static'`
+```bash
+rustup show              # must list *-unknown-linux-musl target
+which musl-gcc           # must return a valid path
+make check-static        # verifies bin/wain is fully static
+```
 
-Run `make check-static` to verify the binary is fully static.
+## Documentation
+
+- [API.md](API.md) — API reference for all internal packages
+- [HARDWARE.md](HARDWARE.md) — Supported hardware matrix (Intel/AMD
+  GPUs, kernel versions, display servers)
+- [ROADMAP.md](ROADMAP.md) — 8-phase implementation plan
+- [ACCESSIBILITY.md](ACCESSIBILITY.md) — Accessibility support and
+  AT-SPI2 implementation path
+- [RECOMMENDED_LIBRARIES.md](RECOMMENDED_LIBRARIES.md) — Library
+  selection rationale and static-compilation constraints
+- [RELEASE.md](RELEASE.md) — Release process documentation
+- [ANDROID_PORT_FEASIBILITY.md](ANDROID_PORT_FEASIBILITY.md) —
+  Android porting analysis
+- [render-sys/shaders/README.md](render-sys/shaders/README.md) —
+  WGSL shader documentation with usage examples
 
 ## Contributing
 
-See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan toward full GPU rendering.
+See [ROADMAP.md](ROADMAP.md) for the complete 8-phase plan.
 
 **Development commands:**
+
 ```bash
-make build         # Build fully static binary
-make test          # Run all tests (Rust + Go)
-make test-rust     # Run Rust tests only
-make test-go       # Run Go tests only
-make coverage      # Run Go tests with coverage reporting
-make coverage-html # Generate HTML coverage report
-make check-static  # Verify static linkage
-make clean         # Remove build artifacts
+make build             # build fully static binary
+make test              # run all tests (Rust + Go)
+make test-rust         # run Rust tests only
+make test-go           # run Go tests only
+make coverage          # Go tests with coverage reporting
+make coverage-html     # HTML coverage report
+make check-static      # verify static linkage
+make stats             # lines-of-code summary
+make clean             # remove build artifacts
 ```
 
-**Priority contributions (Phase 4.2+):**
-1. **Shader lowering** — Compile naga IR to Intel EU machine code
-2. **UI shader authoring** — Write WGSL vertex/fragment shaders for common draw types
-3. **GPU rendering backend** — Wire GPU command submission into the display pipeline
-4. **AMD GPU support** — RDNA ISA backend for AMD GPUs
+**Code style:** Go code uses tabs (see `.editorconfig`); Rust code uses
+4-space indentation. The project lints Go with
+[golangci-lint](https://golangci-lint.run/) (configuration in
+`.golangci.yml`).
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) file.
+[MIT](LICENSE) — Copyright (c) 2026 opdai
