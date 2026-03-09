@@ -1,8 +1,163 @@
 package wain
 
 import (
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/ui/widgets"
 )
+
+// widgetAdapter bridges PublicWidget to the internal Widget interface.
+// This allows PublicWidget instances to be used where internal Widget is expected.
+type widgetAdapter struct {
+	public PublicWidget
+}
+
+// newWidgetAdapter creates an adapter that wraps a PublicWidget.
+func newWidgetAdapter(public PublicWidget) *widgetAdapter {
+	return &widgetAdapter{
+		public: public,
+	}
+}
+
+// Bounds returns the widget's dimensions.
+func (a *widgetAdapter) Bounds() (width, height int) {
+	return a.public.Bounds()
+}
+
+// HandlePointerEnter is called when the pointer enters the widget.
+func (a *widgetAdapter) HandlePointerEnter() {
+	evt := &PointerEvent{
+		eventType: PointerEnter,
+	}
+	a.public.HandleEvent(evt)
+}
+
+// HandlePointerLeave is called when the pointer leaves the widget.
+func (a *widgetAdapter) HandlePointerLeave() {
+	evt := &PointerEvent{
+		eventType: PointerLeave,
+	}
+	a.public.HandleEvent(evt)
+}
+
+// HandlePointerDown is called when a pointer button is pressed.
+func (a *widgetAdapter) HandlePointerDown(button uint32) {
+	evt := &PointerEvent{
+		eventType: PointerButtonPress,
+		button:    PointerButton(button),
+	}
+	a.public.HandleEvent(evt)
+}
+
+// HandlePointerUp is called when a pointer button is released.
+func (a *widgetAdapter) HandlePointerUp(button uint32) {
+	evt := &PointerEvent{
+		eventType: PointerButtonRelease,
+		button:    PointerButton(button),
+	}
+	a.public.HandleEvent(evt)
+}
+
+// Draw renders the widget to the buffer at the specified position.
+// This bridges the public Canvas-based drawing to internal Buffer-based drawing.
+func (a *widgetAdapter) Draw(buf *primitives.Buffer, x, y int) error {
+	// Create a buffer-backed Canvas that offsets all drawing by (x, y)
+	canvas := newBufferCanvas(buf, x, y)
+	
+	// Let the public widget draw to the canvas
+	a.public.Draw(canvas)
+	
+	return nil
+}
+
+// bufferCanvas implements Canvas by drawing directly to a primitives.Buffer.
+// It translates the public Canvas API calls into buffer drawing operations.
+type bufferCanvas struct {
+	buf    *primitives.Buffer
+	xOff   int
+	yOff   int
+}
+
+// newBufferCanvas creates a Canvas that draws to a buffer with an offset.
+func newBufferCanvas(buf *primitives.Buffer, xOff, yOff int) Canvas {
+	return &bufferCanvas{
+		buf:  buf,
+		xOff: xOff,
+		yOff: yOff,
+	}
+}
+
+// FillRect fills a solid rectangle.
+func (c *bufferCanvas) FillRect(x, y, width, height int, color Color) {
+	c.buf.FillRect(c.xOff+x, c.yOff+y, width, height, color.toInternal())
+}
+
+// FillRoundedRect fills a rounded rectangle.
+func (c *bufferCanvas) FillRoundedRect(x, y, width, height, radius int, color Color) {
+	c.buf.FillRoundedRect(c.xOff+x, c.yOff+y, width, height, float64(radius), color.toInternal())
+}
+
+// DrawLine draws a line segment.
+func (c *bufferCanvas) DrawLine(x1, y1, x2, y2 int, color Color, thickness int) {
+	c.buf.DrawLine(c.xOff+x1, c.yOff+y1, c.xOff+x2, c.yOff+y2, float64(thickness), color.toInternal())
+}
+
+// DrawText renders text.
+func (c *bufferCanvas) DrawText(text string, x, y int, font *Font, color Color) {
+	// Text rendering requires an atlas which we don't have access to here
+	// For now, this is a limitation - text in adapted widgets won't render
+	// TODO: Pass atlas through or use a different approach for text
+	_ = text
+	_ = x
+	_ = y
+	_ = font
+	_ = color
+}
+
+// DrawImage renders an image.
+func (c *bufferCanvas) DrawImage(img *Image, x, y, width, height int) {
+	// Image rendering not supported in buffer canvas adapter yet
+	_ = img
+	_ = x
+	_ = y
+	_ = width
+	_ = height
+}
+
+// LinearGradient fills a rectangle with a linear gradient.
+func (c *bufferCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, angle float64) {
+	// Gradients not supported in buffer canvas adapter yet
+	_ = x
+	_ = y
+	_ = width
+	_ = height
+	_ = startColor
+	_ = endColor
+	_ = angle
+}
+
+// RadialGradient fills a rectangle with a radial gradient.
+func (c *bufferCanvas) RadialGradient(x, y, width, height int, centerColor, edgeColor Color) {
+	// Gradients not supported in buffer canvas adapter yet
+	_ = x
+	_ = y
+	_ = width
+	_ = height
+	_ = centerColor
+	_ = edgeColor
+}
+
+// BoxShadow renders a box shadow.
+func (c *bufferCanvas) BoxShadow(x, y, width, height, offsetX, offsetY, blur int, color Color) {
+	// Box shadows not supported in buffer canvas adapter yet
+	_ = x
+	_ = y
+	_ = width
+	_ = height
+	_ = offsetX
+	_ = offsetY
+	_ = blur
+	_ = color
+}
 
 // Button is a clickable button widget with text and onClick callback.
 //
@@ -358,9 +513,12 @@ func (s *ScrollView) HandleEvent(evt Event) bool {
 
 // Add appends a child widget to the scroll view's content area.
 func (s *ScrollView) Add(child PublicWidget) {
-	// TODO(TD-2): Implement proper child management for ScrollView
-	// This requires extending widgets.ScrollContainer to support PublicWidget children
-	_ = child
+	// Wrap the public widget in an adapter that implements the internal Widget interface
+	adapter := newWidgetAdapter(child)
+	s.internal.AddChild(adapter)
+	
+	// Also track in the public widget's children list for consistency
+	s.children = append(s.children, child)
 }
 
 // SetStyle applies a style override to this scroll view.

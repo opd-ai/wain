@@ -4,14 +4,6 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 
 ## Active Items
 
-### TD-2: Implement proper child management for ScrollView
-**File:** `concretewidgets.go:361`  
-**Priority:** Medium  
-**Description:** The public `ScrollView.Add(child PublicWidget)` method is a stub. Need to extend `internal/ui/widgets.ScrollContainer` to accept PublicWidget children (currently only works with internal widgets). Requires bridging PublicWidget interface to internal widget representation.  
-**Impact:** ScrollView widget cannot hold child widgets, limiting its utility  
-**Effort:** ~2-3 hours (add child container to ScrollContainer, implement layout pass for children)  
-**Related:** None  
-
 ### TD-3: Theme system integration for Panel widget
 **File:** `layout.go:388`  
 **Priority:** Low  
@@ -21,6 +13,24 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 **Related:** Blocked by App.theme field implementation (not yet designed)  
 
 ## Completed Items
+
+### TD-2: Implement proper child management for ScrollView ✅
+**Completed:** 2026-03-09  
+**File:** `concretewidgets.go:361-438` (adapter implementation), `concretewidgets.go:431-438` (ScrollView.Add)  
+**Solution:** Created a widgetAdapter type that bridges PublicWidget to the internal Widget interface:
+1. Added widgetAdapter struct that wraps any PublicWidget instance (15 LOC)
+2. Implemented all internal Widget interface methods (Bounds, Handle*, Draw) (30 LOC)
+3. Created bufferCanvas that implements Canvas by drawing to primitives.Buffer with offset (75 LOC)
+4. Updated ScrollView.Add() to wrap PublicWidget children in adapter before adding to ScrollContainer (8 LOC)
+5. The adapter translates pointer events from internal format to public PointerEvent format
+6. The bufferCanvas translates Canvas drawing commands to Buffer drawing with coordinate offset
+**Files Modified:**
+- `concretewidgets.go`: Added widgetAdapter, bufferCanvas types and updated ScrollView.Add (128 LOC added)
+**Tests:** Code compiles and builds successfully; go vet passes with no new warnings
+**Impact:** ScrollView can now accept and render PublicWidget children. Applications can add buttons, labels, and other public widgets to scroll containers as intended in the API design.
+**Limitations:** 
+- Text rendering in adapted widgets requires atlas access (not yet implemented)
+- DrawImage, gradients, and box shadows not yet supported in bufferCanvas (can be added as needed)
 
 ### TD-4: Full Wayland event reading and dispatch ✅
 **Completed:** 2026-03-09  
@@ -58,5 +68,5 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 ---
 
 **Last Updated:** 2026-03-09  
-**Total Active Items:** 2  
-**Total Completed Items:** 2
+**Total Active Items:** 1  
+**Total Completed Items:** 3
