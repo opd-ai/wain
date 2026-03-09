@@ -410,7 +410,7 @@ mod tests {
         let rt = ctx.allocate_render_target()
             .expect("Failed to allocate render target");
 
-        // TODO: Compile shader to EU binary, submit batch, render
+        // TODO(TD-7): Compile shader to EU binary, submit batch, render
         // For now, validate infrastructure works
         
         // Read back pixels
@@ -443,7 +443,7 @@ mod tests {
         let rt = ctx.allocate_render_target()
             .expect("Failed to allocate render target");
 
-        // TODO: Compile shader, submit batch, render gradient
+        // TODO(TD-8): Compile shader, submit batch, render gradient
         
         let gpu_result = ctx.readback_pixels(&rt)
             .expect("Failed to read back pixels");
@@ -468,7 +468,7 @@ mod tests {
 
         println!("Testing textured_quad shader on {:?}", ctx.generation());
         
-        // TODO: Compile shader, upload texture, render textured quad
+        // TODO(TD-9): Compile shader, upload texture, render textured quad
         // Placeholder test validates infrastructure
     }
 
@@ -485,7 +485,7 @@ mod tests {
 
         println!("Testing sdf_text shader on {:?}", ctx.generation());
         
-        // TODO: Compile shader, upload SDF atlas, render text
+        // TODO(TD-10): Compile shader, upload SDF atlas, render text
     }
 
     #[test]
@@ -501,7 +501,7 @@ mod tests {
 
         println!("Testing rounded_rect shader on {:?}", ctx.generation());
         
-        // TODO: Compile shader, render rounded rectangle with clipping
+        // TODO(TD-11): Compile shader, render rounded rectangle with clipping
     }
 
     #[test]
@@ -517,7 +517,7 @@ mod tests {
 
         println!("Testing radial_gradient shader on {:?}", ctx.generation());
         
-        // TODO: Compile shader, render radial gradient
+        // TODO(TD-12): Compile shader, render radial gradient
     }
 
     #[test]
@@ -533,6 +533,6 @@ mod tests {
 
         println!("Testing box_shadow shader on {:?}", ctx.generation());
         
-        // TODO: Compile shader, render two-pass blur
+        // TODO(TD-13): Compile shader, render two-pass blur
     }
 }

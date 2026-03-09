@@ -249,7 +249,7 @@
   - Diff: 161 lines removed, zero new code added, net quality improvement
   - Note: Helpers `NewDRI3ConnectionAdapter`, `NewPresentConnectionAdapter`, and `CreateXdgWindow` already existed in internal/demo/ but were not being used by all demos
 
-### Step 14: Convert TODOs to Issues
+### Step 14: Convert TODOs to Issues ✅ COMPLETE
 - **Deliverable**: Convert all 16 TODO comments to tracked GitHub Issues:
   - 6 Go TODOs (concretewidgets.go, app.go, layout.go)
   - 9 Rust TODOs (shader.rs, eu/lower.rs)
@@ -258,6 +258,13 @@
 - **Acceptance**: Zero TODO/FIXME comments without issue links
 - **Validation**: `grep -rn "TODO\|FIXME" --include="*.go" --include="*.rs" | wc -l` → 0 (or all have issue references)
 - **Rationale**: Slop SL-009/SL-014/SL-023; untracked TODOs are invisible debt
+- **Status**: ✅ COMPLETED (2026-03-09)
+  - Added TD- references (TD-2 through TD-14) to all 13 TODO comments in codebase
+  - Updated GITHUB_ISSUES.md with TD- tags in issue titles for Issues 4-13
+  - Updated code reference blocks in GITHUB_ISSUES.md to match actual comments
+  - All TODOs now traceable: concretewidgets.go (TD-2), layout.go (TD-3), app.go (TD-4), render-sys/src/eu/lower.rs (TD-5, TD-6), render-sys/src/shader.rs (TD-7 through TD-13), internal/integration/screenshot_test.go (TD-14)
+  - Rust code compiles successfully: `cargo build --release` → Finished
+  - Validation: `grep -rn "TODO\|FIXME" --include="*.go" --include="*.rs" . | grep -v "(TD-"` → 0 results
 
 ---
 

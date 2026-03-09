@@ -128,7 +128,7 @@ Wayland applications cannot receive user input (keyboard, mouse) or respond to c
 
 ---
 
-## Issue 4: Implement immediate loading in Intel EU instruction encoder
+## Issue 4: [TD-5] Implement immediate loading in Intel EU instruction encoder
 
 **Labels:** `technical-debt`, `enhancement`, `priority:medium`, `rust`, `gpu`
 
@@ -156,12 +156,12 @@ Current code has a placeholder comment. Need to implement proper immediate value
 
 ### Code Reference
 ```rust
-// TODO: Implement immediate loading properly
+// TODO(TD-5): Implement immediate loading properly
 ```
 
 ---
 
-## Issue 5: Implement swizzle control bits in EU instruction encoding
+## Issue 5: [TD-6] Implement swizzle control bits in EU instruction encoding
 
 **Labels:** `technical-debt`, `enhancement`, `priority:medium`, `rust`, `gpu`
 
@@ -189,12 +189,12 @@ Swizzle control bits determine how vector components are rearranged during opera
 
 ### Code Reference
 ```rust
-// TODO: Implement swizzle control bits in instruction encoding
+// TODO(TD-6): Implement swizzle control bits in instruction encoding
 ```
 
 ---
 
-## Issue 6: Complete GPU shader compilation for solid color rendering
+## Issue 6: [TD-7] Complete GPU shader compilation for solid color rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:high`, `rust`, `gpu`, `shader`
 
@@ -225,12 +225,12 @@ Core rendering primitive (solid color fills) doesn't work on GPU backend, blocki
 
 ### Code Reference
 ```rust
-// TODO: Compile shader to EU binary, submit batch, render
+// TODO(TD-7): Compile shader to EU binary, submit batch, render
 ```
 
 ---
 
-## Issue 7: Complete GPU shader compilation for gradient rendering
+## Issue 7: [TD-8] Complete GPU shader compilation for gradient rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:high`, `rust`, `gpu`, `shader`
 
@@ -260,12 +260,12 @@ Gradient rendering unavailable on GPU backend, limiting visual quality and desig
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, submit batch, render gradient
+// TODO(TD-8): Compile shader, submit batch, render gradient
 ```
 
 ---
 
-## Issue 8: Complete GPU shader compilation for textured quad rendering
+## Issue 8: [TD-9] Complete GPU shader compilation for textured quad rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:high`, `rust`, `gpu`, `shader`
 
@@ -295,12 +295,12 @@ Image rendering unavailable on GPU backend. Cannot display images, icons, or UI 
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, upload texture, render textured quad
+// TODO(TD-9): Compile shader, upload texture, render textured quad
 ```
 
 ---
 
-## Issue 9: Complete GPU shader compilation for SDF text rendering
+## Issue 9: [TD-10] Complete GPU shader compilation for SDF text rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:high`, `rust`, `gpu`, `shader`, `text`
 
@@ -331,12 +331,12 @@ Text rendering unavailable on GPU backend. UI cannot display text, making GPU ba
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, upload SDF atlas, render text
+// TODO(TD-10): Compile shader, upload SDF atlas, render text
 ```
 
 ---
 
-## Issue 10: Complete GPU shader compilation for rounded rectangle rendering
+## Issue 10: [TD-11] Complete GPU shader compilation for rounded rectangle rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:medium`, `rust`, `gpu`, `shader`
 
@@ -366,12 +366,12 @@ UI widgets with rounded corners won't render correctly on GPU backend, affecting
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, render rounded rectangle with clipping
+// TODO(TD-11): Compile shader, render rounded rectangle with clipping
 ```
 
 ---
 
-## Issue 11: Complete GPU shader compilation for radial gradient rendering
+## Issue 11: [TD-12] Complete GPU shader compilation for radial gradient rendering
 
 **Labels:** `technical-debt`, `enhancement`, `priority:medium`, `rust`, `gpu`, `shader`
 
@@ -401,12 +401,12 @@ Advanced gradient effects unavailable on GPU backend, limiting visual design cap
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, render radial gradient
+// TODO(TD-12): Compile shader, render radial gradient
 ```
 
 ---
 
-## Issue 12: Complete GPU shader compilation for blur effects
+## Issue 12: [TD-13] Complete GPU shader compilation for blur effects
 
 **Labels:** `technical-debt`, `enhancement`, `priority:low`, `rust`, `gpu`, `shader`, `effects`
 
@@ -437,12 +437,12 @@ Blur effects (shadows, backgrounds) unavailable on GPU backend. Affects visual p
 
 ### Code Reference
 ```rust
-// TODO: Compile shader, render two-pass blur
+// TODO(TD-13): Compile shader, render two-pass blur
 ```
 
 ---
 
-## Issue 13: Implement GPU backend rendering for integration tests
+## Issue 13: [TD-14] Implement GPU backend rendering for integration tests
 
 **Labels:** `technical-debt`, `testing`, `priority:medium`, `gpu`
 
@@ -474,7 +474,7 @@ This is blocked by Phase 5 (GPU rendering pipeline) completion. Once GPU backend
 
 ### Code Reference
 ```go
-// TODO: Implement GPU backend rendering when Phase 5 is complete
+// TODO(TD-14): Implement GPU backend rendering when Phase 5 is complete
 ```
 
 ---

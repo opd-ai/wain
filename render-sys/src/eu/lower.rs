@@ -574,7 +574,7 @@ impl<'a> LoweringContext<'a> {
                 // Step 1: tmp1 = 1.0 - a
                 // We need to load 1.0 first, then subtract a
                 // For simplicity, use MOV to load 1.0, then ADD with negate
-                // TODO: Implement immediate loading properly
+                // TODO(TD-5): Implement immediate loading properly
                 // For now, use a simplified approach with MAD: tmp1 = -a + 1
                 // This requires implementing MAD or using a constant register
                 
@@ -1551,7 +1551,7 @@ impl<'a> LoweringContext<'a> {
 
         // For simple swizzles, we can use a single MOV with swizzle control
         // For complex swizzles, we need multiple MOV instructions
-        // TODO: Implement swizzle control bits in instruction encoding
+        // TODO(TD-6): Implement swizzle control bits in instruction encoding
         // For now, implement component-wise with multiple MOVs
 
         for i in 0..num_components {

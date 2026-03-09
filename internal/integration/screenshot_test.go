@@ -471,7 +471,7 @@ func TestCrossBackendParity(t *testing.T) {
 		t.Skip("Skipping GPU backend tests in short mode")
 	}
 
-	// TODO: Implement GPU backend rendering when Phase 5 is complete
+	// TODO(TD-14): Implement GPU backend rendering when Phase 5 is complete
 	// For now, we test software backend consistency
 	t.Skip("GPU backend integration pending - Phase 5.5 in progress")
 
