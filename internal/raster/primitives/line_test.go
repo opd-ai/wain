@@ -6,6 +6,7 @@ import (
 )
 
 func TestDrawLine(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		x0    int
@@ -120,6 +121,7 @@ func TestDrawLine(t *testing.T) {
 }
 
 func TestLineCoverage(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name       string
 		px         float64
@@ -185,6 +187,7 @@ func TestLineCoverage(t *testing.T) {
 }
 
 func TestMin2fMax2f(t *testing.T) {
+	t.Parallel()
 	if min2f(5.5, 10.5) != 5.5 {
 		t.Errorf("min2f(5.5, 10.5) = %f, want 5.5", min2f(5.5, 10.5))
 	}
@@ -200,6 +203,7 @@ func TestMin2fMax2f(t *testing.T) {
 }
 
 func TestClamp(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		v        float64

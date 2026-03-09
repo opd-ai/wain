@@ -7,6 +7,7 @@ import (
 )
 
 func TestBoxShadow(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name       string
 		bufW, bufH int
@@ -176,6 +177,7 @@ func TestBoxShadow(t *testing.T) {
 }
 
 func TestLinearGradient(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		bufW, bufH     int
@@ -378,6 +380,7 @@ func TestLinearGradient(t *testing.T) {
 }
 
 func TestRadialGradient(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		bufW, bufH     int
@@ -564,6 +567,7 @@ func TestRadialGradient(t *testing.T) {
 }
 
 func TestScissor(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name               string
 		scissorX, scissorY int
@@ -799,6 +803,7 @@ func TestScissor(t *testing.T) {
 }
 
 func TestInterpolateColor(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		c1, c2   primitives.Color
@@ -852,6 +857,7 @@ func TestInterpolateColor(t *testing.T) {
 }
 
 func TestBlurFunctions(t *testing.T) {
+	t.Parallel()
 	t.Run("blurHorizontal basic", func(t *testing.T) {
 		mask := []uint8{
 			0, 0, 0, 0, 0,

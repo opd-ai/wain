@@ -3,6 +3,7 @@ package primitives
 import "testing"
 
 func TestFillRect(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		width  int
@@ -134,6 +135,7 @@ func TestFillRect(t *testing.T) {
 }
 
 func TestFillRoundedRect(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		width  int
@@ -218,6 +220,7 @@ func TestFillRoundedRect(t *testing.T) {
 }
 
 func TestRoundedRectCoverage(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		x        int
@@ -258,6 +261,7 @@ func TestRoundedRectCoverage(t *testing.T) {
 }
 
 func TestMinMax(t *testing.T) {
+	t.Parallel()
 	if min(5, 10) != 5 {
 		t.Errorf("min(5, 10) = %d, want 5", min(5, 10))
 	}

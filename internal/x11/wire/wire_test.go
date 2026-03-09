@@ -8,6 +8,7 @@ import (
 )
 
 func TestEncodeRequestHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		opcode uint8
@@ -55,6 +56,7 @@ func TestEncodeRequestHeader(t *testing.T) {
 }
 
 func TestEncodeUint32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		value uint32
@@ -99,6 +101,7 @@ func TestEncodeUint32(t *testing.T) {
 }
 
 func TestEncodeUint16(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		value uint16
@@ -138,6 +141,7 @@ func TestEncodeUint16(t *testing.T) {
 }
 
 func TestEncodeInt16(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		value int16
@@ -177,6 +181,7 @@ func TestEncodeInt16(t *testing.T) {
 }
 
 func TestDecodeUint32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -239,6 +244,7 @@ func TestDecodeUint32(t *testing.T) {
 }
 
 func TestDecodeReplyHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -304,6 +310,7 @@ func TestDecodeReplyHeader(t *testing.T) {
 }
 
 func TestDecodeErrorHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -362,6 +369,7 @@ func TestDecodeErrorHeader(t *testing.T) {
 }
 
 func TestPad(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		length int
 		want   int
@@ -385,6 +393,7 @@ func TestPad(t *testing.T) {
 }
 
 func TestEncodeSetupRequest(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		req  wire.SetupRequest
@@ -433,6 +442,7 @@ func TestEncodeSetupRequest(t *testing.T) {
 }
 
 func TestDecodeSetupReply(t *testing.T) {
+	t.Parallel()
 	// Test failure response
 	t.Run("failed setup", func(t *testing.T) {
 		// Minimal failure response
@@ -463,6 +473,7 @@ func TestDecodeSetupReply(t *testing.T) {
 }
 
 func TestDecodeEventHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -533,6 +544,7 @@ func TestDecodeEventHeader(t *testing.T) {
 }
 
 func TestEncodePadding(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		n    int
@@ -567,6 +579,7 @@ func TestEncodePadding(t *testing.T) {
 }
 
 func TestEncodeDrawableGeometry(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		drawable uint32

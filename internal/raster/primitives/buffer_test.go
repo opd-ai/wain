@@ -5,6 +5,7 @@ import (
 )
 
 func TestNewBuffer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name      string
 		width     int
@@ -98,6 +99,7 @@ func TestNewBuffer(t *testing.T) {
 }
 
 func TestBufferClear(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name   string
 		width  int
@@ -146,6 +148,7 @@ func TestBufferClear(t *testing.T) {
 }
 
 func TestBufferAtSet(t *testing.T) {
+	t.Parallel()
 	buf, err := NewBuffer(10, 10)
 	if err != nil {
 		t.Fatalf("NewBuffer() failed: %v", err)
@@ -212,6 +215,7 @@ func TestBufferAtSet(t *testing.T) {
 }
 
 func TestBufferBlending(t *testing.T) {
+	t.Parallel()
 	buf, err := NewBuffer(10, 10)
 	if err != nil {
 		t.Fatalf("NewBuffer() failed: %v", err)
@@ -232,6 +236,7 @@ func TestBufferBlending(t *testing.T) {
 }
 
 func TestColorRGBA(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		color Color

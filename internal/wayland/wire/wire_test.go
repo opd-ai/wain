@@ -9,6 +9,7 @@ import (
 )
 
 func TestDecodeHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -79,6 +80,7 @@ func TestDecodeHeader(t *testing.T) {
 }
 
 func TestEncodeHeader(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		header  wire.Header
@@ -152,6 +154,7 @@ func TestEncodeHeader(t *testing.T) {
 }
 
 func TestHeaderRoundtrip(t *testing.T) {
+	t.Parallel()
 	headers := []wire.Header{
 		{ObjectID: 1, Opcode: 0, Size: 8},
 		{ObjectID: 42, Opcode: 15, Size: 100},
@@ -176,6 +179,7 @@ func TestHeaderRoundtrip(t *testing.T) {
 }
 
 func TestDecodeInt32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -214,6 +218,7 @@ func TestDecodeInt32(t *testing.T) {
 }
 
 func TestEncodeInt32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		value int32
@@ -242,6 +247,7 @@ func TestEncodeInt32(t *testing.T) {
 }
 
 func TestInt32Roundtrip(t *testing.T) {
+	t.Parallel()
 	values := []int32{0, 1, -1, 42, -42, 0x7FFFFFFF, -0x80000000}
 
 	for _, v := range values {
@@ -262,6 +268,7 @@ func TestInt32Roundtrip(t *testing.T) {
 }
 
 func TestDecodeUint32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -298,6 +305,7 @@ func TestDecodeUint32(t *testing.T) {
 }
 
 func TestEncodeUint32(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		value uint32
@@ -324,6 +332,7 @@ func TestEncodeUint32(t *testing.T) {
 }
 
 func TestUint32Roundtrip(t *testing.T) {
+	t.Parallel()
 	values := []uint32{0, 1, 42, 0xFFFFFFFF}
 
 	for _, v := range values {
@@ -344,6 +353,7 @@ func TestUint32Roundtrip(t *testing.T) {
 }
 
 func TestDecodeFixed(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -381,6 +391,7 @@ func TestDecodeFixed(t *testing.T) {
 }
 
 func TestFixedRoundtrip(t *testing.T) {
+	t.Parallel()
 	values := []float64{0.0, 1.0, -1.0, 0.5, 3.14, -2.71}
 
 	for _, v := range values {
@@ -402,6 +413,7 @@ func TestFixedRoundtrip(t *testing.T) {
 }
 
 func TestDecodeString(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -479,6 +491,7 @@ func TestDecodeString(t *testing.T) {
 }
 
 func TestEncodeString(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		input string
@@ -533,6 +546,7 @@ func TestEncodeString(t *testing.T) {
 }
 
 func TestStringRoundtrip(t *testing.T) {
+	t.Parallel()
 	strings := []string{"", "a", "hello", "test", "wayland"}
 
 	for _, s := range strings {
@@ -553,6 +567,7 @@ func TestStringRoundtrip(t *testing.T) {
 }
 
 func TestDecodeArray(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		input   []byte
@@ -620,6 +635,7 @@ func TestDecodeArray(t *testing.T) {
 }
 
 func TestEncodeArray(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name  string
 		input []byte
@@ -673,6 +689,7 @@ func TestEncodeArray(t *testing.T) {
 }
 
 func TestArrayRoundtrip(t *testing.T) {
+	t.Parallel()
 	arrays := [][]byte{
 		nil,
 		{},
@@ -699,6 +716,7 @@ func TestArrayRoundtrip(t *testing.T) {
 }
 
 func TestDecodeEOF(t *testing.T) {
+	t.Parallel()
 	r := bytes.NewReader(nil)
 	_, err := wire.DecodeHeader(r)
 	if err != io.EOF {

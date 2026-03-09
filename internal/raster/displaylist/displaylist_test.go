@@ -7,6 +7,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	if dl == nil {
 		t.Fatal("New() returned nil")
@@ -17,6 +18,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestAddFillRect(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 
@@ -47,6 +49,7 @@ func TestAddFillRect(t *testing.T) {
 }
 
 func TestAddFillRoundedRect(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 0, G: 255, B: 0, A: 255}
 
@@ -72,6 +75,7 @@ func TestAddFillRoundedRect(t *testing.T) {
 }
 
 func TestAddDrawLine(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 0, G: 0, B: 255, A: 255}
 
@@ -102,6 +106,7 @@ func TestAddDrawLine(t *testing.T) {
 }
 
 func TestAddDrawText(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 0, G: 0, B: 0, A: 255}
 
@@ -131,6 +136,7 @@ func TestAddDrawText(t *testing.T) {
 }
 
 func TestAddLinearGradient(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color0 := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 	color1 := primitives.Color{R: 0, G: 0, B: 255, A: 255}
@@ -157,6 +163,7 @@ func TestAddLinearGradient(t *testing.T) {
 }
 
 func TestAddRadialGradient(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color0 := primitives.Color{R: 255, G: 255, B: 0, A: 255}
 	color1 := primitives.Color{R: 255, G: 0, B: 255, A: 255}
@@ -183,6 +190,7 @@ func TestAddRadialGradient(t *testing.T) {
 }
 
 func TestAddBoxShadow(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 0, G: 0, B: 0, A: 128}
 
@@ -209,6 +217,7 @@ func TestAddBoxShadow(t *testing.T) {
 }
 
 func TestAddDrawImage(t *testing.T) {
+	t.Parallel()
 	dl := New()
 
 	dl.AddDrawImage(10, 20, 100, 80, 1, 0.0, 0.0, 1.0, 1.0)
@@ -238,6 +247,7 @@ func TestAddDrawImage(t *testing.T) {
 }
 
 func TestMultipleCommands(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	red := primitives.Color{R: 255, G: 0, B: 0, A: 255}
 	green := primitives.Color{R: 0, G: 255, B: 0, A: 255}
@@ -258,6 +268,7 @@ func TestMultipleCommands(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
+	t.Parallel()
 	dl := New()
 	color := primitives.Color{R: 255, G: 255, B: 255, A: 255}
 
