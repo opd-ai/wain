@@ -280,17 +280,23 @@ func (e *WindowEvent) Height() int { return e.height }
 // Scale returns the new scale factor after a scale change event.
 func (e *WindowEvent) Scale() float64 { return e.scale }
 
+// CustomEventPayload is an opaque payload for application-defined custom events.
+// Applications can send any data through the event system by wrapping it in
+// a CustomEvent. The receiving handler is responsible for type-asserting the
+// payload to the expected concrete type.
+type CustomEventPayload interface{}
+
 // CustomEvent represents application-defined events.
 type CustomEvent struct {
 	baseEvent
-	data interface{}
+	data CustomEventPayload
 }
 
 // Type returns EventTypeCustom for custom events.
 func (e *CustomEvent) Type() EventType { return EventTypeCustom }
 
 // Data returns the application-defined data attached to the event.
-func (e *CustomEvent) Data() interface{} { return e.data }
+func (e *CustomEvent) Data() CustomEventPayload { return e.data }
 
 // EventHandler is a function that processes events.
 type EventHandler func(Event)

@@ -233,8 +233,8 @@ Documentation gate passes, but naming is critical for a library/framework:
 
 - [x] **Naming (Critical Weight):** Address 44 identifier violations — rename single-letter variables in non-loop contexts (primarily `x`/`y` in demo code outside tight arithmetic loops) ✅ COMPLETED (2026-03-09) — Reduced from 44 to 28 violations by renaming: `h` → `header` in wire protocol decoders (4 instances), `x`/`y` → `windowX`/`windowY` in window setup code (12 instances)
 - [x] **Naming:** Address file stuttering violations — rename 10 files following Go convention (e.g., `composite/composite.go` → `composite/ops.go`). Low priority — only if refactoring these packages anyway.
-- [ ] **Naming:** Define `type FramebufferHandle interface{}` in `internal/render/present/` to replace bare `interface{}` (SL-007, SL-011)
-- [ ] **Naming:** Define `type CustomEventPayload interface{}` or use concrete types for `event.go:286` (SL-006)
+- [x] **Naming:** Define `type FramebufferHandle interface{}` in `internal/render/present/` to replace bare `interface{}` (SL-007, SL-011) ✅ COMPLETED (2026-03-09) — Added type alias with documentation, updated all 9 usages across PlatformPresenter and FramebufferPool interfaces and implementations
+- [x] **Naming:** Define `type CustomEventPayload interface{}` or use concrete types for `event.go:286` (SL-006) ✅ COMPLETED (2026-03-09) — Added type alias with documentation, updated CustomEvent struct and all related methods
 
 ### Phase 3: High-Severity Slop Remediation
 - [ ] **SL-003:** Extract 26-line display setup boilerplate from 8+ demo binaries into `internal/demo/display.go:SetupDisplay()` helper

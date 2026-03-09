@@ -154,22 +154,22 @@ func (p *X11Pipeline) IsClosed() bool {
 }
 
 // RenderToFramebuffer implements presentpkg.PlatformPresenter.
-func (p *X11Pipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb interface{}) error {
+func (p *X11Pipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb presentpkg.FramebufferHandle) error {
 	return p.renderToFramebuffer(dl, fb.(*Framebuffer))
 }
 
 // EnsurePlatformBuffer implements presentpkg.PlatformPresenter.
-func (p *X11Pipeline) EnsurePlatformBuffer(fb interface{}) error {
+func (p *X11Pipeline) EnsurePlatformBuffer(fb presentpkg.FramebufferHandle) error {
 	return p.ensureX11Pixmap(fb.(*Framebuffer))
 }
 
 // PresentBuffer implements presentpkg.PlatformPresenter.
-func (p *X11Pipeline) PresentBuffer(fb interface{}) error {
+func (p *X11Pipeline) PresentBuffer(fb presentpkg.FramebufferHandle) error {
 	return p.presentPixmap(fb.(*Framebuffer))
 }
 
 // ReleaseFramebuffer implements presentpkg.PlatformPresenter.
-func (p *X11Pipeline) ReleaseFramebuffer(fb interface{}) {
+func (p *X11Pipeline) ReleaseFramebuffer(fb presentpkg.FramebufferHandle) {
 	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 

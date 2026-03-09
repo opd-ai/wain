@@ -788,7 +788,7 @@ func (w *Window) Dispatcher() *EventDispatcher {
 }
 
 // SendCustomEvent injects a custom event into the event loop.
-func (w *Window) SendCustomEvent(data interface{}) {
+func (w *Window) SendCustomEvent(data CustomEventPayload) {
 	evt := &CustomEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
 		data:      data,

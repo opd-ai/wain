@@ -10,20 +10,26 @@ import (
 // ErrPresenterClosed is returned when operations are attempted on a closed presenter.
 var ErrPresenterClosed = errors.New("present: presenter is closed")
 
+// FramebufferHandle is an opaque handle to a platform-specific framebuffer.
+// The concrete type depends on the backend implementation (e.g., *Ring.Buffer
+// for the ring buffer pool). This type alias improves code clarity by making
+// the framebuffer abstraction explicit.
+type FramebufferHandle interface{}
+
 // PlatformPresenter handles platform-specific rendering, buffer creation, and presentation.
 // Both WaylandPipeline and X11Pipeline implement this interface.
 type PlatformPresenter interface {
 	// RenderToFramebuffer renders the display list to the framebuffer's GPU target.
-	RenderToFramebuffer(dl *displaylist.DisplayList, fb interface{}) error
+	RenderToFramebuffer(dl *displaylist.DisplayList, fb FramebufferHandle) error
 
 	// EnsurePlatformBuffer creates or retrieves the platform-specific buffer handle.
-	EnsurePlatformBuffer(fb interface{}) error
+	EnsurePlatformBuffer(fb FramebufferHandle) error
 
 	// PresentBuffer presents the framebuffer to the display server.
-	PresentBuffer(fb interface{}) error
+	PresentBuffer(fb FramebufferHandle) error
 
 	// ReleaseFramebuffer releases the framebuffer back to the pool.
-	ReleaseFramebuffer(fb interface{})
+	ReleaseFramebuffer(fb FramebufferHandle)
 
 	// IsClosed returns true if the presenter has been closed.
 	IsClosed() bool
@@ -31,8 +37,8 @@ type PlatformPresenter interface {
 
 // FramebufferPool manages the lifecycle of framebuffers.
 type FramebufferPool interface {
-	Acquire(ctx context.Context) (interface{}, error)
-	MarkDisplaying(fb interface{}) error
+	Acquire(ctx context.Context) (FramebufferHandle, error)
+	MarkDisplaying(fb FramebufferHandle) error
 }
 
 // RenderAndPresent implements the common render-and-present pattern shared by

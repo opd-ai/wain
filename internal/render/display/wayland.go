@@ -95,36 +95,36 @@ type poolAdapter struct {
 
 // Acquire obtains an available framebuffer from the pool, blocking if necessary.
 // It delegates to the underlying FramebufferPool's Acquire method and returns
-// the framebuffer as an interface{} to satisfy the presentpkg.FramebufferPool contract.
-func (a *poolAdapter) Acquire(ctx context.Context) (interface{}, error) {
+// the framebuffer as a FramebufferHandle to satisfy the presentpkg.FramebufferPool contract.
+func (a *poolAdapter) Acquire(ctx context.Context) (presentpkg.FramebufferHandle, error) {
 	return a.pool.Acquire(ctx)
 }
 
 // MarkDisplaying marks the framebuffer as actively being displayed by the compositor.
-// It type-asserts the interface{} back to *Framebuffer and delegates to the underlying
+// It type-asserts the FramebufferHandle back to *Framebuffer and delegates to the underlying
 // pool's MarkDisplaying method. This prevents the framebuffer from being recycled while
 // still visible on screen.
-func (a *poolAdapter) MarkDisplaying(fb interface{}) error {
+func (a *poolAdapter) MarkDisplaying(fb presentpkg.FramebufferHandle) error {
 	return a.pool.MarkDisplaying(fb.(*Framebuffer))
 }
 
 // RenderToFramebuffer implements presentpkg.PlatformPresenter.
-func (p *WaylandPipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb interface{}) error {
+func (p *WaylandPipeline) RenderToFramebuffer(dl *displaylist.DisplayList, fb presentpkg.FramebufferHandle) error {
 	return p.renderToFramebuffer(dl, fb.(*Framebuffer))
 }
 
 // EnsurePlatformBuffer implements presentpkg.PlatformPresenter.
-func (p *WaylandPipeline) EnsurePlatformBuffer(fb interface{}) error {
+func (p *WaylandPipeline) EnsurePlatformBuffer(fb presentpkg.FramebufferHandle) error {
 	return p.ensureWaylandBuffer(fb.(*Framebuffer))
 }
 
 // PresentBuffer implements presentpkg.PlatformPresenter.
-func (p *WaylandPipeline) PresentBuffer(fb interface{}) error {
+func (p *WaylandPipeline) PresentBuffer(fb presentpkg.FramebufferHandle) error {
 	return p.commitToSurface(fb.(*Framebuffer))
 }
 
 // ReleaseFramebuffer implements presentpkg.PlatformPresenter.
-func (p *WaylandPipeline) ReleaseFramebuffer(fb interface{}) {
+func (p *WaylandPipeline) ReleaseFramebuffer(fb presentpkg.FramebufferHandle) {
 	p.releaseFramebuffer(fb.(*Framebuffer))
 }
 
