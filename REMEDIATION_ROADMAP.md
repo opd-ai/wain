@@ -238,16 +238,17 @@ Documentation gate passes, but naming is critical for a library/framework:
 
 ### Phase 3: High-Severity Slop Remediation
 - [ ] **SL-003:** Extract 26-line display setup boilerplate from 8+ demo binaries into `internal/demo/display.go:SetupDisplay()` helper
-- [ ] **SL-009:** Extract magic numbers in `theme.go` and `internal/raster/text/atlas.go` to named constants:
-  ```go
-  // theme.go
-  const DefaultPadding = 8
-  const DefaultGap = 6
-  const DefaultBorderRadius = 4
-
-  // atlas.go
-  const AtlasTextureSize = 1024
-  ```
+- [ ] **SL-009:** Extract magic numbers to named constants in the files where they are used:
+  - In `theme.go`, add constants for theme defaults:
+    ```go
+    const DefaultPadding = 8
+    const DefaultGap = 6
+    const DefaultBorderRadius = 4
+    ```
+  - In `internal/raster/text/atlas.go`, add constant for atlas size:
+    ```go
+    const AtlasTextureSize = 1024
+    ```
 - [ ] **SL-013:** Add `testing.Short()` skip guards to all 13 timing-dependent tests in `internal/render/backend/profiler_test.go`
 
 ### Phase 4: Remaining Readiness Gates
