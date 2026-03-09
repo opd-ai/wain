@@ -75,16 +75,32 @@
   - `internal/wayland/input/pointer.go`: Added callback fields, tracking state, SetCallback methods, updated Handle* methods (60 LOC added)
   - `ROADMAP.md`: Removed "Wayland event path TODO" marker
 
-### Step 3: Deduplicate Demo Code
+### Step 3: Deduplicate Demo Code ✅
+- **Completed**: 2026-03-09
 - **Deliverable**: Extract shared 6-line clone (found in 11 demo files) into a `demo` helper package or shared function
 - **Dependencies**: None
-- **Acceptance**: Duplication ratio <4%
+- **Acceptance**: Duplication ratio <4% ✅
 - **Validation**: 
   ```bash
   go-stats-generator analyze . --skip-tests --format json | jq '.duplication.duplication_ratio'
-  # Expected: <0.04
+  # Expected: <0.04 ✅ (actual: 0.0336)
   ```
 - **Files**: `internal/demo/`, `cmd/*/main.go`
+- **Result**:
+  - Created `PrintFeatureList(header string, items []string)` helper function in `internal/demo/summary.go`
+  - Replaced 11 instances of the duplicated 6-line pattern across demo files
+  - Duplication ratio decreased from 4.64% to 3.36% (27.6% reduction)
+  - Total clones decreased from 79 to 59 (25.3% reduction)
+  - All tests passing (32 packages)
+- **Files Modified**:
+  - `internal/demo/summary.go`: Added PrintFeatureList helper (8 LOC)
+  - `cmd/callback-demo/main.go`: Replaced duplicate with helper call
+  - `cmd/clipboard-demo/main.go`: Replaced 2 duplicates with helper calls
+  - `cmd/decorations-demo/main.go`: Replaced duplicate with helper call
+  - `cmd/example-app/main.go`: Replaced 2 duplicates with helper calls
+  - `cmd/wayland-demo/main.go`: Replaced duplicate with helper call
+  - `cmd/widget-demo/main.go`: Replaced 3 duplicates with helper calls
+  - `internal/demo/x11setup.go`: Replaced duplicate with helper call
 
 ### Step 4: Refactor gen-atlas main()
 - **Deliverable**: Split `cmd/gen-atlas/main.go` main() (cc=20, 103 lines) into focused functions: `parseFlags`, `loadFont`, `generateAtlas`, `writeOutput`

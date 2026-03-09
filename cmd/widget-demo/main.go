@@ -89,9 +89,11 @@ func runDemo(platform string) error {
 	// Create UI widgets
 	fmt.Println("[1/4] Creating UI widgets...")
 	app.createWidgets()
-	fmt.Println("      ✓ Created Button widgets (3)")
-	fmt.Println("      ✓ Created TextInput widget")
-	fmt.Println("      ✓ Created ScrollContainer widget (20 items)")
+	demo.PrintFeatureList("", []string{
+		"Created Button widgets (3)",
+		"Created TextInput widget",
+		"Created ScrollContainer widget (20 items)",
+	})
 
 	// Create render buffer
 	fmt.Println("\n[2/4] Initializing framebuffer...")
@@ -331,11 +333,11 @@ func runWayland(app *application) error {
 	fmt.Println("      ⚠ Wayland event loop not yet implemented")
 	fmt.Println("      ℹ Window would be displayed on Wayland compositor")
 	fmt.Println("      ℹ Use --x11 flag to run on X11 instead")
-	fmt.Println()
-	fmt.Println("Demo architecture validated:")
-	fmt.Println("  ✓ Widget creation")
-	fmt.Println("  ✓ Event handlers")
-	fmt.Println("  ✓ Render pipeline")
+	demo.PrintFeatureList("Demo architecture validated:", []string{
+		"Widget creation",
+		"Event handlers",
+		"Render pipeline",
+	})
 	return nil
 }
 
@@ -347,11 +349,11 @@ func runWayland(app *application) error {
 func runX11(app *application) error {
 	fmt.Println("      ⚠ X11 event loop not yet implemented")
 	fmt.Println("      ℹ Window would be displayed on X11 server")
-	fmt.Println()
-	fmt.Println("Demo architecture validated:")
-	fmt.Println("  ✓ Widget creation")
-	fmt.Println("  ✓ Event handlers")
-	fmt.Println("  ✓ Render pipeline")
+	demo.PrintFeatureList("Demo architecture validated:", []string{
+		"Widget creation",
+		"Event handlers",
+		"Render pipeline",
+	})
 
 	// Simulate some interactions for demonstration
 	fmt.Println()

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/opd-ai/wain"
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
@@ -85,12 +86,12 @@ func main() {
 
 	fmt.Println()
 	fmt.Println("=== Demo Complete ===")
-	fmt.Println()
-	fmt.Println("Key Features:")
-	fmt.Println("  • Button.OnClick(func()) - respond to clicks")
-	fmt.Println("  • TextInput.OnChange(func(text string)) - track input changes")
-	fmt.Println("  • ScrollView.OnScroll(func(offset int)) - monitor scrolling")
-	fmt.Println("  • App.Notify(func()) - safe cross-goroutine UI updates")
+	demo.PrintFeatureList("Key Features:", []string{
+		"Button.OnClick(func()) - respond to clicks",
+		"TextInput.OnChange(func(text string)) - track input changes",
+		"ScrollView.OnScroll(func(offset int)) - monitor scrolling",
+		"App.Notify(func()) - safe cross-goroutine UI updates",
+	})
 	fmt.Println()
 	fmt.Println("To see this in a real UI, call app.Run() which starts the event loop")
 }

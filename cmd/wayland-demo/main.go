@@ -172,15 +172,14 @@ func displayBuffer(ctx *demoContext, surface *client.Surface, renderBuffer *prim
 // printFeatureSummary displays a summary of demonstrated Phase 1 features.
 func printFeatureSummary(renderBuffer *primitives.Buffer) {
 	fmt.Println("\n[6/6] Phase 1 Features Demonstrated:")
-	fmt.Println()
-	fmt.Println("      PROTOCOL LAYER (Wayland)")
-	fmt.Println("      ------------------------")
-	fmt.Println("      • Connection to compositor via Unix socket")
-	fmt.Println("      • Global discovery (wl_registry)")
-	fmt.Println("      • Surface creation (wl_compositor)")
-	fmt.Println("      • Shared memory buffers (wl_shm)")
-	fmt.Println("      • Window management (xdg_wm_base)")
-	fmt.Println("      • XDG surface and toplevel creation")
+	demo.PrintFeatureList("      PROTOCOL LAYER (Wayland)\n      ------------------------", []string{
+		"Connection to compositor via Unix socket",
+		"Global discovery (wl_registry)",
+		"Surface creation (wl_compositor)",
+		"Shared memory buffers (wl_shm)",
+		"Window management (xdg_wm_base)",
+		"XDG surface and toplevel creation",
+	})
 	fmt.Println()
 	demo.PrintRenderingFeatures()
 	fmt.Println()

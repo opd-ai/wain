@@ -70,10 +70,11 @@ func main() {
 	fmt.Println("  ✓ Window drag area in title bar")
 	fmt.Println()
 
-	fmt.Println("Protocol Support:")
-	fmt.Println("  ✓ XDG decoration protocol (zxdg_decoration_manager_v1)")
-	fmt.Println("  ✓ Server-side decoration negotiation")
-	fmt.Println("  ✓ Client-side fallback (automatic)")
+	demo.PrintFeatureList("Protocol Support:", []string{
+		"XDG decoration protocol (zxdg_decoration_manager_v1)",
+		"Server-side decoration negotiation",
+		"Client-side fallback (automatic)",
+	})
 	fmt.Println()
 
 	// Demonstrate hit testing

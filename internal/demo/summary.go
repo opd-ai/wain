@@ -32,3 +32,13 @@ func PrintUIFeatures() {
 	fmt.Println("      • Button widget with state management")
 	fmt.Println("      • TextInput widget with placeholder")
 }
+
+// PrintFeatureList prints a formatted feature list with a header and bullet points.
+// It prints a blank line, the header, and then each item as a bullet point.
+func PrintFeatureList(header string, items []string) {
+	fmt.Println()
+	fmt.Println(header)
+	for _, item := range items {
+		fmt.Println("  • " + item)
+	}
+}

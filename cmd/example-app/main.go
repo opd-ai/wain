@@ -29,6 +29,7 @@ import (
 	"log"
 
 	"github.com/opd-ai/wain"
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
@@ -78,13 +79,13 @@ func main() {
 
 	// Report success
 	log.Println("=== Example Complete ===")
-	log.Println()
-	log.Println("This example demonstrates the public wain API structure:")
-	log.Println("  • Percentage-based layout (Row, Column, ScrollView)")
-	log.Println("  • Widget types (Panel, Button, Label, TextInput, Spacer)")
-	log.Println("  • Theme system (DefaultDark, DefaultLight, HighContrast)")
-	log.Println("  • Event callbacks (OnClick, OnChange, OnScroll)")
-	log.Println("  • Cross-goroutine updates (App.Notify)")
+	demo.PrintFeatureList("This example demonstrates the public wain API structure:", []string{
+		"Percentage-based layout (Row, Column, ScrollView)",
+		"Widget types (Panel, Button, Label, TextInput, Spacer)",
+		"Theme system (DefaultDark, DefaultLight, HighContrast)",
+		"Event callbacks (OnClick, OnChange, OnScroll)",
+		"Cross-goroutine updates (App.Notify)",
+	})
 	log.Println()
 	log.Println("To create a window and run the event loop, use:")
 	log.Println("  win, _ := app.NewWindow(wain.WindowConfig{...})")
@@ -229,14 +230,14 @@ func buildFooter(app *wain.App) *wain.Row {
 // printLayoutStructure displays the UI hierarchy
 func printLayoutStructure() {
 	log.Println("=== UI Layout Structure ===")
-	log.Println()
-	log.Println("Root (Column, 100% × 100%)")
-	log.Println("├── Header (Row, 100% × auto)")
-	log.Println("│   ├── Title (Label, 70% × 100%)")
-	log.Println("│   ├── Spacer (5% × 100%)")
-	log.Println("│   ├── Dark Button (8% × 100%)")
-	log.Println("│   ├── Light Button (8% × 100%)")
-	log.Println("│   └── HighContrast Button (9% × 100%)")
+	demo.PrintFeatureList("Root (Column, 100% × 100%)", []string{
+		"Header (Row, 100% × auto)",
+		"  ├── Title (Label, 70% × 100%)",
+		"  ├── Spacer (5% × 100%)",
+		"  ├── Dark Button (8% × 100%)",
+		"  ├── Light Button (8% × 100%)",
+		"  └── HighContrast Button (9% × 100%)",
+	})
 	log.Println("├── Main Content (Row, 100% × auto)")
 	log.Println("│   ├── Sidebar (Column, 25% × 100%)")
 	log.Println("│   │   ├── Home Button (100% × 15%)")

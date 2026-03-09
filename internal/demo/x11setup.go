@@ -88,13 +88,12 @@ func setupEventLoop(width, height int) error {
 	fmt.Printf("      ✓ Rendered to %dx%d ARGB8888 buffer\n", width, height)
 
 	fmt.Println("\n[6/6] Phase 1 Features Demonstrated:")
-	fmt.Println()
-	fmt.Println("      PROTOCOL LAYER (X11)")
-	fmt.Println("      -------------------")
-	fmt.Println("      • Connection setup and authentication")
-	fmt.Println("      • Window creation (CreateWindow)")
-	fmt.Println("      • Window mapping (MapWindow)")
-	fmt.Println("      • Resource allocation (AllocXID)")
+	PrintFeatureList("      PROTOCOL LAYER (X11)\n      -------------------", []string{
+		"Connection setup and authentication",
+		"Window creation (CreateWindow)",
+		"Window mapping (MapWindow)",
+		"Resource allocation (AllocXID)",
+	})
 	fmt.Println()
 	PrintRenderingFeatures()
 	fmt.Println()

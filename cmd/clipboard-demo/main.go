@@ -55,11 +55,11 @@ func demonstrateWaylandAPI() {
 	device.SetSelection(source, 12345)
 	fmt.Println("✓ Set clipboard selection with serial 12345")
 
-	fmt.Println()
-	fmt.Println("Protocol features:")
-	fmt.Println("  • MIME type negotiation")
-	fmt.Println("  • File descriptor-based data transfer")
-	fmt.Println("  • Drag-and-drop support (enter/leave/motion/drop events)")
+	demo.PrintFeatureList("Protocol features:", []string{
+		"MIME type negotiation",
+		"File descriptor-based data transfer",
+		"Drag-and-drop support (enter/leave/motion/drop events)",
+	})
 }
 
 func demonstrateX11API() {
@@ -88,12 +88,12 @@ func demonstrateX11API() {
 	manager.SetPrimary("Selected text")
 	fmt.Println("✓ Set PRIMARY selection: 'Selected text'")
 
-	fmt.Println()
-	fmt.Println("Protocol features:")
-	fmt.Println("  • CLIPBOARD and PRIMARY selections")
-	fmt.Println("  • TARGETS negotiation")
-	fmt.Println("  • UTF8_STRING and TEXT encoding")
-	fmt.Println("  • SelectionRequest/SelectionNotify events")
+	demo.PrintFeatureList("Protocol features:", []string{
+		"CLIPBOARD and PRIMARY selections",
+		"TARGETS negotiation",
+		"UTF8_STRING and TEXT encoding",
+		"SelectionRequest/SelectionNotify events",
+	})
 	fmt.Println()
 	fmt.Println("Demo complete! Both protocols are fully implemented.")
 }
