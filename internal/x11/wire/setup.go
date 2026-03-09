@@ -175,19 +175,33 @@ type PixmapFormat struct {
 
 // decodeSetupFailure reads and handles a setup failure response.
 func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
-	reasonLen, _ := DecodeUint8(r)
-	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
-	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
-	failDataLen, _ := DecodeUint16(r)
+	reasonLen, err := DecodeUint8(r)
+	if err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
+	if reply.ProtocolMajorVersion, err = DecodeUint16(r); err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
+	if reply.ProtocolMinorVersion, err = DecodeUint16(r); err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
+	failDataLen, err := DecodeUint16(r)
+	if err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
 
 	if reasonLen > 0 {
 		reason := make([]byte, reasonLen)
-		io.ReadFull(r, reason)
+		if _, err := io.ReadFull(r, reason); err != nil {
+			return fmt.Errorf("setup failure decode: %w", err)
+		}
 		return fmt.Errorf("%w: %s", ErrSetupFailed, string(reason))
 	}
 
 	if failDataLen > 0 {
-		io.CopyN(io.Discard, r, int64(failDataLen)*4)
+		if _, err := io.CopyN(io.Discard, r, int64(failDataLen)*4); err != nil {
+			return fmt.Errorf("setup failure decode: %w", err)
+		}
 	}
 	return ErrSetupFailed
 }
@@ -196,10 +210,19 @@ func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
 func decodePixmapFormats(r io.Reader, count int) ([]PixmapFormat, error) {
 	formats := make([]PixmapFormat, count)
 	for i := 0; i < count; i++ {
-		formats[i].Depth, _ = DecodeUint8(r)
-		formats[i].BitsPerPixel, _ = DecodeUint8(r)
-		formats[i].ScanlinePad, _ = DecodeUint8(r)
-		io.CopyN(io.Discard, r, 5)
+		var err error
+		if formats[i].Depth, err = DecodeUint8(r); err != nil {
+			return nil, fmt.Errorf("pixmap format decode: %w", err)
+		}
+		if formats[i].BitsPerPixel, err = DecodeUint8(r); err != nil {
+			return nil, fmt.Errorf("pixmap format decode: %w", err)
+		}
+		if formats[i].ScanlinePad, err = DecodeUint8(r); err != nil {
+			return nil, fmt.Errorf("pixmap format decode: %w", err)
+		}
+		if _, err := io.CopyN(io.Discard, r, 5); err != nil {
+			return nil, fmt.Errorf("pixmap format decode: %w", err)
+		}
 	}
 	return formats, nil
 }
@@ -208,15 +231,33 @@ func decodePixmapFormats(r io.Reader, count int) ([]PixmapFormat, error) {
 func decodeVisuals(r io.Reader, count int) ([]Visual, error) {
 	visuals := make([]Visual, count)
 	for k := 0; k < count; k++ {
-		visuals[k].ID, _ = DecodeUint32(r)
-		class, _ := DecodeUint8(r)
+		var err error
+		if visuals[k].ID, err = DecodeUint32(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		class, err := DecodeUint8(r)
+		if err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
 		visuals[k].Class = VisualClass(class)
-		visuals[k].BitsPerRGB, _ = DecodeUint8(r)
-		visuals[k].Colormap, _ = DecodeUint16(r)
-		visuals[k].RedMask, _ = DecodeUint32(r)
-		visuals[k].GreenMask, _ = DecodeUint32(r)
-		visuals[k].BlueMask, _ = DecodeUint32(r)
-		io.CopyN(io.Discard, r, 4)
+		if visuals[k].BitsPerRGB, err = DecodeUint8(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		if visuals[k].Colormap, err = DecodeUint16(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		if visuals[k].RedMask, err = DecodeUint32(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		if visuals[k].GreenMask, err = DecodeUint32(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		if visuals[k].BlueMask, err = DecodeUint32(r); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
+		if _, err := io.CopyN(io.Discard, r, 4); err != nil {
+			return nil, fmt.Errorf("visual decode: %w", err)
+		}
 	}
 	return visuals, nil
 }
@@ -225,10 +266,20 @@ func decodeVisuals(r io.Reader, count int) ([]Visual, error) {
 func decodeDepths(r io.Reader, count int) ([]Depth, error) {
 	depths := make([]Depth, count)
 	for j := 0; j < count; j++ {
-		depths[j].Depth, _ = DecodeUint8(r)
-		io.CopyN(io.Discard, r, 1)
-		numVisuals, _ := DecodeUint16(r)
-		io.CopyN(io.Discard, r, 4)
+		var err error
+		if depths[j].Depth, err = DecodeUint8(r); err != nil {
+			return nil, fmt.Errorf("depth decode: %w", err)
+		}
+		if _, err := io.CopyN(io.Discard, r, 1); err != nil {
+			return nil, fmt.Errorf("depth decode: %w", err)
+		}
+		numVisuals, err := DecodeUint16(r)
+		if err != nil {
+			return nil, fmt.Errorf("depth decode: %w", err)
+		}
+		if _, err := io.CopyN(io.Discard, r, 4); err != nil {
+			return nil, fmt.Errorf("depth decode: %w", err)
+		}
 
 		visuals, err := decodeVisuals(r, int(numVisuals))
 		if err != nil {
@@ -242,11 +293,21 @@ func decodeDepths(r io.Reader, count int) ([]Depth, error) {
 // decodeScreen reads a single screen entry.
 func decodeScreen(r io.Reader) (Screen, error) {
 	var screen Screen
-	decodeScreenFields(r, &screen)
-	saveUnders, _ := DecodeUint8(r)
+	if err := decodeScreenFields(r, &screen); err != nil {
+		return screen, err
+	}
+	saveUnders, err := DecodeUint8(r)
+	if err != nil {
+		return screen, fmt.Errorf("screen decode: %w", err)
+	}
 	screen.SaveUnders = saveUnders != 0
-	screen.RootDepth, _ = DecodeUint8(r)
-	numDepths, _ := DecodeUint8(r)
+	if screen.RootDepth, err = DecodeUint8(r); err != nil {
+		return screen, fmt.Errorf("screen decode: %w", err)
+	}
+	numDepths, err := DecodeUint8(r)
+	if err != nil {
+		return screen, fmt.Errorf("screen decode: %w", err)
+	}
 
 	depths, err := decodeDepths(r, int(numDepths))
 	if err != nil {
@@ -256,41 +317,91 @@ func decodeScreen(r io.Reader) (Screen, error) {
 	return screen, nil
 }
 
-// decodeScreenFields reads basic screen fields, ignoring errors for performance.
-func decodeScreenFields(r io.Reader, s *Screen) {
-	decode5Uint32(r, &s.Root, &s.DefaultColormap, &s.WhitePixel, &s.BlackPixel, &s.CurrentMasks)
-	decode6Uint16(r, &s.WidthPixels, &s.HeightPixels, &s.WidthMM, &s.HeightMM, &s.MinMaps, &s.MaxMaps)
-	s.RootVisual, _ = DecodeUint32(r)
-	s.BackingStores, _ = DecodeUint8(r)
+// decodeScreenFields reads basic screen fields.
+func decodeScreenFields(r io.Reader, s *Screen) error {
+	if err := decode5Uint32(r, &s.Root, &s.DefaultColormap, &s.WhitePixel, &s.BlackPixel, &s.CurrentMasks); err != nil {
+		return err
+	}
+	if err := decode6Uint16(r, &s.WidthPixels, &s.HeightPixels, &s.WidthMM, &s.HeightMM, &s.MinMaps, &s.MaxMaps); err != nil {
+		return err
+	}
+	var err error
+	if s.RootVisual, err = DecodeUint32(r); err != nil {
+		return fmt.Errorf("screen fields decode: %w", err)
+	}
+	if s.BackingStores, err = DecodeUint8(r); err != nil {
+		return fmt.Errorf("screen fields decode: %w", err)
+	}
+	return nil
 }
 
 // decode5Uint32 reads 5 consecutive uint32 values.
-func decode5Uint32(r io.Reader, v1, v2, v3, v4, v5 *uint32) {
-	*v1, _ = DecodeUint32(r)
-	*v2, _ = DecodeUint32(r)
-	*v3, _ = DecodeUint32(r)
-	*v4, _ = DecodeUint32(r)
-	*v5, _ = DecodeUint32(r)
+func decode5Uint32(r io.Reader, v1, v2, v3, v4, v5 *uint32) error {
+	var err error
+	if *v1, err = DecodeUint32(r); err != nil {
+		return err
+	}
+	if *v2, err = DecodeUint32(r); err != nil {
+		return err
+	}
+	if *v3, err = DecodeUint32(r); err != nil {
+		return err
+	}
+	if *v4, err = DecodeUint32(r); err != nil {
+		return err
+	}
+	if *v5, err = DecodeUint32(r); err != nil {
+		return err
+	}
+	return nil
 }
 
 // decode6Uint16 reads 6 consecutive uint16 values.
-func decode6Uint16(r io.Reader, v1, v2, v3, v4, v5, v6 *uint16) {
-	*v1, _ = DecodeUint16(r)
-	*v2, _ = DecodeUint16(r)
-	*v3, _ = DecodeUint16(r)
-	*v4, _ = DecodeUint16(r)
-	*v5, _ = DecodeUint16(r)
-	*v6, _ = DecodeUint16(r)
+func decode6Uint16(r io.Reader, v1, v2, v3, v4, v5, v6 *uint16) error {
+	var err error
+	if *v1, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	if *v2, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	if *v3, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	if *v4, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	if *v5, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	if *v6, err = DecodeUint16(r); err != nil {
+		return err
+	}
+	return nil
 }
 
 // decode6Uint8 reads 6 consecutive uint8 values.
-func decode6Uint8(r io.Reader, v1, v2, v3, v4, v5, v6 *uint8) {
-	*v1, _ = DecodeUint8(r)
-	*v2, _ = DecodeUint8(r)
-	*v3, _ = DecodeUint8(r)
-	*v4, _ = DecodeUint8(r)
-	*v5, _ = DecodeUint8(r)
-	*v6, _ = DecodeUint8(r)
+func decode6Uint8(r io.Reader, v1, v2, v3, v4, v5, v6 *uint8) error {
+	var err error
+	if *v1, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	if *v2, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	if *v3, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	if *v4, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	if *v5, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	if *v6, err = DecodeUint8(r); err != nil {
+		return err
+	}
+	return nil
 }
 
 // DecodeSetupReply reads the server's setup reply from r.
@@ -305,7 +416,10 @@ func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 		return reply, decodeSetupFailure(r, &reply)
 	}
 
-	vendorLen, numScreens, numFormats := decodeSetupBody(r, &reply)
+	vendorLen, numScreens, numFormats, err := decodeSetupBody(r, &reply)
+	if err != nil {
+		return reply, err
+	}
 
 	if err := decodeVendorString(r, &reply, vendorLen); err != nil {
 		return reply, err
@@ -341,39 +455,71 @@ func decodeSetupHeader(r io.Reader, reply *SetupReply) error {
 }
 
 // decodeSetupBody reads the main setup reply fields, returning vendor/screen/format counts.
-func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8) {
-	_, _ = DecodeUint8(r)
-	reply.ProtocolMajorVersion, _ = DecodeUint16(r)
-	reply.ProtocolMinorVersion, _ = DecodeUint16(r)
-	_, _ = DecodeUint16(r)
+func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8, err error) {
+	if _, err = DecodeUint8(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.ProtocolMajorVersion, err = DecodeUint16(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.ProtocolMinorVersion, err = DecodeUint16(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if _, err = DecodeUint16(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
 
-	reply.ReleaseNumber, _ = DecodeUint32(r)
-	reply.ResourceIDBase, _ = DecodeUint32(r)
-	reply.ResourceIDMask, _ = DecodeUint32(r)
-	reply.MotionBufferSize, _ = DecodeUint32(r)
+	if reply.ReleaseNumber, err = DecodeUint32(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.ResourceIDBase, err = DecodeUint32(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.ResourceIDMask, err = DecodeUint32(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.MotionBufferSize, err = DecodeUint32(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
 
-	vendorLen, _ = DecodeUint16(r)
-	reply.MaxRequestLength, _ = DecodeUint16(r)
+	if vendorLen, err = DecodeUint16(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if reply.MaxRequestLength, err = DecodeUint16(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
 
-	numScreens, _ = DecodeUint8(r)
-	numFormats, _ = DecodeUint8(r)
+	if numScreens, err = DecodeUint8(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	if numFormats, err = DecodeUint8(r); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
 
-	decode6Uint8(r, &reply.ImageByteOrder, &reply.BitmapBitOrder, &reply.BitmapScanlineUnit,
-		&reply.BitmapScanlinePad, &reply.MinKeycode, &reply.MaxKeycode)
+	if err = decode6Uint8(r, &reply.ImageByteOrder, &reply.BitmapBitOrder, &reply.BitmapScanlineUnit,
+		&reply.BitmapScanlinePad, &reply.MinKeycode, &reply.MaxKeycode); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
 
-	io.CopyN(io.Discard, r, 4)
-	return vendorLen, numScreens, numFormats
+	if _, err = io.CopyN(io.Discard, r, 4); err != nil {
+		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	}
+	return vendorLen, numScreens, numFormats, nil
 }
 
 // decodeVendorString reads the vendor string if present.
 func decodeVendorString(r io.Reader, reply *SetupReply, vendorLen uint16) error {
 	if vendorLen > 0 {
 		vendor := make([]byte, vendorLen)
-		io.ReadFull(r, vendor)
+		if _, err := io.ReadFull(r, vendor); err != nil {
+			return fmt.Errorf("vendor string decode: %w", err)
+		}
 		reply.Vendor = string(vendor)
 
 		if pad := Pad(int(vendorLen)); pad > 0 {
-			io.CopyN(io.Discard, r, int64(pad))
+			if _, err := io.CopyN(io.Discard, r, int64(pad)); err != nil {
+				return fmt.Errorf("vendor string decode: %w", err)
+			}
 		}
 	}
 	return nil
