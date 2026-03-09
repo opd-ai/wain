@@ -65,22 +65,50 @@ func main() {
 	defer f.Close()
 
 	lineHeight := uint32(glyphSize * 64)
-	binary.Write(f, binary.LittleEndian, uint32(atlasWidth))
-	binary.Write(f, binary.LittleEndian, uint32(atlasHeight))
-	binary.Write(f, binary.LittleEndian, uint32(len(glyphs)))
-	binary.Write(f, binary.LittleEndian, lineHeight)
-	f.Write(sdf)
+	if err := binary.Write(f, binary.LittleEndian, uint32(atlasWidth)); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, uint32(atlasHeight)); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, uint32(len(glyphs))); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(f, binary.LittleEndian, lineHeight); err != nil {
+		panic(err)
+	}
+	if _, err := f.Write(sdf); err != nil {
+		panic(err)
+	}
 
 	for _, g := range glyphs {
-		binary.Write(f, binary.LittleEndian, uint32(g.Rune))
-		binary.Write(f, binary.LittleEndian, uint32(g.X))
-		binary.Write(f, binary.LittleEndian, uint32(g.Y))
-		binary.Write(f, binary.LittleEndian, uint32(g.W))
-		binary.Write(f, binary.LittleEndian, uint32(g.H))
-		binary.Write(f, binary.LittleEndian, int32(g.OffsetX*64))
-		binary.Write(f, binary.LittleEndian, int32(g.OffsetY*64))
-		binary.Write(f, binary.LittleEndian, uint32(g.Advance*64))
-		binary.Write(f, binary.LittleEndian, uint32(0))
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.Rune)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.X)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.Y)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.W)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.H)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, int32(g.OffsetX*64)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, int32(g.OffsetY*64)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(g.Advance*64)); err != nil {
+			panic(err)
+		}
+		if err := binary.Write(f, binary.LittleEndian, uint32(0)); err != nil {
+			panic(err)
+		}
 	}
 
 	fmt.Printf("Generated atlas: %dx%d, %d glyphs\n", atlasWidth, atlasHeight, len(glyphs))
