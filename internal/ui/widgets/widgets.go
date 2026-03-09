@@ -887,3 +887,66 @@ func (s *ScrollContainer) emitScrollbar(dl *displaylist.DisplayList, x, y int) {
 	thumbColor := primitives.Color{R: 180, G: 180, B: 180, A: 255}
 	dl.AddFillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4, thumbColor)
 }
+
+// Label represents a static text display widget.
+type Label struct {
+	text   string
+	width  int
+	height int
+	theme  *Theme
+}
+
+// NewLabel creates a new label widget.
+func NewLabel(text string, width, height int) *Label {
+	return &Label{
+		text:   text,
+		width:  width,
+		height: height,
+		theme:  DefaultTheme(),
+	}
+}
+
+// Bounds returns the label's dimensions.
+func (l *Label) Bounds() (int, int) {
+	return l.width, l.height
+}
+
+// HandlePointerEnter is a no-op for labels.
+func (l *Label) HandlePointerEnter() {}
+
+// HandlePointerLeave is a no-op for labels.
+func (l *Label) HandlePointerLeave() {}
+
+// HandlePointerDown is a no-op for labels.
+func (l *Label) HandlePointerDown(button uint32) {}
+
+// HandlePointerUp is a no-op for labels.
+func (l *Label) HandlePointerUp(button uint32) {}
+
+// Draw renders the label to the buffer.
+func (l *Label) Draw(buf *primitives.Buffer, x, y int) error {
+	if buf == nil {
+		return ErrNilBuffer
+	}
+
+	// Draw background
+	bgColor := primitives.Color{R: 255, G: 255, B: 255, A: 255}
+	buf.FillRect(x, y, l.width, l.height, bgColor)
+
+	// Draw border
+	borderColor := primitives.Color{R: 200, G: 200, B: 200, A: 255}
+	drawRectBorder(buf, x, y, l.width, l.height, 1, borderColor)
+
+	// Draw text placeholder (simple rectangle)
+	// In a full implementation, this would use text rendering
+	textColor := l.theme.TextNormal
+	for i, ch := range []rune(l.text) {
+		if i > 100 {
+			break
+		}
+		_ = ch
+		buf.FillRect(x+10+(i%40)*8, y+10+(i/40)*20, 6, 12, textColor)
+	}
+
+	return nil
+}

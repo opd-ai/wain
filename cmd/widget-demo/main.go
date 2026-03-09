@@ -117,10 +117,11 @@ func runDemo(platform string) error {
 
 // application holds the demo application state.
 type application struct {
-	running     bool
-	clickCount  int
-	inputText   string
-	scrollItems []string
+	running      bool
+	clickCount   int
+	inputText    string
+	scrollItems  []string
+	scrollOffset int
 
 	buffer      *primitives.Buffer
 	clickButton *widgets.Button
@@ -163,10 +164,17 @@ func (app *application) createWidgets() {
 	// Text input field
 	app.textInput = widgets.NewTextInput("Type something...", 400, 35)
 
-	// Scroll container with items
+	// Scroll container with items (2000px tall content as specified in audit)
 	app.scrollList = widgets.NewScrollContainer(400, 200)
 
-	app.statusLabel = "Ready - Click a button or type text"
+	// Add text block children to demonstrate scrolling (10 blocks, 200px each = 2000px total)
+	for i := 0; i < 10; i++ {
+		label := widgets.NewLabel(fmt.Sprintf("Scroll Item Block %d\nThis is scrollable content.\nTotal content: 2000px\nVisible area: 200px", i+1), 380, 180)
+		app.scrollList.AddChild(label)
+	}
+
+	app.statusLabel = "Ready - Use mouse wheel to scroll"
+	app.scrollOffset = 0
 }
 
 // render draws all widgets to the framebuffer.
@@ -198,6 +206,11 @@ func (app *application) render() {
 	renderText(app.buffer, "Scrollable List:", 50, 240,
 		primitives.Color{R: 70, G: 70, B: 70, A: 255})
 	app.scrollList.Draw(app.buffer, 50, 265)
+
+	// Scroll position indicator
+	scrollText := fmt.Sprintf("Scroll: %dpx / %dpx", app.scrollOffset, 1800)
+	renderText(app.buffer, scrollText, 460, 265,
+		primitives.Color{R: 120, G: 120, B: 120, A: 255})
 
 	// Mouse position indicator
 	mouseText := fmt.Sprintf("Mouse: (%d, %d)", app.lastMouseX, app.lastMouseY)
@@ -253,6 +266,18 @@ func (app *application) handleMouseClick(x, y int, button uint32) {
 	}
 
 	app.needsRedraw = true
+}
+
+// handleMouseScroll processes mouse wheel scroll events.
+func (app *application) handleMouseScroll(x, y, delta int) {
+	// Check if scroll is over the scroll container area
+	if pointInRect(x, y, 50, 265, 400, 200) {
+		app.scrollOffset += delta * 20
+		app.scrollList.SetScrollOffset(app.scrollOffset)
+		app.scrollOffset = app.scrollList.ScrollOffset() // Get clamped value
+		app.statusLabel = fmt.Sprintf("Scrolled to %dpx", app.scrollOffset)
+		app.needsRedraw = true
+	}
 }
 
 // handleKeyPress processes keyboard events.
@@ -352,6 +377,22 @@ func runX11(app *application) error {
 	}
 	app.render()
 	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
+
+	// Simulate scroll events
+	fmt.Print("  → Scroll down... ")
+	app.handleMouseScroll(250, 365, 5)
+	app.render()
+	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
+
+	fmt.Print("  → Scroll down more... ")
+	app.handleMouseScroll(250, 365, 10)
+	app.render()
+	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
+
+	fmt.Print("  → Scroll to top... ")
+	app.handleMouseScroll(250, 365, -50)
+	app.render()
+	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
 
 	return nil
 }
