@@ -133,3 +133,43 @@ func TestScrollContainerRenderToDisplayList(t *testing.T) {
 		t.Errorf("Expected many commands from container+children, got %d", dl.Len())
 	}
 }
+
+// TestGPUConsumerIntegration demonstrates GPU consumer usage with widgets.
+func TestGPUConsumerIntegration(t *testing.T) {
+	// Create a mock GPU renderer for testing
+	mockRenderer := &mockGPURenderer{width: 800, height: 600}
+
+	consumer, err := NewGPUConsumer(mockRenderer)
+	if err != nil {
+		t.Fatalf("NewGPUConsumer failed: %v", err)
+	}
+	defer consumer.Destroy()
+
+	atlas, err := text.NewAtlas()
+	if err != nil {
+		t.Fatalf("Failed to create atlas: %v", err)
+	}
+
+	// Create a button and render it to a display list
+	btn := widgets.NewButton("GPU Test", 150, 40)
+	btn.SetAtlas(atlas)
+
+	dl := displaylist.New()
+	btn.RenderToDisplayList(dl, 50, 50)
+
+	// Render the display list using the GPU consumer
+	if err := consumer.Render(dl, nil); err != nil {
+		t.Errorf("GPU consumer render failed: %v", err)
+	}
+
+	// Verify the mock renderer was called
+	if !mockRenderer.renderCalled {
+		t.Error("GPU renderer was not invoked")
+	}
+
+	// Verify dimensions
+	w, h := consumer.Dimensions()
+	if w != 800 || h != 600 {
+		t.Errorf("Unexpected dimensions: got (%d,%d), want (800,600)", w, h)
+	}
+}
