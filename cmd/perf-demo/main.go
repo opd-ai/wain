@@ -29,7 +29,20 @@ func main() {
 }
 
 func runPerfTests() error {
-	// Create GPU backend
+	b, err := initializeGPUBackend()
+	if err != nil {
+		return err
+	}
+	defer b.Destroy()
+
+	runScenarioBenchmarks(b)
+	printMemoryStatistics()
+
+	fmt.Println("=== Profiling Complete ===")
+	return nil
+}
+
+func initializeGPUBackend() (*backend.GPUBackend, error) {
 	cfg := backend.DefaultConfig()
 	cfg.Width = 1920
 	cfg.Height = 1080
@@ -39,14 +52,16 @@ func runPerfTests() error {
 	if err != nil {
 		log.Printf("GPU backend unavailable: %v", err)
 		log.Println("This demo requires an Intel or AMD GPU")
-		return err
+		return nil, err
 	}
-	defer b.Destroy()
 
 	fmt.Printf("GPU initialized: %dx%d\n", cfg.Width, cfg.Height)
 	fmt.Println()
 
-	// Create typical UI workload scenarios
+	return b, nil
+}
+
+func runScenarioBenchmarks(b *backend.GPUBackend) {
 	scenarios := []struct {
 		name     string
 		commands int
@@ -60,41 +75,48 @@ func runPerfTests() error {
 	}
 
 	for _, scenario := range scenarios {
-		fmt.Printf("Scenario: %s\n", scenario.name)
-		fmt.Printf("  Commands: %d (%d rects, %d texts, %d shadows)\n",
-			scenario.commands, scenario.rects, scenario.texts, scenario.shadows)
+		benchmarkScenario(b, scenario.name, scenario.commands, scenario.rects, scenario.texts, scenario.shadows)
+	}
+}
 
-		dl := createWorkload(scenario.rects, scenario.texts, scenario.shadows)
+func benchmarkScenario(b *backend.GPUBackend, name string, commands, rects, texts, shadows int) {
+	fmt.Printf("Scenario: %s\n", name)
+	fmt.Printf("  Commands: %d (%d rects, %d texts, %d shadows)\n", commands, rects, texts, shadows)
 
-		// Warm up (first frame may allocate)
-		b.Render(dl)
+	dl := createWorkload(rects, texts, shadows)
 
-		// Reset stats and render test frames
-		b.ResetFrameStats()
-		for i := 0; i < 60; i++ {
-			if err := b.Render(dl); err != nil {
-				log.Fatalf("Render failed: %v", err)
-			}
+	// Warm up (first frame may allocate)
+	b.Render(dl)
+
+	// Reset stats and render test frames
+	b.ResetFrameStats()
+	for i := 0; i < 60; i++ {
+		if err := b.Render(dl); err != nil {
+			log.Fatalf("Render failed: %v", err)
 		}
-
-		// Print results
-		stats := b.GetFrameStats()
-		fmt.Printf("  Frames rendered: %d\n", stats.TotalFrames)
-		fmt.Printf("  Avg frame time: %.3f ms (CPU: %.3f ms, GPU: %.3f ms)\n",
-			stats.AvgFrameTimeMs, stats.AvgCPUTimeMs, stats.AvgGPUTimeMs)
-		fmt.Printf("  Recent avg: %.3f ms\n", stats.RecentAvgFrameTimeMs)
-		fmt.Printf("  Min/Max: %.3f / %.3f ms\n", stats.MinFrameTimeMs, stats.MaxFrameTimeMs)
-
-		// Check target
-		if stats.RecentAvgFrameTimeMs < 2.0 {
-			fmt.Printf("  ✓ Meets <2ms target\n")
-		} else {
-			fmt.Printf("  ✗ Exceeds <2ms target by %.3f ms\n", stats.RecentAvgFrameTimeMs-2.0)
-		}
-		fmt.Println()
 	}
 
-	// Memory statistics
+	printBenchmarkResults(b)
+}
+
+func printBenchmarkResults(b *backend.GPUBackend) {
+	stats := b.GetFrameStats()
+	fmt.Printf("  Frames rendered: %d\n", stats.TotalFrames)
+	fmt.Printf("  Avg frame time: %.3f ms (CPU: %.3f ms, GPU: %.3f ms)\n",
+		stats.AvgFrameTimeMs, stats.AvgCPUTimeMs, stats.AvgGPUTimeMs)
+	fmt.Printf("  Recent avg: %.3f ms\n", stats.RecentAvgFrameTimeMs)
+	fmt.Printf("  Min/Max: %.3f / %.3f ms\n", stats.MinFrameTimeMs, stats.MaxFrameTimeMs)
+
+	// Check target
+	if stats.RecentAvgFrameTimeMs < 2.0 {
+		fmt.Printf("  ✓ Meets <2ms target\n")
+	} else {
+		fmt.Printf("  ✗ Exceeds <2ms target by %.3f ms\n", stats.RecentAvgFrameTimeMs-2.0)
+	}
+	fmt.Println()
+}
+
+func printMemoryStatistics() {
 	memStats := render.GetMemoryStats()
 	fmt.Println("=== GPU Memory Statistics ===")
 	fmt.Printf("Allocated buffers: %d\n", memStats.AllocatedBuffers)
@@ -103,9 +125,6 @@ func runPerfTests() error {
 	fmt.Printf("Total allocations: %d\n", memStats.TotalAllocations)
 	fmt.Printf("Total deallocations: %d\n", memStats.TotalDeallocations)
 	fmt.Println()
-
-	fmt.Println("=== Profiling Complete ===")
-	return nil
 }
 
 // createWorkload creates a synthetic UI workload for profiling.
