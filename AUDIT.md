@@ -265,7 +265,7 @@ Priority: focus on library code (60 functions), defer demo code (34 functions):
 - [x] Refactor `RunX11Demo` in `internal/demo/x11setup.go:13` (71 lines) — extract setup phases into `connectX11`, `createWindow`, `setupEventLoop` helpers
 
 ### Phase 5: Medium/Low Slop Cleanup
-- [ ] **SL-004:** Extract event handler stubs from 10+ demo files into `internal/demo/logging.go`
+- [x] **SL-004:** Extract event handler stubs from 10+ demo files into `internal/demo/logging.go`
 - [ ] **SL-005:** Extract common window configuration blocks from 7+ demo files into `internal/demo/config.go`
 - [ ] **SL-010:** Extract remaining bare X11 protocol constants in `internal/x11/wire/wire.go` to named constants
 - [ ] **SL-014:** Add GPU device skip guards in `internal/integration/gpu_test.go`

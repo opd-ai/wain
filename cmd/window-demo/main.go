@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/opd-ai/wain"
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
@@ -68,29 +69,11 @@ func main() {
 	log.Printf("Window size: %dx%d", w, h)
 	log.Printf("Window scale: %.1f", win.Scale())
 
-	// Set up event handlers
-	win.OnResize(func(width, height int) {
-		log.Printf("Window resized: %dx%d", width, height)
-	})
+	win.OnResize(demo.LogResize())
+	win.OnClose(demo.LogClose(app))
+	win.OnFocus(demo.LogFocus())
+	win.OnScaleChange(demo.LogScaleChange())
 
-	win.OnClose(func() {
-		log.Println("Window close requested")
-		app.Quit()
-	})
-
-	win.OnFocus(func(focused bool) {
-		if focused {
-			log.Println("Window gained focus")
-		} else {
-			log.Println("Window lost focus")
-		}
-	})
-
-	win.OnScaleChange(func(scale float64) {
-		log.Printf("Window scale changed: %.1f", scale)
-	})
-
-	// Demonstrate window operations
 	log.Println("\nDemonstrating window operations:")
 
 	// Change title
