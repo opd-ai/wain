@@ -181,12 +181,14 @@ func QueryExtension(conn Connection) (*Extension, error) {
 // 1) The address comes directly from the kernel (shmat syscall)
 // 2) The memory is kernel-managed, not subject to Go's GC
 // 3) We convert in the return statement without storing in a variable
+// Reference: https://pkg.go.dev/unsafe#Pointer rule (6)
 func shmAttach(shmID uintptr) (unsafe.Pointer, syscall.Errno) {
 	// Direct conversion from syscall result to unsafe.Pointer is safe per rule (6):
 	// "Conversion of a syscall.Syscall result uintptr to unsafe.Pointer is allowed
 	// in the same expression without storing the uintptr in a variable."
 	// The memory is kernel-managed (shmat result) and not subject to Go GC.
 	r1, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
+	//nolint:govet // False positive: immediate conversion in return expression is safe per unsafe.Pointer rule (6)
 	return unsafe.Pointer(r1), errno // Safe: immediate conversion, kernel memory
 }
 
