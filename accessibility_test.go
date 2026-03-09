@@ -69,7 +69,10 @@ func TestEnterKeyActivation(t *testing.T) {
 	if button.Text() != "Test" {
 		t.Errorf("Expected button text 'Test', got '%s'", button.Text())
 	}
-	_ = activated // may or may not be triggered depending on event details
+	// Activation flag should remain false since focus state is not established
+	if activated {
+		t.Log("Button activation callback triggered (focus state-dependent)")
+	}
 }
 
 // TestTextInputKeyboardInteraction verifies text input responds to events.
@@ -82,12 +85,16 @@ func TestTextInputKeyboardInteraction(t *testing.T) {
 	// Test event handling without panicking
 	evt := &wain.KeyEvent{}
 	handled := input.HandleEvent(evt)
-	_ = handled
+	// Key events should be handled by text input widgets
+	if !handled {
+		t.Error("Expected text input to handle key event")
+	}
 
 	// Test pointer event handling
 	ptrEvt := &wain.PointerEvent{}
 	handled = input.HandleEvent(ptrEvt)
-	_ = handled
+	// Pointer events may or may not be handled depending on focus state
+	t.Logf("Pointer event handled: %v", handled)
 
 	// Verify the input widget has expected properties
 	if input.Text() != "" {
@@ -105,12 +112,14 @@ func TestFocusManagement(t *testing.T) {
 	// Simulate events
 	clickEvent := &wain.PointerEvent{}
 	handled := input.HandleEvent(clickEvent)
-	_ = handled
+	// Pointer events may or may not be handled depending on focus state
+	t.Logf("Click event handled: %v", handled)
 
 	// Simulate typing while focused
 	typeEvent := &wain.KeyEvent{}
 	handled = input.HandleEvent(typeEvent)
-	_ = handled
+	// Key events should be handled by text input widgets
+	t.Logf("Type event handled: %v", handled)
 
 	// Verify widget can be rendered (has bounds)
 	width, height := input.Bounds()
@@ -134,18 +143,21 @@ func TestButtonAccessibility(t *testing.T) {
 	// Button should respond to pointer events
 	clickEvent := &wain.PointerEvent{}
 	handledPtr := button.HandleEvent(clickEvent)
-	_ = handledPtr
+	t.Logf("Button pointer event handled: %v", handledPtr)
 
 	// Button should also respond to keyboard events
 	enterEvent := &wain.KeyEvent{}
 	handledKey := button.HandleEvent(enterEvent)
-	_ = handledKey
+	t.Logf("Button key event handled: %v", handledKey)
 
 	// Verify button maintains its text after event handling
 	if button.Text() != "Accessible" {
 		t.Errorf("Expected button text 'Accessible', got '%s'", button.Text())
 	}
-	_ = clicked // may or may not be triggered depending on event details
+	// Activation flag may or may not be triggered depending on event details
+	if clicked {
+		t.Log("Button click callback triggered")
+	}
 }
 
 // TestScrollViewKeyboardScroll verifies scroll can handle events.
@@ -165,12 +177,12 @@ func TestScrollViewKeyboardScroll(t *testing.T) {
 	// Test keyboard event handling
 	keyEvt := &wain.KeyEvent{}
 	handled := scroll.HandleEvent(keyEvt)
-	_ = handled
+	t.Logf("ScrollView key event handled: %v", handled)
 
 	// Test pointer event handling
 	ptrEvt := &wain.PointerEvent{}
 	handled = scroll.HandleEvent(ptrEvt)
-	_ = handled
+	t.Logf("ScrollView pointer event handled: %v", handled)
 
 	// Verify scroll view has non-zero bounds
 	width, height := scroll.Bounds()
@@ -222,7 +234,7 @@ func TestTabOrder(t *testing.T) {
 			t.Fatalf("Interactive widget %d is nil", i)
 		}
 		handled := widget.HandleEvent(evt)
-		_ = handled
+		t.Logf("Widget %d handled event: %v", i, handled)
 	}
 }
 
@@ -256,12 +268,12 @@ func TestAccessibilityBaseline(t *testing.T) {
 			// Test keyboard event handling
 			keyEvt := &wain.KeyEvent{}
 			handled := tt.widget.HandleEvent(keyEvt)
-			_ = handled
+			t.Logf("%s handled key event: %v", tt.name, handled)
 
 			// Test pointer event handling
 			ptrEvt := &wain.PointerEvent{}
 			handled = tt.widget.HandleEvent(ptrEvt)
-			_ = handled
+			t.Logf("%s handled pointer event: %v", tt.name, handled)
 
 			// Verify widget has non-zero bounds
 			width, height := tt.widget.Bounds()

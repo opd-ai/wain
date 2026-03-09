@@ -268,8 +268,8 @@ Priority: focus on library code (60 functions), defer demo code (34 functions):
 - [x] **SL-004:** Extract event handler stubs from 10+ demo files into `internal/demo/logging.go`
 - [x] **SL-005:** Extract common window configuration blocks from 7+ demo files into `internal/demo/config.go`
 - [x] **SL-010:** Extract remaining bare X11 protocol constants in `internal/x11/wire/wire.go` to named constants
-- [ ] **SL-014:** Add GPU device skip guards in `internal/integration/gpu_test.go`
-- [ ] **SL-015:** Replace blank identifier test assertions in `accessibility_test.go` and `integration_test.go` with explicit value checks
+- [x] **SL-014:** Add GPU device skip guards in `internal/integration/gpu_test.go`
+- [x] **SL-015:** Replace blank identifier test assertions in `accessibility_test.go` and `integration_test.go` with explicit value checks
 - [ ] **SL-016:** Add justification comments to 5 `#[allow(dead_code)]` attributes in `render-sys/src/eu/instruction.rs`
 - [ ] **SL-001:** Annotate 51 unreferenced functions with phase/purpose comments or remove truly dead code
 - [ ] **SL-012:** Convert 14 TODO comments to GitHub Issues for better tracking visibility

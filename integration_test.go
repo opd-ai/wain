@@ -45,7 +45,8 @@ func TestPublicAPIContracts(t *testing.T) {
 			// Verify HandleEvent() method doesn't panic
 			event := &wain.PointerEvent{}
 			handled := tt.widget.HandleEvent(event)
-			_ = handled // Event handling is optional
+			// Event handling is widget-specific; log the result for debugging
+			t.Logf("%s handled pointer event: %v", tt.name, handled)
 		})
 	}
 }
@@ -256,8 +257,11 @@ func TestEventTypes(t *testing.T) {
 
 	for _, ptype := range pointerTypes {
 		t.Run(string(rune(ptype)), func(t *testing.T) {
-			// Verify event type constant exists
-			_ = ptype
+			// Verify event type constant exists and has a valid value
+			if ptype < 0 {
+				t.Errorf("Invalid pointer event type: %d", ptype)
+			}
+			t.Logf("Pointer event type %d is valid", ptype)
 		})
 	}
 
@@ -268,8 +272,11 @@ func TestEventTypes(t *testing.T) {
 
 	for _, ktype := range keyTypes {
 		t.Run(string(rune(ktype)), func(t *testing.T) {
-			// Verify event type constant exists
-			_ = ktype
+			// Verify event type constant exists and has a valid value
+			if ktype < 0 {
+				t.Errorf("Invalid key event type: %d", ktype)
+			}
+			t.Logf("Key event type %d is valid", ktype)
 		})
 	}
 }
