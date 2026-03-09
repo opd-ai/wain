@@ -6,10 +6,10 @@ import (
 
 func TestSize(t *testing.T) {
 	tests := []struct {
-		name   string
-		size   Size
-		wantW  float64
-		wantH  float64
+		name  string
+		size  Size
+		wantW float64
+		wantH float64
 	}{
 		{"normal values", Size{Width: 50, Height: 75}, 50, 75},
 		{"zero values", Size{Width: 0, Height: 0}, 0, 0},
