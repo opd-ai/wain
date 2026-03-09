@@ -347,6 +347,9 @@ type IdleNotifyEvent struct {
 
 // ParseCompleteNotify parses a PresentCompleteNotify event.
 //
+// Currently unused - reserved for advanced presentation timing analysis.
+// Would enable tracking presentation completion callbacks for frame pacing optimization.
+//
 // Event format (32 bytes):
 //   - type(1) + extension(1) + sequence(2) + length(4)
 //   - kind(1) + mode(1) + pad(2) + serial(4)
@@ -375,6 +378,9 @@ func ParseCompleteNotify(data []byte) (*CompleteNotifyEvent, error) {
 }
 
 // ParseIdleNotify parses a PresentIdleNotify event.
+//
+// Currently unused - reserved for advanced buffer synchronization.
+// Would enable tracking pixmap idle notifications for precise buffer reuse timing.
 //
 // Event format (32 bytes):
 //   - type(1) + extension(1) + sequence(2) + length(4)

@@ -323,7 +323,10 @@ func generateScrollItems(count int) []string {
 	return items
 }
 
-// runWayland runs the demo on Wayland (stub for now).
+// runWayland runs the demo on Wayland.
+//
+// Stub implementation - Wayland event loop integration deferred to future phase.
+// Currently validates widget creation and render pipeline without actual display.
 func runWayland(app *application) error {
 	fmt.Println("      ⚠ Wayland event loop not yet implemented")
 	fmt.Println("      ℹ Window would be displayed on Wayland compositor")
@@ -336,7 +339,11 @@ func runWayland(app *application) error {
 	return nil
 }
 
-// runX11 runs the demo on X11 (stub for now).
+// runX11 runs the demo on X11.
+//
+// Stub implementation - X11 event loop integration deferred to future phase.
+// Currently validates widget creation, event handlers, and render pipeline.
+// Simulates mouse and keyboard interactions for demonstration purposes.
 func runX11(app *application) error {
 	fmt.Println("      ⚠ X11 event loop not yet implemented")
 	fmt.Println("      ℹ Window would be displayed on X11 server")

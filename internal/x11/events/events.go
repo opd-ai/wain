@@ -251,6 +251,10 @@ type ExposeEvent struct {
 }
 
 // ParseExposeEvent decodes an Expose event from raw event data.
+//
+// Currently unused - reserved for future damage tracking optimization.
+// Expose events notify the client when window regions need repainting.
+// Active event handling uses polling-based damage detection instead.
 func ParseExposeEvent(header wire.EventHeader, data []byte) (ExposeEvent, error) {
 	if len(data) < 28 {
 		return ExposeEvent{}, fmt.Errorf("events: expose data too short: %d bytes", len(data))
