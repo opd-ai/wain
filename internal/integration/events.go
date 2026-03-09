@@ -280,71 +280,48 @@ func encodeModifiers(mods input.ModifierState) uint32 {
 	return mask
 }
 
+// linuxKeycodeMapInternal maps Linux input event keycodes to X11 keysyms.
+var linuxKeycodeMapInternal = map[uint32]uint32{
+	1:   0xFF1B, // Escape
+	28:  0xFF0D, // Return
+	15:  0xFF09, // Tab
+	14:  0xFF08, // Backspace
+	111: 0xFFFF, // Delete
+	105: 0xFF51, // Left
+	103: 0xFF52, // Up
+	106: 0xFF53, // Right
+	108: 0xFF54, // Down
+	102: 0xFF50, // Home
+	107: 0xFF57, // End
+	104: 0xFF55, // PageUp
+	109: 0xFF56, // PageDown
+	57:  0x0020, // Space
+	42:  0xFFE1, // ShiftL
+	54:  0xFFE2, // ShiftR
+	29:  0xFFE3, // ControlL
+	97:  0xFFE4, // ControlR
+	56:  0xFFE9, // AltL
+	100: 0xFFEA, // AltR
+	125: 0xFFEB, // SuperL
+	126: 0xFFEC, // SuperR
+	// Number keys (1-0)
+	2: 0x0031, 3: 0x0032, 4: 0x0033, 5: 0x0034, 6: 0x0035,
+	7: 0x0036, 8: 0x0037, 9: 0x0038, 10: 0x0039, 11: 0x0030,
+	// QWERTY row
+	16: 'q', 17: 'w', 18: 'e', 19: 'r', 20: 't',
+	21: 'y', 22: 'u', 23: 'i', 24: 'o', 25: 'p',
+	// ASDF row
+	30: 'a', 31: 's', 32: 'd', 33: 'f', 34: 'g',
+	35: 'h', 36: 'j', 37: 'k', 38: 'l',
+	// ZXCV row
+	44: 'z', 45: 'x', 46: 'c', 47: 'v', 48: 'b',
+	49: 'n', 50: 'm',
+}
+
 // linuxToKeysym converts Linux input event keycodes to X11 keysyms.
-// This is a simplified mapping for common keys.
 func linuxToKeysym(code uint32) uint32 {
-	switch code {
-	case 1:
-		return 0xFF1B // Escape
-	case 28:
-		return 0xFF0D // Return
-	case 15:
-		return 0xFF09 // Tab
-	case 14:
-		return 0xFF08 // Backspace
-	case 111:
-		return 0xFFFF // Delete
-	case 105:
-		return 0xFF51 // Left
-	case 103:
-		return 0xFF52 // Up
-	case 106:
-		return 0xFF53 // Right
-	case 108:
-		return 0xFF54 // Down
-	case 102:
-		return 0xFF50 // Home
-	case 107:
-		return 0xFF57 // End
-	case 104:
-		return 0xFF55 // PageUp
-	case 109:
-		return 0xFF56 // PageDown
-	case 57:
-		return 0x0020 // Space
-	case 42:
-		return 0xFFE1 // ShiftL
-	case 54:
-		return 0xFFE2 // ShiftR
-	case 29:
-		return 0xFFE3 // ControlL
-	case 97:
-		return 0xFFE4 // ControlR
-	case 56:
-		return 0xFFE9 // AltL
-	case 100:
-		return 0xFFEA // AltR
-	case 125:
-		return 0xFFEB // SuperL
-	case 126:
-		return 0xFFEC // SuperR
-	default:
-		// For printable characters, attempt simple mapping
-		if code >= 2 && code <= 11 {
-			return 0x0030 + (code-1)%10 // 1-0 keys
-		}
-		if code >= 16 && code <= 25 {
-			qwerty := "qwertyuiop"
-			return uint32(qwerty[code-16])
-		}
-		if code >= 30 && code <= 38 {
-			asdf := "asdfghjkl"
-			return uint32(asdf[code-30])
-		}
-		if code >= 44 && code <= 50 {
-			zxcv := "zxcvbnm"
-			return uint32(zxcv[code-44])
-		}
-		return code
+	if keysym, ok := linuxKeycodeMapInternal[code]; ok {
+		return keysym
 	}
+	return code
 }
