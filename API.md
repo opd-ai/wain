@@ -1198,6 +1198,17 @@ func main() {
 
 ---
 
+## Known Limitations
+
+### Widget System
+
+- **Cross-axis alignment (Panel.SetAlign)**: Currently only `AlignStart` (top for Row, left for Column) is supported. `AlignCenter`, `AlignEnd`, and `AlignStretch` are deferred to a future phase.
+- **TextInput placeholder**: The `TextInput.SetPlaceholder` method accepts a placeholder string but does not display it. Placeholder rendering support is planned for a future phase.
+- **ScrollView child management**: The `ScrollView.Add` method is not yet implemented. ScrollView currently does not support adding PublicWidget children.
+- **Wayland event dispatch**: Wayland event reading and dispatch is not fully implemented. The current implementation only flushes outbound requests to prevent deadlock.
+
+---
+
 ## Versioning and Stability
 
 ### Current Status

@@ -1,6 +1,7 @@
 package wain
 
 import (
+	"github.com/opd-ai/wain/internal/raster/core"
 	"github.com/opd-ai/wain/internal/ui/pctwidget"
 )
 
@@ -80,7 +81,8 @@ const (
 //	panel.Add(header)
 //	panel.Add(content)
 type Panel struct {
-	internal *pctwidget.Panel
+	internal      *pctwidget.Panel
+	styleOverride *StyleOverride
 }
 
 // NewPanel creates a new Panel with percentage-based dimensions.
@@ -175,10 +177,11 @@ func (p *Panel) FlowDirection() FlowDirection {
 // Padding creates space between the panel's border and its children.
 // This is applied before children are laid out.
 func (p *Panel) SetPadding(pixels int) {
-	// TODO: Implement via internal panel's style customization.
-	// The internal pctwidget.Panel uses Style.Padding().
-	// This will be completed when we expose StyleOverride in Phase 10.5.
-	_ = pixels
+	if p.styleOverride == nil {
+		p.styleOverride = &StyleOverride{}
+	}
+	p.styleOverride.Padding = &pixels
+	p.syncStyleToInternal()
 }
 
 // SetGap sets the spacing (in pixels) between child widgets.
@@ -186,21 +189,22 @@ func (p *Panel) SetPadding(pixels int) {
 // Gap is the space inserted between children during layout, both for
 // Row and Column flow directions.
 func (p *Panel) SetGap(pixels int) {
-	// TODO: Implement via internal panel's style customization.
-	// The internal pctwidget.Panel uses Style.Gap().
-	// This will be completed when we expose StyleOverride in Phase 10.5.
-	_ = pixels
+	if p.styleOverride == nil {
+		p.styleOverride = &StyleOverride{}
+	}
+	p.styleOverride.Gap = &pixels
+	p.syncStyleToInternal()
 }
 
 // SetAlign sets the cross-axis alignment for children.
 //
 // For Row containers, controls vertical alignment (top/center/bottom).
 // For Column containers, controls horizontal alignment (left/center/right).
+//
+// Note: Cross-axis alignment is deferred to a future phase. Currently only
+// AlignStart (top for Row, left for Column) is supported. This limitation
+// is tracked in https://github.com/opd-ai/wain/issues/TBD
 func (p *Panel) SetAlign(align Align) {
-	// TODO: Implement cross-axis alignment.
-	// This requires extending the internal pctwidget.AutoLayout to support
-	// alignment modes beyond the current start-aligned behavior.
-	// Will be implemented in Phase 10.4.
 	_ = align
 }
 
@@ -245,9 +249,8 @@ func (p *Panel) Visible() bool {
 //	bg := wain.RGB(40, 40, 60)
 //	panel.SetStyle(wain.StyleOverride{Background: &bg})
 func (p *Panel) SetStyle(override StyleOverride) {
-	// This is a placeholder - actual implementation will be added when
-	// we integrate the theme system with internal widgets
-	_ = override
+	p.styleOverride = &override
+	p.syncStyleToInternal()
 }
 
 // Row is a convenience container that arranges children horizontally.
@@ -373,3 +376,80 @@ func (g *Grid) SetColumns(columns int) {
 	}
 	g.columns = columns
 }
+
+// syncStyleToInternal applies the panel's style override to the internal widget.
+// This method creates a panelStyle that wraps the current theme with the override.
+func (p *Panel) syncStyleToInternal() {
+	if p.styleOverride == nil {
+		p.internal.SetStyle(nil)
+		return
+	}
+	style := &panelStyle{
+		base:     DefaultDark(), // TODO: Get from App.theme when available
+		override: p.styleOverride,
+	}
+	p.internal.SetStyle(style)
+}
+
+// panelStyle adapts Theme + StyleOverride to pctwidget.Style interface.
+type panelStyle struct {
+	base     Theme
+	override *StyleOverride
+}
+
+func (s *panelStyle) Background() core.Color {
+	if s.override != nil && s.override.Background != nil {
+		return s.override.Background.toInternal()
+	}
+	return s.base.Background.toInternal()
+}
+
+func (s *panelStyle) Foreground() core.Color {
+	if s.override != nil && s.override.Foreground != nil {
+		return s.override.Foreground.toInternal()
+	}
+	return s.base.Foreground.toInternal()
+}
+
+func (s *panelStyle) Accent() core.Color {
+	if s.override != nil && s.override.Accent != nil {
+		return s.override.Accent.toInternal()
+	}
+	return s.base.Accent.toInternal()
+}
+
+func (s *panelStyle) Border() core.Color {
+	if s.override != nil && s.override.Border != nil {
+		return s.override.Border.toInternal()
+	}
+	return s.base.Border.toInternal()
+}
+
+func (s *panelStyle) FontSize() float64 {
+	if s.override != nil && s.override.FontSize != nil {
+		return *s.override.FontSize
+	}
+	return s.base.FontSize
+}
+
+func (s *panelStyle) Padding() int {
+	if s.override != nil && s.override.Padding != nil {
+		return *s.override.Padding
+	}
+	return s.base.Padding
+}
+
+func (s *panelStyle) Gap() int {
+	if s.override != nil && s.override.Gap != nil {
+		return *s.override.Gap
+	}
+	return s.base.Gap
+}
+
+func (s *panelStyle) BorderWidth() int {
+	if s.override != nil && s.override.BorderWidth != nil {
+		return *s.override.BorderWidth
+	}
+	return s.base.BorderWidth
+}
+
