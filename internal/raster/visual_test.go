@@ -198,13 +198,21 @@ func compareOrGenerate(t *testing.T, img image.Image, refPath string) error {
 
 	// Compare images
 	diff, percent := compareImages(img, refImg)
-	if percent < 99.5 {
+	// Visual regression threshold: 99.9% pixel match required.
+	// Allows 0.1% tolerance for minor differences from:
+	// - Antialiasing variations across different CPU SIMD implementations
+	// - Subpixel rounding differences in gradient/curve calculations
+	// - Font hinting differences when freetype library versions differ
+	// For a 1920×1080 image, 0.1% = ~2073 pixels, which catches rendering bugs
+	// while allowing for numerical precision variations in software rendering.
+	const threshold = 99.9
+	if percent < threshold {
 		// Save diff image for inspection
 		diffPath := filepath.Join("testdata", "diff_"+filepath.Base(refPath))
 		if err := saveImage(diff, diffPath); err != nil {
 			t.Logf("Failed to save diff image: %v", err)
 		}
-		return fmt.Errorf("image match: %.2f%% (threshold: 99.5%%), diff saved to %s", percent, diffPath)
+		return fmt.Errorf("image match: %.2f%% (threshold: %.1f%%), diff saved to %s", percent, threshold, diffPath)
 	}
 
 	t.Logf("Image match: %.2f%%", percent)

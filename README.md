@@ -477,15 +477,26 @@ The project includes automated screenshot comparison tests for all
 rendering primitives (filled rectangles, rounded rectangles, lines,
 text, gradients, and shadows). Visual tests generate reference images
 on first run and compare subsequent renders against them with a
-99.5% pixel match threshold:
+99.9% pixel match threshold (allows 0.1% tolerance for antialiasing,
+subpixel rounding, and font hinting differences across platforms):
 
 ```bash
 make test-visual      # run visual regression tests
 ```
 
 Reference images are stored in `internal/raster/testdata/`. If a test
-fails, diff images are saved showing pixel-level differences (red =
-different, green = matching).
+fails, the test output shows the match percentage and saves a diff
+image to `internal/raster/testdata/diff_<test>.png` with red pixels
+indicating mismatches and green pixels showing correct regions.
+
+**Regenerating reference images:** If rendering changes are intentional
+(e.g., algorithm improvements, new antialiasing), delete the reference
+images and re-run tests to generate new baselines:
+
+```bash
+rm internal/raster/testdata/*.png     # remove old references
+make test-visual                       # generate new baselines
+```
 
 **Without direnv** (or if direnv is not set up), you MUST use `make
 test-go` instead of `go test ./...`. Direct `go test` requires
