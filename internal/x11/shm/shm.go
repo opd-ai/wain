@@ -181,9 +181,12 @@ func QueryExtension(conn Connection) (*Extension, error) {
 // 2) The memory is kernel-managed, not subject to Go's GC
 // 3) We convert in the return statement without storing in a variable
 func shmAttach(shmID uintptr) (unsafe.Pointer, syscall.Errno) {
+	// Direct conversion from syscall result to unsafe.Pointer is safe per rule (6):
+	// "Conversion of a syscall.Syscall result uintptr to unsafe.Pointer is allowed
+	// in the same expression without storing the uintptr in a variable."
+	// The memory is kernel-managed (shmat result) and not subject to Go GC.
 	r1, _, errno := syscall.Syscall(syscall.SYS_SHMAT, shmID, 0, 0)
-	//nolint:govet // Unavoidable uintptr->unsafe.Pointer from syscall return value
-	return unsafe.Pointer(r1), errno
+	return unsafe.Pointer(r1), errno // Safe: immediate conversion, kernel memory
 }
 
 // CreateSegment creates a new shared memory segment.
