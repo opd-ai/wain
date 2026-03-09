@@ -11,16 +11,37 @@ import (
 // RunX11Demo executes the standard Phase 1 X11 demo with the given window dimensions.
 // It connects to X11, creates a window, renders demo content, and prints feature summaries.
 func RunX11Demo(width, height int) error {
-	// Step 1: Connect to X11 server
+	conn, err := connectX11()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	_, err = createWindow(conn, width, height)
+	if err != nil {
+		return err
+	}
+
+	if err := setupEventLoop(width, height); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// connectX11 establishes a connection to the X11 server.
+func connectX11() (*x11client.Connection, error) {
 	fmt.Println("[1/6] Connecting to X11 server...")
 	conn, err := x11client.Connect("0")
 	if err != nil {
-		return fmt.Errorf("connect to X11: %w", err)
+		return nil, fmt.Errorf("connect to X11: %w", err)
 	}
-	defer conn.Close()
 	fmt.Println("      ✓ Connected to :0")
+	return conn, nil
+}
 
-	// Step 2: Create window
+// createWindow creates and maps an X11 window with the specified dimensions.
+func createWindow(conn *x11client.Connection, width, height int) (x11client.XID, error) {
 	fmt.Println("\n[2/6] Creating window...")
 	root := conn.RootWindow()
 
@@ -29,7 +50,7 @@ func RunX11Demo(width, height int) error {
 		windowY     = 100
 		borderWidth = 0
 		windowClass = wire.WindowClassInputOutput
-		visual      = 0 // CopyFromParent
+		visual      = 0
 		eventMask   = wire.EventMaskExposure | wire.EventMaskKeyPress | wire.EventMaskButtonPress
 	)
 
@@ -38,24 +59,26 @@ func RunX11Demo(width, height int) error {
 
 	wid, err := conn.CreateWindow(root, windowX, windowY, uint16(width), uint16(height), borderWidth, windowClass, visual, mask, attrs)
 	if err != nil {
-		return fmt.Errorf("create window: %w", err)
+		return 0, fmt.Errorf("create window: %w", err)
 	}
 	fmt.Printf("      ✓ Created window XID %d\n", wid)
 
-	// Step 3: Map window to display
 	fmt.Println("\n[3/6] Mapping window to display...")
 	if err := conn.MapWindow(wid); err != nil {
-		return fmt.Errorf("map window: %w", err)
+		return 0, fmt.Errorf("map window: %w", err)
 	}
 	fmt.Println("      ✓ Window visible on screen")
 
-	// Step 4: Create UI widgets
+	return wid, nil
+}
+
+// setupEventLoop creates widgets, renders content, and displays feature summaries.
+func setupEventLoop(width, height int) error {
 	fmt.Println("\n[4/6] Creating UI widgets...")
 	btn, input := StandardWidgets()
 	fmt.Println("      ✓ Created Button widget (120x40)")
 	fmt.Println("      ✓ Created TextInput widget (200x30)")
 
-	// Step 5: Render content with software rasterizer
 	fmt.Println("\n[5/6] Rendering content to framebuffer...")
 	renderBuffer, err := CreateDemoBuffer(width, height)
 	if err != nil {
@@ -64,7 +87,6 @@ func RunX11Demo(width, height int) error {
 	RenderDemoContent(renderBuffer, btn, input)
 	fmt.Printf("      ✓ Rendered to %dx%d ARGB8888 buffer\n", width, height)
 
-	// Step 6: Display feature summary
 	fmt.Println("\n[6/6] Phase 1 Features Demonstrated:")
 	fmt.Println()
 	fmt.Println("      PROTOCOL LAYER (X11)")
