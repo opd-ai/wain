@@ -212,6 +212,11 @@ impl BufferAllocator {
         &self.device
     }
 
+    /// Get the driver type for this allocator.
+    pub fn driver(&self) -> DriverType {
+        self.driver
+    }
+
     /// Map a GPU buffer into CPU address space for reading/writing.
     ///
     /// Returns a slice of the mapped buffer. The mapping is automatically

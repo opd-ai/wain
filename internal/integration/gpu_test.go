@@ -65,10 +65,10 @@ func TestBatchConstruction(t *testing.T) {
 		t.Skipf("Skipping batch construction test: %s not found", drmRenderNode)
 	}
 
-	// Verify GPU is Intel
+	// Detect GPU generation
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping batch construction test: non-Intel GPU detected")
+		t.Skipf("Skipping batch construction test: GPU not recognized")
 	}
 
 	// Create allocator
@@ -86,8 +86,8 @@ func TestBatchConstruction(t *testing.T) {
 	}
 	defer batchBuf.Destroy()
 
-	// Construct minimal valid batch: MI_NOOP + MI_BATCH_BUFFER_END
-	batch := buildMinimalBatch()
+	// Construct minimal valid batch for detected GPU
+	batch := buildMinimalBatch(gen)
 
 	// Verify batch is non-empty and reasonable size
 	if len(batch) == 0 {
@@ -97,14 +97,17 @@ func TestBatchConstruction(t *testing.T) {
 		t.Fatalf("Batch size (%d bytes) exceeds buffer size (%d bytes)", len(batch), batchSize)
 	}
 
-	t.Logf("Successfully constructed %d-byte batch", len(batch))
+	t.Logf("Successfully constructed %d-byte %s batch", len(batch), gen)
 }
 
 // TestGPUContextCreation validates GPU context creation.
 //
 // This test verifies that:
-//  1. GPU contexts can be created successfully on Intel GPUs
-//  2. Context IDs are valid (non-zero for i915, both IDs for Xe)
+//  1. GPU contexts can be created successfully
+//  2. Context IDs are valid (non-zero for Intel i915, both IDs for Xe, any ID for AMD)
+//
+// Note: AMD GPUs may return context ID 0, which is valid. Intel i915 contexts
+// should be non-zero. Xe GPUs require both context and VM IDs to be non-zero.
 //
 // This test skips if GPU hardware is not available.
 func TestGPUContextCreation(t *testing.T) {
@@ -114,7 +117,7 @@ func TestGPUContextCreation(t *testing.T) {
 
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping context creation test: non-Intel GPU detected")
+		t.Skipf("Skipping context creation test: GPU not recognized")
 	}
 
 	ctx, err := render.CreateContext(drmRenderNode)
@@ -122,16 +125,23 @@ func TestGPUContextCreation(t *testing.T) {
 		t.Skipf("Skipping context creation test: failed to create context: %v", err)
 	}
 
-	// Validate context ID is non-zero
-	if ctx.ContextID == 0 {
-		t.Error("Context ID is zero (expected non-zero)")
+	// Validate context ID based on GPU type
+	// Intel i915 contexts should be non-zero
+	if (gen == render.GpuGen9 || gen == render.GpuGen11 || gen == render.GpuGen12) && ctx.ContextID == 0 {
+		t.Error("Context ID is zero on Intel i915 (expected non-zero)")
 	}
 
-	// For Xe GPUs, VM ID should also be non-zero
-	if gen == render.GpuXe && ctx.VmID == 0 {
-		t.Error("VM ID is zero on Xe GPU (expected non-zero)")
+	// For Xe GPUs, both context and VM IDs should be non-zero
+	if gen == render.GpuXe {
+		if ctx.ContextID == 0 {
+			t.Error("Context ID is zero on Xe GPU (expected non-zero)")
+		}
+		if ctx.VmID == 0 {
+			t.Error("VM ID is zero on Xe GPU (expected non-zero)")
+		}
 	}
 
+	// AMD contexts can be any value, including 0
 	t.Logf("Created context: ID=%d, VM=%d (GPU: %s)", ctx.ContextID, ctx.VmID, gen)
 }
 
@@ -154,7 +164,7 @@ func TestBatchSubmission(t *testing.T) {
 
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping batch submission test: non-Intel GPU detected")
+		t.Skipf("Skipping batch submission test: GPU not recognized")
 	}
 
 	// Create allocator
@@ -178,8 +188,18 @@ func TestBatchSubmission(t *testing.T) {
 	}
 	defer batchBuf.Destroy()
 
-	// Build minimal batch
-	batch := buildMinimalBatch()
+	// Build minimal batch for detected GPU
+	batch := buildMinimalBatch(gen)
+
+	// Map buffer and write batch data
+	mapped, err := batchBuf.Mmap()
+	if err != nil {
+		t.Fatalf("Failed to mmap batch buffer: %v", err)
+	}
+	copy(mapped, batch)
+	if err := batchBuf.Munmap(mapped); err != nil {
+		t.Fatalf("Failed to munmap batch buffer: %v", err)
+	}
 
 	// Submit batch with no relocations
 	err = render.SubmitBatch(drmRenderNode, batchBuf.GemHandle(), uint32(len(batch)), nil, ctx.ContextID)
@@ -207,7 +227,7 @@ func TestBatchSubmissionWithRenderTarget(t *testing.T) {
 
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping render target test: non-Intel GPU detected")
+		t.Skipf("Skipping render target test: GPU not recognized")
 	}
 
 	// Create allocator
@@ -238,21 +258,33 @@ func TestBatchSubmissionWithRenderTarget(t *testing.T) {
 	}
 	defer batchBuf.Destroy()
 
-	// Build batch referencing render target
-	batch := buildBatchWithRenderTarget(renderTarget.GemHandle())
+	// Build batch referencing render target (GPU-specific)
+	batch := buildBatchWithRenderTarget(gen, renderTarget.GemHandle())
 
-	// Create relocation entry for render target reference
-	// Note: This is a placeholder relocation for infrastructure testing.
-	// Full relocations will be implemented in Phase 4+ when shaders are available.
-	relocs := []render.Relocation{
-		{
-			TargetHandle:   renderTarget.GemHandle(),
-			Delta:          0,
-			Offset:         4, // Hypothetical offset in batch where RT handle is referenced
-			PresumedOffset: 0,
-			ReadDomains:    render.GemDomainRender,
-			WriteDomain:    render.GemDomainRender,
-		},
+	// Map buffer and write batch data
+	mapped, err := batchBuf.Mmap()
+	if err != nil {
+		t.Fatalf("Failed to mmap batch buffer: %v", err)
+	}
+	copy(mapped, batch)
+	if err := batchBuf.Munmap(mapped); err != nil {
+		t.Fatalf("Failed to munmap batch buffer: %v", err)
+	}
+
+	// Create relocation entry for render target reference (Intel only)
+	// Note: AMD uses VA-based addressing and doesn't use relocations
+	var relocs []render.Relocation
+	if gen == render.GpuGen9 || gen == render.GpuGen11 || gen == render.GpuGen12 {
+		relocs = []render.Relocation{
+			{
+				TargetHandle:   renderTarget.GemHandle(),
+				Delta:          0,
+				Offset:         4, // Hypothetical offset in batch where RT handle is referenced
+				PresumedOffset: 0,
+				ReadDomains:    render.GemDomainRender,
+				WriteDomain:    render.GemDomainRender,
+			},
+		}
 	}
 
 	// Submit batch
@@ -267,9 +299,13 @@ func TestBatchSubmissionWithRenderTarget(t *testing.T) {
 // TestBatchSubmissionMultipleContexts validates that multiple GPU contexts work correctly.
 //
 // This test verifies that:
-//  1. Multiple contexts can be created independently
+//  1. Multiple contexts can be created independently (on Intel)
 //  2. Each context can submit batches successfully
 //  3. Context isolation works as expected
+//
+// Note: AMD GPUs use a per-process context model where multiple CreateContext()
+// calls may return the same context ID. This is expected behavior. The test only
+// validates unique context IDs on Intel GPUs.
 //
 // This test skips if GPU hardware is not available.
 func TestBatchSubmissionMultipleContexts(t *testing.T) {
@@ -279,7 +315,7 @@ func TestBatchSubmissionMultipleContexts(t *testing.T) {
 
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping multiple contexts test: non-Intel GPU detected")
+		t.Skipf("Skipping multiple contexts test: GPU not recognized")
 	}
 
 	// Create allocator
@@ -300,9 +336,10 @@ func TestBatchSubmissionMultipleContexts(t *testing.T) {
 		t.Skipf("Skipping multiple contexts test: failed to create context 2: %v", err)
 	}
 
-	// Verify contexts have different IDs
-	if ctx1.ContextID == ctx2.ContextID {
-		t.Error("Context IDs are identical (expected unique IDs)")
+	// Verify contexts have different IDs on Intel (AMD uses per-process contexts)
+	isIntel := gen == render.GpuGen9 || gen == render.GpuGen11 || gen == render.GpuGen12 || gen == render.GpuXe
+	if isIntel && ctx1.ContextID == ctx2.ContextID {
+		t.Error("Context IDs are identical on Intel GPU (expected unique IDs)")
 	}
 
 	// Allocate batch buffer
@@ -313,7 +350,18 @@ func TestBatchSubmissionMultipleContexts(t *testing.T) {
 	}
 	defer batchBuf.Destroy()
 
-	batch := buildMinimalBatch()
+	// Build GPU-specific batch
+	batch := buildMinimalBatch(gen)
+
+	// Map buffer and write batch data
+	mapped, err := batchBuf.Mmap()
+	if err != nil {
+		t.Fatalf("Failed to mmap batch buffer: %v", err)
+	}
+	copy(mapped, batch)
+	if err := batchBuf.Munmap(mapped); err != nil {
+		t.Fatalf("Failed to munmap batch buffer: %v", err)
+	}
 
 	// Submit to context 1
 	err = render.SubmitBatch(drmRenderNode, batchBuf.GemHandle(), uint32(len(batch)), nil, ctx1.ContextID)
@@ -327,7 +375,7 @@ func TestBatchSubmissionMultipleContexts(t *testing.T) {
 		t.Errorf("Batch submission to context 2 failed: %v", err)
 	}
 
-	t.Logf("Successfully submitted batches to 2 independent contexts on %s", gen)
+	t.Logf("Successfully submitted batches to 2 contexts on %s (ctx1=%d, ctx2=%d)", gen, ctx1.ContextID, ctx2.ContextID)
 }
 
 // TestAllocatorClose validates that allocator cleanup works correctly.
@@ -338,7 +386,7 @@ func TestAllocatorClose(t *testing.T) {
 
 	gen := render.DetectGPU(drmRenderNode)
 	if gen == render.GpuUnknown {
-		t.Skipf("Skipping allocator close test: non-Intel GPU detected")
+		t.Skipf("Skipping allocator close test: GPU not recognized")
 	}
 
 	allocator, err := render.NewAllocator(drmRenderNode)
@@ -396,34 +444,47 @@ func TestBufferExportDmabuf(t *testing.T) {
 
 // buildMinimalBatch constructs a minimal valid GPU command batch.
 //
-// The batch contains:
-//   - MI_NOOP (no operation)
-//   - MI_BATCH_BUFFER_END (terminates batch execution)
+// The batch contains GPU-specific NOP and END commands:
+//   - Intel: MI_NOOP + MI_BATCH_BUFFER_END
+//   - AMD: PM4 NOP packet
 //
 // This is used for infrastructure validation. Full rendering batches with
 // clear/draw commands are deferred to Phase 4+.
-func buildMinimalBatch() []byte {
-	batch := []uint32{
-		0x00000000, // MI_NOOP
-		0x0A000000, // MI_BATCH_BUFFER_END
+func buildMinimalBatch(gen render.GpuGeneration) []byte {
+	switch gen {
+	case render.GpuGen9, render.GpuGen11, render.GpuGen12, render.GpuXe:
+		// Intel MI commands
+		batch := []uint32{
+			0x00000000, // MI_NOOP
+			0x0A000000, // MI_BATCH_BUFFER_END
+		}
+		return u32SliceToBytes(batch)
+	case render.GpuAmdRdna1, render.GpuAmdRdna2, render.GpuAmdRdna3:
+		// AMD PM4 Type 3 NOP packet
+		// Header: [31:30]=Type3(11b), [23:16]=Opcode(NOP=0x10), [13:0]=Count(0)
+		batch := []uint32{
+			0xC0100000, // PM4 Type 3 NOP with 0 payload DWORDs
+		}
+		return u32SliceToBytes(batch)
+	default:
+		// Unknown GPU - return Intel-style batch as fallback
+		batch := []uint32{
+			0x00000000, // MI_NOOP
+			0x0A000000, // MI_BATCH_BUFFER_END
+		}
+		return u32SliceToBytes(batch)
 	}
-	return u32SliceToBytes(batch)
 }
 
 // buildBatchWithRenderTarget constructs a batch that references a render target.
 //
 // Note: This is a placeholder for infrastructure testing. The actual batch
 // doesn't perform rendering yet (full pipeline requires shader compilation in Phase 4).
-func buildBatchWithRenderTarget(renderTargetHandle uint32) []byte {
+func buildBatchWithRenderTarget(gen render.GpuGeneration, renderTargetHandle uint32) []byte {
 	_ = renderTargetHandle // Will be used in Phase 4+
 
-	// For now, return minimal batch + padding where RT handle would go
-	batch := []uint32{
-		0x00000000, // MI_NOOP
-		0x00000000, // Placeholder for RT handle reference
-		0x0A000000, // MI_BATCH_BUFFER_END
-	}
-	return u32SliceToBytes(batch)
+	// For now, return minimal batch (same as buildMinimalBatch)
+	return buildMinimalBatch(gen)
 }
 
 // u32SliceToBytes converts a uint32 slice to little-endian byte slice.

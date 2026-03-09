@@ -563,11 +563,25 @@ pub unsafe extern "C" fn buffer_mmap(
     let buf = &*buffer;
     let dev = alloc.device();
 
-    // Get mmap offset using i915_gem_mmap_offset
-    let mut mmap_req = i915::GemMmapOffset::new(buf.handle, i915::I915_MMAP_OFFSET_WB);
-    if dev.i915_gem_mmap_offset(&mut mmap_req).is_err() {
-        return std::ptr::null_mut();
-    }
+    // Get mmap offset - driver-specific
+    let offset = match alloc.driver() {
+        DriverType::I915 | DriverType::Xe => {
+            // Intel: use i915_gem_mmap_offset
+            let mut mmap_req = i915::GemMmapOffset::new(buf.handle, i915::I915_MMAP_OFFSET_WB);
+            match dev.i915_gem_mmap_offset(&mut mmap_req) {
+                Ok(()) => mmap_req.offset,
+                Err(_) => return std::ptr::null_mut(),
+            }
+        }
+        DriverType::Amdgpu => {
+            // AMD: use amdgpu_gem_mmap
+            let mut mmap_req = amd::GemMmap::new(buf.handle);
+            match dev.amdgpu_gem_mmap(&mut mmap_req) {
+                Ok(()) => mmap_req.offset,
+                Err(_) => return std::ptr::null_mut(),
+            }
+        }
+    };
 
     // Calculate buffer size
     let size = (buf.stride * buf.height) as usize;
@@ -580,7 +594,7 @@ pub unsafe extern "C" fn buffer_mmap(
         nix::libc::PROT_READ | nix::libc::PROT_WRITE,
         nix::libc::MAP_SHARED,
         dev.fd(),
-        mmap_req.offset as i64,
+        offset as i64,
     );
 
     if ptr == nix::libc::MAP_FAILED {
