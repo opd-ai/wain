@@ -128,3 +128,67 @@ jobs:
             echo "ERROR: example-app binary is dynamically linked — musl build must produce a static binary."
             exit 1
           fi
+
+  gpu-integration-tests:
+    name: GPU Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install musl toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+          musl-gcc --version
+
+      - name: Set up Rust with musl target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: render-sys/target
+          key: ${{ runner.os }}-cargo-musl-${{ hashFiles('render-sys/Cargo.toml', 'render-sys/src/**') }}
+          restore-keys: ${{ runner.os }}-cargo-musl-
+
+      - name: Build Rust static library (musl)
+        run: |
+          cargo build --release \
+            --manifest-path render-sys/Cargo.toml \
+            --target x86_64-unknown-linux-musl
+
+      - name: Check for GPU hardware
+        id: gpu-check
+        run: |
+          if [ -e /dev/dri/renderD128 ]; then
+            echo "gpu_available=true" >> $GITHUB_OUTPUT
+            echo "✓ GPU render node detected: /dev/dri/renderD128"
+          else
+            echo "gpu_available=false" >> $GITHUB_OUTPUT
+            echo "⚠ No GPU render node detected — integration tests will be skipped"
+          fi
+
+      - name: Run GPU integration tests
+        if: steps.gpu-check.outputs.gpu_available == 'true'
+        env:
+          CC: musl-gcc
+          CGO_ENABLED: "1"
+          CGO_LDFLAGS_ALLOW: ".*"
+        run: |
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go test -tags=integration -v ./internal/integration -run TestGPURenderingTriangle
+
+      - name: Skip GPU tests (no hardware)
+        if: steps.gpu-check.outputs.gpu_available != 'true'
+        run: |
+          echo "Skipping GPU integration tests: no GPU hardware detected"
+          echo "Tests will run successfully when GPU hardware is available"
+
