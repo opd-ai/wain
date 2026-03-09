@@ -146,12 +146,12 @@ func (r *Ring) Size() int {
 }
 
 // GetSlot returns the slot at the given index.
-// Panics if index is out of bounds.
-func (r *Ring) GetSlot(index int) *Slot {
+// Returns an error if index is out of bounds.
+func (r *Ring) GetSlot(index int) (*Slot, error) {
 	if index < 0 || index >= r.size {
-		panic(fmt.Sprintf("slot index %d out of bounds [0, %d)", index, r.size))
+		return nil, fmt.Errorf("slot index %d out of bounds [0, %d)", index, r.size)
 	}
-	return r.slots[index]
+	return r.slots[index], nil
 }
 
 // AcquireForWriting acquires the next available slot for rendering.
@@ -192,7 +192,10 @@ func (r *Ring) AcquireForWriting(ctx context.Context) (*Slot, error) {
 // MarkDisplaying transitions a slot from rendering to displaying state.
 // Call this after presenting the buffer to the compositor/server.
 func (r *Ring) MarkDisplaying(index int) error {
-	slot := r.GetSlot(index)
+	slot, err := r.GetSlot(index)
+	if err != nil {
+		return err
+	}
 
 	slot.mu.Lock()
 	defer slot.mu.Unlock()
@@ -208,7 +211,10 @@ func (r *Ring) MarkDisplaying(index int) error {
 // MarkReleased transitions a slot from displaying to released state and signals waiters.
 // Call this from the event handler when receiving a release/idle notification.
 func (r *Ring) MarkReleased(index int) error {
-	slot := r.GetSlot(index)
+	slot, err := r.GetSlot(index)
+	if err != nil {
+		return err
+	}
 
 	slot.mu.Lock()
 	defer slot.mu.Unlock()
@@ -224,9 +230,13 @@ func (r *Ring) MarkReleased(index int) error {
 
 // MarkAvailable immediately transitions a slot to available state.
 // Use this for cleanup or reset scenarios (not typical flow).
-func (r *Ring) MarkAvailable(index int) {
-	slot := r.GetSlot(index)
+func (r *Ring) MarkAvailable(index int) error {
+	slot, err := r.GetSlot(index)
+	if err != nil {
+		return err
+	}
 	slot.setState(StateAvailable)
+	return nil
 }
 
 // Reset transitions all slots to available state.

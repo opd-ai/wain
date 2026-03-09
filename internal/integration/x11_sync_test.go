@@ -147,7 +147,10 @@ func TestX11BufferHandler_MultipleHandlers(t *testing.T) {
 			t.Fatalf("HandleIdleNotify() for slot %d failed: %v", idx, err)
 		}
 
-		slot := ring.GetSlot(idx)
+		slot, err := ring.GetSlot(idx)
+		if err != nil {
+			t.Fatalf("GetSlot(%d) failed: %v", idx, err)
+		}
 		if slot.State() != buffer.StateReleased {
 			t.Errorf("slot %d: State() = %v, want StateReleased", idx, slot.State())
 		}

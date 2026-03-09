@@ -371,19 +371,20 @@ func TestRing_GetSlot_Bounds(t *testing.T) {
 
 	// Valid indices
 	for i := 0; i < 3; i++ {
-		slot := ring.GetSlot(i)
+		slot, err := ring.GetSlot(i)
+		if err != nil {
+			t.Errorf("GetSlot(%d) unexpected error: %v", i, err)
+		}
 		if slot.Index != i {
 			t.Errorf("GetSlot(%d).Index = %d, want %d", i, slot.Index, i)
 		}
 	}
 
-	// Out of bounds (should panic)
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("GetSlot(-1) should panic")
-		}
-	}()
-	ring.GetSlot(-1)
+	// Out of bounds (should return error)
+	_, err = ring.GetSlot(-1)
+	if err == nil {
+		t.Error("GetSlot(-1) should return error")
+	}
 }
 
 func TestRing_GetSlot_OutOfBoundsUpper(t *testing.T) {
@@ -392,12 +393,10 @@ func TestRing_GetSlot_OutOfBoundsUpper(t *testing.T) {
 		t.Fatalf("NewRing(2) failed: %v", err)
 	}
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("GetSlot(2) should panic for size=2 ring")
-		}
-	}()
-	ring.GetSlot(2)
+	_, err = ring.GetSlot(2)
+	if err == nil {
+		t.Error("GetSlot(2) should return error for size=2 ring")
+	}
 }
 
 func TestRing_Stats(t *testing.T) {

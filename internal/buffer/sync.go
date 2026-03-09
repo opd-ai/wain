@@ -77,7 +77,7 @@ func (s *Synchronizer) MarkDisplaying(slotIndex int) error {
 }
 
 // GetSlot is a convenience wrapper around ring.GetSlot.
-func (s *Synchronizer) GetSlot(index int) *Slot {
+func (s *Synchronizer) GetSlot(index int) (*Slot, error) {
 	return s.ring.GetSlot(index)
 }
 
