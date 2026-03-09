@@ -51,6 +51,17 @@ This ensures technical debt is visible and trackable.
 - Use mixedCase for multi-word identifiers
 - Common acronyms: API, HTTP, URL, ID (all caps when part of identifier)
 
+#### DMA-buf Naming Convention
+
+To maintain consistency across Go and Rust codebases:
+
+- **Go exported identifiers:** `DMABuf` (e.g., `type DMABufDescriptor struct`, `func ExportDMABuf()`)
+- **Go unexported/package-local:** `dmabuf` (e.g., `func allocateDmabuf()`, `dmabufFd`)
+- **Rust:** `dma_buf` (e.g., `struct DmaBufHandle`, `fn create_dma_buf()`)
+- **Comments/documentation:** Use "DMA-buf" (with hyphen) when referring to the Linux kernel subsystem
+
+**Rationale:** This follows Go's capitalization rules for acronyms while respecting Rust's snake_case convention. The hyphenated form in prose matches kernel documentation.
+
 ## Building
 
 ```bash
