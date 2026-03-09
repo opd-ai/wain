@@ -254,7 +254,7 @@ Documentation gate passes, but naming is critical for a library/framework:
 ### Phase 4: Remaining Readiness Gates
 
 #### Complexity Gate (1 function over threshold)
-- [ ] Refactor `decodeSetupBody` in `internal/x11/wire/setup.go:458` (cc=15) — extract field-type decoding branches into helper functions (e.g., `decodeSetupFormat`, `decodeSetupScreen`, `decodeSetupDepth`) to reduce cyclomatic complexity below 10
+- [x] Refactor `decodeSetupBody` in `internal/x11/wire/setup.go:458` (cc=15) — extract field-type decoding branches into helper functions (e.g., `decodeSetupFormat`, `decodeSetupScreen`, `decodeSetupDepth`) to reduce cyclomatic complexity below 10
 
 #### Function Length Gate (94 functions over threshold)
 Priority: focus on library code (60 functions), defer demo code (34 functions):

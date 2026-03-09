@@ -454,55 +454,96 @@ func decodeSetupHeader(r io.Reader, reply *SetupReply) error {
 	return nil
 }
 
-// decodeSetupBody reads the main setup reply fields, returning vendor/screen/format counts.
-func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8, err error) {
-	if _, err = DecodeUint8(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+// decodeSetupProtocolVersion reads protocol version fields from setup reply.
+func decodeSetupProtocolVersion(r io.Reader, reply *SetupReply) error {
+	if _, err := DecodeUint8(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
 	}
-	if reply.ProtocolMajorVersion, err = DecodeUint16(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if major, err := DecodeUint16(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.ProtocolMajorVersion = major
 	}
-	if reply.ProtocolMinorVersion, err = DecodeUint16(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if minor, err := DecodeUint16(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.ProtocolMinorVersion = minor
 	}
-	if _, err = DecodeUint16(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if _, err := DecodeUint16(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
 	}
+	return nil
+}
 
-	if reply.ReleaseNumber, err = DecodeUint32(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+// decodeSetupResourceFields reads resource ID and buffer size fields from setup reply.
+func decodeSetupResourceFields(r io.Reader, reply *SetupReply) error {
+	if release, err := DecodeUint32(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.ReleaseNumber = release
 	}
-	if reply.ResourceIDBase, err = DecodeUint32(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if base, err := DecodeUint32(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.ResourceIDBase = base
 	}
-	if reply.ResourceIDMask, err = DecodeUint32(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if mask, err := DecodeUint32(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.ResourceIDMask = mask
 	}
-	if reply.MotionBufferSize, err = DecodeUint32(r); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	if bufSize, err := DecodeUint32(r); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.MotionBufferSize = bufSize
 	}
+	return nil
+}
 
+// decodeSetupCounts reads vendor length, max request length, and screen/format counts.
+func decodeSetupCounts(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8, err error) {
 	if vendorLen, err = DecodeUint16(r); err != nil {
 		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
 	}
-	if reply.MaxRequestLength, err = DecodeUint16(r); err != nil {
+	if maxReq, err := DecodeUint16(r); err != nil {
 		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+	} else {
+		reply.MaxRequestLength = maxReq
 	}
-
 	if numScreens, err = DecodeUint8(r); err != nil {
 		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
 	}
 	if numFormats, err = DecodeUint8(r); err != nil {
 		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
 	}
+	return vendorLen, numScreens, numFormats, nil
+}
 
-	if err = decode6Uint8(r, &reply.ImageByteOrder, &reply.BitmapBitOrder, &reply.BitmapScanlineUnit,
+// decodeSetupByteOrderAndKeys reads byte order, bitmap, and keycode fields.
+func decodeSetupByteOrderAndKeys(r io.Reader, reply *SetupReply) error {
+	if err := decode6Uint8(r, &reply.ImageByteOrder, &reply.BitmapBitOrder, &reply.BitmapScanlineUnit,
 		&reply.BitmapScanlinePad, &reply.MinKeycode, &reply.MaxKeycode); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+		return fmt.Errorf("setup body decode: %w", err)
 	}
+	if _, err := io.CopyN(io.Discard, r, 4); err != nil {
+		return fmt.Errorf("setup body decode: %w", err)
+	}
+	return nil
+}
 
-	if _, err = io.CopyN(io.Discard, r, 4); err != nil {
-		return 0, 0, 0, fmt.Errorf("setup body decode: %w", err)
+// decodeSetupBody reads the main setup reply fields, returning vendor/screen/format counts.
+func decodeSetupBody(r io.Reader, reply *SetupReply) (vendorLen uint16, numScreens, numFormats uint8, err error) {
+	if err = decodeSetupProtocolVersion(r, reply); err != nil {
+		return 0, 0, 0, err
+	}
+	if err = decodeSetupResourceFields(r, reply); err != nil {
+		return 0, 0, 0, err
+	}
+	if vendorLen, numScreens, numFormats, err = decodeSetupCounts(r, reply); err != nil {
+		return 0, 0, 0, err
+	}
+	if err = decodeSetupByteOrderAndKeys(r, reply); err != nil {
+		return 0, 0, 0, err
 	}
 	return vendorLen, numScreens, numFormats, nil
 }
