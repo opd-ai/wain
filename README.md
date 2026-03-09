@@ -221,8 +221,15 @@ make build CC=x86_64-linux-musl-gcc
 
 The `.envrc` file auto-configures `CC`, `CGO_ENABLED`, `CGO_LDFLAGS`,
 and `CGO_LDFLAGS_ALLOW` when used with
-[direnv](https://direnv.net/). Run `direnv allow` once, then standard
-`go test ./...` and `go build` commands work without additional flags.
+[direnv](https://direnv.net/). After installing direnv, hooking it into
+your shell (see [direnv setup](https://direnv.net/docs/hook.html)), and
+running `direnv allow`, the environment variables will auto-load when
+you `cd` into this directory. Once loaded, standard `go test ./...` and
+`go build` commands work without additional flags.
+
+**Without direnv**, you must use `make test-go` and `make build` instead
+of `go test ./...` and `go build`, as these Makefile targets set the
+required `CGO_LDFLAGS` to link the Rust static library.
 
 ## Project Structure
 
@@ -428,10 +435,16 @@ appropriate CGO flags for those requiring CGO).
 
 ### Quick Start with direnv
 
+If you have [direnv](https://direnv.net/) installed and configured:
+
 ```bash
-direnv allow          # one-time setup; auto-configures CGO flags
-go test ./...         # run all Go tests
+direnv allow          # one-time setup; allows .envrc to auto-load
+cd ../ && cd -        # reload environment (or open a new shell in this directory)
+go test ./...         # run all Go tests (works because CGO_LDFLAGS is set)
 ```
+
+Note: direnv must be hooked into your shell for this to work. See
+[direnv installation](https://direnv.net/docs/installation.html) for setup.
 
 ### Using Make Targets
 
@@ -463,9 +476,11 @@ Reference images are stored in `internal/raster/testdata/`. If a test
 fails, diff images are saved showing pixel-level differences (red =
 different, green = matching).
 
-**Without direnv:** use `make test-go` instead of `go test ./...`.
-Direct `go test` requires `CGO_LDFLAGS` to link the Rust library
-(see [Troubleshooting](#troubleshooting)).
+**Without direnv** (or if direnv is not set up), you MUST use `make
+test-go` instead of `go test ./...`. Direct `go test` requires
+`CGO_LDFLAGS` to link the Rust library, which the Makefile sets
+automatically but plain `go test` does not (see
+[Troubleshooting](#troubleshooting)).
 
 ## Font Atlas Generation
 
@@ -492,16 +507,31 @@ Install the musl C compiler for your platform
 
 ### `go test ./...` fails with linker errors
 
-Go tests require `CGO_LDFLAGS` to be set:
+**Cause:** Go tests require `CGO_LDFLAGS` to link the Rust static
+library (`librender_sys.a`). Plain `go test ./...` does not set this
+variable.
+
+**Solution:**
 
 ```bash
-# Option 1: Use direnv (recommended)
-direnv allow
-go test ./...
-
-# Option 2: Use the Makefile wrapper
+# Option 1: Use the Makefile (always works)
 make test-go
+
+# Option 2: Use direnv (requires direnv installed and configured)
+# Install direnv: https://direnv.net/docs/installation.html
+# Hook into your shell: https://direnv.net/docs/hook.html
+direnv allow                    # allow .envrc to load
+cd ../ && cd -                  # reload environment in current shell
+echo $CGO_LDFLAGS               # verify environment is loaded (should show paths)
+go test ./...                   # now works
+
+# Option 3: Set CGO_LDFLAGS manually (advanced)
+# See internal/render/binding.go header comments for manual build steps
 ```
+
+**Recommendation:** Use `make test-go` for reliability. The direnv
+approach requires proper shell integration and may not work in CI/CD
+environments or non-interactive shells.
 
 ### Binary has dynamic dependencies
 
