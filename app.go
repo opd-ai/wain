@@ -1078,18 +1078,33 @@ func (a *App) initialize() error {
 // initDisplayServer detects and connects to a display server.
 // Wayland is preferred, with X11 as fallback.
 func (a *App) initDisplayServer() error {
+	var errs []error
+
 	// Try Wayland first
-	if a.tryWaylandConnection() {
+	waylandErr := a.tryWaylandConnection()
+	if waylandErr == nil {
 		return nil
 	}
+	errs = append(errs, waylandErr)
 
 	// Fall back to X11
-	return a.tryX11Connection()
+	x11Err := a.tryX11Connection()
+	if x11Err == nil {
+		return nil
+	}
+	errs = append(errs, x11Err)
+
+	// Both failed - log all errors with diagnostic hints
+	fmt.Fprintf(os.Stderr, "wain: failed to connect to display server\n")
+	fmt.Fprintf(os.Stderr, "  Wayland failed: %v (check $WAYLAND_DISPLAY and $XDG_RUNTIME_DIR)\n", errs[0])
+	fmt.Fprintf(os.Stderr, "  X11 failed: %v (check $DISPLAY)\n", errs[1])
+
+	return fmt.Errorf("failed to connect to any display server: Wayland: %v, X11: %v", errs[0], errs[1])
 }
 
 // tryWaylandConnection attempts to connect to Wayland.
-// Returns true if successful.
-func (a *App) tryWaylandConnection() bool {
+// Returns nil on success, error on failure.
+func (a *App) tryWaylandConnection() error {
 	waylandDisplay := os.Getenv("WAYLAND_DISPLAY")
 	if waylandDisplay == "" {
 		waylandDisplay = "wayland-0"
@@ -1097,30 +1112,27 @@ func (a *App) tryWaylandConnection() bool {
 
 	xdgRuntimeDir := os.Getenv("XDG_RUNTIME_DIR")
 	if xdgRuntimeDir == "" {
-		return false
+		return fmt.Errorf("XDG_RUNTIME_DIR not set")
 	}
 
 	waylandPath := fmt.Sprintf("%s/%s", xdgRuntimeDir, waylandDisplay)
 	if _, err := os.Stat(waylandPath); err != nil {
-		return false
+		return fmt.Errorf("Wayland socket not found at %s: %w", waylandPath, err)
 	}
 
 	if err := a.connectWayland(waylandPath); err != nil {
-		if a.verbose {
-			log.Printf("wain: Wayland connection failed: %v", err)
-		}
-		return false
+		return fmt.Errorf("Wayland connection to %s failed: %w", waylandPath, err)
 	}
 
 	a.displayServer = DisplayServerWayland
 	if a.verbose {
 		log.Printf("wain: connected to Wayland display: %s", waylandPath)
 	}
-	return true
+	return nil
 }
 
 // tryX11Connection attempts to connect to X11.
-// Returns an error if connection fails.
+// Returns nil on success, error on failure.
 func (a *App) tryX11Connection() error {
 	x11Display := os.Getenv("DISPLAY")
 	if x11Display == "" {
@@ -1130,7 +1142,7 @@ func (a *App) tryX11Connection() error {
 	displayNum := a.extractX11DisplayNumber(x11Display)
 
 	if err := a.connectX11(displayNum); err != nil {
-		return fmt.Errorf("failed to connect to any display server: %w", err)
+		return fmt.Errorf("X11 connection to %s failed: %w", x11Display, err)
 	}
 
 	a.displayServer = DisplayServerX11
