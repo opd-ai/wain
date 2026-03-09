@@ -515,10 +515,19 @@ make check-static        # verifies bin/wain is fully static
 
 ## Documentation
 
+### Getting Started
+- [GETTING_STARTED.md](GETTING_STARTED.md) — Step-by-step tutorial for
+  building your first wain application
+- [WIDGETS.md](WIDGETS.md) — Complete widget reference with examples
+  and visual descriptions
+
+### API & Architecture
 - [API.md](API.md) — API reference for all internal packages
 - [HARDWARE.md](HARDWARE.md) — Supported hardware matrix (Intel/AMD
   GPUs, kernel versions, display servers)
-- [ROADMAP.md](ROADMAP.md) — 8-phase implementation plan
+- [ROADMAP.md](ROADMAP.md) — 10-phase implementation plan
+
+### Advanced Topics
 - [ACCESSIBILITY.md](ACCESSIBILITY.md) — Accessibility support and
   AT-SPI2 implementation path
 - [RECOMMENDED_LIBRARIES.md](RECOMMENDED_LIBRARIES.md) — Library
