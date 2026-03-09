@@ -8,6 +8,20 @@ _(No active items)_
 
 ## Completed Items
 
+### TD-5: Implement text rendering in bufferCanvas ✅
+**Completed:** 2026-03-09  
+**File:** `concretewidgets.go:108` (removed TODO)  
+**Solution:** Implemented `DrawText()` method in bufferCanvas to enable text rendering for adapted widgets:
+1. Access `font.atlas` directly from Font parameter (private field, same package)
+2. Call `text.DrawText()` with proper parameters: buffer, text, offset coordinates, font size, color, atlas
+3. Added import: `textpkg "github.com/opd-ai/wain/internal/raster/text"`
+4. Added nil guard for font and font.atlas
+**Files Modified:**
+- `concretewidgets.go`: Implemented DrawText method (8 LOC changed)
+**Tests:** Code compiles successfully; go build passes
+**Impact:** PublicWidget children in ScrollView can now render text. This completes the ScrollView adapter functionality started in TD-2.
+**Complexity:** DrawText complexity cc=2 (one if guard), well under threshold of 10
+
 ### TD-3: Theme system integration for Panel widget ✅
 **Completed:** 2026-03-09  
 **File:** `layout.go:421` (syncStyleToInternal), `layout.go:265` (SetTheme)  
@@ -80,5 +94,5 @@ _(No active items)_
 ---
 
 **Last Updated:** 2026-03-09  
-**Total Active Items:** 1  
-**Total Completed Items:** 3
+**Total Active Items:** 0  
+**Total Completed Items:** 5

@@ -2,6 +2,7 @@ package wain
 
 import (
 	"github.com/opd-ai/wain/internal/raster/primitives"
+	textpkg "github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/widgets"
 )
 
@@ -102,15 +103,20 @@ func (c *bufferCanvas) DrawLine(x1, y1, x2, y2 int, color Color, thickness int) 
 }
 
 // DrawText renders text.
-func (c *bufferCanvas) DrawText(text string, x, y int, font *Font, color Color) {
-	// Text rendering requires an atlas which we don't have access to here
-	// For now, this is a limitation - text in adapted widgets won't render
-	// TODO: Pass atlas through or use a different approach for text
-	_ = text
-	_ = x
-	_ = y
-	_ = font
-	_ = color
+func (c *bufferCanvas) DrawText(txt string, x, y int, font *Font, color Color) {
+	if font == nil || font.atlas == nil {
+		return
+	}
+
+	textpkg.DrawText(
+		c.buf,
+		txt,
+		float64(c.xOff+x),
+		float64(c.yOff+y),
+		font.size,
+		color.toInternal(),
+		font.atlas,
+	)
 }
 
 // DrawImage renders an image.
