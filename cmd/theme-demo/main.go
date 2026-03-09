@@ -77,7 +77,7 @@ func main() {
 		Background: &customBg,
 		FontSize:   &fontSize,
 	}
-	
+
 	// Note: applyToTheme is private, so we can't demonstrate it here.
 	// In actual usage, widgets would use it internally.
 	fmt.Printf("  Created override with custom background RGB(%d, %d, %d) and font size %.1f\n", customBg.R, customBg.G, customBg.B, fontSize)
@@ -85,10 +85,9 @@ func main() {
 	fmt.Println()
 
 	fmt.Println("=== Theme Demo Complete ===")
-	
+
 	// Note: We're not running the full app event loop since this is just a theme demo
 	_ = app
 	_ = override
 	log.Println("Theme demo completed successfully")
 }
-
