@@ -71,7 +71,66 @@ all: build
 # These checks run before any build step and fail immediately with actionable
 # installation instructions if a required tool is absent.
 
-check-deps: check-musl-gcc check-musl-rust-target
+check-deps: check-os check-go check-rust check-musl-gcc check-musl-rust-target
+
+check-os:
+	@if [ "$$(uname -s)" != "Linux" ]; then \
+		echo ""; \
+		echo "ERROR: wain requires Linux (found: $$(uname -s))"; \
+		echo ""; \
+		echo "wain implements Wayland and X11 display protocols and is designed"; \
+		echo "for Linux desktop environments. Cross-compilation from macOS is"; \
+		echo "possible but requires a Linux musl cross-toolchain."; \
+		echo ""; \
+		echo "If you are on macOS and want to cross-compile:"; \
+		echo "  brew install FiloSottile/musl-cross/musl-cross"; \
+		echo "  make build CC=x86_64-linux-musl-gcc"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ Operating system: Linux"
+
+check-go:
+	@if ! command -v go >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: Go compiler not found"; \
+		echo ""; \
+		echo "Install Go 1.24 or later from https://go.dev/dl/"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@GO_VERSION=$$(go version | sed -n 's/.*go\([0-9]*\)\.\([0-9]*\).*/\1.\2/p'); \
+	GO_MAJOR=$$(echo $$GO_VERSION | cut -d. -f1); \
+	GO_MINOR=$$(echo $$GO_VERSION | cut -d. -f2); \
+	if [ "$$GO_MAJOR" -lt 1 ] || ([ "$$GO_MAJOR" -eq 1 ] && [ "$$GO_MINOR" -lt 24 ]); then \
+		echo ""; \
+		echo "ERROR: Go 1.24 or later is required (found: $$(go version))"; \
+		echo ""; \
+		echo "Download from https://go.dev/dl/"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ Go version: $$(go version | awk '{print $$3}')"
+
+check-rust:
+	@if ! command -v rustc >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: Rust compiler not found"; \
+		echo ""; \
+		echo "Install Rust from https://rustup.rs/"; \
+		echo "  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo ""; \
+		echo "ERROR: cargo not found"; \
+		echo ""; \
+		echo "cargo should be installed with Rust. Re-install from https://rustup.rs/"; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ Rust version: $$(rustc --version | awk '{print $$2}')"
 
 check-musl-gcc:
 	@if ! command -v $(CC) >/dev/null 2>&1; then \
