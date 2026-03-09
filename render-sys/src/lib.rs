@@ -683,7 +683,14 @@ pub unsafe extern "C" fn render_compile_shader(
 
     // Allocate heap memory for the binary
     let binary_size = kernel.binary.len();
-    let layout = std::alloc::Layout::from_size_align(binary_size, 1).unwrap();
+    
+    // Guard against zero-size allocation
+    if binary_size == 0 {
+        return std::ptr::null_mut();
+    }
+    
+    let layout = std::alloc::Layout::from_size_align(binary_size, 1)
+        .expect("valid layout: align=1 is always a power of 2");
     let ptr = std::alloc::alloc(layout);
     
     if ptr.is_null() {
@@ -707,11 +714,12 @@ pub unsafe extern "C" fn render_compile_shader(
 /// - ptr must not be used after this call
 #[no_mangle]
 pub unsafe extern "C" fn render_shader_free(ptr: *mut u8, size: usize) {
-    if ptr.is_null() {
+    if ptr.is_null() || size == 0 {
         return;
     }
     
-    let layout = std::alloc::Layout::from_size_align(size, 1).unwrap();
+    let layout = std::alloc::Layout::from_size_align(size, 1)
+        .expect("valid layout: align=1 is always a power of 2");
     std::alloc::dealloc(ptr, layout);
 }
 
