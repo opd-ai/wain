@@ -245,7 +245,7 @@ func (t *TextInput) Text() string {
 // SetPlaceholder sets the placeholder text shown when the input is empty.
 func (t *TextInput) SetPlaceholder(placeholder string) {
 	t.placeholder = placeholder
-	// TODO(TD-1): Add placeholder support to internal TextInput
+	t.internal.SetPlaceholder(placeholder)
 }
 
 // SetFocus sets the keyboard focus state of the text input.

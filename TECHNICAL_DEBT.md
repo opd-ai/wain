@@ -4,14 +4,6 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 
 ## Active Items
 
-### TD-1: Add placeholder support to TextInput widget
-**File:** `concretewidgets.go:248`  
-**Priority:** Medium  
-**Description:** The public `TextInput.SetPlaceholder()` method accepts a placeholder string but doesn't pass it to the internal widget implementation. Need to extend `internal/ui/widgets` TextInput to support placeholder rendering (grayed-out text when input is empty).  
-**Impact:** User-facing API exists but feature is non-functional  
-**Effort:** ~1-2 hours (add placeholder field to internal widget, render in Draw method with dimmed color)  
-**Related:** None  
-
 ### TD-2: Implement proper child management for ScrollView
 **File:** `concretewidgets.go:361`  
 **Priority:** Medium  
@@ -42,10 +34,17 @@ This file tracks TODO items in the codebase. Each TODO comment references an ite
 
 ## Completed Items
 
-(None yet)
+### TD-1: Add placeholder support to TextInput widget ✅
+**Completed:** 2026-03-09  
+**File:** `concretewidgets.go:248` (fixed), `internal/ui/widgets/widgets.go:448` (added)  
+**Solution:** Added `SetPlaceholder(string)` method to internal TextInput widget that updates the placeholder field. Updated public TextInput.SetPlaceholder() to call through to internal widget. Placeholder rendering was already implemented via getDisplayText() helper (grayed-out text when input is empty).  
+**Files Modified:**
+- `internal/ui/widgets/widgets.go`: Added SetPlaceholder method (3 LOC)
+- `concretewidgets.go`: Updated SetPlaceholder to call internal method, removed TODO  
+**Tests:** All tests passing (59 packages)
 
 ---
 
 **Last Updated:** 2026-03-09  
-**Total Active Items:** 4  
+**Total Active Items:** 3  
 **Total Completed Items:** 0

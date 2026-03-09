@@ -446,6 +446,11 @@ func (t *TextInput) SetText(text string) {
 	}
 }
 
+// SetPlaceholder sets the placeholder text shown when the input is empty.
+func (t *TextInput) SetPlaceholder(placeholder string) {
+	t.placeholder = placeholder
+}
+
 // Text returns the current text content.
 func (t *TextInput) Text() string {
 	return t.text
