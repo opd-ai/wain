@@ -3,8 +3,8 @@ package backend
 import (
 	"testing"
 
-	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 func TestNewSoftwareBackend(t *testing.T) {

@@ -2,8 +2,8 @@
 package decorations
 
 import (
-	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // ResizeEdge indicates which edge or corner is being resized.

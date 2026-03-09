@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // ErrVertexBufferFull is returned when the vertex buffer is too small.

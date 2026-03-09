@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/opd-ai/wain/internal/raster/consumer"
-	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/text"
 )
 
