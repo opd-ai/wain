@@ -385,7 +385,7 @@ func (p *Panel) syncStyleToInternal() {
 		return
 	}
 	style := &panelStyle{
-		base:     DefaultDark(), // TODO: Get from App.theme when available
+		base:     DefaultDark(), // TODO(TD-3): Get from App.theme when available
 		override: p.styleOverride,
 	}
 	p.internal.SetStyle(style)

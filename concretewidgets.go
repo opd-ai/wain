@@ -245,7 +245,7 @@ func (t *TextInput) Text() string {
 // SetPlaceholder sets the placeholder text shown when the input is empty.
 func (t *TextInput) SetPlaceholder(placeholder string) {
 	t.placeholder = placeholder
-	// TODO: Add placeholder support to internal TextInput
+	// TODO(TD-1): Add placeholder support to internal TextInput
 }
 
 // SetFocus sets the keyboard focus state of the text input.
@@ -358,7 +358,7 @@ func (s *ScrollView) HandleEvent(evt Event) bool {
 
 // Add appends a child widget to the scroll view's content area.
 func (s *ScrollView) Add(child PublicWidget) {
-	// TODO: Implement proper child management for ScrollView
+	// TODO(TD-2): Implement proper child management for ScrollView
 	// This requires extending widgets.ScrollContainer to support PublicWidget children
 	_ = child
 }

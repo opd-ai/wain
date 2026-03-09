@@ -1468,7 +1468,7 @@ func (a *App) processWaylandEvents() error {
 		return fmt.Errorf("flush wayland requests: %w", err)
 	}
 
-	// TODO: Implement full Wayland event reading and dispatch
+	// TODO(TD-4): Implement full Wayland event reading and dispatch
 	// Current limitation: No inbound event processing yet
 	// Required additions:
 	//   1. Read events from socket with proper wire protocol parsing
