@@ -21,6 +21,7 @@ package main
 
 import (
 	"fmt"
+	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
