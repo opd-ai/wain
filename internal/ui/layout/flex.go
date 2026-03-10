@@ -292,9 +292,11 @@ func computeJustifyOffset(justify Justify, sizes []int, contentSize, currentGap,
 			gap = (contentSize - (totalSize - totalGaps)) / (len(sizes) - 1)
 		}
 	case JustifySpaceAround:
-		space := (contentSize - (totalSize - totalGaps)) / len(sizes)
-		gap = space
-		offset += space / 2
+		if len(sizes) > 0 {
+			space := (contentSize - (totalSize - totalGaps)) / len(sizes)
+			gap = space
+			offset += space / 2
+		}
 	}
 
 	return offset, gap

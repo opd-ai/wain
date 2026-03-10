@@ -467,10 +467,10 @@ func (ta *TextureAtlas) removeRegionFromShelf(pageID, imageID int) {
 		return
 	}
 
-	for _, shelf := range page.Shelves {
+	for shelfIdx, shelf := range page.Shelves {
 		for i, r := range shelf.Regions {
 			if r.ImageID == imageID {
-				shelf.Regions = append(shelf.Regions[:i], shelf.Regions[i+1:]...)
+				page.Shelves[shelfIdx].Regions = append(shelf.Regions[:i], shelf.Regions[i+1:]...)
 				return
 			}
 		}
