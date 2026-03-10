@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -1171,11 +1172,22 @@ func (a *App) tryX11Connection() error {
 }
 
 // extractX11DisplayNumber extracts the display number from DISPLAY env var.
+// DISPLAY format is [host]:displaynumber[.screennumber] — the screen number
+// must be stripped because the Unix socket path uses only the display number.
 func (a *App) extractX11DisplayNumber(display string) string {
-	if len(display) > 1 && display[0] == ':' {
-		return display[1:]
+	s := display
+	// Strip optional host prefix (everything before the last colon)
+	if idx := strings.LastIndex(s, ":"); idx >= 0 {
+		s = s[idx+1:]
 	}
-	return "0"
+	// Strip optional screen number (.N suffix)
+	if dotIdx := strings.Index(s, "."); dotIdx >= 0 {
+		s = s[:dotIdx]
+	}
+	if s == "" {
+		return "0"
+	}
+	return s
 }
 
 // connectWayland establishes a Wayland connection.
