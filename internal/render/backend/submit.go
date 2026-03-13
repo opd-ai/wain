@@ -3,6 +3,7 @@ package backend
 import (
 	"encoding/binary"
 	"fmt"
+	"log"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/render"
@@ -55,18 +56,36 @@ func (b *GPUBackend) allocateBatchBuffer() (*render.BufferHandle, error) {
 }
 
 // submitToGPU submits the batch buffer to the GPU with relocations for execution.
+//
+// When a compiled solid-fill shader is available (set at GPUBackend init time),
+// it also dispatches a shader batch via render_submit_shader_batch so that the
+// EU/RDNA kernel is active in the pipeline alongside the fixed-function state.
+// The shader batch is best-effort: a failure is logged but does not abort the frame.
 func (b *GPUBackend) submitToGPU(buffer *render.BufferHandle, data []byte, relocs []render.Relocation) error {
-	err := render.SubmitBatch(
+	b.maybeSubmitShaderBatch()
+
+	if err := render.SubmitBatch(
 		b.drmPath,
 		buffer.GemHandle(),
 		uint32(len(data)),
 		relocs,
 		b.ctx.ContextID,
-	)
-	if err != nil {
+	); err != nil {
 		return fmt.Errorf("submit batch: %w", err)
 	}
 	return nil
+}
+
+// maybeSubmitShaderBatch submits the pre-compiled solid_fill shader batch when
+// the shader binary is available.  Failure is non-fatal and falls through to
+// the fixed-function path.
+func (b *GPUBackend) maybeSubmitShaderBatch() {
+	if len(b.solidFillShader) == 0 {
+		return
+	}
+	if err := render.SubmitShaderBatch(b.drmPath, solidFillWGSL, true, b.ctx.ContextID); err != nil {
+		log.Printf("backend: shader batch submission skipped (%v); using fixed-function path", err)
+	}
 }
 
 // writeVertexData writes vertex data to the vertex buffer via mmap.

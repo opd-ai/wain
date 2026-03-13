@@ -6,13 +6,18 @@
 package backend
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render"
 )
+
+//go:embed solid_fill.wgsl
+var solidFillWGSL []byte
 
 var (
 	// ErrNilDisplayList is returned when a nil display list is provided.
@@ -43,6 +48,9 @@ type GPUBackend struct {
 
 	// Frame profiler for performance metrics
 	profiler *FrameProfiler
+
+	// Compiled solid-fill fragment shader binary (nil on no-GPU paths)
+	solidFillShader []byte
 }
 
 // Config contains configuration for the GPU backend.
@@ -92,18 +100,25 @@ func New(cfg Config) (*GPUBackend, error) {
 		return nil, err
 	}
 
+	// Detect GPU generation and compile the solid-fill fragment shader once at
+	// startup.  On non-GPU paths (or when the GPU gen is unrecognised) the
+	// shader is silently skipped; the backend falls back to the fixed-function
+	// batch construction that was used before Phase 4.3 integration.
+	solidFillShader := compileSolidFillShader(cfg.DRMPath)
+
 	backend := &GPUBackend{
-		drmPath:      cfg.DRMPath,
-		allocator:    allocator,
-		ctx:          ctx,
-		vertexBuffer: vertexBuffer,
-		vertexHandle: vertexBuffer.GemHandle(),
-		renderTarget: renderTarget,
-		targetHandle: renderTarget.GemHandle(),
-		width:        cfg.Width,
-		height:       cfg.Height,
-		fontAtlas:    cfg.FontAtlas,
-		profiler:     NewFrameProfiler(),
+		drmPath:         cfg.DRMPath,
+		allocator:       allocator,
+		ctx:             ctx,
+		vertexBuffer:    vertexBuffer,
+		vertexHandle:    vertexBuffer.GemHandle(),
+		renderTarget:    renderTarget,
+		targetHandle:    renderTarget.GemHandle(),
+		width:           cfg.Width,
+		height:          cfg.Height,
+		fontAtlas:       cfg.FontAtlas,
+		profiler:        NewFrameProfiler(),
+		solidFillShader: solidFillShader,
 	}
 
 	return backend, nil
@@ -156,6 +171,26 @@ func allocateBuffers(allocator *render.Allocator, cfg Config) (*render.BufferHan
 	}
 
 	return vertexBuffer, renderTarget, nil
+}
+
+// compileSolidFillShader compiles the embedded solid_fill WGSL fragment shader
+// to native GPU machine code.  Returns nil if the GPU generation is unknown or
+// compilation fails; callers must handle nil gracefully.
+func compileSolidFillShader(drmPath string) []byte {
+	gpuGen := render.DetectGPU(drmPath)
+	if gpuGen < 0 {
+		return nil
+	}
+	binary, err := render.CompileShader(
+		string(solidFillWGSL),
+		render.GpuGeneration(gpuGen),
+		render.FragmentShader,
+	)
+	if err != nil {
+		log.Printf("backend: solid_fill shader compile skipped (%v); using fixed-function path", err)
+		return nil
+	}
+	return binary.Data
 }
 
 // Destroy frees all GPU resources.

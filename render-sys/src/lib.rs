@@ -20,6 +20,7 @@ pub mod shader;
 pub mod shaders;
 pub mod eu;
 pub mod rdna;
+pub mod submit;
 
 #[cfg(test)]
 pub mod gpu_test;
@@ -735,6 +736,154 @@ pub unsafe extern "C" fn render_shader_free(ptr: *mut u8, size: usize) {
     let layout = std::alloc::Layout::from_size_align(size, 1)
         .expect("valid layout: align=1 is always a power of 2");
     std::alloc::dealloc(ptr, layout);
+}
+
+/// Compile a WGSL shader to native GPU machine code and submit it as a batch.
+///
+/// This is the primary entry point for shader-driven GPU rendering. It compiles
+/// the provided WGSL source to Intel EU or AMD RDNA machine code (selected
+/// automatically from the detected GPU generation), builds a GPU command batch
+/// that binds the compiled shader kernel, and submits that batch to the GPU.
+///
+/// # Arguments
+/// * `path`        — Path to the DRM render node (e.g. `/dev/dri/renderD128`)
+/// * `wgsl_source` — Null-terminated WGSL shader source
+/// * `is_fragment` — 1 for fragment shader, 0 for vertex shader
+/// * `context_id`  — GPU context ID (from `render_create_context`)
+///
+/// # Returns
+/// 0 on success, −1 on any error (bad args, no GPU, compile failure, etc.).
+///
+/// # Safety
+/// * `path` and `wgsl_source` must be valid null-terminated C strings.
+/// * `wgsl_source` must not exceed `MAX_SHADER_SOURCE_SIZE` bytes.
+#[no_mangle]
+pub unsafe extern "C" fn render_submit_shader_batch(
+    path: *const std::ffi::c_char,
+    wgsl_source: *const std::ffi::c_char,
+    is_fragment: i32,
+    context_id: u32,
+) -> i32 {
+    use batch::BatchBuilder;
+    use naga::ShaderStage;
+    use submit::{bind_eu_shader_to_batch, bind_rdna_shader_to_batch};
+
+    if path.is_null() || wgsl_source.is_null() {
+        return -1;
+    }
+
+    let c_path = match std::ffi::CStr::from_ptr(path).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    let source = match std::ffi::CStr::from_ptr(wgsl_source).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+
+    if source.len() > MAX_SHADER_SOURCE_SIZE {
+        return -1;
+    }
+
+    let stage = if is_fragment != 0 {
+        ShaderStage::Fragment
+    } else {
+        ShaderStage::Vertex
+    };
+
+    let device = match DrmDevice::open(c_path) {
+        Ok(d) => d,
+        Err(_) => return -1,
+    };
+
+    let generation = match device.detect_gpu_generation() {
+        Ok(g) => g,
+        Err(_) => return -1,
+    };
+
+    let driver = match generation {
+        GpuGeneration::Gen9
+        | GpuGeneration::Gen11
+        | GpuGeneration::Gen12
+        | GpuGeneration::Xe => DriverType::I915,
+        GpuGeneration::AmdRdna1
+        | GpuGeneration::AmdRdna2
+        | GpuGeneration::AmdRdna3 => DriverType::Amdgpu,
+        GpuGeneration::Unknown => return -1,
+    };
+
+    let allocator = BufferAllocator::new(device, driver);
+
+    // BatchBuilder::new allocates the GEM batch buffer internally.
+    const BATCH_SIZE: u32 = 64 * 1024;
+    let mut builder = match BatchBuilder::new(&allocator, BATCH_SIZE, generation) {
+        Ok(b) => b,
+        Err(_) => return -1,
+    };
+
+    // Compile the WGSL shader and bind it to the batch (emits pipeline state).
+    let bind_result = match generation {
+        GpuGeneration::Gen9
+        | GpuGeneration::Gen11
+        | GpuGeneration::Gen12
+        | GpuGeneration::Xe => {
+            bind_eu_shader_to_batch(&allocator, generation, source, stage, &mut builder)
+        }
+        GpuGeneration::AmdRdna1
+        | GpuGeneration::AmdRdna2
+        | GpuGeneration::AmdRdna3 => {
+            bind_rdna_shader_to_batch(&allocator, generation, source, stage, &mut builder)
+        }
+        GpuGeneration::Unknown => return -1,
+    };
+
+    if bind_result.is_err() {
+        return -1;
+    }
+
+    // Emit batch-buffer-end marker.
+    builder.emit_dword(0x0A000000); // MI_BATCH_BUFFER_END
+
+    let submittable = builder.finalize();
+    let batch_handle = submittable.buffer_handle;
+    let batch_len = submittable.len_bytes() as u32;
+
+    // Convert batch::Relocation entries to i915::RelocationEntry for submission.
+    let relocs: Vec<RelocationEntry> = submittable
+        .relocations
+        .iter()
+        .map(|r| RelocationEntry {
+            target_handle: r.target_handle,
+            delta: r.target_offset as u32,
+            offset: r.offset_dwords as u64 * 4,
+            presumed_offset: 0,
+            read_domains: r.read_domains,
+            write_domain: r.write_domain,
+        })
+        .collect();
+
+    let dev = allocator.device();
+
+    let result = match generation {
+        GpuGeneration::Gen9 | GpuGeneration::Gen11 | GpuGeneration::Gen12 => {
+            dev.i915_submit_batch(batch_handle, batch_len, &relocs, context_id)
+        }
+        GpuGeneration::Xe => dev.xe_submit_batch_simple(batch_handle, 0, batch_len as u64),
+        GpuGeneration::AmdRdna1
+        | GpuGeneration::AmdRdna2
+        | GpuGeneration::AmdRdna3 => {
+            const AMD_VA_BASE: u64 = 0x4000_0000;
+            let batch_size = ((batch_len as u64 + 4095) / 4096) * 4096;
+            dev.amdgpu_submit_with_va(batch_handle, batch_size, batch_len, context_id, AMD_VA_BASE)
+        }
+        GpuGeneration::Unknown => return -1,
+    };
+
+    match result {
+        Ok(()) => 0,
+        Err(_) => -1,
+    }
 }
 
 #[cfg(test)]

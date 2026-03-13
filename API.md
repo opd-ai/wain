@@ -1241,6 +1241,7 @@ See `cmd/` directory for complete examples:
 | `x11-dmabuf-demo` | X11 DRI3 buffer sharing |
 | `dmabuf-demo` | Wayland dmabuf buffer sharing |
 | `gpu-triangle-demo` | GPU command submission (triangle) |
+| `gpu-shader-demo` | WGSL shader compilation → EU/RDNA → batch submission |
 | `double-buffer-demo` | Double buffering with ring buffer |
 | `auto-render-demo` | Auto-detection with GPU/software fallback |
 | `clipboard-demo` | Clipboard operations (Wayland + X11) |
@@ -1248,5 +1249,77 @@ See `cmd/` directory for complete examples:
 
 ---
 
-**Last Updated:** 2026-03-08  
-**wain Version:** Phase 8 (current development milestone)
+## GPU Rendering Pipeline
+
+Wain includes a shader-driven GPU rendering pipeline that compiles WGSL shaders
+to native Intel EU or AMD RDNA machine code at runtime.
+
+### Data Flow
+
+```
+WGSL source (text)
+    │
+    ▼
+render_compile_shader()          ← Rust / CGO boundary
+    │  (naga IR → EU/RDNA binary)
+    ▼
+EU kernel binary  (Vec<u8>)      ← Intel Gen9/11/12/Xe
+RDNA kernel binary (Vec<u8>)     ← AMD RDNA1/2/3
+    │
+    ▼
+bind_eu_shader_to_batch()        ← render-sys/src/submit.rs
+    │  allocates GEM buffer, emits 3DSTATE_PS pipeline state,
+    │  registers relocation for shader VA
+    ▼
+BatchBuilder → SubmittableBatch
+    │
+    ▼
+render_submit_shader_batch()     ← lib.rs #[no_mangle] FFI
+    │  i915_submit_batch / xe_submit_batch_simple / amdgpu_submit_with_va
+    ▼
+GPU executes shader kernel
+```
+
+### Go API
+
+The following functions in `internal/render` expose the shader pipeline to Go:
+
+```go
+// Compile a WGSL shader to native machine code for the detected GPU.
+// gpuGen: 9=Gen9, 11=Gen11, 12=Gen12, 13=Xe, -1=RDNA1, -2=RDNA2, -3=RDNA3.
+binary, err := render.CompileShader(wgslSource, gpuGen, isFragment)
+
+// Compile and submit a shader batch in one call.
+// Detects GPU automatically from the DRM device.
+err = render.SubmitShaderBatch(drmPath, wgslSource, isFragment, contextID)
+```
+
+### GPUBackend Integration
+
+`internal/render/backend.GPUBackend` compiles `solid_fill.wgsl` at startup via
+`go:embed` and calls `render.SubmitShaderBatch` on every frame.  If the GPU is
+unavailable or compilation fails, the backend silently falls back to the
+fixed-function batch construction path.
+
+```go
+cfg := backend.DefaultConfig()
+b, err := backend.New(cfg)
+// solid_fill.wgsl is compiled to EU/RDNA binary during New()
+```
+
+### Supported GPU Generations
+
+| GPU Family | Generation IDs | Notes |
+|-----------|----------------|-------|
+| Intel Gen9 | 9 | Skylake, Kaby Lake, Coffee Lake |
+| Intel Gen11 | 11 | Ice Lake |
+| Intel Gen12 | 12 | Tiger Lake, Rocket Lake, Alder Lake |
+| Intel Xe | 13 | Meteor Lake+ |
+| AMD RDNA1 | -1 | RX 5000 series |
+| AMD RDNA2 | -2 | RX 6000 series, Steam Deck |
+| AMD RDNA3 | -3 | RX 7000 series |
+
+---
+
+**Last Updated:** 2026-03-13  
+**wain Version:** Phase 4.3 (GPU shader pipeline integrated)

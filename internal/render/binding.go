@@ -100,6 +100,14 @@ package render
 // );
 //
 // int32_t buffer_munmap(uint8_t *ptr, size_t size);
+//
+// // Shader batch submission (compile + bind + submit in one call)
+// int32_t render_submit_shader_batch(
+//     const char *path,
+//     const char *wgsl_source,
+//     int32_t     is_fragment,
+//     uint32_t    context_id
+// );
 import "C"
 
 import (
@@ -392,4 +400,46 @@ type ContextCreateError struct {
 // Error returns the error message for a context creation failure.
 func (e *ContextCreateError) Error() string {
 	return "context creation failed for device " + e.path
+}
+
+// SubmitShaderBatch compiles a WGSL shader and submits it as a GPU command batch.
+//
+// This is the primary path for shader-driven rendering on Intel EU and AMD RDNA
+// GPUs.  It compiles the shader to native machine code, builds a GPU command
+// batch that binds the compiled kernel to the pipeline state, and submits it
+// for execution in the given context.
+//
+// The GPU generation is auto-detected from the DRM device at drmPath.
+// isFragment: true for fragment/pixel shader, false for vertex shader.
+func SubmitShaderBatch(drmPath string, wgslSrc []byte, isFragment bool, contextID uint32) error {
+	if len(wgslSrc) == 0 {
+		return fmt.Errorf("render: SubmitShaderBatch: empty shader source")
+	}
+
+	cpath := C.CString(drmPath)
+	defer C.free(unsafe.Pointer(cpath))
+
+	csrc := C.CString(string(wgslSrc))
+	defer C.free(unsafe.Pointer(csrc))
+
+	frag := C.int32_t(0)
+	if isFragment {
+		frag = 1
+	}
+
+	result := C.render_submit_shader_batch(cpath, csrc, frag, C.uint32_t(contextID))
+	if result < 0 {
+		return &ShaderSubmitError{drmPath: drmPath}
+	}
+	return nil
+}
+
+// ShaderSubmitError represents a shader batch submission failure.
+type ShaderSubmitError struct {
+	drmPath string
+}
+
+// Error returns the error string for a shader submission failure.
+func (e *ShaderSubmitError) Error() string {
+	return "render: shader batch submission failed for device " + e.drmPath
 }
