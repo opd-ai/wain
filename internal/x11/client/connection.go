@@ -307,6 +307,94 @@ func (c *Connection) ConfigureWindow(window XID, mask ConfigureWindowMask, value
 	return c.sendRequest(buf.Bytes())
 }
 
+// InternAtom returns the atom ID for the given name, creating it if necessary.
+// If onlyIfExists is true and the atom does not exist, 0 is returned.
+func (c *Connection) InternAtom(name string, onlyIfExists bool) (uint32, error) {
+	var buf bytes.Buffer
+
+	nameLen := len(name)
+	namePad := wire.Pad(nameLen)
+	msgLen := uint16(2 + (nameLen+namePad)/4)
+
+	var existsByte uint8
+	if onlyIfExists {
+		existsByte = 1
+	}
+
+	wire.EncodeRequestHeader(&buf, wire.OpcodeInternAtom, existsByte, msgLen)
+	wire.EncodeUint16(&buf, uint16(nameLen))
+	wire.EncodePadding(&buf, 2)
+	buf.WriteString(name)
+	wire.EncodePadding(&buf, namePad)
+
+	reply, err := c.SendRequestAndReply(buf.Bytes())
+	if err != nil {
+		return 0, fmt.Errorf("InternAtom %q: %w", name, err)
+	}
+
+	if len(reply) < 12 {
+		return 0, fmt.Errorf("client: InternAtom reply too short (%d bytes)", len(reply))
+	}
+
+	return binary.LittleEndian.Uint32(reply[8:12]), nil
+}
+
+// ChangeProperty sets a window property.
+// format must be 8, 16, or 32 (bits per element).
+// mode: 0 = Replace, 1 = Prepend, 2 = Append.
+func (c *Connection) ChangeProperty(window, property, typ uint32, format, mode uint8, data []byte) error {
+	var buf bytes.Buffer
+
+	dataPad := wire.Pad(len(data))
+	msgLen := uint16(6 + (len(data)+dataPad)/4)
+
+	var dataItems uint32
+
+	switch format {
+	case 16:
+		dataItems = uint32(len(data) / 2)
+	case 32:
+		dataItems = uint32(len(data) / 4)
+	default: // 8
+		dataItems = uint32(len(data))
+	}
+
+	wire.EncodeRequestHeader(&buf, wire.OpcodeChangeProperty, mode, msgLen)
+	wire.EncodeUint32(&buf, window)
+	wire.EncodeUint32(&buf, property)
+	wire.EncodeUint32(&buf, typ)
+	buf.WriteByte(format)
+	wire.EncodePadding(&buf, 3)
+	wire.EncodeUint32(&buf, dataItems)
+	buf.Write(data)
+	wire.EncodePadding(&buf, dataPad)
+
+	return c.sendRequest(buf.Bytes())
+}
+
+// SendEvent sends a synthetic event to the given destination window.
+// event must be exactly 32 bytes.
+func (c *Connection) SendEvent(destination uint32, propagate bool, eventMask uint32, event []byte) error {
+	if len(event) != wire.ReplyHeaderSize {
+		return fmt.Errorf("client: SendEvent event must be 32 bytes, got %d", len(event))
+	}
+
+	var buf bytes.Buffer
+
+	var propagateByte uint8
+	if propagate {
+		propagateByte = 1
+	}
+
+	// Total: header(4) + dest(4) + mask(4) + event(32) = 44 bytes = 11 units
+	wire.EncodeRequestHeader(&buf, wire.OpcodeSendEvent, propagateByte, 11)
+	wire.EncodeUint32(&buf, destination)
+	wire.EncodeUint32(&buf, eventMask)
+	buf.Write(event)
+
+	return c.sendRequest(buf.Bytes())
+}
+
 // RootVisual returns the root visual ID.
 func (c *Connection) RootVisual() uint32 {
 	return c.rootVisual

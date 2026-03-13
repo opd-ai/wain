@@ -198,6 +198,98 @@ func TestWindow_GettersBeforeInit(t *testing.T) {
 	}
 }
 
+// TestBuildWMSizeHints exercises the WM_SIZE_HINTS serialisation helper.
+func TestBuildWMSizeHints(t *testing.T) {
+	tests := []struct {
+		name       string
+		minW, minH int
+		maxW, maxH int
+		wantFlags  uint32
+	}{
+		{
+			name:      "no constraints",
+			wantFlags: 0,
+		},
+		{
+			name:      "min size only",
+			minW:      200, minH: 100,
+			wantFlags: 1 << 4, // PMinSize
+		},
+		{
+			name:      "max size only",
+			maxW:      1920, maxH: 1080,
+			wantFlags: 1 << 5, // PMaxSize
+		},
+		{
+			name:      "both constraints",
+			minW:      200, minH: 100,
+			maxW:      1920, maxH: 1080,
+			wantFlags: (1 << 4) | (1 << 5), // PMinSize | PMaxSize
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			win := &Window{
+				minWidth: tt.minW, minHeight: tt.minH,
+				maxWidth: tt.maxW, maxHeight: tt.maxH,
+			}
+
+			hints := win.buildWMSizeHints()
+
+			if len(hints) != 72 {
+				t.Fatalf("hints length = %d, want 72", len(hints))
+			}
+
+			flags := uint32(hints[0]) | uint32(hints[1])<<8 | uint32(hints[2])<<16 | uint32(hints[3])<<24
+			if flags != tt.wantFlags {
+				t.Errorf("flags = %#x, want %#x", flags, tt.wantFlags)
+			}
+
+			if tt.minW > 0 || tt.minH > 0 {
+				gotMinW := uint32(hints[20]) | uint32(hints[21])<<8 | uint32(hints[22])<<16 | uint32(hints[23])<<24
+				gotMinH := uint32(hints[24]) | uint32(hints[25])<<8 | uint32(hints[26])<<16 | uint32(hints[27])<<24
+				if int(gotMinW) != tt.minW {
+					t.Errorf("min_width = %d, want %d", gotMinW, tt.minW)
+				}
+				if int(gotMinH) != tt.minH {
+					t.Errorf("min_height = %d, want %d", gotMinH, tt.minH)
+				}
+			}
+
+			if tt.maxW > 0 || tt.maxH > 0 {
+				gotMaxW := uint32(hints[28]) | uint32(hints[29])<<8 | uint32(hints[30])<<16 | uint32(hints[31])<<24
+				gotMaxH := uint32(hints[32]) | uint32(hints[33])<<8 | uint32(hints[34])<<16 | uint32(hints[35])<<24
+				if int(gotMaxW) != tt.maxW {
+					t.Errorf("max_width = %d, want %d", gotMaxW, tt.maxW)
+				}
+				if int(gotMaxH) != tt.maxH {
+					t.Errorf("max_height = %d, want %d", gotMaxH, tt.maxH)
+				}
+			}
+		})
+	}
+}
+
+// TestWindow_X11SettersClosedWindow verifies that X11 window-management
+// methods return an error when the window is already closed.
+func TestWindow_X11SettersClosedWindow(t *testing.T) {
+	win := &Window{closed: true}
+
+	if err := win.SetTitle("hello"); err == nil {
+		t.Error("SetTitle on closed window should return error")
+	}
+	if err := win.SetMinSize(100, 100); err == nil {
+		t.Error("SetMinSize on closed window should return error")
+	}
+	if err := win.SetMaxSize(800, 600); err == nil {
+		t.Error("SetMaxSize on closed window should return error")
+	}
+	if err := win.SetFullscreen(true); err == nil {
+		t.Error("SetFullscreen on closed window should return error")
+	}
+}
+
 func TestWindow_EventHandlers(t *testing.T) {
 	win := &Window{}
 

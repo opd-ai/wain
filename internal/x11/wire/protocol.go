@@ -90,12 +90,28 @@ const (
 	OpcodeMapWindow         = 8
 	OpcodeUnmapWindow       = 9
 	OpcodeConfigureWindow   = 10
-	OpcodeGetProperty       = 20
+	OpcodeInternAtom        = 16
 	OpcodeChangeProperty    = 18
 	OpcodeDeleteProperty    = 19
+	OpcodeGetProperty       = 20
+	OpcodeSendEvent         = 25
 	OpcodeCreateGC          = 55
 	OpcodePutImage          = 72
 	OpcodeQueryExtension    = 98
+)
+
+// Predefined X11 atom IDs (XA_ constants from X11/Xatom.h).
+const (
+	AtomString        = 31 // XA_STRING
+	AtomWMName        = 39 // XA_WM_NAME
+	AtomWMNormalHints = 40 // XA_WM_NORMAL_HINTS
+	AtomWMSizeHints   = 41 // XA_WM_SIZE_HINTS
+)
+
+// WM_SIZE_HINTS flag bits used in WM_NORMAL_HINTS.
+const (
+	WMSizeHintsPMinSize = 1 << 4 // PMinSize: min size fields are set
+	WMSizeHintsPMaxSize = 1 << 5 // PMaxSize: max size fields are set
 )
 
 // Window attribute mask bits for CreateWindow and ChangeWindowAttributes.

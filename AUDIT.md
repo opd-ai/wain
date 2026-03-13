@@ -55,7 +55,7 @@ naming violations.  The single previously-flagged CC >10 function remains
 
 - [x] **`Panel.SetAlign` is a documented no-op** — `layout.go:205–213` — The method signature and doc comment fully describe cross-axis alignment ("For Row containers, controls vertical alignment…"), but the body is `_ = align` — the align value is silently discarded.  README claims "Flexbox-like Row/Column layout engine".  Any call to `SetAlign` with `AlignCenter`, `AlignEnd`, or `AlignStretch` has no effect; all layout is equivalent to `AlignStart`.
 
-- [ ] **X11 window-management operations are silent no-ops** — `app.go:477–650` — Three `Window` methods used by the documented public API have placeholder implementations for the X11 backend:
+- [x] **X11 window-management operations are silent no-ops** — `app.go:477–650` — Three `Window` methods used by the documented public API have placeholder implementations for the X11 backend:
   - `SetTitle` (app.go:494): returns `nil` without setting the X11 window title ("simplified placeholder").
   - `SetMinSize` (app.go:559): returns `nil` without writing WM size hints.
   - `SetMaxSize` (app.go:575): returns `nil` without writing WM size hints.

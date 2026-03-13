@@ -21,6 +21,7 @@ package wain
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -492,9 +493,11 @@ func (w *Window) SetTitle(title string) error {
 			return w.waylandToplevel.SetTitle(title)
 		}
 	case DisplayServerX11:
-		// X11 title setting would require additional protocol implementation
-		// This is a simplified placeholder
-		return nil
+		if w.x11Window != 0 {
+			if err := w.x11SetTitle(title); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -551,8 +554,11 @@ func (w *Window) SetMinSize(width, height int) error {
 			return w.waylandToplevel.SetMinSize(int32(width), int32(height))
 		}
 	case DisplayServerX11:
-		// X11 size hints would require additional protocol implementation
-		return nil
+		if w.x11Window != 0 {
+			if err := w.x11SetWMNormalHints(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -576,8 +582,11 @@ func (w *Window) SetMaxSize(width, height int) error {
 			return w.waylandToplevel.SetMaxSize(int32(width), int32(height))
 		}
 	case DisplayServerX11:
-		// X11 size hints would require additional protocol implementation
-		return nil
+		if w.x11Window != 0 {
+			if err := w.x11SetWMNormalHints(); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -603,11 +612,125 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 			return w.waylandToplevel.UnsetFullscreen()
 		}
 	case DisplayServerX11:
-		// X11 fullscreen would require WM hints (_NET_WM_STATE_FULLSCREEN)
-		return nil
+		if w.x11Window != 0 {
+			if err := w.x11SetFullscreen(fullscreen); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
+}
+
+// x11SetTitle sets WM_NAME (STRING) and _NET_WM_NAME (UTF8_STRING) on the X11
+// window so that both legacy and modern window managers show the correct title.
+func (w *Window) x11SetTitle(title string) error {
+	if err := w.app.x11Conn.ChangeProperty(
+		uint32(w.x11Window),
+		wire.AtomWMName,
+		wire.AtomString,
+		8, 0,
+		[]byte(title),
+	); err != nil {
+		return fmt.Errorf("failed to set WM_NAME: %w", err)
+	}
+
+	netWMName, err := w.app.x11Conn.InternAtom("_NET_WM_NAME", false)
+	if err != nil {
+		return fmt.Errorf("failed to intern _NET_WM_NAME: %w", err)
+	}
+
+	utf8String, err := w.app.x11Conn.InternAtom("UTF8_STRING", false)
+	if err != nil {
+		return fmt.Errorf("failed to intern UTF8_STRING: %w", err)
+	}
+
+	return w.app.x11Conn.ChangeProperty(
+		uint32(w.x11Window),
+		netWMName,
+		utf8String,
+		8, 0,
+		[]byte(title),
+	)
+}
+
+// x11SetWMNormalHints writes the WM_NORMAL_HINTS property reflecting the
+// window's current min/max size constraints.
+func (w *Window) x11SetWMNormalHints() error {
+	hints := w.buildWMSizeHints()
+	return w.app.x11Conn.ChangeProperty(
+		uint32(w.x11Window),
+		wire.AtomWMNormalHints,
+		wire.AtomWMSizeHints,
+		32, 0,
+		hints,
+	)
+}
+
+// buildWMSizeHints serialises the window's min/max constraints into the 72-byte
+// WM_SIZE_HINTS structure defined by the ICCCM.
+func (w *Window) buildWMSizeHints() []byte {
+	hints := make([]byte, 72) // 18 INT32 fields × 4 bytes
+
+	var flags uint32
+
+	if w.minWidth > 0 || w.minHeight > 0 {
+		flags |= wire.WMSizeHintsPMinSize
+		binary.LittleEndian.PutUint32(hints[20:24], uint32(w.minWidth))
+		binary.LittleEndian.PutUint32(hints[24:28], uint32(w.minHeight))
+	}
+
+	if w.maxWidth > 0 || w.maxHeight > 0 {
+		flags |= wire.WMSizeHintsPMaxSize
+		binary.LittleEndian.PutUint32(hints[28:32], uint32(w.maxWidth))
+		binary.LittleEndian.PutUint32(hints[32:36], uint32(w.maxHeight))
+	}
+
+	binary.LittleEndian.PutUint32(hints[0:4], flags)
+
+	return hints
+}
+
+// x11SetFullscreen sends a _NET_WM_STATE ClientMessage to the root window to
+// add or remove the fullscreen state per the Extended Window Manager Hints spec.
+func (w *Window) x11SetFullscreen(fullscreen bool) error {
+	netWMState, err := w.app.x11Conn.InternAtom("_NET_WM_STATE", false)
+	if err != nil {
+		return fmt.Errorf("failed to intern _NET_WM_STATE: %w", err)
+	}
+
+	netWMStateFullscreen, err := w.app.x11Conn.InternAtom("_NET_WM_STATE_FULLSCREEN", false)
+	if err != nil {
+		return fmt.Errorf("failed to intern _NET_WM_STATE_FULLSCREEN: %w", err)
+	}
+
+	const (
+		netWMStateRemove = 0
+		netWMStateAdd    = 1
+	)
+
+	action := uint32(netWMStateRemove)
+	if fullscreen {
+		action = netWMStateAdd
+	}
+
+	// ClientMessage event (32 bytes) per EWMH §2.
+	event := make([]byte, 32)
+	event[0] = 33 // ClientMessage type
+	event[1] = 32 // format: 32-bit data elements
+	binary.LittleEndian.PutUint32(event[4:8], uint32(w.x11Window))
+	binary.LittleEndian.PutUint32(event[8:12], netWMState)
+	binary.LittleEndian.PutUint32(event[12:16], action)
+	binary.LittleEndian.PutUint32(event[16:20], netWMStateFullscreen)
+
+	root := uint32(w.app.x11Conn.RootWindow())
+
+	const (
+		substructureRedirectMask = 1 << 20
+		substructureNotifyMask   = 1 << 19
+	)
+
+	return w.app.x11Conn.SendEvent(root, false, substructureRedirectMask|substructureNotifyMask, event)
 }
 
 // Close closes the window and releases its resources.

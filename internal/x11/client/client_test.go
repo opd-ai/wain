@@ -234,3 +234,61 @@ func TestAllocXIDAfterClose(t *testing.T) {
 		t.Errorf("AllocXID after Close should return ErrClosed, got: %v", err)
 	}
 }
+
+// TestInternAtomAfterClose verifies InternAtom returns ErrClosed on a closed connection.
+func TestInternAtomAfterClose(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available")
+	}
+	conn.Close()
+
+	_, err = conn.InternAtom("WM_NAME", false)
+	if err == nil {
+		t.Error("InternAtom on closed connection should return an error")
+	}
+}
+
+// TestChangePropertyAfterClose verifies ChangeProperty returns ErrClosed on a closed connection.
+func TestChangePropertyAfterClose(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available")
+	}
+	conn.Close()
+
+	err = conn.ChangeProperty(0, 39, 31, 8, 0, []byte("title"))
+	if err == nil {
+		t.Error("ChangeProperty on closed connection should return an error")
+	}
+}
+
+// TestSendEventAfterClose verifies SendEvent returns ErrClosed on a closed connection.
+func TestSendEventAfterClose(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available")
+	}
+	conn.Close()
+
+	event := make([]byte, 32)
+	err = conn.SendEvent(0, false, 0, event)
+	if err == nil {
+		t.Error("SendEvent on closed connection should return an error")
+	}
+}
+
+// TestSendEventBadLength verifies SendEvent rejects event buffers != 32 bytes.
+func TestSendEventBadLength(t *testing.T) {
+	conn, err := client.Connect("0")
+	if err != nil {
+		t.Skip("X server not available")
+	}
+	defer conn.Close()
+
+	event := make([]byte, 16) // wrong length
+	err = conn.SendEvent(0, false, 0, event)
+	if err == nil {
+		t.Error("SendEvent with non-32-byte event should return an error")
+	}
+}
