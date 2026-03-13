@@ -85,7 +85,8 @@ naming violations.  The single previously-flagged CC >10 function remains
   All are low-severity; none affect behavior.
   **Fixed (2026-03-13)**: Renamed private stuttering types: `buttonColors`→`btnColors`, `textInputDisplay`→`inputDisplay` (`internal/ui/widgets/base.go`), `panelStyle`→`themeAdapter` (`layout.go`). Renamed package-stuttering exports `ScaleInt`→`Int`, `ScaleFloat`→`Float` (`internal/ui/scale/manager.go`). Remaining tool findings (`Uint32`→`UInt32`, `Idle`→`IDle`) are false positives per Go stdlib convention: `encoding/binary` uses `Uint32`, and `Idle` is an English word, not the `ID` acronym.
 
-- [ ] **3 generic file names** — `internal/x11/events/types.go`, `internal/demo/constants.go`, `internal/ui/widgets/base.go` — go-stats-generator reports names as too generic; naming convention violation only.
+- [x] **3 generic file names** — `internal/x11/events/types.go`, `internal/demo/constants.go`, `internal/ui/widgets/base.go` — go-stats-generator reports names as too generic; naming convention violation only.
+  **Fixed (2026-03-13)**: Renamed `types.go`→`event_types.go`, `constants.go`→`drm_paths.go`, `base.go`→`widget_impl.go`.
 
 - [ ] **1 package name violation** — (go-stats-generator `package_name_violations: 1`) — Low-severity, cosmetic.
 
