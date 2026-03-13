@@ -161,25 +161,10 @@ func (r *Ring) AcquireForWriting(ctx context.Context) (*Slot, error) {
 	const pollInterval = 5 * time.Millisecond
 
 	for {
-		r.mu.Lock()
-		// Try to find an available or released slot
-		for i := 0; i < r.size; i++ {
-			idx := (r.nextAcquire + i) % r.size
-			slot := r.slots[idx]
-
-			slot.mu.Lock()
-			if slot.state == StateAvailable || slot.state == StateReleased {
-				slot.state = StateRendering
-				r.nextAcquire = (idx + 1) % r.size
-				slot.mu.Unlock()
-				r.mu.Unlock()
-				return slot, nil
-			}
-			slot.mu.Unlock()
+		if slot, ok := r.tryAcquireSlot(); ok {
+			return slot, nil
 		}
-		r.mu.Unlock()
 
-		// No slots available, wait briefly and retry
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("acquire canceled: %w", ctx.Err())
@@ -187,6 +172,28 @@ func (r *Ring) AcquireForWriting(ctx context.Context) (*Slot, error) {
 			// Retry
 		}
 	}
+}
+
+// tryAcquireSlot performs a single non-blocking scan for an available or
+// released slot, transitioning it to StateRendering on success.
+func (r *Ring) tryAcquireSlot() (*Slot, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := 0; i < r.size; i++ {
+		idx := (r.nextAcquire + i) % r.size
+		slot := r.slots[idx]
+
+		slot.mu.Lock()
+		if slot.state == StateAvailable || slot.state == StateReleased {
+			slot.state = StateRendering
+			r.nextAcquire = (idx + 1) % r.size
+			slot.mu.Unlock()
+			return slot, true
+		}
+		slot.mu.Unlock()
+	}
+	return nil, false
 }
 
 // MarkDisplaying transitions a slot from rendering to displaying state.

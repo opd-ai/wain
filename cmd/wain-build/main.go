@@ -63,17 +63,66 @@ func main() {
 }
 
 func run() error {
-	// Find the wain module root
 	moduleRoot, err := findModuleRoot()
 	if err != nil {
 		return fmt.Errorf("finding wain module: %w", err)
 	}
 
-	if verbose {
-		fmt.Printf("Found wain module at: %s\n", moduleRoot)
+	muslTarget := detectMuslTarget()
+	logVerboseInit(moduleRoot, muslTarget)
+
+	if err := checkPrerequisites(muslTarget); err != nil {
+		return err
 	}
 
-	// Detect architecture and musl target
+	if err := buildAll(moduleRoot, muslTarget); err != nil {
+		return err
+	}
+
+	logBuildSuccess(outputDir)
+	return nil
+}
+
+// logVerboseInit prints module root and target triple when verbose mode is on.
+func logVerboseInit(moduleRoot, muslTarget string) {
+	if verbose {
+		fmt.Printf("Found wain module at: %s\n", moduleRoot)
+		fmt.Printf("Detected architecture: %s\n", runtime.GOARCH)
+		fmt.Printf("Target triple: %s\n", muslTarget)
+	}
+}
+
+// buildAll compiles the Rust library, the dl_find_object stub, and copies
+// outputs to the destination directory.
+func buildAll(moduleRoot, muslTarget string) error {
+	rustDir := filepath.Join(moduleRoot, "render-sys")
+	if err := buildRust(rustDir, muslTarget); err != nil {
+		return fmt.Errorf("building Rust library: %w", err)
+	}
+
+	stubSrc := filepath.Join(moduleRoot, "internal", "render", "dl_find_object_stub.c")
+	stubObj := "dl_find_object_stub.o"
+	if err := buildStub(stubSrc, stubObj); err != nil {
+		return fmt.Errorf("building dl_find_object stub: %w", err)
+	}
+
+	rustLib := filepath.Join(rustDir, "target", muslTarget, "release", "librender_sys.a")
+	if err := copyOutputs(rustLib, stubObj, outputDir); err != nil {
+		return fmt.Errorf("copying outputs: %w", err)
+	}
+	return nil
+}
+
+// logBuildSuccess prints the post-build success message and artifact locations.
+func logBuildSuccess(destDir string) {
+	fmt.Println("✓ Build successful")
+	fmt.Printf("  librender_sys.a → %s\n", filepath.Join(destDir, "librender_sys.a"))
+	fmt.Printf("  dl_find_object_stub.o → %s\n", filepath.Join(destDir, "dl_find_object_stub.o"))
+	fmt.Println("\nYou can now run 'go build' to link the rebuilt Rust library.")
+}
+
+// detectMuslTarget maps GOARCH to the corresponding musl cross-compilation target triple.
+func detectMuslTarget() string {
 	arch := runtime.GOARCH
 	switch arch {
 	case "amd64":
@@ -81,42 +130,7 @@ func run() error {
 	case "arm64":
 		arch = "aarch64"
 	}
-	muslTarget := arch + "-unknown-linux-musl"
-
-	if verbose {
-		fmt.Printf("Detected architecture: %s\n", runtime.GOARCH)
-		fmt.Printf("Target triple: %s\n", muslTarget)
-	}
-
-	// Check prerequisites
-	if err := checkPrerequisites(muslTarget); err != nil {
-		return err
-	}
-
-	// Build the Rust library
-	rustDir := filepath.Join(moduleRoot, "render-sys")
-	if err := buildRust(rustDir, muslTarget); err != nil {
-		return fmt.Errorf("building Rust library: %w", err)
-	}
-
-	// Build the dl_find_object stub
-	stubSrc := filepath.Join(moduleRoot, "internal", "render", "dl_find_object_stub.c")
-	stubObj := "dl_find_object_stub.o"
-	if err := buildStub(stubSrc, stubObj); err != nil {
-		return fmt.Errorf("building dl_find_object stub: %w", err)
-	}
-
-	// Copy outputs to destination
-	rustLib := filepath.Join(rustDir, "target", muslTarget, "release", "librender_sys.a")
-	if err := copyOutputs(rustLib, stubObj, outputDir); err != nil {
-		return fmt.Errorf("copying outputs: %w", err)
-	}
-
-	fmt.Println("✓ Build successful")
-	fmt.Printf("  librender_sys.a → %s\n", filepath.Join(outputDir, "librender_sys.a"))
-	fmt.Printf("  dl_find_object_stub.o → %s\n", filepath.Join(outputDir, "dl_find_object_stub.o"))
-	fmt.Println("\nYou can now run 'go build' to link the rebuilt Rust library.")
-	return nil
+	return arch + "-unknown-linux-musl"
 }
 
 func findModuleRoot() (string, error) {

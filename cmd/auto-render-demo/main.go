@@ -30,19 +30,16 @@ func main() {
 
 	log.SetFlags(0)
 
-	// Configure automatic backend selection
 	cfg := backend.DefaultAutoConfig()
 	cfg.Width = 800
 	cfg.Height = 600
-	cfg.Verbose = true // Log backend selection
+	cfg.Verbose = true
 
-	// Allow forcing software renderer via environment variable
 	if os.Getenv("FORCE_SOFTWARE") == "1" {
 		cfg.ForceSoftware = true
 		log.Println("Environment: forcing software renderer")
 	}
 
-	// Create renderer with auto-detection
 	renderer, backendType, err := backend.NewRenderer(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create renderer: %v", err)
@@ -51,75 +48,76 @@ func main() {
 
 	log.Printf("Using backend: %s", backendType)
 
-	// Create a simple test scene
 	dl := displaylist.New()
+	buildDemoScene(dl)
 
-	// Background
-	dl.AddFillRect(0, 0, 800, 600, primitives.Color{R: 240, G: 240, B: 240, A: 255})
-
-	// Red rectangle
-	dl.AddFillRect(50, 50, 200, 150, primitives.Color{R: 255, G: 0, B: 0, A: 255})
-
-	// Green rounded rectangle
-	dl.AddFillRoundedRect(300, 50, 200, 150, 20, primitives.Color{R: 0, G: 255, B: 0, A: 255})
-
-	// Blue rectangle
-	dl.AddFillRect(550, 50, 200, 150, primitives.Color{R: 0, G: 0, B: 255, A: 255})
-
-	// Linear gradient
-	dl.AddLinearGradient(
-		50, 250, 700, 100,
-		50, 250, 750, 250,
-		primitives.Color{R: 255, G: 0, B: 255, A: 255},
-		primitives.Color{R: 255, G: 255, B: 0, A: 255},
-	)
-
-	// Radial gradient
-	dl.AddRadialGradient(
-		50, 400, 700, 150,
-		400, 475, 100,
-		primitives.Color{R: 0, G: 255, B: 255, A: 255},
-		primitives.Color{R: 255, G: 128, B: 0, A: 255},
-	)
-
-	// Render the scene
 	if err := renderer.Render(dl); err != nil {
 		log.Fatalf("Render failed: %v", err)
 	}
 
 	log.Printf("Rendered %d commands successfully", dl.Len())
 
-	// Get dimensions
 	w, h := renderer.Dimensions()
 	log.Printf("Render target: %dx%d", w, h)
 
-	// For software backend, we can access the buffer directly
+	reportRenderResults(renderer, backendType, dl, w, h)
+}
+
+// buildDemoScene populates dl with a representative set of UI draw commands.
+func buildDemoScene(dl *displaylist.DisplayList) {
+	dl.AddFillRect(0, 0, 800, 600, primitives.Color{R: 240, G: 240, B: 240, A: 255})
+	dl.AddFillRect(50, 50, 200, 150, primitives.Color{R: 255, G: 0, B: 0, A: 255})
+	dl.AddFillRoundedRect(300, 50, 200, 150, 20, primitives.Color{R: 0, G: 255, B: 0, A: 255})
+	dl.AddFillRect(550, 50, 200, 150, primitives.Color{R: 0, G: 0, B: 255, A: 255})
+	dl.AddLinearGradient(
+		50, 250, 700, 100,
+		50, 250, 750, 250,
+		primitives.Color{R: 255, G: 0, B: 255, A: 255},
+		primitives.Color{R: 255, G: 255, B: 0, A: 255},
+	)
+	dl.AddRadialGradient(
+		50, 400, 700, 150,
+		400, 475, 100,
+		primitives.Color{R: 0, G: 255, B: 255, A: 255},
+		primitives.Color{R: 255, G: 128, B: 0, A: 255},
+	)
+}
+
+// reportRenderResults logs backend-specific post-render diagnostics and prints
+// the summary to stdout.
+func reportRenderResults(renderer backend.Renderer, backendType backend.BackendType, dl *displaylist.DisplayList, w, h int) {
 	if backendType == backend.BackendSoftware {
-		softBackend := renderer.(*backend.SoftwareBackend)
-		buf := softBackend.Buffer()
-		if buf != nil {
-			log.Printf("Software buffer: %d bytes (%dx%d)", len(buf.Pixels), buf.Width, buf.Height)
-		}
+		logSoftwareBuffer(renderer)
 	}
 
-	// For GPU backends, we would export via Present()
 	if backendType == backend.BackendIntelGPU || backendType == backend.BackendAMDGPU {
-		fd, err := renderer.Present()
-		if err != nil {
-			log.Printf("Warning: Present() failed: %v", err)
-		} else {
-			log.Printf("DMA-BUF fd: %d (not saved, would be sent to compositor)", fd)
-			// In a real application, this fd would be sent to Wayland/X11
-			// For this demo, we just close it
-			if fd >= 0 {
-				// syscall.Close(fd) - but we don't want to import syscall for demo
-				log.Printf("DMA-BUF export successful")
-			}
-		}
+		logGPUPresent(renderer)
 	}
 
 	fmt.Println("\n✓ Auto-detection demo complete")
 	fmt.Printf("  Backend: %s\n", backendType)
 	fmt.Printf("  Commands: %d\n", dl.Len())
 	fmt.Printf("  Resolution: %dx%d\n", w, h)
+}
+
+// logSoftwareBuffer logs the pixel buffer size for a software backend.
+func logSoftwareBuffer(renderer backend.Renderer) {
+	softBackend := renderer.(*backend.SoftwareBackend)
+	buf := softBackend.Buffer()
+	if buf != nil {
+		log.Printf("Software buffer: %d bytes (%dx%d)", len(buf.Pixels), buf.Width, buf.Height)
+	}
+}
+
+// logGPUPresent exports the GPU render target via Present and logs the result.
+func logGPUPresent(renderer backend.Renderer) {
+	fd, err := renderer.Present()
+	if err != nil {
+		log.Printf("Warning: Present() failed: %v", err)
+		return
+	}
+	log.Printf("DMA-BUF fd: %d (not saved, would be sent to compositor)", fd)
+	if fd >= 0 {
+		log.Printf("DMA-BUF export successful")
+	}
 }

@@ -158,45 +158,59 @@ func createBufferRing(demoCtx *demoContext) error {
 	size := stride * windowHeight
 
 	for i := 0; i < bufferCount; i++ {
-		// Create memfd for shared memory
-		fd, err := shm.CreateMemfd(fmt.Sprintf("wain-buffer-%d", i))
-		if err != nil {
-			return fmt.Errorf("create memfd %d: %w", i, err)
+		if err := createAndRegisterBuffer(demoCtx, i, size, stride); err != nil {
+			return err
 		}
-		demoCtx.fds = append(demoCtx.fds, fd)
-
-		if err := syscall.Ftruncate(fd, int64(size)); err != nil {
-			return fmt.Errorf("truncate memfd %d: %w", i, err)
-		}
-
-		// Create wl_shm_pool
-		pool, err := demoCtx.shmObj.CreatePool(fd, size)
-		if err != nil {
-			return fmt.Errorf("create pool %d: %w", i, err)
-		}
-		demoCtx.pools[i] = pool
-
-		// Map the pool to access pixels
-		if err := pool.Map(); err != nil {
-			return fmt.Errorf("map pool %d: %w", i, err)
-		}
-
-		// Create wl_buffer
-		buf, err := pool.CreateBuffer(0, int32(windowWidth), int32(windowHeight), stride, shm.FormatARGB8888)
-		if err != nil {
-			return fmt.Errorf("create buffer %d: %w", i, err)
-		}
-		demoCtx.buffers[i] = buf
-
-		// Register buffer ID with synchronizer
-		if err := demoCtx.sync.RegisterBuffer(buf.ID(), i); err != nil {
-			return fmt.Errorf("register buffer %d: %w", i, err)
-		}
-
-		fmt.Printf("      ✓ Buffer %d created (wl_buffer ID=%d)\n", i, buf.ID())
 	}
 
 	return nil
+}
+
+// createAndRegisterBuffer allocates a single SHM buffer, maps it, creates the
+// corresponding wl_buffer, and registers it with the synchronizer.
+func createAndRegisterBuffer(demoCtx *demoContext, i int, size, stride int32) error {
+	pool, err := allocateSHMPool(demoCtx, i, size)
+	if err != nil {
+		return err
+	}
+
+	buf, err := pool.CreateBuffer(0, int32(windowWidth), int32(windowHeight), stride, shm.FormatARGB8888)
+	if err != nil {
+		return fmt.Errorf("create buffer %d: %w", i, err)
+	}
+	demoCtx.buffers[i] = buf
+
+	if err := demoCtx.sync.RegisterBuffer(buf.ID(), i); err != nil {
+		return fmt.Errorf("register buffer %d: %w", i, err)
+	}
+
+	fmt.Printf("      ✓ Buffer %d created (wl_buffer ID=%d)\n", i, buf.ID())
+	return nil
+}
+
+// allocateSHMPool creates a memfd, sizes it, opens a wl_shm_pool, and maps it
+// for direct pixel access. The file descriptor is appended to demoCtx.fds.
+func allocateSHMPool(demoCtx *demoContext, i int, size int32) (*shm.Pool, error) {
+	fd, err := shm.CreateMemfd(fmt.Sprintf("wain-buffer-%d", i))
+	if err != nil {
+		return nil, fmt.Errorf("create memfd %d: %w", i, err)
+	}
+	demoCtx.fds = append(demoCtx.fds, fd)
+
+	if err := syscall.Ftruncate(fd, int64(size)); err != nil {
+		return nil, fmt.Errorf("truncate memfd %d: %w", i, err)
+	}
+
+	pool, err := demoCtx.shmObj.CreatePool(fd, size)
+	if err != nil {
+		return nil, fmt.Errorf("create pool %d: %w", i, err)
+	}
+	demoCtx.pools[i] = pool
+
+	if err := pool.Map(); err != nil {
+		return nil, fmt.Errorf("map pool %d: %w", i, err)
+	}
+	return pool, nil
 }
 
 func renderFrames(ctx context.Context, demoCtx *demoContext) error {

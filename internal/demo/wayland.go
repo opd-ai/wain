@@ -44,7 +44,6 @@ func SetupWaylandGlobals(conn *client.Connection) (*WaylandContext, error) {
 		return nil, fmt.Errorf("get registry: %w", err)
 	}
 
-	// Bind compositor
 	compositorGlobal := registry.FindGlobal("wl_compositor")
 	if compositorGlobal == nil {
 		return nil, fmt.Errorf("wl_compositor not found")
@@ -54,7 +53,27 @@ func SetupWaylandGlobals(conn *client.Connection) (*WaylandContext, error) {
 		return nil, fmt.Errorf("bind compositor: %w", err)
 	}
 
-	// Bind SHM
+	shmObj, err := bindSHMGlobal(conn, registry)
+	if err != nil {
+		return nil, err
+	}
+
+	wmBase, err := bindXdgWmBase(conn, registry)
+	if err != nil {
+		return nil, err
+	}
+
+	return &WaylandContext{
+		Conn:       conn,
+		Compositor: compositor,
+		SHM:        shmObj,
+		WmBase:     wmBase,
+	}, nil
+}
+
+// bindSHMGlobal finds the wl_shm global, binds it, and registers the object
+// with the connection.
+func bindSHMGlobal(conn *client.Connection, registry *client.Registry) (*shm.SHM, error) {
 	shmGlobal := registry.FindGlobal("wl_shm")
 	if shmGlobal == nil {
 		return nil, fmt.Errorf("wl_shm not found")
@@ -65,8 +84,12 @@ func SetupWaylandGlobals(conn *client.Connection) (*WaylandContext, error) {
 	}
 	shmObj := shm.NewSHM(conn, shmID)
 	conn.RegisterObject(shmObj)
+	return shmObj, nil
+}
 
-	// Bind xdg_wm_base
+// bindXdgWmBase finds the xdg_wm_base global, binds it, and registers the
+// object with the connection.
+func bindXdgWmBase(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
 	xdgGlobal := registry.FindGlobal("xdg_wm_base")
 	if xdgGlobal == nil {
 		return nil, fmt.Errorf("xdg_wm_base not found")
@@ -77,13 +100,7 @@ func SetupWaylandGlobals(conn *client.Connection) (*WaylandContext, error) {
 	}
 	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
 	conn.RegisterObject(wmBase)
-
-	return &WaylandContext{
-		Conn:       conn,
-		Compositor: compositor,
-		SHM:        shmObj,
-		WmBase:     wmBase,
-	}, nil
+	return wmBase, nil
 }
 
 // CreateXdgWindow creates an XDG toplevel window with the specified title.

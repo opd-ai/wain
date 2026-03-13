@@ -22,12 +22,10 @@ import (
 func main() {
 	log.SetFlags(0)
 
-	// Create app with verbose logging
 	cfg := wain.DefaultConfig()
 	cfg.Verbose = true
 	app := wain.NewAppWithConfig(cfg)
 
-	// Set up signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -37,17 +35,14 @@ func main() {
 		app.Quit()
 	}()
 
-	// Start the application in a goroutine
 	errChan := make(chan error, 1)
 	go func() {
 		log.Println("Starting wain application...")
 		errChan <- app.Run()
 	}()
 
-	// Wait for initialization
 	time.Sleep(100 * time.Millisecond)
 
-	// Create a window with custom configuration
 	log.Println("Creating window...")
 	win := demo.CreateLargeWindow(app, "wain Window Demo")
 
@@ -61,16 +56,24 @@ func main() {
 	win.OnFocus(demo.LogFocus())
 	win.OnScaleChange(demo.LogScaleChange())
 
+	demonstrateWindowOperations(win)
+
+	log.Println("\nWindow demo running. Press Ctrl+C to exit.")
+
+	waitForAppExit(errChan, sigChan, app)
+}
+
+// demonstrateWindowOperations exercises title, min-size, and max-size mutations,
+// logging the outcome of each call.
+func demonstrateWindowOperations(win *wain.Window) {
 	log.Println("\nDemonstrating window operations:")
 
-	// Change title
 	if err := win.SetTitle("Updated Title"); err != nil {
 		log.Printf("Failed to set title: %v", err)
 	} else {
 		log.Printf("Title updated: %s", win.Title())
 	}
 
-	// Update size constraints
 	if err := win.SetMinSize(800, 600); err != nil {
 		log.Printf("Failed to set min size: %v", err)
 	} else {
@@ -82,10 +85,11 @@ func main() {
 	} else {
 		log.Println("Max size updated to 1600x1200")
 	}
+}
 
-	log.Println("\nWindow demo running. Press Ctrl+C to exit.")
-
-	// Wait for app to finish or signal
+// waitForAppExit blocks until the app exits cleanly or a signal is received,
+// then logs the final display-server and backend state.
+func waitForAppExit(errChan <-chan error, sigChan <-chan os.Signal, app *wain.App) {
 	select {
 	case err := <-errChan:
 		if err != nil {
@@ -95,7 +99,6 @@ func main() {
 		log.Println("Exiting...")
 	}
 
-	// Report final state
 	log.Printf("Display server: %s", app.DisplayServer())
 	log.Printf("Backend type: %s", app.BackendType())
 	log.Println("Application exited cleanly")

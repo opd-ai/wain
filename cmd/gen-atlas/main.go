@@ -89,51 +89,39 @@ func writeAtlasFile(path string, cfg atlasConfig, sdf []uint8, glyphs []glyphMet
 	writeGlyphMetadata(f, glyphs)
 }
 
-func writeAtlasHeader(f *os.File, cfg atlasConfig, glyphCount int) {
-	if err := binary.Write(f, binary.LittleEndian, uint32(cfg.width)); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, uint32(cfg.height)); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, uint32(glyphCount)); err != nil {
-		panic(err)
-	}
-	if err := binary.Write(f, binary.LittleEndian, cfg.lineHeight); err != nil {
+// mustWriteLE writes v to f in little-endian byte order, panicking on error.
+func mustWriteLE(f *os.File, v any) {
+	if err := binary.Write(f, binary.LittleEndian, v); err != nil {
 		panic(err)
 	}
 }
 
+func writeAtlasHeader(f *os.File, cfg atlasConfig, glyphCount int) {
+	mustWriteLE(f, uint32(cfg.width))
+	mustWriteLE(f, uint32(cfg.height))
+	mustWriteLE(f, uint32(glyphCount))
+	mustWriteLE(f, cfg.lineHeight)
+}
+
+// writeGlyphMetadata writes packed glyph layout records to the atlas file.
 func writeGlyphMetadata(f *os.File, glyphs []glyphMeta) {
 	for _, g := range glyphs {
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.Rune)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.X)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.Y)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.W)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.H)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, int32(g.OffsetX*64)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, int32(g.OffsetY*64)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(g.Advance*64)); err != nil {
-			panic(err)
-		}
-		if err := binary.Write(f, binary.LittleEndian, uint32(0)); err != nil {
-			panic(err)
-		}
+		writeSingleGlyph(f, g)
 	}
+}
+
+// writeSingleGlyph encodes one glyph's metrics to the atlas file in
+// little-endian fixed-point format (sub-pixel values are scaled by 64).
+func writeSingleGlyph(f *os.File, g glyphMeta) {
+	mustWriteLE(f, uint32(g.Rune))
+	mustWriteLE(f, uint32(g.X))
+	mustWriteLE(f, uint32(g.Y))
+	mustWriteLE(f, uint32(g.W))
+	mustWriteLE(f, uint32(g.H))
+	mustWriteLE(f, int32(g.OffsetX*64))
+	mustWriteLE(f, int32(g.OffsetY*64))
+	mustWriteLE(f, uint32(g.Advance*64))
+	mustWriteLE(f, uint32(0))
 }
 
 func drawSimpleGlyph(sdf []uint8, width, height, xPos, yPos, size, r int) {

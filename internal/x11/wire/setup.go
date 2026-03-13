@@ -246,35 +246,61 @@ func decodePixmapFormats(r io.Reader, count int) ([]PixmapFormat, error) {
 
 // decodeSingleVisual reads one Visual entry from the X11 setup stream.
 func decodeSingleVisual(r io.Reader) (Visual, error) {
+	er := &seqReader{r: r}
 	var v Visual
-	var err error
-	if v.ID, err = DecodeUint32(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	class, err := DecodeUint8(r)
-	if err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	v.Class = VisualClass(class)
-	if v.BitsPerRGB, err = DecodeUint8(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	if v.Colormap, err = DecodeUint16(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	if v.RedMask, err = DecodeUint32(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	if v.GreenMask, err = DecodeUint32(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	if v.BlueMask, err = DecodeUint32(r); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
-	}
-	if _, err = io.CopyN(io.Discard, r, 4); err != nil {
-		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	v.ID = er.uint32()
+	v.Class = VisualClass(er.uint8())
+	v.BitsPerRGB = er.uint8()
+	v.Colormap = er.uint16()
+	v.RedMask = er.uint32()
+	v.GreenMask = er.uint32()
+	v.BlueMask = er.uint32()
+	er.discard(4)
+	if er.err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", er.err)
 	}
 	return v, nil
+}
+
+// seqReader accumulates the first error across sequential decode calls so that
+// callers can defer error checking to the end of a field-by-field decode block.
+type seqReader struct {
+	r   io.Reader
+	err error
+}
+
+func (s *seqReader) uint8() uint8 {
+	if s.err != nil {
+		return 0
+	}
+	v, err := DecodeUint8(s.r)
+	s.err = err
+	return v
+}
+
+func (s *seqReader) uint16() uint16 {
+	if s.err != nil {
+		return 0
+	}
+	v, err := DecodeUint16(s.r)
+	s.err = err
+	return v
+}
+
+func (s *seqReader) uint32() uint32 {
+	if s.err != nil {
+		return 0
+	}
+	v, err := DecodeUint32(s.r)
+	s.err = err
+	return v
+}
+
+func (s *seqReader) discard(n int64) {
+	if s.err != nil {
+		return
+	}
+	_, s.err = io.CopyN(io.Discard, s.r, n)
 }
 
 // decodeVisuals reads visual entries for a depth.
