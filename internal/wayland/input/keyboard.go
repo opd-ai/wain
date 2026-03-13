@@ -159,20 +159,15 @@ func (k *Keyboard) HandleEvent(opcode uint16, args []wire.Argument) error {
 
 // handleKeymapEvent processes wl_keyboard.keymap event (opcode 0).
 func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
-	if len(args) < 3 {
-		return fmt.Errorf("keyboard: keymap event requires 3 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 3, "keyboard: keymap event"); err != nil {
+		return err
 	}
-	format, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: keymap format must be uint32")
-	}
-	fd, ok := args[1].Value.(int)
-	if !ok {
-		return fmt.Errorf("keyboard: keymap fd must be int")
-	}
-	size, ok := args[2].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: keymap size must be uint32")
+	d := wire.NewArgDecoder(args)
+	format := d.Uint32("keyboard: keymap format")
+	fd := d.Int("keyboard: keymap fd")
+	size := d.Uint32("keyboard: keymap size")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	k.HandleKeymap(format, uint32(fd), size)
 	return nil
@@ -180,20 +175,15 @@ func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
 
 // handleEnterEvent processes wl_keyboard.enter event (opcode 1).
 func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
-	if len(args) < 3 {
-		return fmt.Errorf("keyboard: enter event requires 3 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 3, "keyboard: enter event"); err != nil {
+		return err
 	}
-	serial, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: enter serial must be uint32")
-	}
-	surfaceID, ok := args[1].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: enter surface must be uint32")
-	}
-	keysArray, ok := args[2].Value.([]byte)
-	if !ok {
-		return fmt.Errorf("keyboard: enter keys must be array")
+	d := wire.NewArgDecoder(args)
+	serial := d.Uint32("keyboard: enter serial")
+	surfaceID := d.Uint32("keyboard: enter surface")
+	keysArray := d.Bytes("keyboard: enter keys")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	keys := make([]uint32, len(keysArray)/4)
 	for i := range keys {
@@ -207,16 +197,14 @@ func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
 
 // handleLeaveEvent processes wl_keyboard.leave event (opcode 2).
 func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
-	if len(args) < 2 {
-		return fmt.Errorf("keyboard: leave event requires 2 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 2, "keyboard: leave event"); err != nil {
+		return err
 	}
-	serial, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: leave serial must be uint32")
-	}
-	surfaceID, ok := args[1].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: leave surface must be uint32")
+	d := wire.NewArgDecoder(args)
+	serial := d.Uint32("keyboard: leave serial")
+	surfaceID := d.Uint32("keyboard: leave surface")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	k.HandleLeave(serial, surfaceID)
 	return nil
@@ -224,24 +212,16 @@ func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
 
 // handleKeyEvent processes wl_keyboard.key event (opcode 3).
 func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
-	if len(args) < 4 {
-		return fmt.Errorf("keyboard: key event requires 4 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 4, "keyboard: key event"); err != nil {
+		return err
 	}
-	serial, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: key serial must be uint32")
-	}
-	time, ok := args[1].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: key time must be uint32")
-	}
-	key, ok := args[2].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: key code must be uint32")
-	}
-	state, ok := args[3].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: key state must be uint32")
+	d := wire.NewArgDecoder(args)
+	serial := d.Uint32("keyboard: key serial")
+	time := d.Uint32("keyboard: key time")
+	key := d.Uint32("keyboard: key code")
+	state := d.Uint32("keyboard: key state")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	k.HandleKey(serial, time, key, state)
 	return nil
@@ -249,28 +229,17 @@ func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
 
 // handleModifiersEvent processes wl_keyboard.modifiers event (opcode 4).
 func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
-	if len(args) < 5 {
-		return fmt.Errorf("keyboard: modifiers event requires 5 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 5, "keyboard: modifiers event"); err != nil {
+		return err
 	}
-	serial, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: modifiers serial must be uint32")
-	}
-	modsDepressed, ok := args[1].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: modifiers depressed must be uint32")
-	}
-	modsLatched, ok := args[2].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: modifiers latched must be uint32")
-	}
-	modsLocked, ok := args[3].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: modifiers locked must be uint32")
-	}
-	group, ok := args[4].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("keyboard: modifiers group must be uint32")
+	d := wire.NewArgDecoder(args)
+	serial := d.Uint32("keyboard: modifiers serial")
+	modsDepressed := d.Uint32("keyboard: modifiers depressed")
+	modsLatched := d.Uint32("keyboard: modifiers latched")
+	modsLocked := d.Uint32("keyboard: modifiers locked")
+	group := d.Uint32("keyboard: modifiers group")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	k.HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group)
 	return nil
@@ -278,16 +247,14 @@ func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
 
 // handleRepeatInfoEvent processes wl_keyboard.repeat_info event (opcode 5).
 func (k *Keyboard) handleRepeatInfoEvent(args []wire.Argument) error {
-	if len(args) < 2 {
-		return fmt.Errorf("keyboard: repeat_info event requires 2 arguments, got %d", len(args))
+	if err := wire.ParseArgMinLen(args, 2, "keyboard: repeat_info event"); err != nil {
+		return err
 	}
-	rate, ok := args[0].Value.(int32)
-	if !ok {
-		return fmt.Errorf("keyboard: repeat_info rate must be int32")
-	}
-	delay, ok := args[1].Value.(int32)
-	if !ok {
-		return fmt.Errorf("keyboard: repeat_info delay must be int32")
+	d := wire.NewArgDecoder(args)
+	rate := d.Int32("keyboard: repeat_info rate")
+	delay := d.Int32("keyboard: repeat_info delay")
+	if err := d.Err(); err != nil {
+		return err
 	}
 	k.HandleRepeatInfo(rate, delay)
 	return nil

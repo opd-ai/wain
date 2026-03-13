@@ -13,7 +13,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/primitives"
@@ -29,21 +28,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("wayland-demo", "Wayland protocol client with software rasterizer", []string{
-		demo.FormatExample("wayland-demo", "Run demo on Wayland compositor"),
-		demo.FormatExample("wayland-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("======================================")
-	fmt.Println("wain Phase 1 Demo - Wayland Backend")
-	fmt.Println("======================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"wayland-demo",
+		"Wayland protocol client with software rasterizer",
+		[]string{
+			demo.FormatExample("wayland-demo", "Run demo on Wayland compositor"),
+			demo.FormatExample("wayland-demo --help", "Show this help message"),
+		},
+		"wain Phase 1 Demo - Wayland Backend",
+		runDemo,
+	)
 }
 
 type demoContext struct {

@@ -220,64 +220,45 @@ func subdivideCubic(buf *primitives.Buffer, p0, p1, p2, p3 Point, width float64,
 	subdivideCubic(buf, s, r1, q2, p3, width, c, depth+1)
 }
 
+// pointToLineSegDistSq returns the squared distance from point p to the line segment [p0, p1].
+// Returns 0 when the segment is degenerate (length² < 1e-6).
+func pointToLineSegDistSq(p, p0, p1 Point) float64 {
+	dx := p1.X - p0.X
+	dy := p1.Y - p0.Y
+	lengthSq := dx*dx + dy*dy
+	if lengthSq < 1e-6 {
+		return 0
+	}
+	t := clamp(((p.X-p0.X)*dx+(p.Y-p0.Y)*dy)/lengthSq, 0, 1)
+	closestX := p0.X + t*dx
+	closestY := p0.Y + t*dy
+	distX := p.X - closestX
+	distY := p.Y - closestY
+	return distX*distX + distY*distY
+}
+
 // isQuadraticFlat checks if a quadratic Bezier curve is flat enough to approximate with a line.
 // Uses the distance from the control point to the line segment p0-p2.
 func isQuadraticFlat(p0, p1, p2 Point) bool {
-	dx := p2.X - p0.X
-	dy := p2.Y - p0.Y
-	lengthSq := dx*dx + dy*dy
-
-	if lengthSq < 1e-6 {
+	if (p2.X-p0.X)*(p2.X-p0.X)+(p2.Y-p0.Y)*(p2.Y-p0.Y) < 1e-6 {
 		return true
 	}
-
-	// Distance from p1 to line p0-p2
-	t := ((p1.X-p0.X)*dx + (p1.Y-p0.Y)*dy) / lengthSq
-	t = clamp(t, 0, 1)
-	closestX := p0.X + t*dx
-	closestY := p0.Y + t*dy
-	distX := p1.X - closestX
-	distY := p1.Y - closestY
-	distSq := distX*distX + distY*distY
-
-	return distSq <= flatnessTolerance*flatnessTolerance
+	return pointToLineSegDistSq(p1, p0, p2) <= flatnessTolerance*flatnessTolerance
 }
 
 // isCubicFlat checks if a cubic Bezier curve is flat enough to approximate with a line.
 // Uses the maximum distance from control points to the line segment p0-p3.
 func isCubicFlat(p0, p1, p2, p3 Point) bool {
-	dx := p3.X - p0.X
-	dy := p3.Y - p0.Y
-	lengthSq := dx*dx + dy*dy
-
-	if lengthSq < 1e-6 {
+	if (p3.X-p0.X)*(p3.X-p0.X)+(p3.Y-p0.Y)*(p3.Y-p0.Y) < 1e-6 {
 		return true
 	}
-
-	// Distance from p1 to line p0-p3
-	t1 := ((p1.X-p0.X)*dx + (p1.Y-p0.Y)*dy) / lengthSq
-	t1 = clamp(t1, 0, 1)
-	closestX1 := p0.X + t1*dx
-	closestY1 := p0.Y + t1*dy
-	distX1 := p1.X - closestX1
-	distY1 := p1.Y - closestY1
-	distSq1 := distX1*distX1 + distY1*distY1
-
-	// Distance from p2 to line p0-p3
-	t2 := ((p2.X-p0.X)*dx + (p2.Y-p0.Y)*dy) / lengthSq
-	t2 = clamp(t2, 0, 1)
-	closestX2 := p0.X + t2*dx
-	closestY2 := p0.Y + t2*dy
-	distX2 := p2.X - closestX2
-	distY2 := p2.Y - closestY2
-	distSq2 := distX2*distX2 + distY2*distY2
-
-	maxDistSq := distSq1
-	if distSq2 > maxDistSq {
-		maxDistSq = distSq2
+	thresh := flatnessTolerance * flatnessTolerance
+	d1 := pointToLineSegDistSq(p1, p0, p3)
+	d2 := pointToLineSegDistSq(p2, p0, p3)
+	if d2 > d1 {
+		d1 = d2
 	}
-
-	return maxDistSq <= flatnessTolerance*flatnessTolerance
+	return d1 <= thresh
 }
 
 // arcCoverage calculates the anti-aliased coverage for a pixel at (px, py)

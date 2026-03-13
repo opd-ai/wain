@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
@@ -22,21 +21,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("amd-triangle-demo", "AMD GPU detection and architecture readiness demonstration", []string{
-		demo.FormatExample("amd-triangle-demo", "Run AMD GPU detection demo"),
-		demo.FormatExample("amd-triangle-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("==============================================")
-	fmt.Println("wain Phase 6.4 Demo - AMD GPU Architecture")
-	fmt.Println("==============================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"amd-triangle-demo",
+		"AMD GPU detection and architecture readiness demonstration",
+		[]string{
+			demo.FormatExample("amd-triangle-demo", "Run AMD GPU detection demo"),
+			demo.FormatExample("amd-triangle-demo --help", "Show this help message"),
+		},
+		"wain Phase 6.4 Demo - AMD GPU Architecture",
+		runDemo,
+	)
 	fmt.Println("\n[Phase 6.4 Achievement]")
 	fmt.Println("  ✓ AMD GPU detection working (RDNA1/2/3)")
 	fmt.Println("  ✓ Buffer allocation via AMDGPU driver")

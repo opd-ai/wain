@@ -133,48 +133,31 @@ func (cb *CommandBuilder) State3DWM() {
 	cb.EmitDword(dw1)
 }
 
-// State3DPS emits a 3DSTATE_PS command with shader kernel address.
-func (cb *CommandBuilder) State3DPS(kernelAddr uint64) {
-	opcode := uint32(0x7820)
-	length := uint32(11) // 12 DWords total
+// emitShaderKernelState emits a shader stage state command (3DSTATE_PS or 3DSTATE_VS).
+// It encodes the command header, kernel address, enable flag, and trailing zero DWords.
+func (cb *CommandBuilder) emitShaderKernelState(opcode, length, enableBit uint32, trailingDwords int, kernelAddr uint64) {
 	dw0 := (3 << 29) | (opcode << 16) | length
-
 	dw1 := uint32(kernelAddr & 0xFFFFFFFF)
 	dw2 := uint32(kernelAddr >> 32)
-
 	dw3 := uint32(0)
-	dw3 |= 1 << 0 // 8-pixel dispatch enable
-
+	dw3 |= 1 << enableBit
 	cb.EmitDword(dw0)
 	cb.EmitDword(dw1)
 	cb.EmitDword(dw2)
 	cb.EmitDword(dw3)
-	// DWords 4-11 (shader parameters - zeros for now)
-	for i := 0; i < 8; i++ {
+	for i := 0; i < trailingDwords; i++ {
 		cb.EmitDword(0)
 	}
 }
 
+// State3DPS emits a 3DSTATE_PS command with shader kernel address.
+func (cb *CommandBuilder) State3DPS(kernelAddr uint64) {
+	cb.emitShaderKernelState(0x7820, 11, 0, 8, kernelAddr) // 12 DWords; bit 0 = 8-pixel dispatch enable
+}
+
 // State3DVS emits a 3DSTATE_VS command with shader kernel address.
 func (cb *CommandBuilder) State3DVS(kernelAddr uint64) {
-	opcode := uint32(0x7821)
-	length := uint32(8) // 9 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
-
-	dw1 := uint32(kernelAddr & 0xFFFFFFFF)
-	dw2 := uint32(kernelAddr >> 32)
-
-	dw3 := uint32(0)
-	dw3 |= 1 << 0 // Vertex shader enable
-
-	cb.EmitDword(dw0)
-	cb.EmitDword(dw1)
-	cb.EmitDword(dw2)
-	cb.EmitDword(dw3)
-	// DWords 4-8 (shader parameters - zeros for now)
-	for i := 0; i < 5; i++ {
-		cb.EmitDword(0)
-	}
+	cb.emitShaderKernelState(0x7821, 8, 0, 5, kernelAddr) // 9 DWords; bit 0 = vertex shader enable
 }
 
 // State3DVertexBuffers emits a 3DSTATE_VERTEX_BUFFERS command.

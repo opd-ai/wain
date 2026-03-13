@@ -180,69 +180,20 @@ func (o *Output) handleGeometry(args []wire.Argument) error {
 	return nil
 }
 
-// geomDecoder provides sequential argument decoding with accumulated error state.
-// If any decode call fails, subsequent calls become no-ops and the error is
-// preserved for retrieval via err().
-type geomDecoder struct {
-	args []wire.Argument
-	idx  int
-	err  error
-}
-
-// int32Field decodes the next argument as int32, recording any type mismatch.
-func (d *geomDecoder) int32Field(name string) int32 {
-	if d.err != nil {
-		return 0
-	}
-	val, err := getInt32Arg(d.args[d.idx], name)
-	d.idx++
-	d.err = err
-	return val
-}
-
-// strField decodes the next argument as string, recording any type mismatch.
-func (d *geomDecoder) strField(name string) string {
-	if d.err != nil {
-		return ""
-	}
-	val, err := getStringArg(d.args[d.idx], name)
-	d.idx++
-	d.err = err
-	return val
-}
-
 // parseGeometryArgs extracts and validates geometry arguments.
 func parseGeometryArgs(args []wire.Argument) (Geometry, error) {
-	dec := &geomDecoder{args: args}
+	dec := wire.NewArgDecoder(args)
 	g := Geometry{
-		X:         dec.int32Field("x"),
-		Y:         dec.int32Field("y"),
-		PhysicalW: dec.int32Field("physical_width"),
-		PhysicalH: dec.int32Field("physical_height"),
-		Subpixel:  dec.int32Field("subpixel"),
-		Make:      dec.strField("make"),
-		Model:     dec.strField("model"),
-		Transform: dec.int32Field("transform"),
+		X:         dec.Int32("x"),
+		Y:         dec.Int32("y"),
+		PhysicalW: dec.Int32("physical_width"),
+		PhysicalH: dec.Int32("physical_height"),
+		Subpixel:  dec.Int32("subpixel"),
+		Make:      dec.String("make"),
+		Model:     dec.String("model"),
+		Transform: dec.Int32("transform"),
 	}
-	return g, dec.err
-}
-
-// getInt32Arg extracts an int32 argument with error handling.
-func getInt32Arg(arg wire.Argument, name string) (int32, error) {
-	val, ok := arg.Value.(int32)
-	if !ok {
-		return 0, fmt.Errorf("output: invalid %s type", name)
-	}
-	return val, nil
-}
-
-// getStringArg extracts a string argument with error handling.
-func getStringArg(arg wire.Argument, name string) (string, error) {
-	val, ok := arg.Value.(string)
-	if !ok {
-		return "", fmt.Errorf("output: invalid %s type", name)
-	}
-	return val, nil
+	return g, dec.Err()
 }
 
 // handleMode processes a mode event.
@@ -250,31 +201,20 @@ func (o *Output) handleMode(args []wire.Argument) error {
 	if len(args) != 4 {
 		return fmt.Errorf("output: mode event requires 4 args, got %d", len(args))
 	}
-
-	flags, ok := args[0].Value.(uint32)
-	if !ok {
-		return fmt.Errorf("output: invalid flags type")
+	d := wire.NewArgDecoder(args)
+	flags := d.Uint32("output: flags")
+	width := d.Int32("output: width")
+	height := d.Int32("output: height")
+	refresh := d.Int32("output: refresh")
+	if err := d.Err(); err != nil {
+		return err
 	}
-	width, ok := args[1].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid width type")
-	}
-	height, ok := args[2].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid height type")
-	}
-	refresh, ok := args[3].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid refresh type")
-	}
-
 	o.mode = Mode{
 		Flags:   flags,
 		Width:   width,
 		Height:  height,
 		Refresh: refresh,
 	}
-
 	return nil
 }
 
@@ -292,12 +232,10 @@ func (o *Output) handleScale(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("output: scale event requires 1 arg, got %d", len(args))
 	}
-
-	scale, ok := args[0].Value.(int32)
-	if !ok {
-		return fmt.Errorf("output: invalid scale type")
+	scale, err := wire.ParseArgInt32(args, 0, "output: scale")
+	if err != nil {
+		return err
 	}
-
 	o.scale = scale
 	return nil
 }

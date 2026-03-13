@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
@@ -35,21 +34,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("x11-dmabuf-demo", "GPU buffer sharing with X11 using DRI3/Present", []string{
-		demo.FormatExample("x11-dmabuf-demo", "Run DRI3 GPU buffer demo"),
-		demo.FormatExample("x11-dmabuf-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("==============================================")
-	fmt.Println("wain Phase 2.4 Demo - DRI3/Present + X11")
-	fmt.Println("==============================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"x11-dmabuf-demo",
+		"GPU buffer sharing with X11 using DRI3/Present",
+		[]string{
+			demo.FormatExample("x11-dmabuf-demo", "Run DRI3 GPU buffer demo"),
+			demo.FormatExample("x11-dmabuf-demo --help", "Show this help message"),
+		},
+		"wain Phase 2.4 Demo - DRI3/Present + X11",
+		runDemo,
+	)
 }
 
 type demoContext struct {

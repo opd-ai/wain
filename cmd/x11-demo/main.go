@@ -12,9 +12,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/opd-ai/wain/internal/demo"
 )
 
@@ -24,21 +21,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("x11-demo", "X11 protocol client with software rasterizer", []string{
-		demo.FormatExample("x11-demo", "Run demo on X11 server"),
-		demo.FormatExample("x11-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("==================================")
-	fmt.Println("wain Phase 1 Demo - X11 Backend")
-	fmt.Println("==================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"x11-demo",
+		"X11 protocol client with software rasterizer",
+		[]string{
+			demo.FormatExample("x11-demo", "Run demo on X11 server"),
+			demo.FormatExample("x11-demo --help", "Show this help message"),
+		},
+		"wain Phase 1 Demo - X11 Backend",
+		runDemo,
+	)
 }
 
 // runDemo demonstrates the Phase 1 feature stack on X11.

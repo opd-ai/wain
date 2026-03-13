@@ -107,6 +107,19 @@ func commandToVertices(cmd displaylist.DrawCommand, fbWidth, fbHeight int, atlas
 	}
 }
 
+// makeUniformQuad builds 6 vertices (two triangles) forming a rectangle with
+// standard unit UV coordinates and a single uniform color.
+func makeUniformQuad(x0, y0, x1, y1 float32, r, g, b, a uint8) []Vertex {
+	return []Vertex{
+		{x0, y0, 0, 0, r, g, b, a},
+		{x1, y0, 1, 0, r, g, b, a},
+		{x0, y1, 0, 1, r, g, b, a},
+		{x1, y0, 1, 0, r, g, b, a},
+		{x1, y1, 1, 1, r, g, b, a},
+		{x0, y1, 0, 1, r, g, b, a},
+	}
+}
+
 // rectToVertices converts a filled rectangle to 6 vertices (2 triangles).
 func rectToVertices(data displaylist.FillRectData, fbWidth, fbHeight int) []Vertex {
 	// Convert pixel coordinates to normalized device coordinates [-1, 1]
@@ -116,16 +129,7 @@ func rectToVertices(data displaylist.FillRectData, fbWidth, fbHeight int) []Vert
 	y1 := 1.0 - float32((data.Y+data.Height)*2)/float32(fbHeight)
 
 	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
-
-	// Two triangles forming a quad
-	return []Vertex{
-		{x0, y0, 0, 0, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x1, y1, 1, 1, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-	}
+	return makeUniformQuad(x0, y0, x1, y1, r, g, b, a)
 }
 
 // roundedRectToVertices converts a rounded rectangle to vertices.
@@ -137,15 +141,7 @@ func roundedRectToVertices(data displaylist.FillRoundedRectData, fbWidth, fbHeig
 	y1 := 1.0 - float32((data.Y+data.Height)*2)/float32(fbHeight)
 
 	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
-
-	return []Vertex{
-		{x0, y0, 0, 0, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x1, y1, 1, 1, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-	}
+	return makeUniformQuad(x0, y0, x1, y1, r, g, b, a)
 }
 
 // lineToVertices converts a line to vertices (as a thin rectangle).
@@ -300,15 +296,7 @@ func boxShadowToVertices(data displaylist.BoxShadowData, fbWidth, fbHeight int) 
 	y1 := 1.0 - float32((data.Y+data.Height+blur)*2)/float32(fbHeight)
 
 	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
-
-	return []Vertex{
-		{x0, y0, 0, 0, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-		{x1, y0, 1, 0, r, g, b, a},
-		{x1, y1, 1, 1, r, g, b, a},
-		{x0, y1, 0, 1, r, g, b, a},
-	}
+	return makeUniformQuad(x0, y0, x1, y1, r, g, b, a)
 }
 
 // imageToVertices converts an image draw to vertices.

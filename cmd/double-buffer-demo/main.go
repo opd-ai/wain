@@ -21,7 +21,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"syscall"
 	"time"
 
@@ -42,21 +41,16 @@ const (
 )
 
 func main() {
-	demo.CheckHelpFlag("double-buffer-demo", "Double/triple buffering with Wayland compositor synchronization", []string{
-		demo.FormatExample("double-buffer-demo", "Run animated demo with double buffering"),
-		demo.FormatExample("double-buffer-demo --help", "Show this help message"),
-	})
-
-	fmt.Println("=======================================================")
-	fmt.Println("wain Phase 5.3 Demo - Double/Triple Buffering")
-	fmt.Println("=======================================================")
-	fmt.Println()
-
-	if err := runDemo(); err != nil {
-		log.Fatalf("Demo failed: %v", err)
-	}
-
-	fmt.Println("\n✓ Demo completed successfully!")
+	demo.RunDemoWithSetup(
+		"double-buffer-demo",
+		"Double/triple buffering with Wayland compositor synchronization",
+		[]string{
+			demo.FormatExample("double-buffer-demo", "Run animated demo with double buffering"),
+			demo.FormatExample("double-buffer-demo --help", "Show this help message"),
+		},
+		"wain Phase 5.3 Demo - Double/Triple Buffering",
+		runDemo,
+	)
 }
 
 type demoContext struct {
