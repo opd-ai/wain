@@ -88,11 +88,11 @@ naming violations.  The single previously-flagged CC >10 function remains
 - [x] **3 generic file names** — `internal/x11/events/types.go`, `internal/demo/constants.go`, `internal/ui/widgets/base.go` — go-stats-generator reports names as too generic; naming convention violation only.
   **Fixed (2026-03-13)**: Renamed `types.go`→`event_types.go`, `constants.go`→`drm_paths.go`, `base.go`→`widget_impl.go`.
 
-- [ ] **1 package name violation** — (go-stats-generator `package_name_violations: 1`) — Low-severity, cosmetic.
+- [x] **1 package name violation** — (go-stats-generator `package_name_violations: 1`) — Low-severity, cosmetic.
 
-- [ ] **Deprecated comment on Wayland DMA-BUF protocol** — `internal/wayland/dmabuf/protocol.go:109` — Comment marks `zwp_linux_dmabuf_v1` format events as deprecated; no action tracking exists in code.
+- [x] **Deprecated comment on Wayland DMA-BUF protocol** — `internal/wayland/dmabuf/protocol.go:109` — Comment marks `zwp_linux_dmabuf_v1` format events as deprecated; no action tracking exists in code.
 
-- [ ] **Cross-axis alignment issue URL is a placeholder** — `layout.go:211` — The tracking URL reads `https://github.com/opd-ai/wain/issues/TBD` — no actual issue has been filed to track the deferred `SetAlign` implementation.
+- [x] **Cross-axis alignment issue URL is a placeholder** — `layout.go:211` — The tracking URL reads `https://github.com/opd-ai/wain/issues/TBD` — no actual issue has been filed to track the deferred `SetAlign` implementation.
 
 ---
 
