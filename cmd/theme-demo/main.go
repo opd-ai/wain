@@ -7,6 +7,17 @@ import (
 	"github.com/opd-ai/wain"
 )
 
+// printThemeInfo prints the common fields of a named theme.
+func printThemeInfo(label string, t wain.Theme) {
+	fmt.Printf("%s Theme:\n", label)
+	fmt.Printf("  Background: RGB(%d, %d, %d)\n", t.Background.R, t.Background.G, t.Background.B)
+	fmt.Printf("  Foreground: RGB(%d, %d, %d)\n", t.Foreground.R, t.Foreground.G, t.Foreground.B)
+	fmt.Printf("  Accent:     RGB(%d, %d, %d)\n", t.Accent.R, t.Accent.G, t.Accent.B)
+	fmt.Printf("  Border:     RGB(%d, %d, %d)\n", t.Border.R, t.Border.G, t.Border.B)
+	fmt.Printf("  FontSize:   %.1f\n", t.FontSize)
+	fmt.Printf("  Padding:    %d\n", t.Padding)
+}
+
 func main() {
 	app := wain.NewApp()
 
@@ -14,37 +25,15 @@ func main() {
 	fmt.Println("=== Theme Demo ===")
 	fmt.Println()
 
-	// Display DefaultDark theme
-	darkTheme := wain.DefaultDark()
-	fmt.Println("DefaultDark Theme:")
-	fmt.Printf("  Background: RGB(%d, %d, %d)\n", darkTheme.Background.R, darkTheme.Background.G, darkTheme.Background.B)
-	fmt.Printf("  Foreground: RGB(%d, %d, %d)\n", darkTheme.Foreground.R, darkTheme.Foreground.G, darkTheme.Foreground.B)
-	fmt.Printf("  Accent:     RGB(%d, %d, %d)\n", darkTheme.Accent.R, darkTheme.Accent.G, darkTheme.Accent.B)
-	fmt.Printf("  Border:     RGB(%d, %d, %d)\n", darkTheme.Border.R, darkTheme.Border.G, darkTheme.Border.B)
-	fmt.Printf("  FontSize:   %.1f\n", darkTheme.FontSize)
-	fmt.Printf("  Padding:    %d\n", darkTheme.Padding)
+	printThemeInfo("DefaultDark", wain.DefaultDark())
 	fmt.Println()
 
-	// Display DefaultLight theme
-	lightTheme := wain.DefaultLight()
-	fmt.Println("DefaultLight Theme:")
-	fmt.Printf("  Background: RGB(%d, %d, %d)\n", lightTheme.Background.R, lightTheme.Background.G, lightTheme.Background.B)
-	fmt.Printf("  Foreground: RGB(%d, %d, %d)\n", lightTheme.Foreground.R, lightTheme.Foreground.G, lightTheme.Foreground.B)
-	fmt.Printf("  Accent:     RGB(%d, %d, %d)\n", lightTheme.Accent.R, lightTheme.Accent.G, lightTheme.Accent.B)
-	fmt.Printf("  Border:     RGB(%d, %d, %d)\n", lightTheme.Border.R, lightTheme.Border.G, lightTheme.Border.B)
-	fmt.Printf("  FontSize:   %.1f\n", lightTheme.FontSize)
-	fmt.Printf("  Padding:    %d\n", lightTheme.Padding)
+	printThemeInfo("DefaultLight", wain.DefaultLight())
 	fmt.Println()
 
-	// Display HighContrast theme
+	// Display HighContrast theme — also shows extra border fields.
 	hcTheme := wain.HighContrast()
-	fmt.Println("HighContrast Theme:")
-	fmt.Printf("  Background: RGB(%d, %d, %d)\n", hcTheme.Background.R, hcTheme.Background.G, hcTheme.Background.B)
-	fmt.Printf("  Foreground: RGB(%d, %d, %d)\n", hcTheme.Foreground.R, hcTheme.Foreground.G, hcTheme.Foreground.B)
-	fmt.Printf("  Accent:     RGB(%d, %d, %d)\n", hcTheme.Accent.R, hcTheme.Accent.G, hcTheme.Accent.B)
-	fmt.Printf("  Border:     RGB(%d, %d, %d)\n", hcTheme.Border.R, hcTheme.Border.G, hcTheme.Border.B)
-	fmt.Printf("  FontSize:   %.1f\n", hcTheme.FontSize)
-	fmt.Printf("  Padding:    %d\n", hcTheme.Padding)
+	printThemeInfo("HighContrast", hcTheme)
 	fmt.Printf("  BorderWidth:%d\n", hcTheme.BorderWidth)
 	fmt.Printf("  BorderRadius:%d\n", hcTheme.BorderRadius)
 	fmt.Println()

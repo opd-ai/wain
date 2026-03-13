@@ -1359,16 +1359,29 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	return nil
 }
 
+// findAndBindGlobal looks up a Wayland global by name and binds it,
+// returning the assigned object ID. notFoundMsg and bindFailMsg provide
+// context for error messages.
+func findAndBindGlobal(registry *client.Registry, name, notFoundMsg, bindFailMsg string) (uint32, error) {
+	global := registry.FindGlobal(name)
+	if global == nil {
+		return 0, fmt.Errorf("%s", notFoundMsg)
+	}
+	id, err := registry.Bind(global.Name, name, global.Version)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", bindFailMsg, err)
+	}
+	return id, nil
+}
+
 // bindDataDeviceManager binds wl_data_device_manager and creates a per-seat
 // data device for clipboard access.  Errors are non-fatal.
 func (a *App) bindDataDeviceManager(registry *client.Registry) error {
-	ddmGlobal := registry.FindGlobal("wl_data_device_manager")
-	if ddmGlobal == nil {
-		return fmt.Errorf("wl_data_device_manager not advertised by compositor")
-	}
-	ddmID, err := registry.Bind(ddmGlobal.Name, "wl_data_device_manager", ddmGlobal.Version)
+	ddmID, err := findAndBindGlobal(registry, "wl_data_device_manager",
+		"wl_data_device_manager not advertised by compositor",
+		"failed to bind wl_data_device_manager")
 	if err != nil {
-		return fmt.Errorf("failed to bind wl_data_device_manager: %w", err)
+		return err
 	}
 	mgr := datadevice.NewManager(a.waylandConn, ddmID)
 	a.waylandConn.RegisterObject(mgr)
@@ -1390,13 +1403,11 @@ func (a *App) bindCompositor(registry *client.Registry) error {
 	a.waylandCompositor = compositor
 
 	// Bind shm
-	shmGlobal := registry.FindGlobal("wl_shm")
-	if shmGlobal == nil {
-		return fmt.Errorf("wl_shm not found")
-	}
-	shmID, err := registry.Bind(shmGlobal.Name, "wl_shm", shmGlobal.Version)
+	shmID, err := findAndBindGlobal(registry, "wl_shm",
+		"wl_shm not found",
+		"failed to bind shm")
 	if err != nil {
-		return fmt.Errorf("failed to bind shm: %w", err)
+		return err
 	}
 	shmObj := shm.NewSHM(a.waylandConn, shmID)
 	a.waylandConn.RegisterObject(shmObj)

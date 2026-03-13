@@ -341,6 +341,22 @@ func runWayland(app *application) error {
 	return nil
 }
 
+// simulateClick fires a click event, re-renders, and prints the updated status.
+func simulateClick(app *application, label string, x, y int, button uint32) {
+	fmt.Print(label)
+	app.handleMouseClick(x, y, button)
+	app.render()
+	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
+}
+
+// simulateScroll fires a scroll event, re-renders, and prints the updated offset.
+func simulateScroll(app *application, label string, x, y, delta int) {
+	fmt.Print(label)
+	app.handleMouseScroll(x, y, delta)
+	app.render()
+	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
+}
+
 // runX11 runs the demo on X11.
 //
 // Stub implementation - X11 event loop integration deferred to future phase.
@@ -364,20 +380,9 @@ func runX11(app *application) error {
 	app.handleMouseMove(125, 80)
 	fmt.Println("✓")
 
-	fmt.Print("  → Click button... ")
-	app.handleMouseClick(125, 80, 1)
-	app.render()
-	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
-
-	fmt.Print("  → Click button again... ")
-	app.handleMouseClick(125, 80, 1)
-	app.render()
-	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
-
-	fmt.Print("  → Click reset button... ")
-	app.handleMouseClick(295, 80, 1)
-	app.render()
-	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
+	simulateClick(app, "  → Click button... ", 125, 80, 1)
+	simulateClick(app, "  → Click button again... ", 125, 80, 1)
+	simulateClick(app, "  → Click reset button... ", 295, 80, 1)
 
 	// Simulate keyboard input
 	fmt.Print("  → Type 'Hello'... ")
@@ -388,20 +393,9 @@ func runX11(app *application) error {
 	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
 
 	// Simulate scroll events
-	fmt.Print("  → Scroll down... ")
-	app.handleMouseScroll(250, 365, 5)
-	app.render()
-	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
-
-	fmt.Print("  → Scroll down more... ")
-	app.handleMouseScroll(250, 365, 10)
-	app.render()
-	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
-
-	fmt.Print("  → Scroll to top... ")
-	app.handleMouseScroll(250, 365, -50)
-	app.render()
-	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
+	simulateScroll(app, "  → Scroll down... ", 250, 365, 5)
+	simulateScroll(app, "  → Scroll down more... ", 250, 365, 10)
+	simulateScroll(app, "  → Scroll to top... ", 250, 365, -50)
 
 	return nil
 }

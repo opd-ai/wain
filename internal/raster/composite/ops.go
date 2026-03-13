@@ -99,6 +99,20 @@ func blitRow(dstRow, srcRow []byte, width int) {
 	}
 }
 
+// scaledSourceCoord maps one destination-space coordinate to source space for
+// bilinear filtering. It returns the two neighbouring integer sample positions
+// (s0, s1 = s0+1) and the fractional offset between them. dstPos is the
+// current destination pixel, dstOrigin/srcOrigin are the rect origins, and
+// scale is the source/destination size ratio for this axis.
+func scaledSourceCoord(dstPos, dstOrigin, srcOrigin int, scale float64) (s0, s1 int, frac float64) {
+	f := (float64(dstPos-dstOrigin) + 0.5) * scale
+	fi := int(f)
+	frac = f - float64(fi)
+	s0 = srcOrigin + fi
+	s1 = s0 + 1
+	return
+}
+
 // BlitScaled copies a rectangular region from src to dst with bilinear filtering.
 // The source rectangle is defined by (srcX, srcY, srcWidth, srcHeight).
 // The destination rectangle is defined by (dstX, dstY, dstWidth, dstHeight).
@@ -124,12 +138,7 @@ func BlitScaled(dst *primitives.Buffer, dstX, dstY, dstWidth, dstHeight int,
 	scaleY := float64(srcHeight) / float64(dstHeight)
 
 	for dstRow := dstY1; dstRow < dstY2; dstRow++ {
-		srcYf := (float64(dstRow-dstY) + 0.5) * scaleY
-		srcYi := int(srcYf)
-		srcYfrac := srcYf - float64(srcYi)
-
-		srcY0 := srcY + srcYi
-		srcY1 := srcY0 + 1
+		srcY0, srcY1, srcYfrac := scaledSourceCoord(dstRow, dstY, srcY, scaleY)
 
 		if srcY0 < 0 || srcY1 >= src.Height {
 			continue
@@ -144,12 +153,7 @@ func BlitScaled(dst *primitives.Buffer, dstX, dstY, dstWidth, dstHeight int,
 // scaleX and srcYfrac for interpolation, and composites the result into dst.
 func blendScaledRow(dst, src *primitives.Buffer, dstRow, dstX1, dstX2, dstX, srcX, srcY0, srcY1 int, scaleX, srcYfrac float64) {
 	for dstCol := dstX1; dstCol < dstX2; dstCol++ {
-		srcXf := (float64(dstCol-dstX) + 0.5) * scaleX
-		srcXi := int(srcXf)
-		srcXfrac := srcXf - float64(srcXi)
-
-		srcX0 := srcX + srcXi
-		srcX1 := srcX0 + 1
+		srcX0, srcX1, srcXfrac := scaledSourceCoord(dstCol, dstX, srcX, scaleX)
 
 		if srcX0 < 0 || srcX1 >= src.Width {
 			continue
