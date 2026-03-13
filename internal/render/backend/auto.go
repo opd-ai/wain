@@ -87,6 +87,7 @@ func NewRenderer(cfg AutoConfig) (Renderer, BackendType, error) {
 		Width:            cfg.Width,
 		Height:           cfg.Height,
 		VertexBufferSize: cfg.VertexBufferSize,
+		FontAtlas:        cfg.Atlas,
 	}
 
 	backend, err := New(gpuCfg)

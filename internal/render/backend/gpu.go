@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render"
 )
 
@@ -37,6 +38,9 @@ type GPUBackend struct {
 	width        int
 	height       int
 
+	// Font atlas for text rendering
+	fontAtlas *text.Atlas
+
 	// Frame profiler for performance metrics
 	profiler *FrameProfiler
 }
@@ -54,6 +58,10 @@ type Config struct {
 
 	// VertexBufferSize is the size of the dynamic vertex buffer in bytes
 	VertexBufferSize int
+
+	// FontAtlas is the font atlas for GPU text rendering (optional).
+	// When nil, text commands produce no visible output.
+	FontAtlas *text.Atlas
 }
 
 // DefaultConfig returns a default configuration.
@@ -94,6 +102,7 @@ func New(cfg Config) (*GPUBackend, error) {
 		targetHandle: renderTarget.GemHandle(),
 		width:        cfg.Width,
 		height:       cfg.Height,
+		fontAtlas:    cfg.FontAtlas,
 		profiler:     NewFrameProfiler(),
 	}
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/primitives"
+	"github.com/opd-ai/wain/internal/raster/text"
 )
 
 // ErrVertexBufferFull is returned when the vertex buffer is too small.
@@ -46,7 +47,7 @@ func (b *GPUBackend) packVertices(batches []Batch) ([]byte, error) {
 
 	// Pack vertices for each batch
 	for _, batch := range batches {
-		batchData, err := packBatchVertices(batch, b.width, b.height)
+		batchData, err := packBatchVertices(batch, b.width, b.height, b.fontAtlas)
 		if err != nil {
 			return nil, err
 		}
@@ -57,11 +58,11 @@ func (b *GPUBackend) packVertices(batches []Batch) ([]byte, error) {
 }
 
 // packBatchVertices packs vertices for a single batch.
-func packBatchVertices(batch Batch, fbWidth, fbHeight int) ([]byte, error) {
+func packBatchVertices(batch Batch, fbWidth, fbHeight int, atlas *text.Atlas) ([]byte, error) {
 	data := make([]byte, 0, len(batch.Commands)*6*24)
 
 	for _, cmd := range batch.Commands {
-		vertices, err := commandToVertices(cmd, fbWidth, fbHeight)
+		vertices, err := commandToVertices(cmd, fbWidth, fbHeight, atlas)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +76,7 @@ func packBatchVertices(batch Batch, fbWidth, fbHeight int) ([]byte, error) {
 }
 
 // commandToVertices converts a draw command to a list of vertices.
-func commandToVertices(cmd displaylist.DrawCommand, fbWidth, fbHeight int) ([]Vertex, error) {
+func commandToVertices(cmd displaylist.DrawCommand, fbWidth, fbHeight int, atlas *text.Atlas) ([]Vertex, error) {
 	switch cmd.Type {
 	case displaylist.CmdFillRect:
 		return rectToVertices(cmd.Data.(displaylist.FillRectData), fbWidth, fbHeight), nil
@@ -87,8 +88,7 @@ func commandToVertices(cmd displaylist.DrawCommand, fbWidth, fbHeight int) ([]Ve
 		return lineToVertices(cmd.Data.(displaylist.DrawLineData), fbWidth, fbHeight), nil
 
 	case displaylist.CmdDrawText:
-		// Text rendering requires glyph atlas lookup (deferred to Phase 5.2)
-		return textToVertices(cmd.Data.(displaylist.DrawTextData), fbWidth, fbHeight), nil
+		return textToVertices(cmd.Data.(displaylist.DrawTextData), fbWidth, fbHeight, atlas), nil
 
 	case displaylist.CmdLinearGradient:
 		return linearGradientToVertices(cmd.Data.(displaylist.LinearGradientData), fbWidth, fbHeight), nil
@@ -185,11 +185,63 @@ func lineToVertices(data displaylist.DrawLineData, fbWidth, fbHeight int) []Vert
 	}
 }
 
-// textToVertices converts text to vertices (placeholder for Phase 5.2).
-func textToVertices(data displaylist.DrawTextData, fbWidth, fbHeight int) []Vertex {
-	// Phase 5.2 will implement glyph atlas lookup
-	// For now, return empty (text won't render)
-	return nil
+// textToVertices converts a text draw command to glyph quad vertices.
+//
+// Each character in the string becomes a textured quad (6 vertices) whose UV
+// coordinates reference the glyph's region in the SDF font atlas. Returns nil
+// when the atlas is unavailable or the string is empty.
+func textToVertices(data displaylist.DrawTextData, fbWidth, fbHeight int, atlas *text.Atlas) []Vertex {
+	if atlas == nil || data.Text == "" || atlas.Baseline <= 0 {
+		return nil
+	}
+
+	scale := float64(data.FontSize) / atlas.Baseline
+	if scale <= 0 {
+		return nil
+	}
+
+	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
+	var verts []Vertex
+	penX := float64(data.X)
+
+	for _, ch := range data.Text {
+		glyph, err := atlas.GetGlyph(ch)
+		if err != nil {
+			continue
+		}
+		verts = append(verts, glyphToVertices(glyph, penX, float64(data.Y), scale, fbWidth, fbHeight, r, g, b, a, atlas.Width, atlas.Height)...)
+		penX += glyph.Advance * scale
+	}
+
+	return verts
+}
+
+// glyphToVertices generates 6 vertices (two triangles) for a single glyph quad.
+// UV coordinates address the glyph's texel region within the SDF atlas texture.
+func glyphToVertices(glyph *text.Glyph, penX, penY, scale float64, fbWidth, fbHeight int, r, g, b, a uint8, atlasW, atlasH int) []Vertex {
+	sx0 := penX + glyph.OffsetX*scale
+	sy0 := penY + glyph.OffsetY*scale
+	sx1 := sx0 + float64(glyph.Width)*scale
+	sy1 := sy0 + float64(glyph.Height)*scale
+
+	x0 := float32(sx0*2)/float32(fbWidth) - 1.0
+	y0 := 1.0 - float32(sy0*2)/float32(fbHeight)
+	x1 := float32(sx1*2)/float32(fbWidth) - 1.0
+	y1 := 1.0 - float32(sy1*2)/float32(fbHeight)
+
+	u0 := float32(glyph.X) / float32(atlasW)
+	v0 := float32(glyph.Y) / float32(atlasH)
+	u1 := float32(glyph.X+glyph.Width) / float32(atlasW)
+	v1 := float32(glyph.Y+glyph.Height) / float32(atlasH)
+
+	return []Vertex{
+		{x0, y0, u0, v0, r, g, b, a},
+		{x1, y0, u1, v0, r, g, b, a},
+		{x0, y1, u0, v1, r, g, b, a},
+		{x1, y0, u1, v0, r, g, b, a},
+		{x1, y1, u1, v1, r, g, b, a},
+		{x0, y1, u0, v1, r, g, b, a},
+	}
 }
 
 // linearGradientToVertices converts a linear gradient to vertices.
