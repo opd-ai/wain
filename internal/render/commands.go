@@ -56,13 +56,18 @@ func (cb *CommandBuilder) PipelineSelect3D() {
 	cb.EmitDword(dw0)
 }
 
+// makeCommandHeader builds the first DWORD of a Render Command Engine (RCE)
+// command packet: pipeline type 3 (bits [31:29]=3), opcode in [28:16], and
+// the (length - 2) field in [15:0].
+func makeCommandHeader(opcode, length uint32) uint32 {
+	return (3 << 29) | (opcode << 16) | length
+}
+
 // StateBaseAddress emits a STATE_BASE_ADDRESS command with dummy addresses.
 // For the first triangle, we can use zero addresses since we're not using
 // dynamic state, surface state, or instruction heaps.
 func (cb *CommandBuilder) StateBaseAddress() {
-	opcode := uint32(0x7801)
-	length := uint32(15) // 16 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7801, 15) // 16 DWords total
 
 	cb.EmitDword(dw0)
 	// General state base (disabled - bit 0 = 0)
@@ -90,9 +95,7 @@ func (cb *CommandBuilder) StateBaseAddress() {
 
 // State3DClip emits a 3DSTATE_CLIP command with default settings.
 func (cb *CommandBuilder) State3DClip() {
-	opcode := uint32(0x7812)
-	length := uint32(3) // 4 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7812, 3) // 4 DWords total
 
 	dw1 := uint32(0)
 	dw1 |= 1 << 31 // Clip enable
@@ -106,9 +109,7 @@ func (cb *CommandBuilder) State3DClip() {
 
 // State3DSF emits a 3DSTATE_SF command (rasterization setup).
 func (cb *CommandBuilder) State3DSF() {
-	opcode := uint32(0x7813)
-	length := uint32(3) // 4 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7813, 3) // 4 DWords total
 
 	dw1 := uint32(0)
 	dw1 |= 1 << 0 // CCW front winding
@@ -122,9 +123,7 @@ func (cb *CommandBuilder) State3DSF() {
 
 // State3DWM emits a 3DSTATE_WM command.
 func (cb *CommandBuilder) State3DWM() {
-	opcode := uint32(0x7814)
-	length := uint32(1) // 2 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7814, 1) // 2 DWords total
 
 	dw1 := uint32(0)
 	dw1 |= 1 << 25 // Pixel shader kill enable
@@ -136,7 +135,7 @@ func (cb *CommandBuilder) State3DWM() {
 // emitShaderKernelState emits a shader stage state command (3DSTATE_PS or 3DSTATE_VS).
 // It encodes the command header, kernel address, enable flag, and trailing zero DWords.
 func (cb *CommandBuilder) emitShaderKernelState(opcode, length, enableBit uint32, trailingDwords int, kernelAddr uint64) {
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(opcode, length)
 	dw1 := uint32(kernelAddr & 0xFFFFFFFF)
 	dw2 := uint32(kernelAddr >> 32)
 	dw3 := uint32(0)
@@ -162,9 +161,7 @@ func (cb *CommandBuilder) State3DVS(kernelAddr uint64) {
 
 // State3DVertexBuffers emits a 3DSTATE_VERTEX_BUFFERS command.
 func (cb *CommandBuilder) State3DVertexBuffers(index uint32, address uint64, size, stride uint32) {
-	opcode := uint32(0x7808)
-	length := uint32(3) // 4 DWords per buffer
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7808, 3) // 4 DWords per buffer
 
 	dw1 := (index << 26) | (stride & 0x7FF)
 	dw2 := uint32(address & 0xFFFFFFFF)
@@ -180,9 +177,7 @@ func (cb *CommandBuilder) State3DVertexBuffers(index uint32, address uint64, siz
 
 // State3DVertexElements emits a 3DSTATE_VERTEX_ELEMENTS command.
 func (cb *CommandBuilder) State3DVertexElements(bufferIndex, offset, format uint32) {
-	opcode := uint32(0x7809)
-	length := uint32(1) // 2 DWords per element
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7809, 1) // 2 DWords per element
 
 	dw1 := (bufferIndex << 26) | (offset & 0x7FF)
 	dw2 := format
@@ -194,9 +189,7 @@ func (cb *CommandBuilder) State3DVertexElements(bufferIndex, offset, format uint
 
 // Primitive3D emits a 3DPRIMITIVE command for drawing triangles.
 func (cb *CommandBuilder) Primitive3D(vertexCount uint32) {
-	opcode := uint32(0x7A00)
-	length := uint32(6) // 7 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7A00, 6) // 7 DWords total
 
 	topology := uint32(0x04) // Triangle list
 	dw1 := topology & 0x3F
@@ -212,9 +205,7 @@ func (cb *CommandBuilder) Primitive3D(vertexCount uint32) {
 
 // PipeControl emits a PIPE_CONTROL command with full flush.
 func (cb *CommandBuilder) PipeControl() {
-	opcode := uint32(0x7A00)
-	length := uint32(4) // 5 DWords total
-	dw0 := (3 << 29) | (opcode << 16) | length
+	dw0 := makeCommandHeader(0x7A00, 4) // 5 DWords total
 
 	dw1 := uint32(0)
 	dw1 |= 1 << 1  // Stall at pixel scoreboard

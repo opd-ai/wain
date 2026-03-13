@@ -320,64 +320,66 @@ func computeCrossAlign(align Align, childSize, contentSize, padding int) (int, i
 	return position, size
 }
 
-// layoutRow computes the layout for horizontally arranged children using flexbox-like behavior.
-// It distributes available width among children based on their flex-grow/shrink properties and gaps.
-func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
+// layoutAxis implements the shared flex algorithm for both row and column layouts.
+// isRow=true distributes along the X axis; isRow=false distributes along the Y axis.
+func (c *Container) layoutAxis(isRow bool, contentWidth, contentHeight int) []LayoutItem {
 	totalGaps := c.Gap * (len(c.children) - 1)
 	if totalGaps < 0 {
 		totalGaps = 0
 	}
 
-	measurements, baseWidth, totalGrow, totalShrink := computeFlexMeasurements(c.children, true)
-	availableWidth := contentWidth - totalGaps
-	widths := distributeFlex(measurements, availableWidth, baseWidth, totalGrow, totalShrink)
-	x, gap := computeJustifyOffset(c.Justify, widths, contentWidth, c.Gap, c.Padding.Left)
+	var mainContent, crossContent int
+	if isRow {
+		mainContent, crossContent = contentWidth, contentHeight
+	} else {
+		mainContent, crossContent = contentHeight, contentWidth
+	}
+
+	measurements, base, totalGrow, totalShrink := computeFlexMeasurements(c.children, isRow)
+	mainSizes := distributeFlex(measurements, mainContent-totalGaps, base, totalGrow, totalShrink)
+
+	var mainPad, crossPad int
+	if isRow {
+		mainPad, crossPad = c.Padding.Left, c.Padding.Top
+	} else {
+		mainPad, crossPad = c.Padding.Top, c.Padding.Left
+	}
+	main, gap := computeJustifyOffset(c.Justify, mainSizes, mainContent, c.Gap, mainPad)
 
 	items := make([]LayoutItem, 0, len(c.children))
 	for i, item := range c.children {
-		y, height := computeCrossAlign(c.Align, item.Box.Height, contentHeight, c.Padding.Top)
+		var crossItemSize int
+		if isRow {
+			crossItemSize = item.Box.Height
+		} else {
+			crossItemSize = item.Box.Width
+		}
+		cross, crossSize := computeCrossAlign(c.Align, crossItemSize, crossContent, crossPad)
 
-		items = append(items, LayoutItem{
-			Box:    item.Box,
-			X:      x,
-			Y:      y,
-			Width:  widths[i],
-			Height: height,
-		})
-
-		x += widths[i] + gap
+		var li LayoutItem
+		li.Box = item.Box
+		if isRow {
+			li.X, li.Y = main, cross
+			li.Width, li.Height = mainSizes[i], crossSize
+		} else {
+			li.X, li.Y = cross, main
+			li.Width, li.Height = crossSize, mainSizes[i]
+		}
+		items = append(items, li)
+		main += mainSizes[i] + gap
 	}
 
 	return items
 }
 
+// layoutRow computes the layout for horizontally arranged children using flexbox-like behavior.
+// It distributes available width among children based on their flex-grow/shrink properties and gaps.
+func (c *Container) layoutRow(contentWidth, contentHeight int) []LayoutItem {
+	return c.layoutAxis(true, contentWidth, contentHeight)
+}
+
 // layoutColumn computes the layout for vertically arranged children using flexbox-like behavior.
 // It distributes available height among children based on their flex-grow/shrink properties and gaps.
 func (c *Container) layoutColumn(contentWidth, contentHeight int) []LayoutItem {
-	totalGaps := c.Gap * (len(c.children) - 1)
-	if totalGaps < 0 {
-		totalGaps = 0
-	}
-
-	measurements, baseHeight, totalGrow, totalShrink := computeFlexMeasurements(c.children, false)
-	availableHeight := contentHeight - totalGaps
-	heights := distributeFlex(measurements, availableHeight, baseHeight, totalGrow, totalShrink)
-	y, gap := computeJustifyOffset(c.Justify, heights, contentHeight, c.Gap, c.Padding.Top)
-
-	items := make([]LayoutItem, 0, len(c.children))
-	for i, item := range c.children {
-		x, width := computeCrossAlign(c.Align, item.Box.Width, contentWidth, c.Padding.Left)
-
-		items = append(items, LayoutItem{
-			Box:    item.Box,
-			X:      x,
-			Y:      y,
-			Width:  width,
-			Height: heights[i],
-		})
-
-		y += heights[i] + gap
-	}
-
-	return items
+	return c.layoutAxis(false, contentWidth, contentHeight)
 }

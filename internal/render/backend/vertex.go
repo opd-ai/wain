@@ -120,14 +120,19 @@ func makeUniformQuad(x0, y0, x1, y1 float32, r, g, b, a uint8) []Vertex {
 	}
 }
 
+// rectToNDC converts pixel-space rectangle coordinates to OpenGL normalized
+// device coordinates (NDC) in the range [-1, 1].
+func rectToNDC(x, y, w, h, fbWidth, fbHeight int) (x0, y0, x1, y1 float32) {
+	x0 = float32(x*2)/float32(fbWidth) - 1.0
+	y0 = 1.0 - float32(y*2)/float32(fbHeight)
+	x1 = float32((x+w)*2)/float32(fbWidth) - 1.0
+	y1 = 1.0 - float32((y+h)*2)/float32(fbHeight)
+	return
+}
+
 // rectToVertices converts a filled rectangle to 6 vertices (2 triangles).
 func rectToVertices(data displaylist.FillRectData, fbWidth, fbHeight int) []Vertex {
-	// Convert pixel coordinates to normalized device coordinates [-1, 1]
-	x0 := float32(data.X*2)/float32(fbWidth) - 1.0
-	y0 := 1.0 - float32(data.Y*2)/float32(fbHeight)
-	x1 := float32((data.X+data.Width)*2)/float32(fbWidth) - 1.0
-	y1 := 1.0 - float32((data.Y+data.Height)*2)/float32(fbHeight)
-
+	x0, y0, x1, y1 := rectToNDC(data.X, data.Y, data.Width, data.Height, fbWidth, fbHeight)
 	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
 	return makeUniformQuad(x0, y0, x1, y1, r, g, b, a)
 }
@@ -135,11 +140,7 @@ func rectToVertices(data displaylist.FillRectData, fbWidth, fbHeight int) []Vert
 // roundedRectToVertices converts a rounded rectangle to vertices.
 func roundedRectToVertices(data displaylist.FillRoundedRectData, fbWidth, fbHeight int) []Vertex {
 	// Simplified: treat as regular rect for now (SDF rounding handled in fragment shader)
-	x0 := float32(data.X*2)/float32(fbWidth) - 1.0
-	y0 := 1.0 - float32(data.Y*2)/float32(fbHeight)
-	x1 := float32((data.X+data.Width)*2)/float32(fbWidth) - 1.0
-	y1 := 1.0 - float32((data.Y+data.Height)*2)/float32(fbHeight)
-
+	x0, y0, x1, y1 := rectToNDC(data.X, data.Y, data.Width, data.Height, fbWidth, fbHeight)
 	r, g, b, a := data.Color.R, data.Color.G, data.Color.B, data.Color.A
 	return makeUniformQuad(x0, y0, x1, y1, r, g, b, a)
 }

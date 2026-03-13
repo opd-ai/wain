@@ -808,12 +808,20 @@ func (s *ScrollContainer) Draw(buf *primitives.Buffer, x, y int) error {
 	return nil
 }
 
-// drawScrollbar draws a vertical scrollbar.
-func (s *ScrollContainer) drawScrollbar(buf *primitives.Buffer, x, y int) {
+// scrollbarThumb holds the computed geometry for a scrollbar.
+type scrollbarThumb struct {
+	barX        int
+	barWidth    int
+	thumbY      int
+	thumbHeight int
+}
+
+// computeScrollbarThumb calculates the position and size of the scrollbar thumb
+// relative to the container origin (x, y).
+func (s *ScrollContainer) computeScrollbarThumb(x, y int) scrollbarThumb {
 	barWidth := 8
 	barX := x + s.width - barWidth - 2
 
-	// Calculate scrollbar thumb size and position
 	thumbRatio := float64(s.height) / float64(s.contentHeight)
 	thumbHeight := int(float64(s.height) * thumbRatio)
 	if thumbHeight < 20 {
@@ -823,13 +831,20 @@ func (s *ScrollContainer) drawScrollbar(buf *primitives.Buffer, x, y int) {
 	scrollRatio := float64(s.scrollOffset) / float64(s.contentHeight-s.height)
 	thumbY := y + int(scrollRatio*float64(s.height-thumbHeight))
 
+	return scrollbarThumb{barX: barX, barWidth: barWidth, thumbY: thumbY, thumbHeight: thumbHeight}
+}
+
+// drawScrollbar draws a vertical scrollbar.
+func (s *ScrollContainer) drawScrollbar(buf *primitives.Buffer, x, y int) {
+	g := s.computeScrollbarThumb(x, y)
+
 	// Draw scrollbar track
 	trackColor := primitives.Color{R: 230, G: 230, B: 230, A: 255}
-	buf.FillRect(barX, y, barWidth, s.height, trackColor)
+	buf.FillRect(g.barX, y, g.barWidth, s.height, trackColor)
 
 	// Draw scrollbar thumb
 	thumbColor := primitives.Color{R: 180, G: 180, B: 180, A: 255}
-	buf.FillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4.0, thumbColor)
+	buf.FillRoundedRect(g.barX, g.thumbY, g.barWidth, g.thumbHeight, 4.0, thumbColor)
 }
 
 // RenderToDisplayList emits draw commands for the scroll container to a display list.
@@ -871,26 +886,15 @@ func (s *ScrollContainer) RenderToDisplayList(dl *displaylist.DisplayList, x, y 
 
 // emitScrollbar emits scrollbar draw commands to a display list.
 func (s *ScrollContainer) emitScrollbar(dl *displaylist.DisplayList, x, y int) {
-	barWidth := 8
-	barX := x + s.width - barWidth - 2
-
-	// Calculate scrollbar thumb size and position
-	thumbRatio := float64(s.height) / float64(s.contentHeight)
-	thumbHeight := int(float64(s.height) * thumbRatio)
-	if thumbHeight < 20 {
-		thumbHeight = 20
-	}
-
-	scrollRatio := float64(s.scrollOffset) / float64(s.contentHeight-s.height)
-	thumbY := y + int(scrollRatio*float64(s.height-thumbHeight))
+	g := s.computeScrollbarThumb(x, y)
 
 	// Emit scrollbar track
 	trackColor := primitives.Color{R: 230, G: 230, B: 230, A: 255}
-	dl.AddFillRect(barX, y, barWidth, s.height, trackColor)
+	dl.AddFillRect(g.barX, y, g.barWidth, s.height, trackColor)
 
 	// Emit scrollbar thumb
 	thumbColor := primitives.Color{R: 180, G: 180, B: 180, A: 255}
-	dl.AddFillRoundedRect(barX, thumbY, barWidth, thumbHeight, 4, thumbColor)
+	dl.AddFillRoundedRect(g.barX, g.thumbY, g.barWidth, g.thumbHeight, 4, thumbColor)
 }
 
 // Label represents a static text display widget.

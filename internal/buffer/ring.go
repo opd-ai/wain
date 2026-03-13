@@ -196,9 +196,9 @@ func (r *Ring) tryAcquireSlot() (*Slot, bool) {
 	return nil, false
 }
 
-// MarkDisplaying transitions a slot from rendering to displaying state.
-// Call this after presenting the buffer to the compositor/server.
-func (r *Ring) MarkDisplaying(index int) error {
+// markSlotTransition atomically transitions a slot from an expected state to a new state.
+// If after is non-nil it is called while the slot mutex is still held.
+func (r *Ring) markSlotTransition(index int, from, to SlotState, after func(*Slot)) error {
 	slot, err := r.GetSlot(index)
 	if err != nil {
 		return err
@@ -207,32 +207,29 @@ func (r *Ring) MarkDisplaying(index int) error {
 	slot.mu.Lock()
 	defer slot.mu.Unlock()
 
-	if slot.state != StateRendering {
-		return fmt.Errorf("cannot mark slot %d as displaying: current state is %s, expected rendering", index, slot.state)
+	if slot.state != from {
+		return fmt.Errorf("cannot mark slot %d as %s: current state is %s, expected %s", index, to, slot.state, from)
 	}
 
-	slot.state = StateDisplaying
+	slot.state = to
+	if after != nil {
+		after(slot)
+	}
 	return nil
+}
+
+// MarkDisplaying transitions a slot from rendering to displaying state.
+// Call this after presenting the buffer to the compositor/server.
+func (r *Ring) MarkDisplaying(index int) error {
+	return r.markSlotTransition(index, StateRendering, StateDisplaying, nil)
 }
 
 // MarkReleased transitions a slot from displaying to released state and signals waiters.
 // Call this from the event handler when receiving a release/idle notification.
 func (r *Ring) MarkReleased(index int) error {
-	slot, err := r.GetSlot(index)
-	if err != nil {
-		return err
-	}
-
-	slot.mu.Lock()
-	defer slot.mu.Unlock()
-
-	if slot.state != StateDisplaying {
-		return fmt.Errorf("cannot mark slot %d as released: current state is %s, expected displaying", index, slot.state)
-	}
-
-	slot.state = StateReleased
-	slot.signalRelease()
-	return nil
+	return r.markSlotTransition(index, StateDisplaying, StateReleased, func(s *Slot) {
+		s.signalRelease()
+	})
 }
 
 // MarkAvailable immediately transitions a slot to available state.

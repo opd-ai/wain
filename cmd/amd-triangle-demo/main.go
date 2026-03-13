@@ -150,16 +150,10 @@ func setupGPU() (*render.Allocator, *render.GpuContext, error) {
 	fmt.Println("       ✓ Allocator created (AMDGPU driver)")
 
 	fmt.Println("\n[7/8] Creating GPU context...")
-	gpuCtx, err := render.CreateContext(drmPath)
+	gpuCtx, err := demo.SetupGPUContext(allocator, drmPath)
 	if err != nil {
-		allocator.Close()
-		return nil, nil, fmt.Errorf("create GPU context: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
-	if gpuCtx.VmID != 0 {
-		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
-	}
-	fmt.Println()
 
 	return allocator, gpuCtx, nil
 }

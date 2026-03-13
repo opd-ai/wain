@@ -6,6 +6,22 @@ import (
 	"github.com/opd-ai/wain/internal/render"
 )
 
+// SetupGPUContext creates a GPU execution context and prints formatted status.
+// The caller is responsible for closing the allocator on failure.
+func SetupGPUContext(allocator *render.Allocator, drmPath string) (*render.GpuContext, error) {
+	gpuCtx, err := render.CreateContext(drmPath)
+	if err != nil {
+		allocator.Close()
+		return nil, fmt.Errorf("create GPU context: %w", err)
+	}
+	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
+	if gpuCtx.VmID != 0 {
+		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
+	}
+	fmt.Println()
+	return gpuCtx, nil
+}
+
 // SetupGPUAllocator creates and initializes a GPU buffer allocator and context.
 // It displays formatted progress messages indicating the current step number.
 // Returns the allocator and GPU context, or an error if setup fails.
@@ -27,16 +43,10 @@ func SetupGPUAllocator(drmPath string, stepNum, totalSteps int) (*render.Allocat
 	fmt.Printf("       ✓ Detected: %s\n", gpuGen)
 
 	fmt.Printf("\n[%d/%d] Creating GPU context...\n", stepNum+2, totalSteps)
-	gpuCtx, err := render.CreateContext(drmPath)
+	gpuCtx, err := SetupGPUContext(allocator, drmPath)
 	if err != nil {
-		allocator.Close()
-		return nil, nil, fmt.Errorf("create GPU context: %w", err)
+		return nil, nil, err
 	}
-	fmt.Printf("       ✓ Created context ID: %d", gpuCtx.ContextID)
-	if gpuCtx.VmID != 0 {
-		fmt.Printf(", VM ID: %d", gpuCtx.VmID)
-	}
-	fmt.Println()
 
 	return allocator, gpuCtx, nil
 }

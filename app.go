@@ -1460,30 +1460,31 @@ func (a *App) setupWaylandInput(seat *input.Seat) error {
 	return nil
 }
 
-// handleWaylandKeyEvent processes a Wayland key event.
-func (a *App) handleWaylandKeyEvent(surfaceID, key, state uint32) {
+// lookupWindow returns the window associated with the given Wayland surface ID,
+// or nil if no window is registered for that surface.
+func (a *App) lookupWindow(surfaceID uint32) *Window {
 	a.mu.Lock()
 	win := a.surfaceToWindow[surfaceID]
 	a.mu.Unlock()
+	return win
+}
 
+// handleWaylandKeyEvent processes a Wayland key event.
+func (a *App) handleWaylandKeyEvent(surfaceID, key, state uint32) {
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := translateWaylandKeyEvent(key, state)
 	win.dispatchEvent(evt)
 }
 
 // handleWaylandKeyboardEnter processes keyboard focus enter.
 func (a *App) handleWaylandKeyboardEnter(surfaceID uint32) {
-	a.mu.Lock()
-	win := a.surfaceToWindow[surfaceID]
-	a.mu.Unlock()
-
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := &WindowEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
 		eventType: WindowFocus,
@@ -1494,14 +1495,10 @@ func (a *App) handleWaylandKeyboardEnter(surfaceID uint32) {
 
 // handleWaylandKeyboardLeave processes keyboard focus leave.
 func (a *App) handleWaylandKeyboardLeave(surfaceID uint32) {
-	a.mu.Lock()
-	win := a.surfaceToWindow[surfaceID]
-	a.mu.Unlock()
-
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := &WindowEvent{
 		baseEvent: baseEvent{timestamp: time.Now()},
 		eventType: WindowUnfocus,
@@ -1512,42 +1509,30 @@ func (a *App) handleWaylandKeyboardLeave(surfaceID uint32) {
 
 // handleWaylandPointerButton processes a Wayland pointer button event.
 func (a *App) handleWaylandPointerButton(surfaceID, button, state uint32, x, y float64) {
-	a.mu.Lock()
-	win := a.surfaceToWindow[surfaceID]
-	a.mu.Unlock()
-
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := translateWaylandPointerButtonEvent(button, state, x, y)
 	win.dispatchEvent(evt)
 }
 
 // handleWaylandPointerMotion processes a Wayland pointer motion event.
 func (a *App) handleWaylandPointerMotion(surfaceID uint32, x, y float64) {
-	a.mu.Lock()
-	win := a.surfaceToWindow[surfaceID]
-	a.mu.Unlock()
-
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := translateWaylandPointerMotionEvent(x, y)
 	win.dispatchEvent(evt)
 }
 
 // handleWaylandPointerAxis processes a Wayland pointer axis (scroll) event.
 func (a *App) handleWaylandPointerAxis(surfaceID, axis uint32, value, x, y float64) {
-	a.mu.Lock()
-	win := a.surfaceToWindow[surfaceID]
-	a.mu.Unlock()
-
+	win := a.lookupWindow(surfaceID)
 	if win == nil {
 		return
 	}
-
 	evt := translateWaylandPointerAxisEvent(axis, value, x, y)
 	win.dispatchEvent(evt)
 }

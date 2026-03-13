@@ -389,73 +389,32 @@ func decodeScreenFields(r io.Reader, s *Screen) error {
 	return nil
 }
 
-// decode5Uint32 reads 5 consecutive uint32 values.
-func decode5Uint32(r io.Reader, v1, v2, v3, v4, v5 *uint32) error {
-	var err error
-	if *v1, err = DecodeUint32(r); err != nil {
-		return err
-	}
-	if *v2, err = DecodeUint32(r); err != nil {
-		return err
-	}
-	if *v3, err = DecodeUint32(r); err != nil {
-		return err
-	}
-	if *v4, err = DecodeUint32(r); err != nil {
-		return err
-	}
-	if *v5, err = DecodeUint32(r); err != nil {
-		return err
+// decodeValues reads consecutive values from r using the provided decode function,
+// storing each result in the corresponding pointer.
+func decodeValues[T uint8 | uint16 | uint32](r io.Reader, decode func(io.Reader) (T, error), vs ...*T) error {
+	for _, v := range vs {
+		val, err := decode(r)
+		if err != nil {
+			return err
+		}
+		*v = val
 	}
 	return nil
+}
+
+// decode5Uint32 reads 5 consecutive uint32 values.
+func decode5Uint32(r io.Reader, v1, v2, v3, v4, v5 *uint32) error {
+	return decodeValues(r, DecodeUint32, v1, v2, v3, v4, v5)
 }
 
 // decode6Uint16 reads 6 consecutive uint16 values.
 func decode6Uint16(r io.Reader, v1, v2, v3, v4, v5, v6 *uint16) error {
-	var err error
-	if *v1, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	if *v2, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	if *v3, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	if *v4, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	if *v5, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	if *v6, err = DecodeUint16(r); err != nil {
-		return err
-	}
-	return nil
+	return decodeValues(r, DecodeUint16, v1, v2, v3, v4, v5, v6)
 }
 
 // decode6Uint8 reads 6 consecutive uint8 values.
 func decode6Uint8(r io.Reader, v1, v2, v3, v4, v5, v6 *uint8) error {
-	var err error
-	if *v1, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	if *v2, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	if *v3, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	if *v4, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	if *v5, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	if *v6, err = DecodeUint8(r); err != nil {
-		return err
-	}
-	return nil
+	return decodeValues(r, DecodeUint8, v1, v2, v3, v4, v5, v6)
 }
 
 // decodeScreenList reads numScreens Screen entries from the X11 setup stream.
