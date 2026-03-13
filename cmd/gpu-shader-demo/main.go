@@ -68,19 +68,10 @@ func run() error {
 	}
 	fmt.Printf("gpu-shader-demo: detected GPU generation %d at %s\n", gpuGen, drmPath)
 
-	// Step 1: compile the WGSL vertex shader to native machine code.
-	vsBinary, err := render.CompileShader(solidFillWGSL, render.GpuGeneration(gpuGen), render.VertexShader)
-	if err != nil {
-		return fmt.Errorf("vertex shader compilation: %w", err)
+	// Step 1 & 2: compile vertex and fragment shaders.
+	if err := reportCompiledShaders(gpuGen); err != nil {
+		return err
 	}
-	fmt.Printf("gpu-shader-demo: vertex shader compiled (%d bytes)\n", len(vsBinary.Data))
-
-	// Step 2: compile the WGSL fragment shader.
-	fsBinary, err := render.CompileShader(solidFillWGSL, render.GpuGeneration(gpuGen), render.FragmentShader)
-	if err != nil {
-		return fmt.Errorf("fragment shader compilation: %w", err)
-	}
-	fmt.Printf("gpu-shader-demo: fragment shader compiled (%d bytes)\n", len(fsBinary.Data))
 
 	// Step 3: create a GPU context for submission.
 	ctx, err := render.CreateContext(drmPath)
@@ -94,15 +85,35 @@ func run() error {
 	}()
 	fmt.Printf("gpu-shader-demo: GPU context created (ID=%d)\n", ctx.ContextID)
 
-	// Step 4: submit a shader batch — compiles the shader, builds a GPU batch
-	// that binds the EU/RDNA kernel to the pipeline, and submits it.
-	if err := render.SubmitShaderBatch(drmPath, []byte(solidFillWGSL), true, ctx.ContextID); err != nil {
+	// Step 4: submit the shader batch.
+	return submitShaderBatch(ctx.ContextID)
+}
+
+// reportCompiledShaders compiles the solid-fill WGSL vertex and fragment shaders
+// and prints their native binary sizes.
+func reportCompiledShaders(gen render.GpuGeneration) error {
+	vs, err := render.CompileShader(solidFillWGSL, gen, render.VertexShader)
+	if err != nil {
+		return fmt.Errorf("vertex shader compilation: %w", err)
+	}
+	fmt.Printf("gpu-shader-demo: vertex shader compiled (%d bytes)\n", len(vs.Data))
+
+	fs, err := render.CompileShader(solidFillWGSL, gen, render.FragmentShader)
+	if err != nil {
+		return fmt.Errorf("fragment shader compilation: %w", err)
+	}
+	fmt.Printf("gpu-shader-demo: fragment shader compiled (%d bytes)\n", len(fs.Data))
+	return nil
+}
+
+// submitShaderBatch submits the solid-fill WGSL shader as a GPU batch command.
+func submitShaderBatch(contextID uint32) error {
+	if err := render.SubmitShaderBatch(drmPath, []byte(solidFillWGSL), true, contextID); err != nil {
 		// Non-fatal on CI systems: log a warning and report success.
 		fmt.Fprintf(os.Stderr, "gpu-shader-demo: shader batch submission: %v\n", err)
 		fmt.Println("gpu-shader-demo: shader compiled and bound successfully (submission skipped on this system)")
 		return nil
 	}
-
 	fmt.Println("gpu-shader-demo: shader batch submitted and executed successfully")
 	return nil
 }

@@ -176,16 +176,21 @@ func (c *Connection) sendRequest(objectID uint32, opcode uint16, args []wire.Arg
 		return fmt.Errorf("client: encode failed: %w", err)
 	}
 
+	return c.dispatchEncodedMessage(data, fds)
+}
+
+// dispatchEncodedMessage sends pre-encoded wire data, using the FD-passing path
+// when the message carries file descriptors.
+func (c *Connection) dispatchEncodedMessage(data []byte, fds []int) error {
 	if len(fds) > 0 {
 		if err := c.socket.SendWithFDs(data, fds); err != nil {
 			return fmt.Errorf("client: send with fds failed: %w", err)
 		}
-	} else {
-		if err := c.socket.Send(data); err != nil {
-			return fmt.Errorf("client: send failed: %w", err)
-		}
+		return nil
 	}
-
+	if err := c.socket.Send(data); err != nil {
+		return fmt.Errorf("client: send failed: %w", err)
+	}
 	return nil
 }
 

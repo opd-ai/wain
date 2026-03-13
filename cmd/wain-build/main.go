@@ -134,35 +134,43 @@ func detectMuslTarget() string {
 }
 
 func findModuleRoot() (string, error) {
-	// Try to find go.mod walking up from current directory
 	dir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
+	if root, ok := walkDirsForWainModule(dir); ok {
+		return root, nil
+	}
+	return findModuleRootViaGoList()
+}
 
-	// First check if we're in the wain module
+// walkDirsForWainModule walks parent directories from startDir looking for a go.mod
+// that declares the github.com/opd-ai/wain module.
+func walkDirsForWainModule(startDir string) (string, bool) {
+	dir := startDir
 	for {
 		gomod := filepath.Join(dir, "go.mod")
 		if data, err := os.ReadFile(gomod); err == nil {
 			if strings.Contains(string(data), "module github.com/opd-ai/wain") {
-				return dir, nil
+				return dir, true
 			}
 		}
-
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			break
 		}
 		dir = parent
 	}
+	return "", false
+}
 
-	// If not found, try to find it via go list
+// findModuleRootViaGoList uses 'go list' to locate the wain module in the module cache.
+func findModuleRootViaGoList() (string, error) {
 	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", "github.com/opd-ai/wain")
 	out, err := cmd.Output()
 	if err == nil {
 		return strings.TrimSpace(string(out)), nil
 	}
-
 	return "", fmt.Errorf("could not find wain module (not in a wain project or module not downloaded)")
 }
 

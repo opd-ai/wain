@@ -68,31 +68,22 @@ func ScissorRectFromDamage(damage displaylist.Rect) ScissorRect {
 
 // ClampScissorRect clamps a scissor rect to fit within target dimensions.
 func ClampScissorRect(rect ScissorRect, maxWidth, maxHeight int) ScissorRect {
-	// Clamp origin to valid range
-	if rect.X < 0 {
-		rect.Width += rect.X
-		rect.X = 0
-	}
-	if rect.Y < 0 {
-		rect.Height += rect.Y
-		rect.Y = 0
-	}
-
-	// Clamp size to not exceed bounds
-	if rect.X+rect.Width > maxWidth {
-		rect.Width = maxWidth - rect.X
-	}
-	if rect.Y+rect.Height > maxHeight {
-		rect.Height = maxHeight - rect.Y
-	}
-
-	// Ensure non-negative dimensions
-	if rect.Width < 0 {
-		rect.Width = 0
-	}
-	if rect.Height < 0 {
-		rect.Height = 0
-	}
-
+	rect.X, rect.Width = clampAxis(rect.X, rect.Width, maxWidth)
+	rect.Y, rect.Height = clampAxis(rect.Y, rect.Height, maxHeight)
 	return rect
+}
+
+// clampAxis adjusts an axis origin and size so the range [origin, origin+size) fits within [0, max).
+func clampAxis(origin, size, max int) (int, int) {
+	if origin < 0 {
+		size += origin
+		origin = 0
+	}
+	if origin+size > max {
+		size = max - origin
+	}
+	if size < 0 {
+		size = 0
+	}
+	return origin, size
 }

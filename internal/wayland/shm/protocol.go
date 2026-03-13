@@ -68,12 +68,18 @@ func (s *SHM) WaitForFormats(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			if len(s.formats) > 0 {
-				return nil
-			}
-			return fmt.Errorf("no formats received")
+			return s.checkFormatsAvailable()
 		}
 	}
+}
+
+// checkFormatsAvailable returns nil if at least one format has been received,
+// or an error if none have arrived yet.
+func (s *SHM) checkFormatsAvailable() error {
+	if len(s.formats) > 0 {
+		return nil
+	}
+	return fmt.Errorf("no formats received")
 }
 
 // HasFormat checks if a pixel format is supported by the compositor.

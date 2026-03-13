@@ -106,41 +106,45 @@ func (d *Dmabuf) CreateParams() (*BufferParams, error) {
 // HandleEvent processes events from the compositor for this dmabuf object.
 func (d *Dmabuf) HandleEvent(opcode uint16, args []wire.Argument) error {
 	switch opcode {
-	case 0: // format event — deprecated since zwp_linux_dmabuf_v1 v3; modifier event (case 1) is authoritative for v3+.
-		// TODO: Once the minimum required compositor version is raised to v3, remove this
-		// handler and rely solely on modifier events. Tracked by opd-ai/wain#dmabuf-v3.
-		if len(args) != 1 {
-			return fmt.Errorf("dmabuf: format event: expected 1 argument, got %d", len(args))
-		}
-		if args[0].Type != wire.ArgTypeUint32 {
-			return fmt.Errorf("dmabuf: format event: expected uint32 argument")
-		}
-		format := args[0].Value.(uint32)
-		// Add with linear modifier as default
-		if _, exists := d.formats[format]; !exists {
-			d.formats[format] = []uint64{ModifierLinear}
-		}
-		return nil
-
-	case 1: // modifier event
-		if len(args) != 3 {
-			return fmt.Errorf("dmabuf: modifier event: expected 3 arguments, got %d", len(args))
-		}
-		if args[0].Type != wire.ArgTypeUint32 || args[1].Type != wire.ArgTypeUint32 || args[2].Type != wire.ArgTypeUint32 {
-			return fmt.Errorf("dmabuf: modifier event: invalid argument types")
-		}
-
-		format := args[0].Value.(uint32)
-		modHi := uint64(args[1].Value.(uint32))
-		modLo := uint64(args[2].Value.(uint32))
-		modifier := (modHi << 32) | modLo
-
-		d.formats[format] = append(d.formats[format], modifier)
-		return nil
-
+	case 0:
+		return d.handleFormatEvent(args)
+	case 1:
+		return d.handleModifierEvent(args)
 	default:
 		return fmt.Errorf("dmabuf: unknown event opcode: %d", opcode)
 	}
+}
+
+// handleFormatEvent processes the deprecated format event (zwp_linux_dmabuf_v1 v1/v2).
+// TODO: Once the minimum required compositor version is raised to v3, remove this
+// handler and rely solely on modifier events. Tracked by opd-ai/wain#dmabuf-v3.
+func (d *Dmabuf) handleFormatEvent(args []wire.Argument) error {
+	if len(args) != 1 {
+		return fmt.Errorf("dmabuf: format event: expected 1 argument, got %d", len(args))
+	}
+	if args[0].Type != wire.ArgTypeUint32 {
+		return fmt.Errorf("dmabuf: format event: expected uint32 argument")
+	}
+	format := args[0].Value.(uint32)
+	if _, exists := d.formats[format]; !exists {
+		d.formats[format] = []uint64{ModifierLinear}
+	}
+	return nil
+}
+
+// handleModifierEvent processes the modifier event (zwp_linux_dmabuf_v1 v3+).
+func (d *Dmabuf) handleModifierEvent(args []wire.Argument) error {
+	if len(args) != 3 {
+		return fmt.Errorf("dmabuf: modifier event: expected 3 arguments, got %d", len(args))
+	}
+	if args[0].Type != wire.ArgTypeUint32 || args[1].Type != wire.ArgTypeUint32 || args[2].Type != wire.ArgTypeUint32 {
+		return fmt.Errorf("dmabuf: modifier event: invalid argument types")
+	}
+	format := args[0].Value.(uint32)
+	modHi := uint64(args[1].Value.(uint32))
+	modLo := uint64(args[2].Value.(uint32))
+	d.formats[format] = append(d.formats[format], (modHi<<32)|modLo)
+	return nil
 }
 
 // HasFormat checks if a format is supported by the compositor.

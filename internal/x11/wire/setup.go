@@ -320,28 +320,38 @@ func decodeVisuals(r io.Reader, count int) ([]Visual, error) {
 func decodeDepths(r io.Reader, count int) ([]Depth, error) {
 	depths := make([]Depth, count)
 	for j := 0; j < count; j++ {
-		var err error
-		if depths[j].Depth, err = DecodeUint8(r); err != nil {
-			return nil, fmt.Errorf("depth decode: %w", err)
-		}
-		if _, err := io.CopyN(io.Discard, r, 1); err != nil {
-			return nil, fmt.Errorf("depth decode: %w", err)
-		}
-		numVisuals, err := DecodeUint16(r)
-		if err != nil {
-			return nil, fmt.Errorf("depth decode: %w", err)
-		}
-		if _, err := io.CopyN(io.Discard, r, 4); err != nil {
-			return nil, fmt.Errorf("depth decode: %w", err)
-		}
-
-		visuals, err := decodeVisuals(r, int(numVisuals))
+		d, err := decodeSingleDepth(r)
 		if err != nil {
 			return nil, err
 		}
-		depths[j].Visuals = visuals
+		depths[j] = d
 	}
 	return depths, nil
+}
+
+// decodeSingleDepth reads one depth entry along with its associated visuals.
+func decodeSingleDepth(r io.Reader) (Depth, error) {
+	var d Depth
+	var err error
+	if d.Depth, err = DecodeUint8(r); err != nil {
+		return d, fmt.Errorf("depth decode: %w", err)
+	}
+	if _, err = io.CopyN(io.Discard, r, 1); err != nil {
+		return d, fmt.Errorf("depth decode: %w", err)
+	}
+	numVisuals, err := DecodeUint16(r)
+	if err != nil {
+		return d, fmt.Errorf("depth decode: %w", err)
+	}
+	if _, err = io.CopyN(io.Discard, r, 4); err != nil {
+		return d, fmt.Errorf("depth decode: %w", err)
+	}
+	visuals, err := decodeVisuals(r, int(numVisuals))
+	if err != nil {
+		return d, err
+	}
+	d.Visuals = visuals
+	return d, nil
 }
 
 // decodeScreen reads a single screen entry.

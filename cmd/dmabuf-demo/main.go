@@ -123,41 +123,65 @@ func setupWaylandContext() (*demoContext, func(), error) {
 }
 
 func bindGlobals(conn *client.Connection, registry *client.Registry) (*client.Compositor, *dmabuf.Dmabuf, *xdg.WmBase, error) {
-	compositorGlobal := registry.FindGlobal("wl_compositor")
-	if compositorGlobal == nil {
-		return nil, nil, nil, fmt.Errorf("wl_compositor not found")
-	}
-	compositor, err := registry.BindCompositor(compositorGlobal)
+	compositor, err := bindCompositorGlobal(registry)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("bind compositor: %w", err)
+		return nil, nil, nil, err
+	}
+	dmabufObj, err := bindDmabufGlobal(conn, registry)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	wmBase, err := bindXdgWmBaseGlobal(conn, registry)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return compositor, dmabufObj, wmBase, nil
+}
+
+// bindCompositorGlobal finds and binds the wl_compositor global.
+func bindCompositorGlobal(registry *client.Registry) (*client.Compositor, error) {
+	g := registry.FindGlobal("wl_compositor")
+	if g == nil {
+		return nil, fmt.Errorf("wl_compositor not found")
+	}
+	compositor, err := registry.BindCompositor(g)
+	if err != nil {
+		return nil, fmt.Errorf("bind compositor: %w", err)
 	}
 	fmt.Println("      ✓ Bound to wl_compositor")
+	return compositor, nil
+}
 
-	dmabufGlobal := registry.FindGlobal("zwp_linux_dmabuf_v1")
-	if dmabufGlobal == nil {
-		return nil, nil, nil, fmt.Errorf("zwp_linux_dmabuf_v1 not found (compositor doesn't support DMA-BUF)")
+// bindDmabufGlobal finds and binds the zwp_linux_dmabuf_v1 global.
+func bindDmabufGlobal(conn *client.Connection, registry *client.Registry) (*dmabuf.Dmabuf, error) {
+	g := registry.FindGlobal("zwp_linux_dmabuf_v1")
+	if g == nil {
+		return nil, fmt.Errorf("zwp_linux_dmabuf_v1 not found (compositor doesn't support DMA-BUF)")
 	}
-	dmabufID, err := registry.BindDmabuf(dmabufGlobal)
+	id, err := registry.BindDmabuf(g)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("bind dmabuf: %w", err)
+		return nil, fmt.Errorf("bind dmabuf: %w", err)
 	}
-	dmabufObj := dmabuf.NewDmabuf(conn, dmabufID)
-	conn.RegisterObject(dmabufObj)
+	obj := dmabuf.NewDmabuf(conn, id)
+	conn.RegisterObject(obj)
 	fmt.Println("      ✓ Bound to zwp_linux_dmabuf_v1")
+	return obj, nil
+}
 
-	xdgGlobal := registry.FindGlobal("xdg_wm_base")
-	if xdgGlobal == nil {
-		return nil, nil, nil, fmt.Errorf("xdg_wm_base not found")
+// bindXdgWmBaseGlobal finds and binds the xdg_wm_base global.
+func bindXdgWmBaseGlobal(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
+	g := registry.FindGlobal("xdg_wm_base")
+	if g == nil {
+		return nil, fmt.Errorf("xdg_wm_base not found")
 	}
-	wmBaseID, _, err := registry.BindXdgWmBase(xdgGlobal)
+	id, _, err := registry.BindXdgWmBase(g)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("bind xdg_wm_base: %w", err)
+		return nil, fmt.Errorf("bind xdg_wm_base: %w", err)
 	}
-	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
+	wmBase := xdg.NewWmBase(conn, id, g.Version)
 	conn.RegisterObject(wmBase)
 	fmt.Println("      ✓ Bound to xdg_wm_base")
-
-	return compositor, dmabufObj, wmBase, nil
+	return wmBase, nil
 }
 
 func createGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {

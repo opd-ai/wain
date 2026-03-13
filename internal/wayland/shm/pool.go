@@ -124,19 +124,22 @@ func (p *Pool) Resize(size int32) error {
 		return fmt.Errorf("ftruncate failed: %w", err)
 	}
 
-	// Remap if currently mapped.
-	if p.mapping != nil {
-		if err := p.Unmap(); err != nil {
-			return fmt.Errorf("unmap before resize failed: %w", err)
-		}
-		p.size = size
-		if err := p.Map(); err != nil {
-			return fmt.Errorf("remap after resize failed: %w", err)
-		}
-	} else {
-		p.size = size
-	}
+	return p.remapAfterResize(size)
+}
 
+// remapAfterResize updates the memory mapping to reflect the new pool size.
+func (p *Pool) remapAfterResize(size int32) error {
+	if p.mapping == nil {
+		p.size = size
+		return nil
+	}
+	if err := p.Unmap(); err != nil {
+		return fmt.Errorf("unmap before resize failed: %w", err)
+	}
+	p.size = size
+	if err := p.Map(); err != nil {
+		return fmt.Errorf("remap after resize failed: %w", err)
+	}
 	return nil
 }
 

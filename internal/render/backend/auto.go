@@ -69,8 +69,6 @@ func NewRenderer(cfg AutoConfig) (Renderer, BackendType, error) {
 
 	// Attempt GPU detection
 	gen := render.DetectGPU(cfg.DRMPath)
-
-	// Check if GPU was detected
 	if gen == render.GpuUnknown {
 		return newSoftwareFallback(cfg, "no GPU detected")
 	}
@@ -81,7 +79,12 @@ func NewRenderer(cfg AutoConfig) (Renderer, BackendType, error) {
 		return newSoftwareFallback(cfg, fmt.Sprintf("unsupported GPU: %s", gen))
 	}
 
-	// Attempt to create GPU backend
+	return createGPUBackend(cfg, gen, backendType)
+}
+
+// createGPUBackend attempts to initialise a GPU rendering backend for the detected
+// generation. Falls back to software rendering if backend creation fails.
+func createGPUBackend(cfg AutoConfig, gen render.GpuGeneration, backendType BackendType) (Renderer, BackendType, error) {
 	gpuCfg := Config{
 		DRMPath:          cfg.DRMPath,
 		Width:            cfg.Width,
@@ -92,7 +95,6 @@ func NewRenderer(cfg AutoConfig) (Renderer, BackendType, error) {
 
 	backend, err := New(gpuCfg)
 	if err != nil {
-		// GPU backend creation failed - fall back to software
 		return newSoftwareFallback(cfg, fmt.Sprintf("GPU init failed: %v", err))
 	}
 
