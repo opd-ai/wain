@@ -1,65 +1,65 @@
-ok  	github.com/opd-ai/wain	1.070s
+ok  	github.com/opd-ai/wain	1.104s
 ?   	github.com/opd-ai/wain/cmd/amd-triangle-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/auto-render-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/callback-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/clipboard-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/decorations-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/dmabuf-demo	1.015s
-ok  	github.com/opd-ai/wain/cmd/double-buffer-demo	1.014s
-ok  	github.com/opd-ai/wain/cmd/event-demo	1.013s
+ok  	github.com/opd-ai/wain/cmd/dmabuf-demo	1.020s
+ok  	github.com/opd-ai/wain/cmd/double-buffer-demo	1.019s
+ok  	github.com/opd-ai/wain/cmd/event-demo	1.023s
 ?   	github.com/opd-ai/wain/cmd/example-app	[no test files]
-ok  	github.com/opd-ai/wain/cmd/gen-atlas	1.016s
+ok  	github.com/opd-ai/wain/cmd/gen-atlas	1.029s
 ?   	github.com/opd-ai/wain/cmd/gpu-display-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/gpu-triangle-demo	1.014s
+ok  	github.com/opd-ai/wain/cmd/gpu-triangle-demo	1.022s
 ?   	github.com/opd-ai/wain/cmd/perf-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/resource-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/shader-test	[no test files]
 ?   	github.com/opd-ai/wain/cmd/theme-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/wain	[no test files]
 ?   	github.com/opd-ai/wain/cmd/wain-build	[no test files]
-ok  	github.com/opd-ai/wain/cmd/wain-demo	1.015s
-ok  	github.com/opd-ai/wain/cmd/wayland-demo	1.013s
-ok  	github.com/opd-ai/wain/cmd/widget-demo	1.014s
+ok  	github.com/opd-ai/wain/cmd/wain-demo	1.014s
+ok  	github.com/opd-ai/wain/cmd/wayland-demo	1.017s
+ok  	github.com/opd-ai/wain/cmd/widget-demo	1.016s
 ?   	github.com/opd-ai/wain/cmd/window-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/x11-demo	1.012s
-ok  	github.com/opd-ai/wain/cmd/x11-dmabuf-demo	1.014s
-ok  	github.com/opd-ai/wain/internal/buffer	1.146s
+ok  	github.com/opd-ai/wain/cmd/x11-demo	1.015s
+ok  	github.com/opd-ai/wain/cmd/x11-dmabuf-demo	1.015s
+ok  	github.com/opd-ai/wain/internal/buffer	1.154s
 ?   	github.com/opd-ai/wain/internal/demo	[no test files]
-ok  	github.com/opd-ai/wain/internal/integration	1.181s
-ok  	github.com/opd-ai/wain/internal/raster	1.129s
-ok  	github.com/opd-ai/wain/internal/raster/composite	1.029s
-ok  	github.com/opd-ai/wain/internal/raster/consumer	1.039s
-ok  	github.com/opd-ai/wain/internal/raster/curves	1.028s
-ok  	github.com/opd-ai/wain/internal/raster/displaylist	1.021s
-ok  	github.com/opd-ai/wain/internal/raster/effects	1.059s
-ok  	github.com/opd-ai/wain/internal/raster/primitives	1.020s
-ok  	github.com/opd-ai/wain/internal/raster/text	1.025s
-ok  	github.com/opd-ai/wain/internal/render	1.030s
-ok  	github.com/opd-ai/wain/internal/render/atlas	1.030s
-ok  	github.com/opd-ai/wain/internal/render/backend	1.205s
+ok  	github.com/opd-ai/wain/internal/integration	1.172s
+ok  	github.com/opd-ai/wain/internal/raster	1.128s
+ok  	github.com/opd-ai/wain/internal/raster/composite	1.026s
+ok  	github.com/opd-ai/wain/internal/raster/consumer	1.029s
+ok  	github.com/opd-ai/wain/internal/raster/curves	1.027s
+ok  	github.com/opd-ai/wain/internal/raster/displaylist	1.015s
+ok  	github.com/opd-ai/wain/internal/raster/effects	1.053s
+ok  	github.com/opd-ai/wain/internal/raster/primitives	1.016s
+ok  	github.com/opd-ai/wain/internal/raster/text	1.020s
+ok  	github.com/opd-ai/wain/internal/render	1.017s
+ok  	github.com/opd-ai/wain/internal/render/atlas	1.017s
+ok  	github.com/opd-ai/wain/internal/render/backend	1.215s
 ?   	github.com/opd-ai/wain/internal/render/display	[no test files]
 ?   	github.com/opd-ai/wain/internal/render/present	[no test files]
-ok  	github.com/opd-ai/wain/internal/ui/decorations	1.064s
-ok  	github.com/opd-ai/wain/internal/ui/layout	1.024s
-ok  	github.com/opd-ai/wain/internal/ui/pctwidget	1.032s
+ok  	github.com/opd-ai/wain/internal/ui/decorations	1.052s
+ok  	github.com/opd-ai/wain/internal/ui/layout	1.018s
+ok  	github.com/opd-ai/wain/internal/ui/pctwidget	1.026s
 ok  	github.com/opd-ai/wain/internal/ui/scale	1.024s
-ok  	github.com/opd-ai/wain/internal/ui/widgets	1.072s
-ok  	github.com/opd-ai/wain/internal/wayland/client	1.046s
-ok  	github.com/opd-ai/wain/internal/wayland/datadevice	1.030s
-ok  	github.com/opd-ai/wain/internal/wayland/dmabuf	1.032s
-ok  	github.com/opd-ai/wain/internal/wayland/input	1.037s
-ok  	github.com/opd-ai/wain/internal/wayland/output	1.028s
-ok  	github.com/opd-ai/wain/internal/wayland/shm	1.078s
-ok  	github.com/opd-ai/wain/internal/wayland/socket	1.019s
-ok  	github.com/opd-ai/wain/internal/wayland/wire	1.016s
-ok  	github.com/opd-ai/wain/internal/wayland/xdg	1.019s
-ok  	github.com/opd-ai/wain/internal/x11/client	1.055s
-ok  	github.com/opd-ai/wain/internal/x11/dpi	1.017s
+ok  	github.com/opd-ai/wain/internal/ui/widgets	1.070s
+ok  	github.com/opd-ai/wain/internal/wayland/client	1.024s
+ok  	github.com/opd-ai/wain/internal/wayland/datadevice	1.018s
+ok  	github.com/opd-ai/wain/internal/wayland/dmabuf	1.017s
+ok  	github.com/opd-ai/wain/internal/wayland/input	1.018s
+ok  	github.com/opd-ai/wain/internal/wayland/output	1.016s
+ok  	github.com/opd-ai/wain/internal/wayland/shm	1.065s
+ok  	github.com/opd-ai/wain/internal/wayland/socket	1.017s
+ok  	github.com/opd-ai/wain/internal/wayland/wire	1.018s
+ok  	github.com/opd-ai/wain/internal/wayland/xdg	1.015s
+ok  	github.com/opd-ai/wain/internal/x11/client	1.060s
+ok  	github.com/opd-ai/wain/internal/x11/dpi	1.018s
 ok  	github.com/opd-ai/wain/internal/x11/dri3	1.017s
-ok  	github.com/opd-ai/wain/internal/x11/events	1.019s
-ok  	github.com/opd-ai/wain/internal/x11/gc	1.017s
-ok  	github.com/opd-ai/wain/internal/x11/present	1.015s
-ok  	github.com/opd-ai/wain/internal/x11/selection	1.067s
-ok  	github.com/opd-ai/wain/internal/x11/shm	1.016s
-ok  	github.com/opd-ai/wain/internal/x11/wire	1.016s
+ok  	github.com/opd-ai/wain/internal/x11/events	1.020s
+ok  	github.com/opd-ai/wain/internal/x11/gc	1.015s
+ok  	github.com/opd-ai/wain/internal/x11/present	1.016s
+ok  	github.com/opd-ai/wain/internal/x11/selection	1.064s
+ok  	github.com/opd-ai/wain/internal/x11/shm	1.015s
+ok  	github.com/opd-ai/wain/internal/x11/wire	1.018s
 ?   	github.com/opd-ai/wain/scripts	[no test files]

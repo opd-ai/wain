@@ -180,51 +180,51 @@ func (o *Output) handleGeometry(args []wire.Argument) error {
 	return nil
 }
 
+// geomDecoder provides sequential argument decoding with accumulated error state.
+// If any decode call fails, subsequent calls become no-ops and the error is
+// preserved for retrieval via err().
+type geomDecoder struct {
+	args []wire.Argument
+	idx  int
+	err  error
+}
+
+// int32Field decodes the next argument as int32, recording any type mismatch.
+func (d *geomDecoder) int32Field(name string) int32 {
+	if d.err != nil {
+		return 0
+	}
+	val, err := getInt32Arg(d.args[d.idx], name)
+	d.idx++
+	d.err = err
+	return val
+}
+
+// strField decodes the next argument as string, recording any type mismatch.
+func (d *geomDecoder) strField(name string) string {
+	if d.err != nil {
+		return ""
+	}
+	val, err := getStringArg(d.args[d.idx], name)
+	d.idx++
+	d.err = err
+	return val
+}
+
 // parseGeometryArgs extracts and validates geometry arguments.
 func parseGeometryArgs(args []wire.Argument) (Geometry, error) {
-	x, err := getInt32Arg(args[0], "x")
-	if err != nil {
-		return Geometry{}, err
+	dec := &geomDecoder{args: args}
+	g := Geometry{
+		X:         dec.int32Field("x"),
+		Y:         dec.int32Field("y"),
+		PhysicalW: dec.int32Field("physical_width"),
+		PhysicalH: dec.int32Field("physical_height"),
+		Subpixel:  dec.int32Field("subpixel"),
+		Make:      dec.strField("make"),
+		Model:     dec.strField("model"),
+		Transform: dec.int32Field("transform"),
 	}
-	y, err := getInt32Arg(args[1], "y")
-	if err != nil {
-		return Geometry{}, err
-	}
-	physicalW, err := getInt32Arg(args[2], "physical_width")
-	if err != nil {
-		return Geometry{}, err
-	}
-	physicalH, err := getInt32Arg(args[3], "physical_height")
-	if err != nil {
-		return Geometry{}, err
-	}
-	subpixel, err := getInt32Arg(args[4], "subpixel")
-	if err != nil {
-		return Geometry{}, err
-	}
-	make, err := getStringArg(args[5], "make")
-	if err != nil {
-		return Geometry{}, err
-	}
-	model, err := getStringArg(args[6], "model")
-	if err != nil {
-		return Geometry{}, err
-	}
-	transform, err := getInt32Arg(args[7], "transform")
-	if err != nil {
-		return Geometry{}, err
-	}
-
-	return Geometry{
-		X:         x,
-		Y:         y,
-		PhysicalW: physicalW,
-		PhysicalH: physicalH,
-		Subpixel:  subpixel,
-		Make:      make,
-		Model:     model,
-		Transform: transform,
-	}, nil
+	return g, dec.err
 }
 
 // getInt32Arg extracts an int32 argument with error handling.

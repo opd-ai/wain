@@ -228,47 +228,62 @@ type EventHandler interface {
 
 // ReadMessage reads a single event message from the compositor.
 // Returns nil, nil if no message is available (non-blocking read).
-func (c *Connection) ReadMessage() (*wire.Message, error) {
-	if c.closed {
-		return nil, ErrClosed
-	}
-
-	// Try to read a message header
+// readMessageHeader reads and decodes a Wayland message header from the socket.
+// Returns the decoded header, a boolean indicating whether a message was available,
+// and any error.
+func (c *Connection) readMessageHeader() (wire.Header, bool, error) {
 	n, _, err := c.socket.RecvMsg(c.eventBuffer[:wire.HeaderSize], 0)
 	if err != nil {
-		return nil, fmt.Errorf("client: read header failed: %w", err)
+		return wire.Header{}, false, fmt.Errorf("client: read header failed: %w", err)
 	}
 	if n == 0 {
-		return nil, nil // No message available
+		return wire.Header{}, false, nil // No message available
 	}
 	if n < wire.HeaderSize {
-		return nil, fmt.Errorf("client: incomplete header (%d bytes)", n)
+		return wire.Header{}, false, fmt.Errorf("client: incomplete header (%d bytes)", n)
 	}
-
-	// Decode header
 	header := wire.Header{
 		ObjectID: binary.LittleEndian.Uint32(c.eventBuffer[0:4]),
 		Opcode:   uint16(binary.LittleEndian.Uint32(c.eventBuffer[4:8]) & 0xFFFF),
 		Size:     uint16(binary.LittleEndian.Uint32(c.eventBuffer[4:8]) >> 16),
 	}
+	return header, true, nil
+}
 
-	// Read the rest of the message if needed
+// readMessagePayload reads the message body bytes that follow the header.
+func (c *Connection) readMessagePayload(header wire.Header) error {
 	payloadSize := int(header.Size) - wire.HeaderSize
-	if payloadSize > 0 {
-		n, _, err = c.socket.RecvMsg(c.eventBuffer[wire.HeaderSize:header.Size], 0)
-		if err != nil {
-			return nil, fmt.Errorf("client: read payload failed: %w", err)
-		}
-		if n < payloadSize {
-			return nil, fmt.Errorf("client: incomplete payload (%d of %d bytes)", n, payloadSize)
-		}
+	if payloadSize <= 0 {
+		return nil
+	}
+	n, _, err := c.socket.RecvMsg(c.eventBuffer[wire.HeaderSize:header.Size], 0)
+	if err != nil {
+		return fmt.Errorf("client: read payload failed: %w", err)
+	}
+	if n < payloadSize {
+		return fmt.Errorf("client: incomplete payload (%d of %d bytes)", n, payloadSize)
+	}
+	return nil
+}
+
+func (c *Connection) ReadMessage() (*wire.Message, error) {
+	if c.closed {
+		return nil, ErrClosed
 	}
 
-	msg := &wire.Message{
-		Header: header,
+	header, available, err := c.readMessageHeader()
+	if err != nil {
+		return nil, err
+	}
+	if !available {
+		return nil, nil
 	}
 
-	return msg, nil
+	if err := c.readMessagePayload(header); err != nil {
+		return nil, err
+	}
+
+	return &wire.Message{Header: header}, nil
 }
 
 // DispatchMessage routes an event message to the appropriate object handler.

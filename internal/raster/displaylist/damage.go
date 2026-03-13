@@ -48,6 +48,28 @@ func (dt *DamageTracker) IsEmpty() bool {
 	return len(dt.regions) == 0
 }
 
+// growMergedRegion merges region at index i with all overlapping or adjacent
+// remaining regions (those not yet consumed), expanding the result rect until
+// no further merges are possible.
+func growMergedRegion(regions []Rect, used []bool, i, margin int) Rect {
+	current := regions[i]
+	changed := true
+	for changed {
+		changed = false
+		for j := i + 1; j < len(regions); j++ {
+			if used[j] {
+				continue
+			}
+			if rectsOverlapOrClose(current, regions[j], margin) {
+				current = mergeRects(current, regions[j])
+				used[j] = true
+				changed = true
+			}
+		}
+	}
+	return current
+}
+
 // Coalesce merges overlapping or adjacent damage regions to reduce the number of regions.
 // This uses a simple greedy algorithm that merges regions that overlap or are close.
 func (dt *DamageTracker) Coalesce(margin int) {
@@ -62,28 +84,8 @@ func (dt *DamageTracker) Coalesce(margin int) {
 		if used[i] {
 			continue
 		}
-
-		current := dt.regions[i]
 		used[i] = true
-
-		// Try to merge with all remaining regions
-		changed := true
-		for changed {
-			changed = false
-			for j := i + 1; j < len(dt.regions); j++ {
-				if used[j] {
-					continue
-				}
-
-				if rectsOverlapOrClose(current, dt.regions[j], margin) {
-					current = mergeRects(current, dt.regions[j])
-					used[j] = true
-					changed = true
-				}
-			}
-		}
-
-		merged = append(merged, current)
+		merged = append(merged, growMergedRegion(dt.regions, used, i, margin))
 	}
 
 	dt.regions = merged

@@ -174,6 +174,30 @@ type PixmapFormat struct {
 }
 
 // decodeSetupFailure reads and handles a setup failure response.
+// readFailureReason reads the reason string from a setup failure response.
+// Returns a wrapped ErrSetupFailed with the reason message, or nil if reasonLen is zero.
+func readFailureReason(r io.Reader, reasonLen uint8) error {
+	if reasonLen == 0 {
+		return nil
+	}
+	reason := make([]byte, reasonLen)
+	if _, err := io.ReadFull(r, reason); err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
+	return fmt.Errorf("%w: %s", ErrSetupFailed, string(reason))
+}
+
+// skipFailureData discards trailing failure data padding from the setup stream.
+func skipFailureData(r io.Reader, failDataLen uint16) error {
+	if failDataLen == 0 {
+		return nil
+	}
+	if _, err := io.CopyN(io.Discard, r, int64(failDataLen)*4); err != nil {
+		return fmt.Errorf("setup failure decode: %w", err)
+	}
+	return nil
+}
+
 func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
 	reasonLen, err := DecodeUint8(r)
 	if err != nil {
@@ -190,18 +214,11 @@ func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
 		return fmt.Errorf("setup failure decode: %w", err)
 	}
 
-	if reasonLen > 0 {
-		reason := make([]byte, reasonLen)
-		if _, err := io.ReadFull(r, reason); err != nil {
-			return fmt.Errorf("setup failure decode: %w", err)
-		}
-		return fmt.Errorf("%w: %s", ErrSetupFailed, string(reason))
+	if err := readFailureReason(r, reasonLen); err != nil {
+		return err
 	}
-
-	if failDataLen > 0 {
-		if _, err := io.CopyN(io.Discard, r, int64(failDataLen)*4); err != nil {
-			return fmt.Errorf("setup failure decode: %w", err)
-		}
+	if err := skipFailureData(r, failDataLen); err != nil {
+		return err
 	}
 	return ErrSetupFailed
 }
@@ -227,37 +244,48 @@ func decodePixmapFormats(r io.Reader, count int) ([]PixmapFormat, error) {
 	return formats, nil
 }
 
+// decodeSingleVisual reads one Visual entry from the X11 setup stream.
+func decodeSingleVisual(r io.Reader) (Visual, error) {
+	var v Visual
+	var err error
+	if v.ID, err = DecodeUint32(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	class, err := DecodeUint8(r)
+	if err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	v.Class = VisualClass(class)
+	if v.BitsPerRGB, err = DecodeUint8(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	if v.Colormap, err = DecodeUint16(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	if v.RedMask, err = DecodeUint32(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	if v.GreenMask, err = DecodeUint32(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	if v.BlueMask, err = DecodeUint32(r); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	if _, err = io.CopyN(io.Discard, r, 4); err != nil {
+		return Visual{}, fmt.Errorf("visual decode: %w", err)
+	}
+	return v, nil
+}
+
 // decodeVisuals reads visual entries for a depth.
 func decodeVisuals(r io.Reader, count int) ([]Visual, error) {
 	visuals := make([]Visual, count)
 	for k := 0; k < count; k++ {
-		var err error
-		if visuals[k].ID, err = DecodeUint32(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		class, err := DecodeUint8(r)
+		v, err := decodeSingleVisual(r)
 		if err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
+			return nil, err
 		}
-		visuals[k].Class = VisualClass(class)
-		if visuals[k].BitsPerRGB, err = DecodeUint8(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		if visuals[k].Colormap, err = DecodeUint16(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		if visuals[k].RedMask, err = DecodeUint32(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		if visuals[k].GreenMask, err = DecodeUint32(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		if visuals[k].BlueMask, err = DecodeUint32(r); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
-		if _, err := io.CopyN(io.Discard, r, 4); err != nil {
-			return nil, fmt.Errorf("visual decode: %w", err)
-		}
+		visuals[k] = v
 	}
 	return visuals, nil
 }
@@ -404,6 +432,19 @@ func decode6Uint8(r io.Reader, v1, v2, v3, v4, v5, v6 *uint8) error {
 	return nil
 }
 
+// decodeScreenList reads numScreens Screen entries from the X11 setup stream.
+func decodeScreenList(r io.Reader, numScreens uint8) ([]Screen, error) {
+	screens := make([]Screen, numScreens)
+	for i := 0; i < int(numScreens); i++ {
+		screen, err := decodeScreen(r)
+		if err != nil {
+			return nil, err
+		}
+		screens[i] = screen
+	}
+	return screens, nil
+}
+
 // DecodeSetupReply reads the server's setup reply from r.
 func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	var reply SetupReply
@@ -431,15 +472,10 @@ func DecodeSetupReply(r io.Reader) (SetupReply, error) {
 	}
 	reply.PixmapFormats = formats
 
-	screens := make([]Screen, numScreens)
-	for i := 0; i < int(numScreens); i++ {
-		screen, err := decodeScreen(r)
-		if err != nil {
-			return reply, err
-		}
-		screens[i] = screen
+	reply.Screens, err = decodeScreenList(r, numScreens)
+	if err != nil {
+		return reply, err
 	}
-	reply.Screens = screens
 
 	return reply, nil
 }

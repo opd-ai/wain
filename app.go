@@ -316,6 +316,18 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 	return win, nil
 }
 
+// clampDimension clamps value within [minVal, maxVal].
+// A constraint of 0 means unconstrained in that direction.
+func clampDimension(value, minVal, maxVal int) int {
+	if maxVal > 0 && value > maxVal {
+		value = maxVal
+	}
+	if minVal > 0 && value < minVal {
+		value = minVal
+	}
+	return value
+}
+
 // validateAndNormalizeConfig validates and normalizes window configuration.
 func validateAndNormalizeConfig(cfg *WindowConfig) error {
 	if cfg.Width <= 0 {
@@ -329,18 +341,8 @@ func validateAndNormalizeConfig(cfg *WindowConfig) error {
 		return ErrInvalidWindowConfig
 	}
 
-	if cfg.MaxWidth > 0 && cfg.Width > cfg.MaxWidth {
-		cfg.Width = cfg.MaxWidth
-	}
-	if cfg.MaxHeight > 0 && cfg.Height > cfg.MaxHeight {
-		cfg.Height = cfg.MaxHeight
-	}
-	if cfg.MinWidth > 0 && cfg.Width < cfg.MinWidth {
-		cfg.Width = cfg.MinWidth
-	}
-	if cfg.MinHeight > 0 && cfg.Height < cfg.MinHeight {
-		cfg.Height = cfg.MinHeight
-	}
+	cfg.Width = clampDimension(cfg.Width, cfg.MinWidth, cfg.MaxWidth)
+	cfg.Height = clampDimension(cfg.Height, cfg.MinHeight, cfg.MaxHeight)
 
 	return nil
 }
@@ -507,18 +509,8 @@ func (w *Window) SetSize(width, height int) error {
 		return errors.New("window is closed")
 	}
 
-	if w.maxWidth > 0 && width > w.maxWidth {
-		width = w.maxWidth
-	}
-	if w.maxHeight > 0 && height > w.maxHeight {
-		height = w.maxHeight
-	}
-	if w.minWidth > 0 && width < w.minWidth {
-		width = w.minWidth
-	}
-	if w.minHeight > 0 && height < w.minHeight {
-		height = w.minHeight
-	}
+	width = clampDimension(width, w.minWidth, w.maxWidth)
+	height = clampDimension(height, w.minHeight, w.maxHeight)
 
 	w.width = width
 	w.height = height

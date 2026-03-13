@@ -2,6 +2,33 @@ package primitives
 
 import "math"
 
+// fillRectOpaque writes packed pixel bytes into every cell of the rectangle.
+// Assumes x1 < x2 and y1 < y2 and the pixel is fully opaque (alpha = 255).
+func (b *Buffer) fillRectOpaque(x1, y1, x2, y2 int, pixel [4]byte) {
+	for row := y1; row < y2; row++ {
+		offset := row*b.Stride + x1*4
+		for col := x1; col < x2; col++ {
+			idx := offset + (col-x1)*4
+			b.Pixels[idx] = pixel[0]
+			b.Pixels[idx+1] = pixel[1]
+			b.Pixels[idx+2] = pixel[2]
+			b.Pixels[idx+3] = pixel[3]
+		}
+	}
+}
+
+// fillRectBlended alpha-blends color c into every cell of the rectangle.
+// Assumes x1 < x2 and y1 < y2.
+func (b *Buffer) fillRectBlended(x1, y1, x2, y2 int, c Color) {
+	for row := y1; row < y2; row++ {
+		offset := row * b.Stride
+		for col := x1; col < x2; col++ {
+			idx := offset + col*4
+			BlendPixel(b.Pixels[idx:idx+4], c)
+		}
+	}
+}
+
 // FillRect fills a rectangle with the specified color.
 // Coordinates are automatically clipped to buffer bounds.
 func (b *Buffer) FillRect(x, y, width, height int, c Color) {
@@ -20,24 +47,9 @@ func (b *Buffer) FillRect(x, y, width, height int, c Color) {
 
 	pixel := packColor(c)
 	if c.A == 255 {
-		for row := y1; row < y2; row++ {
-			offset := row*b.Stride + x1*4
-			for col := x1; col < x2; col++ {
-				idx := offset + (col-x1)*4
-				b.Pixels[idx] = pixel[0]
-				b.Pixels[idx+1] = pixel[1]
-				b.Pixels[idx+2] = pixel[2]
-				b.Pixels[idx+3] = pixel[3]
-			}
-		}
+		b.fillRectOpaque(x1, y1, x2, y2, pixel)
 	} else {
-		for row := y1; row < y2; row++ {
-			offset := row * b.Stride
-			for col := x1; col < x2; col++ {
-				idx := offset + col*4
-				BlendPixel(b.Pixels[idx:idx+4], c)
-			}
-		}
+		b.fillRectBlended(x1, y1, x2, y2, c)
 	}
 }
 

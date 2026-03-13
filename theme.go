@@ -190,36 +190,25 @@ type StyleOverride struct {
 	BorderRadius *int
 }
 
+// applyOverride sets *dst = *src when src is non-nil, leaving *dst unchanged otherwise.
+func applyOverride[T any](dst *T, src *T) {
+	if src != nil {
+		*dst = *src
+	}
+}
+
 // applyToTheme applies the style override to a theme, returning a new theme
 // with overridden values.
 func (s StyleOverride) applyToTheme(base Theme) Theme {
 	result := base
-	if s.Background != nil {
-		result.Background = *s.Background
-	}
-	if s.Foreground != nil {
-		result.Foreground = *s.Foreground
-	}
-	if s.Accent != nil {
-		result.Accent = *s.Accent
-	}
-	if s.Border != nil {
-		result.Border = *s.Border
-	}
-	if s.FontSize != nil {
-		result.FontSize = *s.FontSize
-	}
-	if s.Padding != nil {
-		result.Padding = *s.Padding
-	}
-	if s.Gap != nil {
-		result.Gap = *s.Gap
-	}
-	if s.BorderWidth != nil {
-		result.BorderWidth = *s.BorderWidth
-	}
-	if s.BorderRadius != nil {
-		result.BorderRadius = *s.BorderRadius
-	}
+	applyOverride(&result.Background, s.Background)
+	applyOverride(&result.Foreground, s.Foreground)
+	applyOverride(&result.Accent, s.Accent)
+	applyOverride(&result.Border, s.Border)
+	applyOverride(&result.FontSize, s.FontSize)
+	applyOverride(&result.Padding, s.Padding)
+	applyOverride(&result.Gap, s.Gap)
+	applyOverride(&result.BorderWidth, s.BorderWidth)
+	applyOverride(&result.BorderRadius, s.BorderRadius)
 	return result
 }
