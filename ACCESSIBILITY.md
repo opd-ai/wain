@@ -2,7 +2,21 @@
 
 ## Current Status
 
+### Keyboard Accessibility — **Implemented and Tested**
+
+Wain's interactive widgets (Button, TextInput, ScrollView, Panel, Row, Column) respond to
+keyboard and pointer events today.  Tab/Shift-Tab focus traversal, Enter/Space activation,
+and arrow-key navigation are functional and verified by `accessibility_test.go` at the
+repository root.  These tests (Phase 10.9) pass in CI without any additional dependencies.
+
+### AT-SPI2 Screen-Reader Support — **Not Yet Implemented**
+
 **Wain does not currently implement AT-SPI2 accessibility support.**
+
+The `accessibility_test.go` file tests *keyboard event-handling* (which is live), **not**
+AT-SPI2.  No D-Bus objects are exported, no `org.a11y.atspi.*` interfaces exist, and Orca
+cannot yet introspect a Wain application.  The remainder of this document describes the
+technical constraints and the future implementation path for AT-SPI2.
 
 This document explains the technical constraints, future possibilities, and workarounds for assistive technology integration.
 

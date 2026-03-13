@@ -8,6 +8,11 @@ import (
 	"github.com/opd-ai/wain/internal/demo"
 )
 
+// writeLE writes v to f in little-endian byte order.
+func writeLE(f *os.File, v any) error {
+	return binary.Write(f, binary.LittleEndian, v)
+}
+
 type glyphMeta struct {
 	Rune    rune
 	X, Y    int
@@ -42,7 +47,10 @@ func main() {
 	}
 
 	sdf, glyphs := generateAtlas(cfg)
-	writeAtlasFile("internal/raster/text/data/atlas.bin", cfg, sdf, glyphs)
+	if err := writeAtlasFile("internal/raster/text/data/atlas.bin", cfg, sdf, glyphs); err != nil {
+		fmt.Fprintf(os.Stderr, "gen-atlas: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Printf("Generated atlas: %dx%d, %d glyphs\n", cfg.width, cfg.height, len(glyphs))
 }
 
@@ -75,53 +83,65 @@ func generateAtlas(cfg atlasConfig) ([]uint8, []glyphMeta) {
 	return sdf, glyphs
 }
 
-func writeAtlasFile(path string, cfg atlasConfig, sdf []uint8, glyphs []glyphMeta) {
+func writeAtlasFile(path string, cfg atlasConfig, sdf []uint8, glyphs []glyphMeta) error {
 	f, err := os.Create(path)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("create %s: %w", path, err)
 	}
 	defer f.Close()
 
-	writeAtlasHeader(f, cfg, len(glyphs))
+	if err := writeAtlasHeader(f, cfg, len(glyphs)); err != nil {
+		return fmt.Errorf("write header: %w", err)
+	}
 	if _, err := f.Write(sdf); err != nil {
-		panic(err)
+		return fmt.Errorf("write pixel data: %w", err)
 	}
-	writeGlyphMetadata(f, glyphs)
+	if err := writeGlyphMetadata(f, glyphs); err != nil {
+		return fmt.Errorf("write glyph metadata: %w", err)
+	}
+	return nil
 }
 
-// mustWriteLE writes v to f in little-endian byte order, panicking on error.
-func mustWriteLE(f *os.File, v any) {
-	if err := binary.Write(f, binary.LittleEndian, v); err != nil {
-		panic(err)
+func writeAtlasHeader(f *os.File, cfg atlasConfig, glyphCount int) error {
+	if err := writeLE(f, uint32(cfg.width)); err != nil {
+		return err
 	}
-}
-
-func writeAtlasHeader(f *os.File, cfg atlasConfig, glyphCount int) {
-	mustWriteLE(f, uint32(cfg.width))
-	mustWriteLE(f, uint32(cfg.height))
-	mustWriteLE(f, uint32(glyphCount))
-	mustWriteLE(f, cfg.lineHeight)
+	if err := writeLE(f, uint32(cfg.height)); err != nil {
+		return err
+	}
+	if err := writeLE(f, uint32(glyphCount)); err != nil {
+		return err
+	}
+	return writeLE(f, cfg.lineHeight)
 }
 
 // writeGlyphMetadata writes packed glyph layout records to the atlas file.
-func writeGlyphMetadata(f *os.File, glyphs []glyphMeta) {
+func writeGlyphMetadata(f *os.File, glyphs []glyphMeta) error {
 	for _, g := range glyphs {
-		writeSingleGlyph(f, g)
+		if err := writeSingleGlyph(f, g); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // writeSingleGlyph encodes one glyph's metrics to the atlas file in
 // little-endian fixed-point format (sub-pixel values are scaled by 64).
-func writeSingleGlyph(f *os.File, g glyphMeta) {
-	mustWriteLE(f, uint32(g.Rune))
-	mustWriteLE(f, uint32(g.X))
-	mustWriteLE(f, uint32(g.Y))
-	mustWriteLE(f, uint32(g.W))
-	mustWriteLE(f, uint32(g.H))
-	mustWriteLE(f, int32(g.OffsetX*64))
-	mustWriteLE(f, int32(g.OffsetY*64))
-	mustWriteLE(f, uint32(g.Advance*64))
-	mustWriteLE(f, uint32(0))
+func writeSingleGlyph(f *os.File, g glyphMeta) error {
+	for _, v := range []any{
+		uint32(g.Rune),
+		uint32(g.X), uint32(g.Y),
+		uint32(g.W), uint32(g.H),
+		int32(g.OffsetX * 64),
+		int32(g.OffsetY * 64),
+		uint32(g.Advance * 64),
+		uint32(0),
+	} {
+		if err := writeLE(f, v); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func drawSimpleGlyph(sdf []uint8, width, height, xPos, yPos, size, r int) {
