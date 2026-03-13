@@ -1,89 +1,65 @@
-✓ Operating system: Linux
-✓ Go version: go1.24.0
-✓ Rust version: 1.83.0
-✓ musl C compiler found: /usr/bin/musl-gcc
-✓ Rust musl target installed: x86_64-unknown-linux-musl
-CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="/home/user/go/src/github.com/opd-ai/wain/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a /home/user/go/src/github.com/opd-ai/wain/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
-  CGO_LDFLAGS_ALLOW=".*" \
-  go test ./...
-ok  	github.com/opd-ai/wain	0.010s
+ok  	github.com/opd-ai/wain	1.070s
 ?   	github.com/opd-ai/wain/cmd/amd-triangle-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/auto-render-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/callback-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/clipboard-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/decorations-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/dmabuf-demo	0.003s
-ok  	github.com/opd-ai/wain/cmd/double-buffer-demo	0.003s
-ok  	github.com/opd-ai/wain/cmd/event-demo	0.003s
+ok  	github.com/opd-ai/wain/cmd/dmabuf-demo	1.015s
+ok  	github.com/opd-ai/wain/cmd/double-buffer-demo	1.014s
+ok  	github.com/opd-ai/wain/cmd/event-demo	1.013s
 ?   	github.com/opd-ai/wain/cmd/example-app	[no test files]
-ok  	github.com/opd-ai/wain/cmd/gen-atlas	0.004s
+ok  	github.com/opd-ai/wain/cmd/gen-atlas	1.016s
 ?   	github.com/opd-ai/wain/cmd/gpu-display-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/gpu-triangle-demo	0.003s
+ok  	github.com/opd-ai/wain/cmd/gpu-triangle-demo	1.014s
 ?   	github.com/opd-ai/wain/cmd/perf-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/resource-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/shader-test	[no test files]
 ?   	github.com/opd-ai/wain/cmd/theme-demo	[no test files]
 ?   	github.com/opd-ai/wain/cmd/wain	[no test files]
 ?   	github.com/opd-ai/wain/cmd/wain-build	[no test files]
-ok  	github.com/opd-ai/wain/cmd/wain-demo	0.003s
-ok  	github.com/opd-ai/wain/cmd/wayland-demo	0.003s
-ok  	github.com/opd-ai/wain/cmd/widget-demo	0.002s
+ok  	github.com/opd-ai/wain/cmd/wain-demo	1.015s
+ok  	github.com/opd-ai/wain/cmd/wayland-demo	1.013s
+ok  	github.com/opd-ai/wain/cmd/widget-demo	1.014s
 ?   	github.com/opd-ai/wain/cmd/window-demo	[no test files]
-ok  	github.com/opd-ai/wain/cmd/x11-demo	0.003s
-ok  	github.com/opd-ai/wain/cmd/x11-dmabuf-demo	0.004s
-ok  	github.com/opd-ai/wain/internal/buffer	(cached)
+ok  	github.com/opd-ai/wain/cmd/x11-demo	1.012s
+ok  	github.com/opd-ai/wain/cmd/x11-dmabuf-demo	1.014s
+ok  	github.com/opd-ai/wain/internal/buffer	1.146s
 ?   	github.com/opd-ai/wain/internal/demo	[no test files]
---- FAIL: TestGPUContextCreation (0.00s)
-    gpu_test.go:127: Context ID is zero (expected non-zero)
-    gpu_test.go:135: Created context: ID=0, VM=0 (GPU: AMD RDNA2 (Navi 21/22/23/24, RX 6000))
---- FAIL: TestBatchSubmission (0.00s)
-    gpu_test.go:187: Batch submission failed: batch submission failed for device /dev/dri/renderD128
---- FAIL: TestBatchSubmissionWithRenderTarget (0.00s)
-    gpu_test.go:261: Batch submission with render target failed: batch submission failed for device /dev/dri/renderD128
---- FAIL: TestBatchSubmissionMultipleContexts (0.01s)
-    gpu_test.go:305: Context IDs are identical (expected unique IDs)
-    gpu_test.go:321: Batch submission to context 1 failed: batch submission failed for device /dev/dri/renderD128
-    gpu_test.go:327: Batch submission to context 2 failed: batch submission failed for device /dev/dri/renderD128
-    gpu_test.go:330: Successfully submitted batches to 2 independent contexts on AMD RDNA2 (Navi 21/22/23/24, RX 6000)
-FAIL
-FAIL	github.com/opd-ai/wain/internal/integration	0.086s
-ok  	github.com/opd-ai/wain/internal/raster	0.024s
-ok  	github.com/opd-ai/wain/internal/raster/composite	(cached)
-ok  	github.com/opd-ai/wain/internal/raster/consumer	0.006s
-ok  	github.com/opd-ai/wain/internal/raster/curves	(cached)
-ok  	github.com/opd-ai/wain/internal/raster/displaylist	(cached)
-ok  	github.com/opd-ai/wain/internal/raster/effects	(cached)
-ok  	github.com/opd-ai/wain/internal/raster/primitives	(cached)
-ok  	github.com/opd-ai/wain/internal/raster/text	0.004s
-ok  	github.com/opd-ai/wain/internal/render	(cached)
-ok  	github.com/opd-ai/wain/internal/render/atlas	(cached)
-ok  	github.com/opd-ai/wain/internal/render/backend	0.178s
+ok  	github.com/opd-ai/wain/internal/integration	1.181s
+ok  	github.com/opd-ai/wain/internal/raster	1.129s
+ok  	github.com/opd-ai/wain/internal/raster/composite	1.029s
+ok  	github.com/opd-ai/wain/internal/raster/consumer	1.039s
+ok  	github.com/opd-ai/wain/internal/raster/curves	1.028s
+ok  	github.com/opd-ai/wain/internal/raster/displaylist	1.021s
+ok  	github.com/opd-ai/wain/internal/raster/effects	1.059s
+ok  	github.com/opd-ai/wain/internal/raster/primitives	1.020s
+ok  	github.com/opd-ai/wain/internal/raster/text	1.025s
+ok  	github.com/opd-ai/wain/internal/render	1.030s
+ok  	github.com/opd-ai/wain/internal/render/atlas	1.030s
+ok  	github.com/opd-ai/wain/internal/render/backend	1.205s
 ?   	github.com/opd-ai/wain/internal/render/display	[no test files]
 ?   	github.com/opd-ai/wain/internal/render/present	[no test files]
-ok  	github.com/opd-ai/wain/internal/ui/decorations	0.005s
-ok  	github.com/opd-ai/wain/internal/ui/layout	(cached)
-ok  	github.com/opd-ai/wain/internal/ui/pctwidget	(cached)
-ok  	github.com/opd-ai/wain/internal/ui/scale	(cached)
-ok  	github.com/opd-ai/wain/internal/ui/widgets	0.006s
-ok  	github.com/opd-ai/wain/internal/wayland/client	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/datadevice	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/dmabuf	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/input	0.003s
-ok  	github.com/opd-ai/wain/internal/wayland/output	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/shm	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/socket	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/wire	(cached)
-ok  	github.com/opd-ai/wain/internal/wayland/xdg	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/client	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/dpi	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/dri3	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/events	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/gc	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/present	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/selection	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/shm	(cached)
-ok  	github.com/opd-ai/wain/internal/x11/wire	(cached)
+ok  	github.com/opd-ai/wain/internal/ui/decorations	1.064s
+ok  	github.com/opd-ai/wain/internal/ui/layout	1.024s
+ok  	github.com/opd-ai/wain/internal/ui/pctwidget	1.032s
+ok  	github.com/opd-ai/wain/internal/ui/scale	1.024s
+ok  	github.com/opd-ai/wain/internal/ui/widgets	1.072s
+ok  	github.com/opd-ai/wain/internal/wayland/client	1.046s
+ok  	github.com/opd-ai/wain/internal/wayland/datadevice	1.030s
+ok  	github.com/opd-ai/wain/internal/wayland/dmabuf	1.032s
+ok  	github.com/opd-ai/wain/internal/wayland/input	1.037s
+ok  	github.com/opd-ai/wain/internal/wayland/output	1.028s
+ok  	github.com/opd-ai/wain/internal/wayland/shm	1.078s
+ok  	github.com/opd-ai/wain/internal/wayland/socket	1.019s
+ok  	github.com/opd-ai/wain/internal/wayland/wire	1.016s
+ok  	github.com/opd-ai/wain/internal/wayland/xdg	1.019s
+ok  	github.com/opd-ai/wain/internal/x11/client	1.055s
+ok  	github.com/opd-ai/wain/internal/x11/dpi	1.017s
+ok  	github.com/opd-ai/wain/internal/x11/dri3	1.017s
+ok  	github.com/opd-ai/wain/internal/x11/events	1.019s
+ok  	github.com/opd-ai/wain/internal/x11/gc	1.017s
+ok  	github.com/opd-ai/wain/internal/x11/present	1.015s
+ok  	github.com/opd-ai/wain/internal/x11/selection	1.067s
+ok  	github.com/opd-ai/wain/internal/x11/shm	1.016s
+ok  	github.com/opd-ai/wain/internal/x11/wire	1.016s
 ?   	github.com/opd-ai/wain/scripts	[no test files]
-FAIL
-make: *** [Makefile:343: test-go] Error 1
