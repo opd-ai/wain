@@ -35,8 +35,9 @@ This ensures technical debt is visible and trackable.
 ### Testing
 
 - Use `t.Parallel()` for independent tests to speed up test execution
-- Run tests with: `make test-go` (includes CGO_LDFLAGS for Rust library linking)
-- Never use `go test ./...` directly (will fail due to missing CGO flags)
+- Run `go generate ./...` once after cloning to build the Rust library and generate the `CGO_LDFLAGS` file
+- Run tests with: `make test-go` or `CC=musl-gcc CGO_ENABLED=1 go test ./...` (after `go generate ./...`)
+- Using `go test ./...` without first running `go generate ./...` will fail with linker errors
 
 ### Documentation
 

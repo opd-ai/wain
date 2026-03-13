@@ -145,19 +145,20 @@ go build .
 As an alternative to `make`, build using Go's native workflow:
 
 ```bash
-# Ensure RUST_MUSL_TARGET matches the target used by scripts/build-rust.sh / the Makefile,
-# for example: export RUST_MUSL_TARGET=x86_64-unknown-linux-musl
+# Build the Rust library, musl stub, and generate CGO flags (one-time setup)
 go generate ./...
-CC=musl-gcc CGO_ENABLED=1 \
-  CGO_LDFLAGS="$(pwd)/render-sys/target/${RUST_MUSL_TARGET}/release/librender_sys.a \
-  $(pwd)/internal/render/dl_find_object_stub.o -ldl -lm -lpthread" \
-  CGO_LDFLAGS_ALLOW=".*" \
-  go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
+
+# After go generate, go test and go build work without extra env vars
+CC=musl-gcc CGO_ENABLED=1 go test ./...
+CC=musl-gcc CGO_ENABLED=1 go build -ldflags "-extldflags '-static'" -o bin/wain ./cmd/wain
 ```
 
 The `go generate` step (`internal/render/generate.go`) calls
 `scripts/build-rust.sh`, which checks for required tools, detects the
-host architecture, and builds both the Rust library and the musl stub.
+host architecture, builds both the Rust library and the musl stub, and
+writes `internal/render/cgo_flags_generated.go` with the correct
+`#cgo LDFLAGS` so that subsequent `go test ./...` invocations work
+without manually setting `CGO_LDFLAGS`.
 
 ## Usage
 
@@ -238,9 +239,12 @@ running `direnv allow`, the environment variables will auto-load when
 you `cd` into this directory. Once loaded, standard `go test ./...` and
 `go build` commands work without additional flags.
 
-**Without direnv**, you must use `make test-go` and `make build` instead
-of `go test ./...` and `go build`, as these Makefile targets set the
-required `CGO_LDFLAGS` to link the Rust static library.
+**Without direnv**, run `go generate ./...` once after cloning. This
+builds the Rust library, compiles the musl stub, and writes a generated
+`internal/render/cgo_flags_generated.go` file with the required
+`#cgo LDFLAGS`. After that, `CC=musl-gcc CGO_ENABLED=1 go test ./...`
+works without any additional `CGO_LDFLAGS` setting. Alternatively,
+`make test-go` and `make build` set the required flags automatically.
 
 ## Project Structure
 
@@ -460,9 +464,21 @@ appropriate CGO flags for those requiring CGO).
 
 ## Testing
 
+### Quick Start with go generate
+
+The recommended setup for running `go test ./...` directly:
+
+```bash
+go generate ./...     # one-time setup: builds Rust lib, stub, and writes CGO flags
+CC=musl-gcc CGO_ENABLED=1 go test ./...  # run all Go tests
+```
+
+After `go generate ./...`, the `internal/render/cgo_flags_generated.go` file
+provides `#cgo LDFLAGS` automatically, so no manual `CGO_LDFLAGS` is needed.
+
 ### Quick Start with direnv
 
-If you have [direnv](https://direnv.net/) installed and configured:
+Alternatively, if you have [direnv](https://direnv.net/) installed and configured:
 
 ```bash
 direnv allow          # one-time setup; allows .envrc to auto-load
@@ -514,11 +530,11 @@ rm internal/raster/testdata/*.png     # remove old references
 make test-visual                       # generate new baselines
 ```
 
-**Without direnv** (or if direnv is not set up), you MUST use `make
-test-go` instead of `go test ./...`. Direct `go test` requires
-`CGO_LDFLAGS` to link the Rust library, which the Makefile sets
-automatically but plain `go test` does not (see
-[Troubleshooting](#troubleshooting)).
+**Without direnv** (or if direnv is not set up), run `go generate ./...`
+once to build the Rust library and generate the CGO flags file. After
+that, `CC=musl-gcc CGO_ENABLED=1 go test ./...` works without any
+additional `CGO_LDFLAGS`. Alternatively, `make test-go` sets all
+required flags automatically.
 
 ## Font Atlas Generation
 

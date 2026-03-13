@@ -46,6 +46,7 @@ mem.prof
 # Object files and stub outputs
 *.o
 *.a
+internal/render/cgo_flags_generated.go
 
 # Editor swap files
 *.swp
