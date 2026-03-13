@@ -110,6 +110,7 @@ type Panel struct {
 	BaseWidget
 	children      []*Panel
 	flowDirection FlowDirection
+	align         Align
 }
 
 // NewPanel creates a panel with percentage-based dimensions.
@@ -137,6 +138,19 @@ func (p *Panel) SetFlowDirection(dir FlowDirection) {
 // FlowDirection returns the current flow direction.
 func (p *Panel) FlowDirection() FlowDirection {
 	return p.flowDirection
+}
+
+// SetAlign sets the cross-axis alignment for children.
+//
+// For Row containers, controls vertical alignment (top/center/bottom/stretch).
+// For Column containers, controls horizontal alignment (left/center/right/stretch).
+func (p *Panel) SetAlign(a Align) {
+	p.align = a
+}
+
+// GetAlign returns the current cross-axis alignment.
+func (p *Panel) GetAlign() Align {
+	return p.align
 }
 
 // Add is an alias for AddChild for consistency with public API.

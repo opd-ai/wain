@@ -48,19 +48,19 @@ type Align int
 const (
 	// AlignStart aligns children to the start of the cross axis.
 	// For Row: top edge. For Column: left edge.
-	AlignStart Align = iota
+	AlignStart Align = Align(pctwidget.AlignStart)
 
 	// AlignCenter centers children on the cross axis.
 	// For Row: vertical center. For Column: horizontal center.
-	AlignCenter
+	AlignCenter Align = Align(pctwidget.AlignCenter)
 
 	// AlignEnd aligns children to the end of the cross axis.
 	// For Row: bottom edge. For Column: right edge.
-	AlignEnd
+	AlignEnd Align = Align(pctwidget.AlignEnd)
 
 	// AlignStretch stretches children to fill the cross axis.
 	// For Row: children fill container height. For Column: children fill container width.
-	AlignStretch
+	AlignStretch Align = Align(pctwidget.AlignStretch)
 )
 
 // Panel is a styled rectangular container that holds child widgets.
@@ -199,14 +199,17 @@ func (p *Panel) SetGap(pixels int) {
 
 // SetAlign sets the cross-axis alignment for children.
 //
-// For Row containers, controls vertical alignment (top/center/bottom).
-// For Column containers, controls horizontal alignment (left/center/right).
+// For Row containers, controls vertical alignment (top/center/bottom/stretch).
+// For Column containers, controls horizontal alignment (left/center/right/stretch).
 //
-// Note: Cross-axis alignment is deferred to a future phase. Currently only
-// AlignStart (top for Row, left for Column) is supported. This limitation
-// is tracked in https://github.com/opd-ai/wain/issues/TBD
+// The default alignment is AlignStart.
 func (p *Panel) SetAlign(align Align) {
-	_ = align
+	p.internal.SetAlign(pctwidget.Align(align))
+}
+
+// Align returns the current cross-axis alignment.
+func (p *Panel) Align() Align {
+	return Align(p.internal.GetAlign())
 }
 
 // SetPosition manually overrides the auto-layout position and dimensions.

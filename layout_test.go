@@ -238,6 +238,23 @@ func TestAlignConstants(t *testing.T) {
 	}
 }
 
+func TestPanelSetAlign(t *testing.T) {
+	panel := NewPanel(Size{Width: 100, Height: 100})
+
+	// Default alignment should be AlignStart
+	if got := panel.Align(); got != AlignStart {
+		t.Errorf("Default Align() = %v, want AlignStart", got)
+	}
+
+	alignments := []Align{AlignStart, AlignCenter, AlignEnd, AlignStretch}
+	for _, a := range alignments {
+		panel.SetAlign(a)
+		if got := panel.Align(); got != a {
+			t.Errorf("After SetAlign(%v), Align() = %v, want %v", a, got, a)
+		}
+	}
+}
+
 func TestFlowDirectionConstants(t *testing.T) {
 	// Verify flow direction constants are distinct
 	if FlowRow == FlowColumn {

@@ -10,6 +10,23 @@ const (
 	FlowRow
 )
 
+// Align controls cross-axis alignment of children within a container.
+//
+// For Row containers the cross axis is vertical; for Column containers it is
+// horizontal.
+type Align int
+
+const (
+	// AlignStart places children at the start of the cross axis (top for Row, left for Column).
+	AlignStart Align = iota
+	// AlignCenter centers children on the cross axis.
+	AlignCenter
+	// AlignEnd places children at the end of the cross axis (bottom for Row, right for Column).
+	AlignEnd
+	// AlignStretch stretches children to fill the cross axis entirely.
+	AlignStretch
+)
+
 // AutoLayout computes positions for a slice of panels within a parent region.
 //
 // The engine resolves each child's percentage-based size against the parent
@@ -17,12 +34,18 @@ const (
 // Gaps between children and padding around the edges are derived from the
 // supplied [Style] (or [DefaultStyle] if nil).
 //
+// The align parameter controls cross-axis alignment of children:
+//   - [AlignStart] places children at the start of the cross axis (default).
+//   - [AlignCenter] centers children on the cross axis.
+//   - [AlignEnd] places children at the end of the cross axis.
+//   - [AlignStretch] sizes children to fill the cross axis.
+//
 // Children that have a manual position override ([BaseWidget.IsManuallyPositioned])
 // are left untouched and do not consume space in the flow.
 //
-// AutoLayout also recurses into each child's own children, providing
-// zero-configuration nested layout.
-func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir FlowDirection, style Style) {
+// AutoLayout recurses into each child using the child's own [FlowDirection] and
+// [Align], providing zero-configuration nested layout.
+func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir FlowDirection, align Align, style Style) {
 	if style == nil {
 		style = DefaultStyle()
 	}
@@ -36,8 +59,7 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 		}
 		if p.IsManuallyPositioned() {
 			// Recurse into children using the manually set bounds.
-			_, _, pw, ph := p.ResolvedBounds()
-			layoutChildren(p, pw, ph, dir, style)
+			layoutChildren(p, style)
 			continue
 		}
 
@@ -49,10 +71,10 @@ func AutoLayout(panels []*Panel, parentX, parentY, parentW, parentH int, dir Flo
 			p.height = 0
 		}
 
-		cursor = placePanel(p, cx, cy, cursor, gap, dir)
+		cursor = placePanel(p, cx, cy, cw, ch, cursor, gap, dir, align)
 
-		// Recurse into children.
-		layoutChildren(p, p.width, p.height, dir, style)
+		// Recurse into children using the child's own layout settings.
+		layoutChildren(p, style)
 	}
 }
 
@@ -72,17 +94,40 @@ func computeContentArea(parentX, parentY, parentW, parentH int, style Style) (cx
 	return cx, cy, cw, ch
 }
 
-// placePanel positions a panel based on flow direction and returns the updated cursor.
-func placePanel(p *Panel, cx, cy, cursor, gap int, dir FlowDirection) int {
+// placePanel positions a panel on the main axis and applies cross-axis alignment.
+// It returns the updated cursor (offset along the main axis).
+func placePanel(p *Panel, cx, cy, cw, ch, cursor, gap int, dir FlowDirection, align Align) int {
 	switch dir {
 	case FlowRow:
 		p.x = cx + cursor
-		p.y = cy
+		if align == AlignStretch {
+			p.y = cy
+			p.height = ch
+		} else {
+			p.y = crossAxisPosition(cy, p.height, ch, align)
+		}
 		return cursor + p.width + gap
 	default: // FlowColumn or unknown
-		p.x = cx
 		p.y = cy + cursor
+		if align == AlignStretch {
+			p.x = cx
+			p.width = cw
+		} else {
+			p.x = crossAxisPosition(cx, p.width, cw, align)
+		}
 		return cursor + p.height + gap
+	}
+}
+
+// crossAxisPosition calculates the offset along the cross axis for a child.
+func crossAxisPosition(containerStart, childSize, containerSize int, align Align) int {
+	switch align {
+	case AlignCenter:
+		return containerStart + (containerSize-childSize)/2
+	case AlignEnd:
+		return containerStart + containerSize - childSize
+	default: // AlignStart
+		return containerStart
 	}
 }
 
@@ -94,11 +139,11 @@ func clampToZero(value int) int {
 	return value
 }
 
-// layoutChildren is a helper that runs AutoLayout on a panel's children using
-// the panel's resolved position and dimensions as the parent region.
-func layoutChildren(p *Panel, parentW, parentH int, dir FlowDirection, style Style) {
+// layoutChildren runs AutoLayout on a panel's children using the panel's own
+// resolved position, dimensions, flow direction, and cross-axis alignment.
+func layoutChildren(p *Panel, style Style) {
 	if len(p.children) == 0 {
 		return
 	}
-	AutoLayout(p.children, p.x, p.y, parentW, parentH, dir, style)
+	AutoLayout(p.children, p.x, p.y, p.width, p.height, p.flowDirection, p.align, style)
 }

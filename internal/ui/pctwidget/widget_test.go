@@ -291,7 +291,7 @@ func TestAutoLayoutColumn(t *testing.T) {
 	parent.AddChild(c2)
 
 	parentW, parentH := 400, 400
-	AutoLayout(parent.Children(), 0, 0, parentW, parentH, FlowColumn, DefaultStyle())
+	AutoLayout(parent.Children(), 0, 0, parentW, parentH, FlowColumn, AlignStart, DefaultStyle())
 
 	style := DefaultStyle()
 	pad := style.Padding()
@@ -317,7 +317,7 @@ func TestAutoLayoutRow(t *testing.T) {
 	c1 := NewPanel(30, 100)
 	c2 := NewPanel(30, 100)
 
-	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowRow, DefaultStyle())
+	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowRow, AlignStart, DefaultStyle())
 
 	style := DefaultStyle()
 	pad := style.Padding()
@@ -342,7 +342,7 @@ func TestAutoLayoutSkipsManual(t *testing.T) {
 	c1.SetPosition(100, 100, 50, 50) // manual override
 	c2 := NewPanel(30, 30)
 
-	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowColumn, DefaultStyle())
+	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowColumn, AlignStart, DefaultStyle())
 
 	// c1 should keep its manual position.
 	x1, y1, _, _ := c1.ResolvedBounds()
@@ -364,7 +364,7 @@ func TestAutoLayoutSkipsInvisible(t *testing.T) {
 	c1.SetVisible(false)
 	c2 := NewPanel(50, 30)
 
-	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowColumn, DefaultStyle())
+	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowColumn, AlignStart, DefaultStyle())
 
 	style := DefaultStyle()
 	pad := style.Padding()
@@ -382,7 +382,7 @@ func TestAutoLayoutNested(t *testing.T) {
 	child.AddChild(grandchild)
 	parent.AddChild(child)
 
-	AutoLayout(parent.Children(), 0, 0, 400, 400, FlowColumn, DefaultStyle())
+	AutoLayout(parent.Children(), 0, 0, 400, 400, FlowColumn, AlignStart, DefaultStyle())
 
 	// Grandchild should be positioned inside the child's resolved bounds.
 	gx, gy, _, _ := grandchild.ResolvedBounds()
@@ -396,7 +396,7 @@ func TestAutoLayoutNested(t *testing.T) {
 func TestAutoLayoutNilStyle(t *testing.T) {
 	c1 := NewPanel(50, 30)
 	// Should not panic — AutoLayout falls back to DefaultStyle.
-	AutoLayout([]*Panel{c1}, 0, 0, 400, 400, FlowColumn, nil)
+	AutoLayout([]*Panel{c1}, 0, 0, 400, 400, FlowColumn, AlignStart, nil)
 	x, y, _, _ := c1.ResolvedBounds()
 	pad := DefaultStyle().Padding()
 	if x != pad || y != pad {
@@ -408,10 +408,10 @@ func TestAutoLayoutPercentageConsistency(t *testing.T) {
 	// Verify that resizing the parent correctly updates child pixel sizes.
 	c := NewPanel(50, 50)
 
-	AutoLayout([]*Panel{c}, 0, 0, 800, 600, FlowColumn, DefaultStyle())
+	AutoLayout([]*Panel{c}, 0, 0, 800, 600, FlowColumn, AlignStart, DefaultStyle())
 	_, _, w1, h1 := c.ResolvedBounds()
 
-	AutoLayout([]*Panel{c}, 0, 0, 400, 300, FlowColumn, DefaultStyle())
+	AutoLayout([]*Panel{c}, 0, 0, 400, 300, FlowColumn, AlignStart, DefaultStyle())
 	_, _, w2, h2 := c.ResolvedBounds()
 
 	// At 50% sizing, halving the parent should halve the child.
@@ -439,7 +439,7 @@ func TestAutoLayoutDefaultFlowDirection(t *testing.T) {
 	c2 := NewPanel(100, 30)
 
 	// Use an invalid FlowDirection value; should behave like FlowColumn.
-	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowDirection(99), DefaultStyle())
+	AutoLayout([]*Panel{c1, c2}, 0, 0, 400, 400, FlowDirection(99), AlignStart, DefaultStyle())
 
 	style := DefaultStyle()
 	pad := style.Padding()
@@ -487,10 +487,133 @@ func TestPanelDrawBorderClamped(t *testing.T) {
 func TestAutoLayoutZeroParent(t *testing.T) {
 	c := NewPanel(50, 50)
 	// Parent area smaller than 2*padding should not panic.
-	AutoLayout([]*Panel{c}, 0, 0, 2, 2, FlowColumn, DefaultStyle())
+	AutoLayout([]*Panel{c}, 0, 0, 2, 2, FlowColumn, AlignStart, DefaultStyle())
 	_, _, w, h := c.ResolvedBounds()
 	if w != 0 || h != 0 {
 		t.Errorf("expected zero dimensions for tiny parent, got (%d,%d)", w, h)
+	}
+}
+
+func TestPanelSetAlign(t *testing.T) {
+	p := NewPanel(100, 100)
+	if p.GetAlign() != AlignStart {
+		t.Errorf("default align = %v, want AlignStart", p.GetAlign())
+	}
+	for _, a := range []Align{AlignStart, AlignCenter, AlignEnd, AlignStretch} {
+		p.SetAlign(a)
+		if got := p.GetAlign(); got != a {
+			t.Errorf("SetAlign(%v): GetAlign() = %v", a, got)
+		}
+	}
+}
+
+func TestAutoLayoutAlignCenterRow(t *testing.T) {
+	// Container: 400 wide, 200 tall (no padding/gap via custom style)
+	noStyle := &RetroStyle{}
+	// Child: 100% wide, 50% tall → 400×100
+	child := NewPanel(100, 50)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 200, FlowRow, AlignCenter, noStyle)
+	_, y, _, h := child.ResolvedBounds()
+	// cross axis is vertical; center of 200 with child height 100 → y = 50
+	if h != 100 {
+		t.Fatalf("child height = %d, want 100", h)
+	}
+	if y != 50 {
+		t.Errorf("AlignCenter row: child.y = %d, want 50", y)
+	}
+}
+
+func TestAutoLayoutAlignEndRow(t *testing.T) {
+	noStyle := &RetroStyle{}
+	child := NewPanel(100, 50)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 200, FlowRow, AlignEnd, noStyle)
+	_, y, _, h := child.ResolvedBounds()
+	// end of 200 with child height 100 → y = 100
+	if h != 100 {
+		t.Fatalf("child height = %d, want 100", h)
+	}
+	if y != 100 {
+		t.Errorf("AlignEnd row: child.y = %d, want 100", y)
+	}
+}
+
+func TestAutoLayoutAlignStretchRow(t *testing.T) {
+	noStyle := &RetroStyle{}
+	child := NewPanel(100, 50)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 200, FlowRow, AlignStretch, noStyle)
+	_, y, _, h := child.ResolvedBounds()
+	if h != 200 {
+		t.Errorf("AlignStretch row: child height = %d, want 200", h)
+	}
+	if y != 0 {
+		t.Errorf("AlignStretch row: child.y = %d, want 0", y)
+	}
+}
+
+func TestAutoLayoutAlignCenterColumn(t *testing.T) {
+	noStyle := &RetroStyle{}
+	// Child: 50% wide, 100% tall → 200×400 in a 400×400 container
+	child := NewPanel(50, 100)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 400, FlowColumn, AlignCenter, noStyle)
+	x, _, w, _ := child.ResolvedBounds()
+	if w != 200 {
+		t.Fatalf("child width = %d, want 200", w)
+	}
+	if x != 100 {
+		t.Errorf("AlignCenter column: child.x = %d, want 100", x)
+	}
+}
+
+func TestAutoLayoutAlignEndColumn(t *testing.T) {
+	noStyle := &RetroStyle{}
+	child := NewPanel(50, 100)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 400, FlowColumn, AlignEnd, noStyle)
+	x, _, w, _ := child.ResolvedBounds()
+	if w != 200 {
+		t.Fatalf("child width = %d, want 200", w)
+	}
+	if x != 200 {
+		t.Errorf("AlignEnd column: child.x = %d, want 200", x)
+	}
+}
+
+func TestAutoLayoutAlignStretchColumn(t *testing.T) {
+	noStyle := &RetroStyle{}
+	child := NewPanel(50, 100)
+	AutoLayout([]*Panel{child}, 0, 0, 400, 400, FlowColumn, AlignStretch, noStyle)
+	x, _, w, _ := child.ResolvedBounds()
+	if w != 400 {
+		t.Errorf("AlignStretch column: child width = %d, want 400", w)
+	}
+	if x != 0 {
+		t.Errorf("AlignStretch column: child.x = %d, want 0", x)
+	}
+}
+
+func TestAutoLayoutPanelFlowDirectionPropagation(t *testing.T) {
+	// Verify that when recursing, the child's own flowDirection is used,
+	// not the parent's direction passed to the top-level AutoLayout call.
+	noStyle := &RetroStyle{}
+	parent := NewPanel(100, 100)
+	// Child uses FlowRow even though parent uses FlowColumn.
+	child := NewPanel(100, 100)
+	child.SetFlowDirection(FlowRow)
+	gc1 := NewPanel(50, 100)
+	gc2 := NewPanel(50, 100)
+	child.AddChild(gc1)
+	child.AddChild(gc2)
+	parent.AddChild(child)
+
+	AutoLayout(parent.Children(), 0, 0, 400, 400, FlowColumn, AlignStart, noStyle)
+
+	// gc1 and gc2 should be laid out side-by-side (FlowRow), not top-to-bottom.
+	x1, _, w1, _ := gc1.ResolvedBounds()
+	x2, _, _, _ := gc2.ResolvedBounds()
+	if x1 != 0 {
+		t.Errorf("gc1.x = %d, want 0", x1)
+	}
+	if x2 != w1 {
+		t.Errorf("gc2.x = %d, want %d (gc1.width)", x2, w1)
 	}
 }
 
@@ -505,7 +628,7 @@ func BenchmarkAutoLayout(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		AutoLayout(panels, 0, 0, 800, 600, FlowColumn, DefaultStyle())
+		AutoLayout(panels, 0, 0, 800, 600, FlowColumn, AlignStart, DefaultStyle())
 	}
 }
 
