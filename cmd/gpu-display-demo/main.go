@@ -170,21 +170,7 @@ func bindDmabuf(conn *client.Connection) (*dmabuf.Dmabuf, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get registry: %w", err)
 	}
-
-	dmabufGlobal := registry.FindGlobal("zwp_linux_dmabuf_v1")
-	if dmabufGlobal == nil {
-		return nil, fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
-	}
-
-	dmabufID, err := registry.BindDmabuf(dmabufGlobal)
-	if err != nil {
-		return nil, fmt.Errorf("failed to bind dmabuf: %w", err)
-	}
-
-	dmabufObj := dmabuf.NewDmabuf(conn, dmabufID)
-	conn.RegisterObject(dmabufObj)
-
-	return dmabufObj, nil
+	return demo.BindDmabuf(conn, registry)
 }
 
 func createWaylandWindow(wlCtx *demo.WaylandContext) (*client.Surface, error) {

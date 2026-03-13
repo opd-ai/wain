@@ -159,14 +159,13 @@ func (k *Keyboard) HandleEvent(opcode uint16, args []wire.Argument) error {
 
 // handleKeymapEvent processes wl_keyboard.keymap event (opcode 0).
 func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 3, "keyboard: keymap event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	format := d.Uint32("keyboard: keymap format")
-	fd := d.Int("keyboard: keymap fd")
-	size := d.Uint32("keyboard: keymap size")
-	if err := d.Err(); err != nil {
+	var format, size uint32
+	var fd int
+	if err := parseEvent(args, 3, "keyboard: keymap event", func(d *wire.ArgDecoder) {
+		format = d.Uint32("keyboard: keymap format")
+		fd = d.Int("keyboard: keymap fd")
+		size = d.Uint32("keyboard: keymap size")
+	}); err != nil {
 		return err
 	}
 	k.HandleKeymap(format, uint32(fd), size)
@@ -175,14 +174,13 @@ func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
 
 // handleEnterEvent processes wl_keyboard.enter event (opcode 1).
 func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 3, "keyboard: enter event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("keyboard: enter serial")
-	surfaceID := d.Uint32("keyboard: enter surface")
-	keysArray := d.Bytes("keyboard: enter keys")
-	if err := d.Err(); err != nil {
+	var serial, surfaceID uint32
+	var keysArray []byte
+	if err := parseEvent(args, 3, "keyboard: enter event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("keyboard: enter serial")
+		surfaceID = d.Uint32("keyboard: enter surface")
+		keysArray = d.Bytes("keyboard: enter keys")
+	}); err != nil {
 		return err
 	}
 	keys := make([]uint32, len(keysArray)/4)
@@ -197,13 +195,11 @@ func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
 
 // handleLeaveEvent processes wl_keyboard.leave event (opcode 2).
 func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 2, "keyboard: leave event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("keyboard: leave serial")
-	surfaceID := d.Uint32("keyboard: leave surface")
-	if err := d.Err(); err != nil {
+	var serial, surfaceID uint32
+	if err := parseEvent(args, 2, "keyboard: leave event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("keyboard: leave serial")
+		surfaceID = d.Uint32("keyboard: leave surface")
+	}); err != nil {
 		return err
 	}
 	k.HandleLeave(serial, surfaceID)
@@ -212,15 +208,13 @@ func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
 
 // handleKeyEvent processes wl_keyboard.key event (opcode 3).
 func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 4, "keyboard: key event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("keyboard: key serial")
-	time := d.Uint32("keyboard: key time")
-	key := d.Uint32("keyboard: key code")
-	state := d.Uint32("keyboard: key state")
-	if err := d.Err(); err != nil {
+	var serial, time, key, state uint32
+	if err := parseEvent(args, 4, "keyboard: key event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("keyboard: key serial")
+		time = d.Uint32("keyboard: key time")
+		key = d.Uint32("keyboard: key code")
+		state = d.Uint32("keyboard: key state")
+	}); err != nil {
 		return err
 	}
 	k.HandleKey(serial, time, key, state)
@@ -229,16 +223,14 @@ func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
 
 // handleModifiersEvent processes wl_keyboard.modifiers event (opcode 4).
 func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 5, "keyboard: modifiers event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("keyboard: modifiers serial")
-	modsDepressed := d.Uint32("keyboard: modifiers depressed")
-	modsLatched := d.Uint32("keyboard: modifiers latched")
-	modsLocked := d.Uint32("keyboard: modifiers locked")
-	group := d.Uint32("keyboard: modifiers group")
-	if err := d.Err(); err != nil {
+	var serial, modsDepressed, modsLatched, modsLocked, group uint32
+	if err := parseEvent(args, 5, "keyboard: modifiers event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("keyboard: modifiers serial")
+		modsDepressed = d.Uint32("keyboard: modifiers depressed")
+		modsLatched = d.Uint32("keyboard: modifiers latched")
+		modsLocked = d.Uint32("keyboard: modifiers locked")
+		group = d.Uint32("keyboard: modifiers group")
+	}); err != nil {
 		return err
 	}
 	k.HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group)
@@ -247,13 +239,11 @@ func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
 
 // handleRepeatInfoEvent processes wl_keyboard.repeat_info event (opcode 5).
 func (k *Keyboard) handleRepeatInfoEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 2, "keyboard: repeat_info event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	rate := d.Int32("keyboard: repeat_info rate")
-	delay := d.Int32("keyboard: repeat_info delay")
-	if err := d.Err(); err != nil {
+	var rate, delay int32
+	if err := parseEvent(args, 2, "keyboard: repeat_info event", func(d *wire.ArgDecoder) {
+		rate = d.Int32("keyboard: repeat_info rate")
+		delay = d.Int32("keyboard: repeat_info delay")
+	}); err != nil {
 		return err
 	}
 	k.HandleRepeatInfo(rate, delay)

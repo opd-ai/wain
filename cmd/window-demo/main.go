@@ -10,9 +10,6 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/opd-ai/wain"
@@ -20,20 +17,7 @@ import (
 )
 
 func main() {
-	log.SetFlags(0)
-
-	cfg := wain.DefaultConfig()
-	cfg.Verbose = true
-	app := wain.NewAppWithConfig(cfg)
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		log.Println("\nShutdown signal received, exiting...")
-		app.Quit()
-	}()
+	app := demo.SetupApp()
 
 	errChan := make(chan error, 1)
 	go func() {
@@ -60,7 +44,7 @@ func main() {
 
 	log.Println("\nWindow demo running. Press Ctrl+C to exit.")
 
-	waitForAppExit(errChan, sigChan, app)
+	waitForAppExit(errChan, app)
 }
 
 // demonstrateWindowOperations exercises title, min-size, and max-size mutations,
@@ -89,14 +73,9 @@ func demonstrateWindowOperations(win *wain.Window) {
 
 // waitForAppExit blocks until the app exits cleanly or a signal is received,
 // then logs the final display-server and backend state.
-func waitForAppExit(errChan <-chan error, sigChan <-chan os.Signal, app *wain.App) {
-	select {
-	case err := <-errChan:
-		if err != nil {
-			log.Fatalf("App error: %v", err)
-		}
-	case <-sigChan:
-		log.Println("Exiting...")
+func waitForAppExit(errChan <-chan error, app *wain.App) {
+	if err := <-errChan; err != nil {
+		log.Fatalf("App error: %v", err)
 	}
 
 	log.Printf("Display server: %s", app.DisplayServer())

@@ -67,24 +67,12 @@ func makeCommandHeader(opcode, length uint32) uint32 {
 // For the first triangle, we can use zero addresses since we're not using
 // dynamic state, surface state, or instruction heaps.
 func (cb *CommandBuilder) StateBaseAddress() {
-	dw0 := makeCommandHeader(0x7801, 15) // 16 DWords total
-
-	cb.EmitDword(dw0)
-	// General state base (disabled - bit 0 = 0)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
-	// Surface state base (disabled)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
-	// Dynamic state base (disabled)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
-	// Indirect object base (disabled)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
-	// Instruction base (disabled)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
+	cb.EmitDword(makeCommandHeader(0x7801, 15)) // 16 DWords total
+	cb.emitDisabledBaseAddress()                // General state base
+	cb.emitDisabledBaseAddress()                // Surface state base
+	cb.emitDisabledBaseAddress()                // Dynamic state base
+	cb.emitDisabledBaseAddress()                // Indirect object base
+	cb.emitDisabledBaseAddress()                // Instruction base
 	// Upper bounds
 	cb.EmitDword(0xFFFFF000)
 	cb.EmitDword(0xFFFFF000)
@@ -93,43 +81,39 @@ func (cb *CommandBuilder) StateBaseAddress() {
 	cb.EmitDword(0)
 }
 
+// emitDisabledBaseAddress emits a disabled 64-bit base address entry (two zero DWords).
+func (cb *CommandBuilder) emitDisabledBaseAddress() {
+	cb.EmitDword(0)
+	cb.EmitDword(0)
+}
+
+// emitState2DWord emits a 2-dword state command: header followed by a control dword.
+func (cb *CommandBuilder) emitState2DWord(opcode, length, dw1 uint32) {
+	cb.EmitDword(makeCommandHeader(opcode, length))
+	cb.EmitDword(dw1)
+}
+
+// emitState4DWord emits a 4-dword state command: header, control dword, and two zero padding DWords.
+func (cb *CommandBuilder) emitState4DWord(opcode, length, dw1 uint32) {
+	cb.emitState2DWord(opcode, length, dw1)
+	cb.EmitDword(0)
+	cb.EmitDword(0)
+}
+
 // State3DClip emits a 3DSTATE_CLIP command with default settings.
 func (cb *CommandBuilder) State3DClip() {
-	dw0 := makeCommandHeader(0x7812, 3) // 4 DWords total
-
-	dw1 := uint32(0)
-	dw1 |= 1 << 31 // Clip enable
-	dw1 |= 1 << 28 // Viewport XY clip test enable
-
-	cb.EmitDword(dw0)
-	cb.EmitDword(dw1)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
+	const dw1 = (1 << 31) | (1 << 28) // Clip enable | Viewport XY clip test enable
+	cb.emitState4DWord(0x7812, 3, dw1)
 }
 
 // State3DSF emits a 3DSTATE_SF command (rasterization setup).
 func (cb *CommandBuilder) State3DSF() {
-	dw0 := makeCommandHeader(0x7813, 3) // 4 DWords total
-
-	dw1 := uint32(0)
-	dw1 |= 1 << 0 // CCW front winding
-	// Cull mode = 0 (no culling)
-
-	cb.EmitDword(dw0)
-	cb.EmitDword(dw1)
-	cb.EmitDword(0)
-	cb.EmitDword(0)
+	cb.emitState4DWord(0x7813, 3, 1<<0) // CCW front winding; cull mode = 0 (no culling)
 }
 
 // State3DWM emits a 3DSTATE_WM command.
 func (cb *CommandBuilder) State3DWM() {
-	dw0 := makeCommandHeader(0x7814, 1) // 2 DWords total
-
-	dw1 := uint32(0)
-	dw1 |= 1 << 25 // Pixel shader kill enable
-
-	cb.EmitDword(dw0)
-	cb.EmitDword(dw1)
+	cb.emitState2DWord(0x7814, 1, 1<<25) // Pixel shader kill enable
 }
 
 // emitShaderKernelState emits a shader stage state command (3DSTATE_PS or 3DSTATE_VS).

@@ -11,30 +11,12 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/opd-ai/wain"
+	"github.com/opd-ai/wain/internal/demo"
 )
 
 func main() {
-	log.SetFlags(0)
-
-	// Create app with default configuration
-	cfg := wain.DefaultConfig()
-	cfg.Verbose = true
-	app := wain.NewAppWithConfig(cfg)
-
-	// Set up signal handling for graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		log.Println("\nShutdown signal received, exiting...")
-		app.Quit()
-	}()
+	app := demo.SetupApp()
 
 	// Run the application (blocks until Quit() is called)
 	log.Println("Starting wain application...")

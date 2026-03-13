@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/opd-ai/wain/internal/wayland/client"
+	"github.com/opd-ai/wain/internal/wayland/dmabuf"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
 )
@@ -71,9 +72,9 @@ func SetupWaylandGlobals(conn *client.Connection) (*WaylandContext, error) {
 	}, nil
 }
 
-// bindSHMGlobal finds the wl_shm global, binds it, and registers the object
+// BindSHMGlobal finds the wl_shm global, binds it, and registers the object
 // with the connection.
-func bindSHMGlobal(conn *client.Connection, registry *client.Registry) (*shm.SHM, error) {
+func BindSHMGlobal(conn *client.Connection, registry *client.Registry) (*shm.SHM, error) {
 	shmGlobal := registry.FindGlobal("wl_shm")
 	if shmGlobal == nil {
 		return nil, fmt.Errorf("wl_shm not found")
@@ -87,9 +88,14 @@ func bindSHMGlobal(conn *client.Connection, registry *client.Registry) (*shm.SHM
 	return shmObj, nil
 }
 
-// bindXdgWmBase finds the xdg_wm_base global, binds it, and registers the
+// bindSHMGlobal is an unexported alias kept for internal use within this package.
+func bindSHMGlobal(conn *client.Connection, registry *client.Registry) (*shm.SHM, error) {
+	return BindSHMGlobal(conn, registry)
+}
+
+// BindXdgWmBase finds the xdg_wm_base global, binds it, and registers the
 // object with the connection.
-func bindXdgWmBase(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
+func BindXdgWmBase(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
 	xdgGlobal := registry.FindGlobal("xdg_wm_base")
 	if xdgGlobal == nil {
 		return nil, fmt.Errorf("xdg_wm_base not found")
@@ -101,6 +107,27 @@ func bindXdgWmBase(conn *client.Connection, registry *client.Registry) (*xdg.WmB
 	wmBase := xdg.NewWmBase(conn, wmBaseID, xdgGlobal.Version)
 	conn.RegisterObject(wmBase)
 	return wmBase, nil
+}
+
+// bindXdgWmBase is an unexported alias kept for internal use within this package.
+func bindXdgWmBase(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
+	return BindXdgWmBase(conn, registry)
+}
+
+// BindDmabuf finds the zwp_linux_dmabuf_v1 global, binds it, and registers
+// the object with the connection.
+func BindDmabuf(conn *client.Connection, registry *client.Registry) (*dmabuf.Dmabuf, error) {
+	g := registry.FindGlobal("zwp_linux_dmabuf_v1")
+	if g == nil {
+		return nil, fmt.Errorf("zwp_linux_dmabuf_v1 not supported by compositor")
+	}
+	id, err := registry.BindDmabuf(g)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bind dmabuf: %w", err)
+	}
+	obj := dmabuf.NewDmabuf(conn, id)
+	conn.RegisterObject(obj)
+	return obj, nil
 }
 
 // CreateXdgWindow creates an XDG toplevel window with the specified title.

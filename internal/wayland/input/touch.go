@@ -107,17 +107,16 @@ func (t *Touch) HandleEvent(opcode uint16, args []wire.Argument) error {
 
 // handleDownEvent processes wl_touch.down event (opcode 0).
 func (t *Touch) handleDownEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 6, "touch: down event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("touch: down serial")
-	time := d.Uint32("touch: down time")
-	surfaceID := d.Uint32("touch: down surface")
-	id := d.Int32("touch: down id")
-	x := d.Int32("touch: down x")
-	y := d.Int32("touch: down y")
-	if err := d.Err(); err != nil {
+	var serial, time, surfaceID uint32
+	var id, x, y int32
+	if err := parseEvent(args, 6, "touch: down event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("touch: down serial")
+		time = d.Uint32("touch: down time")
+		surfaceID = d.Uint32("touch: down surface")
+		id = d.Int32("touch: down id")
+		x = d.Int32("touch: down x")
+		y = d.Int32("touch: down y")
+	}); err != nil {
 		return err
 	}
 	t.HandleDown(serial, time, surfaceID, id, x, y)
@@ -126,14 +125,13 @@ func (t *Touch) handleDownEvent(args []wire.Argument) error {
 
 // handleUpEvent processes wl_touch.up event (opcode 1).
 func (t *Touch) handleUpEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 3, "touch: up event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	serial := d.Uint32("touch: up serial")
-	time := d.Uint32("touch: up time")
-	id := d.Int32("touch: up id")
-	if err := d.Err(); err != nil {
+	var serial, time uint32
+	var id int32
+	if err := parseEvent(args, 3, "touch: up event", func(d *wire.ArgDecoder) {
+		serial = d.Uint32("touch: up serial")
+		time = d.Uint32("touch: up time")
+		id = d.Int32("touch: up id")
+	}); err != nil {
 		return err
 	}
 	t.HandleUp(serial, time, id)
@@ -142,15 +140,14 @@ func (t *Touch) handleUpEvent(args []wire.Argument) error {
 
 // handleMotionEvent processes wl_touch.motion event (opcode 2).
 func (t *Touch) handleMotionEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 4, "touch: motion event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	time := d.Uint32("touch: motion time")
-	id := d.Int32("touch: motion id")
-	x := d.Int32("touch: motion x")
-	y := d.Int32("touch: motion y")
-	if err := d.Err(); err != nil {
+	var time uint32
+	var id, x, y int32
+	if err := parseEvent(args, 4, "touch: motion event", func(d *wire.ArgDecoder) {
+		time = d.Uint32("touch: motion time")
+		id = d.Int32("touch: motion id")
+		x = d.Int32("touch: motion x")
+		y = d.Int32("touch: motion y")
+	}); err != nil {
 		return err
 	}
 	t.HandleMotion(time, id, x, y)
@@ -159,14 +156,12 @@ func (t *Touch) handleMotionEvent(args []wire.Argument) error {
 
 // handleShapeEvent processes wl_touch.shape event (opcode 4).
 func (t *Touch) handleShapeEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 3, "touch: shape event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	id := d.Int32("touch: shape id")
-	major := d.Int32("touch: shape major")
-	minor := d.Int32("touch: shape minor")
-	if err := d.Err(); err != nil {
+	var id, major, minor int32
+	if err := parseEvent(args, 3, "touch: shape event", func(d *wire.ArgDecoder) {
+		id = d.Int32("touch: shape id")
+		major = d.Int32("touch: shape major")
+		minor = d.Int32("touch: shape minor")
+	}); err != nil {
 		return err
 	}
 	t.HandleShape(id, major, minor)
@@ -175,13 +170,11 @@ func (t *Touch) handleShapeEvent(args []wire.Argument) error {
 
 // handleOrientationEvent processes wl_touch.orientation event (opcode 5).
 func (t *Touch) handleOrientationEvent(args []wire.Argument) error {
-	if err := wire.ParseArgMinLen(args, 2, "touch: orientation event"); err != nil {
-		return err
-	}
-	d := wire.NewArgDecoder(args)
-	id := d.Int32("touch: orientation id")
-	orientation := d.Int32("touch: orientation value")
-	if err := d.Err(); err != nil {
+	var id, orientation int32
+	if err := parseEvent(args, 2, "touch: orientation event", func(d *wire.ArgDecoder) {
+		id = d.Int32("touch: orientation id")
+		orientation = d.Int32("touch: orientation value")
+	}); err != nil {
 		return err
 	}
 	t.HandleOrientation(id, orientation)

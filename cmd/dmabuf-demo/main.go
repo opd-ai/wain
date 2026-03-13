@@ -170,16 +170,10 @@ func bindDmabufGlobal(conn *client.Connection, registry *client.Registry) (*dmab
 
 // bindXdgWmBaseGlobal finds and binds the xdg_wm_base global.
 func bindXdgWmBaseGlobal(conn *client.Connection, registry *client.Registry) (*xdg.WmBase, error) {
-	g := registry.FindGlobal("xdg_wm_base")
-	if g == nil {
-		return nil, fmt.Errorf("xdg_wm_base not found")
-	}
-	id, _, err := registry.BindXdgWmBase(g)
+	wmBase, err := demo.BindXdgWmBase(conn, registry)
 	if err != nil {
-		return nil, fmt.Errorf("bind xdg_wm_base: %w", err)
+		return nil, err
 	}
-	wmBase := xdg.NewWmBase(conn, id, g.Version)
-	conn.RegisterObject(wmBase)
 	fmt.Println("      ✓ Bound to xdg_wm_base")
 	return wmBase, nil
 }
