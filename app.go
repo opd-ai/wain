@@ -34,12 +34,14 @@ import (
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/wayland/client"
+	"github.com/opd-ai/wain/internal/wayland/datadevice"
 	"github.com/opd-ai/wain/internal/wayland/input"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	wlwire "github.com/opd-ai/wain/internal/wayland/wire"
 	"github.com/opd-ai/wain/internal/wayland/xdg"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	x11events "github.com/opd-ai/wain/internal/x11/events"
+	"github.com/opd-ai/wain/internal/x11/selection"
 	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
@@ -105,8 +107,13 @@ type App struct {
 	waylandPointer    *input.Pointer
 
 	// X11-specific objects
-	x11Window x11client.XID
-	x11GC     x11client.XID
+	x11Window      x11client.XID
+	x11GC          x11client.XID
+	x11SelectionMgr *selection.Manager
+
+	// Wayland clipboard objects
+	waylandDataDeviceMgr *datadevice.Manager
+	waylandDataDevice    *datadevice.Device
 
 	// Rendering backend
 	renderer    backend.Renderer
@@ -1335,9 +1342,30 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	if err := a.bindShellProtocols(registry); err != nil {
 		return err
 	}
+	// Clipboard support — optional, compositor may not expose it.
+	if err := a.bindDataDeviceManager(registry); err != nil && a.verbose {
+		log.Printf("Warning: clipboard unavailable: %v", err)
+	}
 	if err := a.bindInputDevices(registry); err != nil {
 		return err
 	}
+	return nil
+}
+
+// bindDataDeviceManager binds wl_data_device_manager and creates a per-seat
+// data device for clipboard access.  Errors are non-fatal.
+func (a *App) bindDataDeviceManager(registry *client.Registry) error {
+	ddmGlobal := registry.FindGlobal("wl_data_device_manager")
+	if ddmGlobal == nil {
+		return fmt.Errorf("wl_data_device_manager not advertised by compositor")
+	}
+	ddmID, err := registry.Bind(ddmGlobal.Name, "wl_data_device_manager", ddmGlobal.Version)
+	if err != nil {
+		return fmt.Errorf("failed to bind wl_data_device_manager: %w", err)
+	}
+	mgr := datadevice.NewManager(a.waylandConn, ddmID)
+	a.waylandConn.RegisterObject(mgr)
+	a.waylandDataDeviceMgr = mgr
 	return nil
 }
 
@@ -1408,9 +1436,27 @@ func (a *App) bindInputDevices(registry *client.Registry) error {
 				log.Printf("Warning: failed to setup input: %v", err)
 			}
 		}
+
+		a.setupWaylandDataDevice(seat)
 	}
 
 	return nil
+}
+
+// setupWaylandDataDevice creates a per-seat data device for clipboard access.
+func (a *App) setupWaylandDataDevice(seat *input.Seat) {
+	if a.waylandDataDeviceMgr == nil {
+		return
+	}
+	device, err := a.waylandDataDeviceMgr.GetDataDevice(seat.ID())
+	if err != nil {
+		if a.verbose {
+			log.Printf("Warning: failed to get data device: %v", err)
+		}
+		return
+	}
+	a.waylandConn.RegisterObject(device)
+	a.waylandDataDevice = device
 }
 
 // setupWaylandInput sets up keyboard and pointer input devices and wires event callbacks.
@@ -1637,7 +1683,18 @@ func (a *App) initX11Window() error {
 		return fmt.Errorf("failed to map window: %w", err)
 	}
 
+	a.initX11Clipboard(wid)
 	return nil
+}
+
+// initX11Clipboard creates the selection manager for the app window.  Non-fatal.
+func (a *App) initX11Clipboard(wid x11client.XID) {
+	selMgr, err := newX11SelectionManager(a.x11Conn, uint32(wid))
+	if err == nil {
+		a.x11SelectionMgr = selMgr
+	} else if a.verbose {
+		log.Printf("Warning: clipboard unavailable: %v", err)
+	}
 }
 
 // initRenderer initializes the rendering backend with auto-detection.
