@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"bytes"
 	"os"
 	"syscall"
 	"testing"
@@ -222,4 +223,101 @@ func TestGPUConsumerEmptyDisplayList(t *testing.T) {
 func gpuAvailable() bool {
 	_, err := os.Stat("/dev/dri/renderD128")
 	return err == nil
+}
+
+// fdMockGPURenderer is a test GPURenderer that returns a file-backed fd from Present.
+// It writes pixelData to a temp file and returns a dup'd fd, simulating DMA-BUF export.
+type fdMockGPURenderer struct {
+	width, height int
+	pixelData     []byte
+}
+
+func (m *fdMockGPURenderer) Render(_ *displaylist.DisplayList) error          { return nil }
+func (m *fdMockGPURenderer) RenderWithDamage(_ *displaylist.DisplayList, _ []displaylist.Rect) error {
+	return nil
+}
+func (m *fdMockGPURenderer) Dimensions() (int, int) { return m.width, m.height }
+func (m *fdMockGPURenderer) Destroy() error         { return nil }
+
+// Present writes pixelData to a temp file and returns a dup'd file descriptor.
+// The caller is responsible for closing the returned fd.
+func (m *fdMockGPURenderer) Present() (int, error) {
+	f, err := os.CreateTemp("", "gpu-readback-test-*")
+	if err != nil {
+		return -1, err
+	}
+	name := f.Name()
+	defer os.Remove(name)
+
+	if _, err := f.Write(m.pixelData); err != nil {
+		f.Close()
+		return -1, err
+	}
+
+	// Dup so the fd remains valid after the file handle is closed.
+	dupFd, err := syscall.Dup(int(f.Fd()))
+	f.Close()
+	if err != nil {
+		return -1, err
+	}
+	return dupFd, nil
+}
+
+// TestGPUConsumerRenderWithBufferInvalidFd tests that Render returns an error
+// when a non-nil buffer is provided but Present returns an invalid fd.
+func TestGPUConsumerRenderWithBufferInvalidFd(t *testing.T) {
+	renderer := &mockGPURenderer{width: 4, height: 4}
+	consumer, err := NewGPUConsumer(renderer)
+	if err != nil {
+		t.Fatalf("NewGPUConsumer: %v", err)
+	}
+	defer consumer.Destroy()
+
+	dl := displaylist.New()
+	buf, err := primitives.NewBuffer(4, 4)
+	if err != nil {
+		t.Fatalf("NewBuffer: %v", err)
+	}
+
+	// Mock returns fd=-1 so copyToBuffer should propagate an error.
+	if err := consumer.Render(dl, buf); err == nil {
+		t.Error("Render with non-nil buf and invalid fd should return error")
+	}
+}
+
+// TestGPUConsumerCopyToBuffer verifies GPU→CPU readback via a file-backed DMA-BUF mock.
+func TestGPUConsumerCopyToBuffer(t *testing.T) {
+	const width, height = 4, 4
+	stride := width * 4
+	size := stride * height
+
+	pixelData := make([]byte, size)
+	for i := range pixelData {
+		pixelData[i] = byte(i + 1)
+	}
+
+	renderer := &fdMockGPURenderer{width: width, height: height, pixelData: pixelData}
+	consumer, err := NewGPUConsumer(renderer)
+	if err != nil {
+		t.Fatalf("NewGPUConsumer: %v", err)
+	}
+	defer consumer.Destroy()
+
+	dl := displaylist.New()
+	buf, err := primitives.NewBuffer(width, height)
+	if err != nil {
+		t.Fatalf("NewBuffer: %v", err)
+	}
+
+	if err := consumer.Render(dl, buf); err != nil {
+		t.Fatalf("Render with buf failed: %v", err)
+	}
+
+	if buf.Width != width || buf.Height != height || buf.Stride != stride {
+		t.Errorf("buf dimensions wrong: got %dx%d stride=%d, want %dx%d stride=%d",
+			buf.Width, buf.Height, buf.Stride, width, height, stride)
+	}
+	if !bytes.Equal(buf.Pixels[:size], pixelData) {
+		t.Error("buf.Pixels does not match expected pixel data")
+	}
 }

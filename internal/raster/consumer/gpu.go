@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"fmt"
+	"syscall"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/primitives"
@@ -100,12 +101,40 @@ func (gc *GPUConsumer) Destroy() error {
 	return nil
 }
 
-// copyToBuffer copies the GPU render target to a CPU buffer.
-// This is a placeholder for future implementation of GPU→CPU readback.
-// Currently unimplemented as it requires DMA-BUF import or mmap of the render target.
+// copyToBuffer copies the GPU render target to a CPU buffer via DMA-BUF mmap.
+// It calls Present to obtain the render target's DMA-BUF file descriptor,
+// maps it read-only into the process address space, and bulk-copies the
+// ARGB8888 pixel rows into buf. The buf's dimensions and stride are updated
+// to match the render target if they differ.
 func (gc *GPUConsumer) copyToBuffer(buf *primitives.Buffer) error {
-	// Phase 5.3: Implement GPU→CPU readback via mmap or blit
-	// For now, this is a no-op to support interface compatibility
-	_ = buf
+	fd, err := gc.renderer.Present()
+	if err != nil {
+		return fmt.Errorf("readback: export render target: %w", err)
+	}
+	if fd < 0 {
+		return fmt.Errorf("readback: invalid DMA-BUF fd %d", fd)
+	}
+	defer syscall.Close(fd)
+
+	width, height := gc.renderer.Dimensions()
+	stride := width * 4
+	size := stride * height
+	if size == 0 {
+		return nil
+	}
+
+	mem, err := syscall.Mmap(fd, 0, size, syscall.PROT_READ, syscall.MAP_SHARED)
+	if err != nil {
+		return fmt.Errorf("readback: mmap render target: %w", err)
+	}
+	defer syscall.Munmap(mem)
+
+	if len(buf.Pixels) < size {
+		buf.Pixels = make([]byte, size)
+	}
+	buf.Width = width
+	buf.Height = height
+	buf.Stride = stride
+	copy(buf.Pixels, mem)
 	return nil
 }

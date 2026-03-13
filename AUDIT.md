@@ -47,7 +47,7 @@ naming violations.  The single previously-flagged CC >10 function remains
 
 ### HIGH
 
-- [ ] **GPU→CPU readback is unimplemented (no-op)** — `internal/raster/consumer/gpu.go:104–112` — The `GPUConsumer.copyToBuffer` method, which is required to produce pixels from the GPU render target back to a CPU buffer, is documented as "a placeholder for future implementation" and returns `nil` without doing anything (`_ = buf`).  README claims "Display List Rendering — GPU backend with display list consumer"; the consumer exists but cannot deliver rendered pixels to the display without this step.  This silently produces blank frames on GPU paths.
+- [x] **GPU→CPU readback is unimplemented (no-op)** — `internal/raster/consumer/gpu.go:104–112` — The `GPUConsumer.copyToBuffer` method, which is required to produce pixels from the GPU render target back to a CPU buffer, is documented as "a placeholder for future implementation" and returns `nil` without doing anything (`_ = buf`).  README claims "Display List Rendering — GPU backend with display list consumer"; the consumer exists but cannot deliver rendered pixels to the display without this step.  This silently produces blank frames on GPU paths.
 
 - [ ] **Text rendering is a no-op in the GPU backend** — `internal/render/backend/vertex.go:188–193` — `textToVertices` always returns `nil` with an in-code comment "text won't render" and a Phase 5.2 deferral note.  README claims "SDF text rendering" as a feature; this is functional only through the *software* rasterizer (`internal/raster/text/`), not through the GPU display-list backend.  Any widget that draws text via the GPU backend produces silent blank output.
 
