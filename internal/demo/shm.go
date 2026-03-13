@@ -12,7 +12,7 @@ import (
 // prepareShmBuffer allocates, maps, and creates a wl_buffer from a memfd.
 // On error, fd is closed. On success, the returned pool owns fd and must be
 // destroyed by the caller (pool.Destroy also closes fd).
-func prepareShmBuffer(shmObj *shm.SHM, fd int, width, height int) (*shm.Pool, *shm.Buffer, error) {
+func prepareShmBuffer(shmObj *shm.SHM, fd, width, height int) (*shm.Pool, *shm.Buffer, error) {
 	bufferSize := int32(width * height * 4)
 	if err := syscall.Ftruncate(fd, int64(bufferSize)); err != nil {
 		syscall.Close(fd)

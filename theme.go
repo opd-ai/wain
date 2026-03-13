@@ -191,7 +191,7 @@ type StyleOverride struct {
 }
 
 // applyOverride sets *dst = *src when src is non-nil, leaving *dst unchanged otherwise.
-func applyOverride[T any](dst *T, src *T) {
+func applyOverride[T any](dst, src *T) {
 	if src != nil {
 		*dst = *src
 	}

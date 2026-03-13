@@ -232,7 +232,7 @@ type fdMockGPURenderer struct {
 	pixelData     []byte
 }
 
-func (m *fdMockGPURenderer) Render(_ *displaylist.DisplayList) error          { return nil }
+func (m *fdMockGPURenderer) Render(_ *displaylist.DisplayList) error { return nil }
 func (m *fdMockGPURenderer) RenderWithDamage(_ *displaylist.DisplayList, _ []displaylist.Rect) error {
 	return nil
 }

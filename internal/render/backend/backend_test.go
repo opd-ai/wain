@@ -167,96 +167,96 @@ func TestPackVertices(t *testing.T) {
 }
 
 func TestTextToVerticesNilAtlas(t *testing.T) {
-data := displaylist.DrawTextData{
-Text:     "Hi",
-X:        10,
-Y:        20,
-FontSize: 16,
-Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
-}
-// nil atlas should produce no vertices (graceful no-op)
-verts := textToVertices(data, 800, 600, nil)
-if verts != nil {
-t.Errorf("Expected nil vertices with nil atlas, got %d", len(verts))
-}
+	data := displaylist.DrawTextData{
+		Text:     "Hi",
+		X:        10,
+		Y:        20,
+		FontSize: 16,
+		Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
+	}
+	// nil atlas should produce no vertices (graceful no-op)
+	verts := textToVertices(data, 800, 600, nil)
+	if verts != nil {
+		t.Errorf("Expected nil vertices with nil atlas, got %d", len(verts))
+	}
 }
 
 func TestTextToVerticesEmptyString(t *testing.T) {
-atlas, err := text.NewAtlas()
-if err != nil {
-t.Skipf("atlas unavailable: %v", err)
-}
-data := displaylist.DrawTextData{
-Text:     "",
-X:        10,
-Y:        20,
-FontSize: 16,
-Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
-}
-verts := textToVertices(data, 800, 600, atlas)
-if verts != nil {
-t.Errorf("Expected nil vertices for empty string, got %d", len(verts))
-}
+	atlas, err := text.NewAtlas()
+	if err != nil {
+		t.Skipf("atlas unavailable: %v", err)
+	}
+	data := displaylist.DrawTextData{
+		Text:     "",
+		X:        10,
+		Y:        20,
+		FontSize: 16,
+		Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
+	}
+	verts := textToVertices(data, 800, 600, atlas)
+	if verts != nil {
+		t.Errorf("Expected nil vertices for empty string, got %d", len(verts))
+	}
 }
 
 func TestTextToVerticesProducesQuads(t *testing.T) {
-atlas, err := text.NewAtlas()
-if err != nil {
-t.Skipf("atlas unavailable: %v", err)
-}
-data := displaylist.DrawTextData{
-Text:     "AB",
-X:        10,
-Y:        20,
-FontSize: 16,
-Color:    primitives.Color{R: 200, G: 100, B: 50, A: 255},
-}
-verts := textToVertices(data, 800, 600, atlas)
-// 2 glyphs × 6 vertices each
-if len(verts) != 12 {
-t.Fatalf("Expected 12 vertices for 2-char string, got %d", len(verts))
-}
-// All vertices should carry the specified color
-for i, v := range verts {
-if v.R != 200 || v.G != 100 || v.B != 50 || v.A != 255 {
-t.Errorf("Vertex %d has wrong color: (%d,%d,%d,%d)", i, v.R, v.G, v.B, v.A)
-}
-}
-// UV coordinates must be in [0, 1]
-for i, v := range verts {
-if v.U < 0 || v.U > 1 || v.V < 0 || v.V > 1 {
-t.Errorf("Vertex %d UV out of [0,1]: u=%f v=%f", i, v.U, v.V)
-}
-}
-// NDC positions must be in [-1, 1]
-for i, v := range verts {
-if v.X < -1 || v.X > 1 || v.Y < -1 || v.Y > 1 {
-t.Errorf("Vertex %d NDC out of range: x=%f y=%f", i, v.X, v.Y)
-}
-}
+	atlas, err := text.NewAtlas()
+	if err != nil {
+		t.Skipf("atlas unavailable: %v", err)
+	}
+	data := displaylist.DrawTextData{
+		Text:     "AB",
+		X:        10,
+		Y:        20,
+		FontSize: 16,
+		Color:    primitives.Color{R: 200, G: 100, B: 50, A: 255},
+	}
+	verts := textToVertices(data, 800, 600, atlas)
+	// 2 glyphs × 6 vertices each
+	if len(verts) != 12 {
+		t.Fatalf("Expected 12 vertices for 2-char string, got %d", len(verts))
+	}
+	// All vertices should carry the specified color
+	for i, v := range verts {
+		if v.R != 200 || v.G != 100 || v.B != 50 || v.A != 255 {
+			t.Errorf("Vertex %d has wrong color: (%d,%d,%d,%d)", i, v.R, v.G, v.B, v.A)
+		}
+	}
+	// UV coordinates must be in [0, 1]
+	for i, v := range verts {
+		if v.U < 0 || v.U > 1 || v.V < 0 || v.V > 1 {
+			t.Errorf("Vertex %d UV out of [0,1]: u=%f v=%f", i, v.U, v.V)
+		}
+	}
+	// NDC positions must be in [-1, 1]
+	for i, v := range verts {
+		if v.X < -1 || v.X > 1 || v.Y < -1 || v.Y > 1 {
+			t.Errorf("Vertex %d NDC out of range: x=%f y=%f", i, v.X, v.Y)
+		}
+	}
 }
 
 func TestTextToVerticesAdvancesHorizontally(t *testing.T) {
-atlas, err := text.NewAtlas()
-if err != nil {
-t.Skipf("atlas unavailable: %v", err)
-}
-data := displaylist.DrawTextData{
-Text:     "AB",
-X:        0,
-Y:        100,
-FontSize: 16,
-Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
-}
-verts := textToVertices(data, 800, 600, atlas)
-if len(verts) < 12 {
-t.Fatalf("Expected at least 12 vertices, got %d", len(verts))
-}
-// First glyph quad left edge should be <= second glyph quad left edge.
-// Each glyph occupies 6 vertices; first vertex in each quad is the top-left corner.
-firstGlyphX := verts[0].X
-secondGlyphX := verts[6].X
-if secondGlyphX <= firstGlyphX {
-t.Errorf("Second glyph should start to the right of first: first x=%f, second x=%f", firstGlyphX, secondGlyphX)
-}
+	atlas, err := text.NewAtlas()
+	if err != nil {
+		t.Skipf("atlas unavailable: %v", err)
+	}
+	data := displaylist.DrawTextData{
+		Text:     "AB",
+		X:        0,
+		Y:        100,
+		FontSize: 16,
+		Color:    primitives.Color{R: 255, G: 255, B: 255, A: 255},
+	}
+	verts := textToVertices(data, 800, 600, atlas)
+	if len(verts) < 12 {
+		t.Fatalf("Expected at least 12 vertices, got %d", len(verts))
+	}
+	// First glyph quad left edge should be <= second glyph quad left edge.
+	// Each glyph occupies 6 vertices; first vertex in each quad is the top-left corner.
+	firstGlyphX := verts[0].X
+	secondGlyphX := verts[6].X
+	if secondGlyphX <= firstGlyphX {
+		t.Errorf("Second glyph should start to the right of first: first x=%f, second x=%f", firstGlyphX, secondGlyphX)
+	}
 }
