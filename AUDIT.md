@@ -79,10 +79,11 @@ naming violations.  The single previously-flagged CC >10 function remains
 
 ### LOW
 
-- [ ] **32 identifier naming violations** — Various files — Detected by `go-stats-generator`: 28 identifier issues including:
+- [x] **32 identifier naming violations** — Various files — Detected by `go-stats-generator`: 28 identifier issues including:
   - `buttonColors`, `textInputDisplay` (stuttering — `internal/ui/widgets/base.go:232,551`)
   - `ArgTypeUint32`, `DecodeUint32`, `EncodeUint32` (should be `UInt32` per Go acronym convention — `internal/wayland/wire/protocol.go:75,157,166`)
   All are low-severity; none affect behavior.
+  **Fixed (2026-03-13)**: Renamed private stuttering types: `buttonColors`→`btnColors`, `textInputDisplay`→`inputDisplay` (`internal/ui/widgets/base.go`), `panelStyle`→`themeAdapter` (`layout.go`). Renamed package-stuttering exports `ScaleInt`→`Int`, `ScaleFloat`→`Float` (`internal/ui/scale/manager.go`). Remaining tool findings (`Uint32`→`UInt32`, `Idle`→`IDle`) are false positives per Go stdlib convention: `encoding/binary` uses `Uint32`, and `Idle` is an English word, not the `ID` acronym.
 
 - [ ] **3 generic file names** — `internal/x11/events/types.go`, `internal/demo/constants.go`, `internal/ui/widgets/base.go` — go-stats-generator reports names as too generic; naming convention violation only.
 

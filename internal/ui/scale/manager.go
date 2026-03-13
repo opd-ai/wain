@@ -49,12 +49,12 @@ func (m *Manager) SetFromDPI(dpi int32) {
 	m.Set(float32(dpi) / 96.0)
 }
 
-// ScaleInt scales an integer value by the current scale factor.
-func (m *Manager) ScaleInt(value int) int {
+// Int scales an integer value by the current scale factor.
+func (m *Manager) Int(value int) int {
 	return int(float32(value) * m.Get())
 }
 
-// ScaleFloat scales a float value by the current scale factor.
-func (m *Manager) ScaleFloat(value float32) float32 {
+// Float scales a float value by the current scale factor.
+func (m *Manager) Float(value float32) float32 {
 	return value * m.Get()
 }

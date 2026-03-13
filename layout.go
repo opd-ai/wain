@@ -420,7 +420,7 @@ func (g *Grid) SetColumns(columns int) {
 }
 
 // syncStyleToInternal applies the panel's style override to the internal widget.
-// This method creates a panelStyle that wraps the current theme with the override.
+// This method creates a themeAdapter that wraps the current theme with the override.
 func (p *Panel) syncStyleToInternal() {
 	if p.styleOverride == nil && p.theme == nil {
 		p.internal.SetStyle(nil)
@@ -432,22 +432,22 @@ func (p *Panel) syncStyleToInternal() {
 		baseTheme = *p.theme
 	}
 
-	style := &panelStyle{
+	style := &themeAdapter{
 		base:     baseTheme,
 		override: p.styleOverride,
 	}
 	p.internal.SetStyle(style)
 }
 
-// panelStyle adapts Theme + StyleOverride to pctwidget.Style interface.
-type panelStyle struct {
+// themeAdapter adapts Theme + StyleOverride to pctwidget.Style interface.
+type themeAdapter struct {
 	base     Theme
 	override *StyleOverride
 }
 
 // Background returns the background color, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Background.
-func (s *panelStyle) Background() primitives.Color {
+func (s *themeAdapter) Background() primitives.Color {
 	if s.override != nil && s.override.Background != nil {
 		return s.override.Background.toInternal()
 	}
@@ -456,7 +456,7 @@ func (s *panelStyle) Background() primitives.Color {
 
 // Foreground returns the foreground (text) color, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Foreground.
-func (s *panelStyle) Foreground() primitives.Color {
+func (s *themeAdapter) Foreground() primitives.Color {
 	if s.override != nil && s.override.Foreground != nil {
 		return s.override.Foreground.toInternal()
 	}
@@ -465,7 +465,7 @@ func (s *panelStyle) Foreground() primitives.Color {
 
 // Accent returns the accent/highlight color, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Accent.
-func (s *panelStyle) Accent() primitives.Color {
+func (s *themeAdapter) Accent() primitives.Color {
 	if s.override != nil && s.override.Accent != nil {
 		return s.override.Accent.toInternal()
 	}
@@ -474,7 +474,7 @@ func (s *panelStyle) Accent() primitives.Color {
 
 // Border returns the border color, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Border.
-func (s *panelStyle) Border() primitives.Color {
+func (s *themeAdapter) Border() primitives.Color {
 	if s.override != nil && s.override.Border != nil {
 		return s.override.Border.toInternal()
 	}
@@ -483,7 +483,7 @@ func (s *panelStyle) Border() primitives.Color {
 
 // FontSize returns the base font size in pixels, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.FontSize.
-func (s *panelStyle) FontSize() float64 {
+func (s *themeAdapter) FontSize() float64 {
 	if s.override != nil && s.override.FontSize != nil {
 		return *s.override.FontSize
 	}
@@ -492,7 +492,7 @@ func (s *panelStyle) FontSize() float64 {
 
 // Padding returns the default inner padding in pixels, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Padding.
-func (s *panelStyle) Padding() int {
+func (s *themeAdapter) Padding() int {
 	if s.override != nil && s.override.Padding != nil {
 		return *s.override.Padding
 	}
@@ -501,7 +501,7 @@ func (s *panelStyle) Padding() int {
 
 // Gap returns the default gap between sibling widgets in pixels, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.Gap.
-func (s *panelStyle) Gap() int {
+func (s *themeAdapter) Gap() int {
 	if s.override != nil && s.override.Gap != nil {
 		return *s.override.Gap
 	}
@@ -510,7 +510,7 @@ func (s *panelStyle) Gap() int {
 
 // BorderWidth returns the default border width in pixels, using the override if present or the base theme otherwise.
 // This implements pctwidget.Style.BorderWidth.
-func (s *panelStyle) BorderWidth() int {
+func (s *themeAdapter) BorderWidth() int {
 	if s.override != nil && s.override.BorderWidth != nil {
 		return *s.override.BorderWidth
 	}

@@ -228,17 +228,17 @@ func (b *Button) HandlePointerUp(button uint32) {
 	}
 }
 
-// buttonColors holds the color scheme for a button in its current state.
-type buttonColors struct {
+// btnColors holds the color scheme for a button in its current state.
+type btnColors struct {
 	background primitives.Color
 	text       primitives.Color
 	border     primitives.Color
 }
 
 // getButtonColors returns the appropriate colors based on button state.
-func (b *Button) getButtonColors() buttonColors {
+func (b *Button) getButtonColors() btnColors {
 	if !b.enabled {
-		return buttonColors{
+		return btnColors{
 			background: b.theme.BackgroundDisabled,
 			text:       b.theme.TextDisabled,
 			border:     b.theme.BorderNormal,
@@ -246,19 +246,19 @@ func (b *Button) getButtonColors() buttonColors {
 	}
 	switch b.state {
 	case PointerStatePressed:
-		return buttonColors{
+		return btnColors{
 			background: b.theme.BackgroundPressed,
 			text:       b.theme.TextPressed,
 			border:     b.theme.BorderPressed,
 		}
 	case PointerStateHover:
-		return buttonColors{
+		return btnColors{
 			background: b.theme.BackgroundHover,
 			text:       b.theme.TextHover,
 			border:     b.theme.BorderHover,
 		}
 	default:
-		return buttonColors{
+		return btnColors{
 			background: b.theme.BackgroundNormal,
 			text:       b.theme.TextNormal,
 			border:     b.theme.BorderNormal,
@@ -547,28 +547,28 @@ func (t *TextInput) HandleBlur() {
 	t.focused = false
 }
 
-// textInputDisplay holds the display text and color for rendering.
-type textInputDisplay struct {
+// inputDisplay holds the display text and color for rendering.
+type inputDisplay struct {
 	text  string
 	color primitives.Color
 }
 
 // getDisplayText returns the text to display and its color.
-func (t *TextInput) getDisplayText() textInputDisplay {
+func (t *TextInput) getDisplayText() inputDisplay {
 	if t.text != "" {
 		color := t.theme.TextNormal
 		if !t.enabled {
 			color = t.theme.TextDisabled
 		}
-		return textInputDisplay{text: t.text, color: color}
+		return inputDisplay{text: t.text, color: color}
 	}
 	if t.placeholder != "" {
-		return textInputDisplay{
+		return inputDisplay{
 			text:  t.placeholder,
 			color: primitives.Color{R: 150, G: 150, B: 150, A: 255},
 		}
 	}
-	return textInputDisplay{text: "", color: t.theme.TextNormal}
+	return inputDisplay{text: "", color: t.theme.TextNormal}
 }
 
 // getBackgroundColor returns the background color based on enabled state.

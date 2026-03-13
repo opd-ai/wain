@@ -64,33 +64,33 @@ func TestSetFromDPI(t *testing.T) {
 	}
 }
 
-func TestScaleInt(t *testing.T) {
+func TestInt(t *testing.T) {
 	m := NewManager()
 	m.Set(2.0)
 
-	result := m.ScaleInt(100)
+	result := m.Int(100)
 	if result != 200 {
 		t.Errorf("expected 200, got %d", result)
 	}
 
 	m.Set(1.5)
-	result = m.ScaleInt(100)
+	result = m.Int(100)
 	if result != 150 {
 		t.Errorf("expected 150, got %d", result)
 	}
 }
 
-func TestScaleFloat(t *testing.T) {
+func TestFloat(t *testing.T) {
 	m := NewManager()
 	m.Set(2.0)
 
-	result := m.ScaleFloat(100.0)
+	result := m.Float(100.0)
 	if result != 200.0 {
 		t.Errorf("expected 200.0, got %f", result)
 	}
 
 	m.Set(1.5)
-	result = m.ScaleFloat(100.0)
+	result = m.Float(100.0)
 	if result != 150.0 {
 		t.Errorf("expected 150.0, got %f", result)
 	}
