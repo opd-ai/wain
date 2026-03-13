@@ -168,36 +168,37 @@ func (m *Manager) getSelection(selection, target uint32) (string, error) {
 
 // HandleSelectionRequest processes a SelectionRequest event.
 func (m *Manager) HandleSelectionRequest(requestor, selection, target, property, timestamp uint32) error {
-	var data []byte
-	var actualType uint32
-
-	// Determine which selection is being requested
-	if selection == m.clipboardAtom && m.ownsClipboard {
-		data = m.clipboardData
-		actualType = m.utf8Atom
-	} else if selection == AtomPRIMARY && m.ownsPrimary {
-		data = m.primaryData
-		actualType = m.utf8Atom
-	} else if target == m.targetsAtom {
-		// Reply with supported targets
-		targets := []uint32{m.utf8Atom, m.textAtom, m.targetsAtom}
-		data = make([]byte, len(targets)*4)
-		for i, t := range targets {
-			binary.LittleEndian.PutUint32(data[i*4:], t)
-		}
-		actualType = 4 // ATOM type
-	} else {
-		// Unsupported target, send property = None
+	data, actualType, ok := m.resolveSelectionData(selection, target)
+	if !ok {
 		return m.sendSelectionNotify(requestor, selection, target, 0, timestamp)
 	}
 
-	// Set the property on the requestor window
 	if err := m.conn.ChangeProperty(requestor, property, actualType, 8, 0, data); err != nil {
 		return fmt.Errorf("ChangeProperty failed: %w", err)
 	}
 
-	// Send SelectionNotify event
 	return m.sendSelectionNotify(requestor, selection, target, property, timestamp)
+}
+
+// resolveSelectionData determines the byte payload and X11 type atom for a
+// selection request. It returns ok=false when the requested target is
+// unsupported, signalling that a "property = None" notify should be sent.
+func (m *Manager) resolveSelectionData(selection, target uint32) (data []byte, actualType uint32, ok bool) {
+	if selection == m.clipboardAtom && m.ownsClipboard {
+		return m.clipboardData, m.utf8Atom, true
+	}
+	if selection == AtomPRIMARY && m.ownsPrimary {
+		return m.primaryData, m.utf8Atom, true
+	}
+	if target == m.targetsAtom {
+		targets := []uint32{m.utf8Atom, m.textAtom, m.targetsAtom}
+		buf := make([]byte, len(targets)*4)
+		for i, t := range targets {
+			binary.LittleEndian.PutUint32(buf[i*4:], t)
+		}
+		return buf, 4, true // 4 = ATOM type
+	}
+	return nil, 0, false
 }
 
 // sendSelectionNotify sends a SelectionNotify event.

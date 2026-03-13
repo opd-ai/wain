@@ -2,6 +2,7 @@ package demo
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opd-ai/wain"
 )
@@ -164,28 +165,24 @@ func KeyToString(key wain.Key) string {
 	}
 }
 
+// modifierBits maps each modifier bitmask to its display name.
+var modifierBits = []struct {
+	mask wain.Modifier
+	name string
+}{
+	{wain.ModShift, "Shift"},
+	{wain.ModControl, "Ctrl"},
+	{wain.ModAlt, "Alt"},
+	{wain.ModSuper, "Super"},
+}
+
 // ModifiersToString converts wain.Modifier flags to a human-readable string.
 func ModifiersToString(mods wain.Modifier) string {
-	parts := []string{}
-	if mods&wain.ModShift != 0 {
-		parts = append(parts, "Shift")
-	}
-	if mods&wain.ModControl != 0 {
-		parts = append(parts, "Ctrl")
-	}
-	if mods&wain.ModAlt != 0 {
-		parts = append(parts, "Alt")
-	}
-	if mods&wain.ModSuper != 0 {
-		parts = append(parts, "Super")
-	}
-
-	result := ""
-	for i, part := range parts {
-		if i > 0 {
-			result += "+"
+	parts := make([]string, 0, len(modifierBits))
+	for _, mb := range modifierBits {
+		if mods&mb.mask != 0 {
+			parts = append(parts, mb.name)
 		}
-		result += part
 	}
-	return result
+	return strings.Join(parts, "+")
 }

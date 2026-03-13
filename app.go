@@ -612,12 +612,7 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 
 	switch w.app.displayServer {
 	case DisplayServerWayland:
-		if w.waylandToplevel != nil {
-			if fullscreen {
-				return w.waylandToplevel.SetFullscreen(0)
-			}
-			return w.waylandToplevel.UnsetFullscreen()
-		}
+		return w.applyWaylandFullscreen(fullscreen)
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.x11SetFullscreen(fullscreen); err != nil {
@@ -627,6 +622,18 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 	}
 
 	return nil
+}
+
+// applyWaylandFullscreen sends the appropriate fullscreen request to the Wayland
+// toplevel surface, or does nothing if the toplevel is not yet initialised.
+func (w *Window) applyWaylandFullscreen(fullscreen bool) error {
+	if w.waylandToplevel == nil {
+		return nil
+	}
+	if fullscreen {
+		return w.waylandToplevel.SetFullscreen(0)
+	}
+	return w.waylandToplevel.UnsetFullscreen()
 }
 
 // x11SetTitle sets WM_NAME (STRING) and _NET_WM_NAME (UTF8_STRING) on the X11

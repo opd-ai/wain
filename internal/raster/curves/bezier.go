@@ -153,22 +153,31 @@ func FillArc(b *primitives.Buffer, cx, cy, rx, ry, startAngle, endAngle float64,
 
 	// Rasterize each pixel in the bounding box
 	for y := minY; y < maxY; y++ {
-		for x := minX; x < maxX; x++ {
-			coverage := arcCoverage(float64(x), float64(y), cx, cy, rx, ry, startAngle, endAngle)
-			if coverage <= 0 {
-				continue
-			}
-
-			alpha := uint8(float64(c.A) * coverage)
-			if alpha == 0 {
-				continue
-			}
-
-			pixelColor := primitives.Color{R: c.R, G: c.G, B: c.B, A: alpha}
-			idx := y*b.Stride + x*4
-			primitives.BlendPixel(b.Pixels[idx:idx+4], pixelColor)
-		}
+		scanArcRow(b, y, minX, maxX, cx, cy, rx, ry, startAngle, endAngle, c)
 	}
+}
+
+// scanArcRow scans one horizontal row, blending pixels that lie within the arc's coverage area.
+func scanArcRow(b *primitives.Buffer, y, minX, maxX int, cx, cy, rx, ry, startAngle, endAngle float64, c primitives.Color) {
+	for x := minX; x < maxX; x++ {
+		coverage := arcCoverage(float64(x), float64(y), cx, cy, rx, ry, startAngle, endAngle)
+		if coverage <= 0 {
+			continue
+		}
+		blendArcPixel(b, x, y, c, coverage)
+	}
+}
+
+// blendArcPixel composites a single anti-aliased arc pixel into the buffer.
+// It scales the color's alpha by coverage and skips fully transparent pixels.
+func blendArcPixel(b *primitives.Buffer, x, y int, c primitives.Color, coverage float64) {
+	alpha := uint8(float64(c.A) * coverage)
+	if alpha == 0 {
+		return
+	}
+	pixelColor := primitives.Color{R: c.R, G: c.G, B: c.B, A: alpha}
+	idx := y*b.Stride + x*4
+	primitives.BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 }
 
 // subdivideQuadratic recursively subdivides a quadratic Bezier curve until it's flat enough.

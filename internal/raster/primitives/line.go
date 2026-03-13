@@ -37,22 +37,31 @@ func (b *Buffer) DrawLine(x0, y0, x1, y1 int, width float64, c Color) {
 	maxY = min(b.Height, maxY)
 
 	for y := minY; y < maxY; y++ {
-		for x := minX; x < maxX; x++ {
-			coverage := lineCoverage(float64(x), float64(y), float64(x0), float64(y0), dirX, dirY, perpX, perpY, length, halfWidth)
-			if coverage <= 0 {
-				continue
-			}
-
-			alpha := uint8(float64(c.A) * coverage)
-			if alpha == 0 {
-				continue
-			}
-
-			pixelColor := Color{c.R, c.G, c.B, alpha}
-			idx := y*b.Stride + x*4
-			BlendPixel(b.Pixels[idx:idx+4], pixelColor)
-		}
+		b.scanLineRow(y, minX, maxX, x0, y0, dirX, dirY, perpX, perpY, length, halfWidth, c)
 	}
+}
+
+// scanLineRow scans one horizontal row, blending pixels that lie within the line's coverage area.
+func (b *Buffer) scanLineRow(y, minX, maxX, x0, y0 int, dirX, dirY, perpX, perpY, length, halfWidth float64, c Color) {
+	for x := minX; x < maxX; x++ {
+		coverage := lineCoverage(float64(x), float64(y), float64(x0), float64(y0), dirX, dirY, perpX, perpY, length, halfWidth)
+		if coverage <= 0 {
+			continue
+		}
+		b.blendLinePixel(x, y, c, coverage)
+	}
+}
+
+// blendLinePixel composites a single anti-aliased line pixel into the buffer.
+// It scales the color's alpha by coverage and skips fully transparent pixels.
+func (b *Buffer) blendLinePixel(x, y int, c Color, coverage float64) {
+	alpha := uint8(float64(c.A) * coverage)
+	if alpha == 0 {
+		return
+	}
+	pixelColor := Color{c.R, c.G, c.B, alpha}
+	idx := y*b.Stride + x*4
+	BlendPixel(b.Pixels[idx:idx+4], pixelColor)
 }
 
 // lineCoverage calculates the anti-aliased coverage for a pixel at (px, py)

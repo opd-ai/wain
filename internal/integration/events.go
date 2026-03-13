@@ -200,30 +200,12 @@ func TranslateX11Pointer(evt interface{}) PointerEvent {
 	case events.ButtonPressEvent:
 		pe.x = float64(e.EventX)
 		pe.y = float64(e.EventY)
-		// X11 button mapping: 1=left, 2=middle, 3=right, 4/5=scroll
-		if e.Detail <= 3 {
-			pe.eventType = PointerButtonPress
-			// Map X11 buttons to Linux input event codes
-			pe.button = 0x110 + uint32(e.Detail) - 1
-		} else if e.Detail == 4 {
-			pe.eventType = PointerScroll
-			pe.axis = 0 // vertical
-			pe.value = -1.0
-		} else if e.Detail == 5 {
-			pe.eventType = PointerScroll
-			pe.axis = 0 // vertical
-			pe.value = 1.0
-		}
+		applyX11ButtonPress(pe, e.Detail)
 
 	case events.ButtonReleaseEvent:
-		// Skip scroll button releases
-		if e.Detail >= 4 && e.Detail <= 5 {
+		if !applyX11ButtonRelease(pe, e) {
 			return nil
 		}
-		pe.eventType = PointerButtonRelease
-		pe.x = float64(e.EventX)
-		pe.y = float64(e.EventY)
-		pe.button = 0x110 + uint32(e.Detail) - 1
 
 	case events.MotionNotifyEvent:
 		pe.eventType = PointerMove
@@ -235,6 +217,37 @@ func TranslateX11Pointer(evt interface{}) PointerEvent {
 	}
 
 	return pe
+}
+
+// applyX11ButtonPress populates pe with the event type, button, and scroll
+// direction for an X11 ButtonPress event. X11 button mapping: 1=left,
+// 2=middle, 3=right, 4=scroll up, 5=scroll down.
+func applyX11ButtonPress(pe *pointerEvent, detail uint8) {
+	if detail <= 3 {
+		pe.eventType = PointerButtonPress
+		pe.button = 0x110 + uint32(detail) - 1
+	} else if detail == 4 {
+		pe.eventType = PointerScroll
+		pe.axis = 0
+		pe.value = -1.0
+	} else if detail == 5 {
+		pe.eventType = PointerScroll
+		pe.axis = 0
+		pe.value = 1.0
+	}
+}
+
+// applyX11ButtonRelease populates pe with button release data and returns
+// false when the event should be discarded (scroll-wheel button releases).
+func applyX11ButtonRelease(pe *pointerEvent, e events.ButtonReleaseEvent) bool {
+	if e.Detail >= 4 && e.Detail <= 5 {
+		return false
+	}
+	pe.eventType = PointerButtonRelease
+	pe.x = float64(e.EventX)
+	pe.y = float64(e.EventY)
+	pe.button = 0x110 + uint32(e.Detail) - 1
+	return true
 }
 
 // TranslateX11Keyboard converts X11 keyboard events to public key events.

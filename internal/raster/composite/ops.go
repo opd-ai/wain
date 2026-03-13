@@ -135,28 +135,35 @@ func BlitScaled(dst *primitives.Buffer, dstX, dstY, dstWidth, dstHeight int,
 			continue
 		}
 
-		for dstCol := dstX1; dstCol < dstX2; dstCol++ {
-			srcXf := (float64(dstCol-dstX) + 0.5) * scaleX
-			srcXi := int(srcXf)
-			srcXfrac := srcXf - float64(srcXi)
+		blendScaledRow(dst, src, dstRow, dstX1, dstX2, dstX, srcX, srcY0, srcY1, scaleX, srcYfrac)
+	}
+}
 
-			srcX0 := srcX + srcXi
-			srcX1 := srcX0 + 1
+// blendScaledRow blends one destination row of a bilinear-scaled blit operation.
+// It iterates over columns [dstX1, dstX2), maps each to a source position using
+// scaleX and srcYfrac for interpolation, and composites the result into dst.
+func blendScaledRow(dst, src *primitives.Buffer, dstRow, dstX1, dstX2, dstX, srcX, srcY0, srcY1 int, scaleX, srcYfrac float64) {
+	for dstCol := dstX1; dstCol < dstX2; dstCol++ {
+		srcXf := (float64(dstCol-dstX) + 0.5) * scaleX
+		srcXi := int(srcXf)
+		srcXfrac := srcXf - float64(srcXi)
 
-			if srcX0 < 0 || srcX1 >= src.Width {
-				continue
-			}
+		srcX0 := srcX + srcXi
+		srcX1 := srcX0 + 1
 
-			p00 := samplePixel(src, srcX0, srcY0)
-			p10 := samplePixel(src, srcX1, srcY0)
-			p01 := samplePixel(src, srcX0, srcY1)
-			p11 := samplePixel(src, srcX1, srcY1)
-
-			result := bilinearInterpolate(p00, p10, p01, p11, srcXfrac, srcYfrac)
-
-			dstIdx := dstRow*dst.Stride + dstCol*4
-			blendPixelDirect(dst.Pixels[dstIdx:dstIdx+4], result[:])
+		if srcX0 < 0 || srcX1 >= src.Width {
+			continue
 		}
+
+		p00 := samplePixel(src, srcX0, srcY0)
+		p10 := samplePixel(src, srcX1, srcY0)
+		p01 := samplePixel(src, srcX0, srcY1)
+		p11 := samplePixel(src, srcX1, srcY1)
+
+		result := bilinearInterpolate(p00, p10, p01, p11, srcXfrac, srcYfrac)
+
+		dstIdx := dstRow*dst.Stride + dstCol*4
+		blendPixelDirect(dst.Pixels[dstIdx:dstIdx+4], result[:])
 	}
 }
 

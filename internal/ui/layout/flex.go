@@ -328,48 +328,59 @@ func (c *Container) layoutAxis(isRow bool, contentWidth, contentHeight int) []La
 		totalGaps = 0
 	}
 
-	var mainContent, crossContent int
-	if isRow {
-		mainContent, crossContent = contentWidth, contentHeight
-	} else {
-		mainContent, crossContent = contentHeight, contentWidth
-	}
-
+	mainContent, crossContent := mainCrossSize(isRow, contentWidth, contentHeight)
 	measurements, base, totalGrow, totalShrink := computeFlexMeasurements(c.children, isRow)
 	mainSizes := distributeFlex(measurements, mainContent-totalGaps, base, totalGrow, totalShrink)
 
-	var mainPad, crossPad int
-	if isRow {
-		mainPad, crossPad = c.Padding.Left, c.Padding.Top
-	} else {
-		mainPad, crossPad = c.Padding.Top, c.Padding.Left
-	}
+	mainPad, crossPad := mainCrossPad(isRow, c.Padding)
 	main, gap := computeJustifyOffset(c.Justify, mainSizes, mainContent, c.Gap, mainPad)
 
 	items := make([]LayoutItem, 0, len(c.children))
 	for i, item := range c.children {
-		var crossItemSize int
-		if isRow {
-			crossItemSize = item.Box.Height
-		} else {
-			crossItemSize = item.Box.Width
-		}
-		cross, crossSize := computeCrossAlign(c.Align, crossItemSize, crossContent, crossPad)
-
+		cross, crossSize := computeCrossAlign(c.Align, crossItemDimension(isRow, item.Box), crossContent, crossPad)
 		var li LayoutItem
 		li.Box = item.Box
-		if isRow {
-			li.X, li.Y = main, cross
-			li.Width, li.Height = mainSizes[i], crossSize
-		} else {
-			li.X, li.Y = cross, main
-			li.Width, li.Height = crossSize, mainSizes[i]
-		}
+		assignLayoutAxes(isRow, &li, main, cross, mainSizes[i], crossSize)
 		items = append(items, li)
 		main += mainSizes[i] + gap
 	}
 
 	return items
+}
+
+// mainCrossSize returns the main-axis and cross-axis content sizes for the given orientation.
+func mainCrossSize(isRow bool, width, height int) (main, cross int) {
+	if isRow {
+		return width, height
+	}
+	return height, width
+}
+
+// mainCrossPad returns the main-axis and cross-axis padding for the given orientation.
+func mainCrossPad(isRow bool, p Padding) (main, cross int) {
+	if isRow {
+		return p.Left, p.Top
+	}
+	return p.Top, p.Left
+}
+
+// crossItemDimension returns the cross-axis size of a child box for the given orientation.
+func crossItemDimension(isRow bool, box *Box) int {
+	if isRow {
+		return box.Height
+	}
+	return box.Width
+}
+
+// assignLayoutAxes sets the position and size fields of li based on orientation.
+func assignLayoutAxes(isRow bool, li *LayoutItem, main, cross, mainSize, crossSize int) {
+	if isRow {
+		li.X, li.Y = main, cross
+		li.Width, li.Height = mainSize, crossSize
+	} else {
+		li.X, li.Y = cross, main
+		li.Width, li.Height = crossSize, mainSize
+	}
 }
 
 // layoutRow computes the layout for horizontally arranged children using flexbox-like behavior.
