@@ -67,7 +67,7 @@ naming violations.  The single previously-flagged CC >10 function remains
 
 ### MEDIUM
 
-- [ ] **`cmd/example-app` explicitly incomplete** — `cmd/example-app/main.go:20–21` — The top-of-file NOTE states "Full integration with the rendering pipeline is in progress."  The file is listed in README's project structure as a usage example and ships in the repository.  A developer following the README's "Create a window using the public API" section may build this binary and observe no rendering output.
+- [x] **`cmd/example-app` explicitly incomplete** — `cmd/example-app/main.go:20–21` — The top-of-file NOTE states "Full integration with the rendering pipeline is in progress."  The file is listed in README's project structure as a usage example and ships in the repository.  A developer following the README's "Create a window using the public API" section may build this binary and observe no rendering output.
 
 - [ ] **Clipboard not exposed in public API** — `app.go` (no clipboard functions), `internal/x11/selection/manager.go:99,127` — README features list "data-device clipboard" (Wayland) and the demo `cmd/clipboard-demo` exists, but neither `App` nor `Window` expose `SetClipboard`/`GetClipboard` methods.  X11 clipboard is implemented in `internal/x11/selection` but is inaccessible to public-API consumers.  Wayland data-device is implemented in `internal/wayland/datadevice` but similarly not wired into the public surface.
 

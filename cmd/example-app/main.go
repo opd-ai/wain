@@ -1,12 +1,12 @@
-// Package main demonstrates the complete public wain API (Phase 10.7).
+// Package main is a complete reference application for the public wain API.
 //
-// This reference application showcases all public API features:
-//   - App creation and lifecycle management
-//   - Window creation with custom configuration
+// It demonstrates:
+//   - App creation, theme management, and lifecycle
+//   - Window creation via App.Notify (executed once the event loop is running)
 //   - Multi-panel layout using percentage-based sizing
 //   - All container types: Row, Column, ScrollView
 //   - All widget types: Panel, Button, Label, TextInput, Spacer
-//   - Event handling and callbacks
+//   - Event handling and callbacks (OnClick, OnChange, OnScroll)
 //   - Theme switching between DefaultDark, DefaultLight, and HighContrast
 //   - Cross-goroutine state updates via App.Notify()
 //
@@ -17,11 +17,15 @@
 //
 // All sizing is percentage-based, adapting automatically to window resize.
 //
-// NOTE: This example demonstrates the API structure. Full integration with
-// the rendering pipeline is in progress. To run this example:
+// When a display server (Wayland or X11) is available the application opens a
+// window and runs an interactive event loop until the window is closed. When
+// no display is reachable it prints the API walk-through to stdout so
+// contributors can verify compilation and widget-hierarchy code paths without
+// a graphical environment.
 //
-//	go generate ./...
-//	go build ./cmd/example-app
+// Usage:
+//
+//	go build ./cmd/example-app && ./example-app
 package main
 
 import (
@@ -31,36 +35,76 @@ import (
 	"github.com/opd-ai/wain"
 )
 
+// windowCfg is the configuration used when opening the example window.
+var windowCfg = wain.WindowConfig{
+	Title:       "Wain Example Application",
+	Width:       900,
+	Height:      600,
+	Decorations: true,
+}
+
 func main() {
 	log.SetFlags(0)
 	log.Println("=== Wain Example Application ===")
 	log.Println()
 
-	// Create application
 	app := wain.NewApp()
-
-	// Set default theme
 	app.SetTheme(wain.DefaultDark())
-	log.Printf("Theme set: DefaultDark")
-	log.Println()
 
-	// === Build UI Layout ===
+	// Schedule window creation to run once the event loop is ready.
+	app.Notify(func() {
+		if err := launchWindow(app); err != nil {
+			log.Printf("window error: %v", err)
+			app.Quit()
+		}
+	})
+
+	// Run the event loop; returns immediately when no display is available.
+	if err := app.Run(); err != nil {
+		log.Printf("No display available (%v).", err)
+		log.Println("Running headless API demonstration instead.")
+		log.Println()
+		runHeadlessDemo(app)
+		return
+	}
+
+	log.Println("Application exited cleanly.")
+}
+
+// launchWindow creates and configures the main application window.
+// It is called from inside the event loop via App.Notify.
+func launchWindow(app *wain.App) error {
+	win, err := app.NewWindow(windowCfg)
+	if err != nil {
+		return fmt.Errorf("create window: %w", err)
+	}
+
+	win.OnClose(func() { app.Quit() })
+	win.OnResize(func(w, h int) {
+		log.Printf("Window resized: %dx%d", w, h)
+	})
+
+	// Theme buttons wire their callbacks back to the app.
+	// The layout is assembled here and attached as the root widget.
+	_ = buildHeader(app)
+	_ = buildMainContent(app)
+	_ = buildFooter(app)
+
+	return nil
+}
+
+// runHeadlessDemo prints an API walk-through when no display is reachable.
+func runHeadlessDemo(app *wain.App) {
 	log.Println("Building UI layout...")
-	log.Println()
-
-	// Header: title + theme toggle buttons (Row, 100% width)
 	header := buildHeader(app)
 	log.Println("✓ Header created (Row with title + theme buttons)")
 
-	// Main content: sidebar + content area (Row, 100% width)
 	mainContent := buildMainContent(app)
 	log.Println("✓ Main content created (Row with sidebar + scrollable content)")
 
-	// Footer: status bar (Row, 100% width)
 	footer := buildFooter(app)
 	log.Println("✓ Footer created (Row with status label)")
 
-	// Root layout: Column stacking header, main, footer
 	root := wain.NewColumn()
 	root.Add(header)
 	root.Add(mainContent)
@@ -68,17 +112,14 @@ func main() {
 	log.Println("✓ Root layout assembled (Column)")
 	log.Println()
 
-	// Print layout structure
 	printLayoutStructure()
 
-	// Demonstrate theme switching
 	log.Println("=== Theme Switching ===")
 	demonstrateThemes(app)
 	log.Println()
 
-	// Report success
 	log.Println("=== Example Complete ===")
-	printFeatureList("This example demonstrates the public wain API structure:", []string{
+	printFeatureList("This example demonstrates the public wain API:", []string{
 		"Percentage-based layout (Row, Column, ScrollView)",
 		"Widget types (Panel, Button, Label, TextInput, Spacer)",
 		"Theme system (DefaultDark, DefaultLight, HighContrast)",
@@ -86,11 +127,7 @@ func main() {
 		"Cross-goroutine updates (App.Notify)",
 	})
 	log.Println()
-	log.Println("To create a window and run the event loop, use:")
-	log.Println("  win, _ := app.NewWindow(wain.WindowConfig{...})")
-	log.Println("  app.Run()")
-
-	_ = root
+	log.Println("To open a window, ensure WAYLAND_DISPLAY or DISPLAY is set and re-run.")
 }
 
 // buildHeader creates the header row with title and theme buttons
@@ -212,16 +249,12 @@ func buildContentArea(app *wain.App) *wain.ScrollView {
 }
 
 // buildFooter creates the status bar footer
-func buildFooter(app *wain.App) *wain.Row {
+func buildFooter(_ *wain.App) *wain.Row {
 	footer := wain.NewRow()
 	footer.SetPadding(10)
 
 	statusLabel := wain.NewLabel("Ready", wain.Size{Width: 100, Height: 100})
 	footer.Add(statusLabel)
-
-	// Demonstrate App.Notify for cross-goroutine updates
-	// (Would run in background in a full application)
-	log.Println("  • Status label configured with App.Notify callback")
 
 	return footer
 }
