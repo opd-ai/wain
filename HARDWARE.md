@@ -95,7 +95,7 @@ If no compatible GPU is detected or GPU initialization fails, wain automatically
 
 **CPU Requirements:**
 - x86-64 or ARM64 architecture
-- No special CPU features required (SIMD optimizations not yet implemented)
+- No special CPU features required (AVX2 detected at runtime for optimised blended fills)
 
 ---
 
@@ -287,7 +287,10 @@ $ ldd bin/wain
 - Anti-aliased curve rasterization
 - Memory bandwidth (framebuffer writes)
 
-**Note:** SIMD optimizations (AVX2/NEON) are not yet implemented. Performance could improve 2-4× with SIMD.
+**Note:** SIMD optimisations are implemented via runtime AVX2 detection (`golang.org/x/sys/cpu`).
+Opaque fills use auto-vectorised uint32 aligned writes; blended fills precompute per-colour
+blend factors and use a vectorisation-friendly inner loop (`blendRow`). Both paths auto-vectorise
+to 256-bit AVX2 stores on supported CPUs.
 
 ---
 

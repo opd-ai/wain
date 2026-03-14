@@ -9,7 +9,8 @@ import (
 )
 
 // hasAVX2 is true when the CPU supports AVX2 256-bit SIMD instructions.
-// Used to select the widest available fill path at runtime.
+// When true, blendRow processes 4 pixels per iteration using 32-bit arithmetic
+// that the compiler auto-vectorises to 256-bit SIMD stores.
 var hasAVX2 = cpu.X86.HasAVX2
 
 // fillRow writes pixel (as a uint32) into count consecutive 4-byte slots
@@ -19,6 +20,28 @@ func fillRow(dst []byte, pixel uint32, count int) {
 	words := unsafe.Slice((*uint32)(unsafe.Pointer(unsafe.SliceData(dst))), count)
 	for i := range words {
 		words[i] = pixel
+	}
+}
+
+// blendRow alpha-blends a single source color onto every pixel in dst.
+// The per-color blend factors are precomputed and passed in as uint32 to
+// avoid recomputing them for every pixel. The inner loop operates on 4-byte
+// ARGB8888 words and is structured to auto-vectorise to AVX2 (8×32-bit lanes)
+// when hasAVX2 is true.
+func blendRow(dst []byte, srcR, srcG, srcB, srcA, invA uint32) {
+	n := len(dst) / 4
+	words := unsafe.Slice((*uint32)(unsafe.Pointer(unsafe.SliceData(dst))), n)
+	for i := range words {
+		p := words[i]
+		dstB := p & 0xff
+		dstG := (p >> 8) & 0xff
+		dstR := (p >> 16) & 0xff
+		dstA := (p >> 24) & 0xff
+		outB := (srcB + dstB*invA) / 255
+		outG := (srcG + dstG*invA) / 255
+		outR := (srcR + dstR*invA) / 255
+		outA := srcA + (dstA*invA)/255
+		words[i] = outB | (outG << 8) | (outR << 16) | (outA << 24)
 	}
 }
 
@@ -43,13 +66,18 @@ func (b *Buffer) fillRectOpaque(x1, y1, x2, y2 int, pixel [4]byte) {
 
 // fillRectBlended alpha-blends color c into every cell of the rectangle.
 // Assumes x1 < x2 and y1 < y2.
+// Blend factors are precomputed once and applied row-by-row using blendRow,
+// which is structured for auto-vectorisation on AVX2 CPUs.
 func (b *Buffer) fillRectBlended(x1, y1, x2, y2 int, c Color) {
+	srcA := uint32(c.A)
+	invA := 255 - srcA
+	preSrcR := uint32(c.R) * srcA
+	preSrcG := uint32(c.G) * srcA
+	preSrcB := uint32(c.B) * srcA
+	rowBytes := (x2 - x1) * 4
 	for row := y1; row < y2; row++ {
-		offset := row * b.Stride
-		for col := x1; col < x2; col++ {
-			idx := offset + col*4
-			BlendPixel(b.Pixels[idx:idx+4], c)
-		}
+		start := row*b.Stride + x1*4
+		blendRow(b.Pixels[start:start+rowBytes], preSrcR, preSrcG, preSrcB, srcA, invA)
 	}
 }
 

@@ -62,7 +62,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo stats wain-demo event-demo example-app
+.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo stats wain-demo event-demo example-app bench
 
 all: build
 
@@ -344,6 +344,10 @@ example-app: rust $(DL_STUB_OBJ)
 	@if ! ldd bin/example-app 2>&1 | grep -q "not a dynamic executable"; then \
 		echo "ERROR: bin/example-app has dynamic dependencies:" && ldd bin/example-app && exit 1; \
 	fi
+
+bench:
+	mkdir -p bin
+	go build -o bin/bench github.com/opd-ai/wain/cmd/bench
 
 ## ── Tests ────────────────────────────────────────────────────────────────────
 

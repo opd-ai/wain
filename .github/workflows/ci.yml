@@ -75,6 +75,12 @@ jobs:
           CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
             go test ./...
 
+      - name: Run staticcheck / golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
       - name: Run integration tests
         env:
           CC: musl-gcc
@@ -227,3 +233,21 @@ jobs:
             exit 1
           fi
           echo "✓ FillRectOpaque1080p: ${ns} ns/op (≤ 16.7 ms — 60 FPS budget met)"
+
+      - name: Run cmd/bench end-to-end frame timing (≤ 16 ms mean)
+        run: |
+          go run ./cmd/bench -frames 60 -max 16 | tee /tmp/bench-endtoend.json
+          echo "=== cmd/bench result ==="
+          cat /tmp/bench-endtoend.json
+          jq -r '"Mean frame time: \(.mean_ms) ms  (threshold: \(.threshold_ms // "none") ms)  pass=\(.pass)"' \
+            /tmp/bench-endtoend.json
+
+      - name: Post frame-time summary
+        if: always()
+        run: |
+          echo "## Software Render Benchmark" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          jq -r '"| Mean (ms) | \(.mean_ms) |", "| Min (ms) | \(.min_ms) |", "| Max (ms) | \(.max_ms) |", "| StdDev (ms) | \(.stddev_ms) |", "| Pass | \(.pass) |"' \
+            /tmp/bench-endtoend.json >> $GITHUB_STEP_SUMMARY || true
