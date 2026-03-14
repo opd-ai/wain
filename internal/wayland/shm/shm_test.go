@@ -599,7 +599,9 @@ func TestIntegration(t *testing.T) {
 	}
 
 	// Simulate release event.
-	_ = buf.HandleEvent(0, []wire.Argument{})
+	if err := buf.HandleEvent(0, []wire.Argument{}); err != nil {
+		t.Fatalf("HandleEvent failed: %v", err)
+	}
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel2()
