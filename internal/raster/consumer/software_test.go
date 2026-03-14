@@ -1,6 +1,8 @@
 package consumer
 
 import (
+	"image"
+	"image/color"
 	"testing"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
@@ -248,5 +250,63 @@ func TestRenderEmptyDisplayList(t *testing.T) {
 
 	if err := sc.Render(dl, buf); err != nil {
 		t.Errorf("Render failed on empty display list: %v", err)
+	}
+}
+
+// TestImageWidgetSoftwarePath verifies that CmdDrawImage with a non-nil Src
+// composites visible pixels into the output buffer.
+func TestImageWidgetSoftwarePath(t *testing.T) {
+	t.Parallel()
+
+	const dstSize = 64
+	buf, err := primitives.NewBuffer(dstSize, dstSize)
+	if err != nil {
+		t.Fatalf("Failed to create buffer: %v", err)
+	}
+
+	// Build a solid red 16×16 NRGBA source image.
+	src := image.NewNRGBA(image.Rect(0, 0, 16, 16))
+	for y := 0; y < 16; y++ {
+		for x := 0; x < 16; x++ {
+			src.SetNRGBA(x, y, color.NRGBA{R: 255, G: 0, B: 0, A: 255})
+		}
+	}
+
+	dl := displaylist.New()
+	dl.AddDrawImage(8, 8, 32, 32, 0, src, 0.0, 0.0, 1.0, 1.0)
+
+	sc := NewSoftwareConsumer(nil)
+	if err := sc.Render(dl, buf); err != nil {
+		t.Fatalf("Render returned error: %v", err)
+	}
+
+	// Sample the centre of the blit region (8+16, 8+16) = (24, 24).
+	px := buf.At(24, 24)
+	if px.R == 0 || px.A == 0 {
+		t.Errorf("Expected non-zero red pixel at (24,24), got R=%d A=%d", px.R, px.A)
+	}
+
+	// Confirm pixels outside the blit region are still zero.
+	outside := buf.At(0, 0)
+	if outside.R != 0 || outside.G != 0 || outside.B != 0 || outside.A != 0 {
+		t.Errorf("Expected zero pixel outside blit region at (0,0), got %+v", outside)
+	}
+}
+
+// TestImageWidgetSoftwarePath_NilSrc verifies that CmdDrawImage with a nil Src
+// is silently skipped without error.
+func TestImageWidgetSoftwarePath_NilSrc(t *testing.T) {
+	t.Parallel()
+
+	buf, err := primitives.NewBuffer(64, 64)
+	if err != nil {
+		t.Fatalf("Failed to create buffer: %v", err)
+	}
+	dl := displaylist.New()
+	dl.AddDrawImage(0, 0, 32, 32, 0, nil, 0.0, 0.0, 1.0, 1.0)
+
+	sc := NewSoftwareConsumer(nil)
+	if err := sc.Render(dl, buf); err != nil {
+		t.Errorf("Expected no error for nil Src, got: %v", err)
 	}
 }

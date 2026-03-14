@@ -2091,7 +2091,14 @@ func (a *App) processWaylandDragEvents() {
 	if a.waylandDataDevice == nil {
 		return
 	}
+	a.handleWaylandDragEnter()
+	a.handleWaylandDragMotion()
+	a.handleWaylandDragLeave()
+	a.handleWaylandDrop()
+}
 
+// handleWaylandDragEnter handles a pending wl_data_device enter event.
+func (a *App) handleWaylandDragEnter() {
 	select {
 	case ev := <-a.waylandDataDevice.DragEnterChannel():
 		a.waylandDragOffer = ev.Offer
@@ -2109,7 +2116,10 @@ func (a *App) processWaylandDragEvents() {
 		}
 	default:
 	}
+}
 
+// handleWaylandDragMotion handles a pending wl_data_device motion event.
+func (a *App) handleWaylandDragMotion() {
 	select {
 	case ev := <-a.waylandDataDevice.DragMotionChannel():
 		a.waylandDragX = ev.X
@@ -2120,7 +2130,10 @@ func (a *App) processWaylandDragEvents() {
 		}
 	default:
 	}
+}
 
+// handleWaylandDragLeave handles a pending wl_data_device leave event.
+func (a *App) handleWaylandDragLeave() {
 	select {
 	case <-a.waylandDataDevice.DragLeaveChannel():
 		win := a.lookupWindow(a.waylandDragSurface)
@@ -2131,7 +2144,10 @@ func (a *App) processWaylandDragEvents() {
 		a.waylandDragSurface = 0
 	default:
 	}
+}
 
+// handleWaylandDrop handles a pending wl_data_device drop event.
+func (a *App) handleWaylandDrop() {
 	select {
 	case <-a.waylandDataDevice.DropChannel():
 		win := a.lookupWindow(a.waylandDragSurface)

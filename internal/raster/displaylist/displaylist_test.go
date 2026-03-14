@@ -220,7 +220,7 @@ func TestAddDrawImage(t *testing.T) {
 	t.Parallel()
 	dl := New()
 
-	dl.AddDrawImage(10, 20, 100, 80, 1, 0.0, 0.0, 1.0, 1.0)
+	dl.AddDrawImage(10, 20, 100, 80, 1, nil, 0.0, 0.0, 1.0, 1.0)
 
 	if dl.Len() != 1 {
 		t.Fatalf("Expected 1 command, got %d", dl.Len())

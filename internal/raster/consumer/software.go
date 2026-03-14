@@ -2,19 +2,14 @@
 //
 // A consumer takes a DisplayList and renders it to a target surface using either
 // software (CPU) rasterization or GPU acceleration.
-//
-// Software Rasterizer Limitations:
-//
-// The SoftwareConsumer does not implement the CmdDrawImage display list command.
-// Image compositing is available through the composite package's Blit and BlitScaled
-// functions, but DrawImage command execution requires a GPU backend. This is a
-// deliberate design decision to keep the software rasterizer focused on vector
-// primitives while GPU-accelerated texture sampling handles image operations.
 package consumer
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 
+	"github.com/opd-ai/wain/internal/raster/composite"
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/effects"
 	"github.com/opd-ai/wain/internal/raster/primitives"
@@ -88,12 +83,52 @@ func (sc *SoftwareConsumer) renderCommand(cmd displaylist.DrawCommand, buf *prim
 		effects.BoxShadow(buf, data.X, data.Y, data.Width, data.Height, data.BlurRadius, data.Color)
 
 	case displaylist.CmdDrawImage:
-		// DrawImage not yet implemented in software rasterizer
-		// Skip for now - GPU backend handles this
+		data := cmd.Data.(displaylist.DrawImageData)
+		sc.renderDrawImage(data, buf)
 
 	default:
 		return fmt.Errorf("consumer: unknown command type %d", cmd.Type)
 	}
 
 	return nil
+}
+
+// renderDrawImage blits a software image into the destination buffer using
+// bilinear scaling. If the command carries no source image (GPU-only path),
+// the call is silently ignored.
+func (sc *SoftwareConsumer) renderDrawImage(data displaylist.DrawImageData, buf *primitives.Buffer) {
+	if data.Src == nil || data.Width <= 0 || data.Height <= 0 {
+		return
+	}
+	src := imageToBuffer(data.Src)
+	if src == nil {
+		return
+	}
+	composite.BlitScaled(buf, data.X, data.Y, data.Width, data.Height,
+		src, 0, 0, src.Width, src.Height)
+}
+
+// imageToBuffer converts a standard image.Image to a primitives.Buffer in
+// ARGB8888 format (B, G, R, A byte order) for use by the software rasterizer.
+func imageToBuffer(img image.Image) *primitives.Buffer {
+	b := img.Bounds()
+	w, h := b.Max.X-b.Min.X, b.Max.Y-b.Min.Y
+	if w <= 0 || h <= 0 {
+		return nil
+	}
+	buf, err := primitives.NewBuffer(w, h)
+	if err != nil {
+		return nil
+	}
+	for py := 0; py < h; py++ {
+		for px := 0; px < w; px++ {
+			c := color.NRGBAModel.Convert(img.At(b.Min.X+px, b.Min.Y+py)).(color.NRGBA)
+			idx := py*buf.Stride + px*4
+			buf.Pixels[idx] = c.B
+			buf.Pixels[idx+1] = c.G
+			buf.Pixels[idx+2] = c.R
+			buf.Pixels[idx+3] = c.A
+		}
+	}
+	return buf
 }

@@ -6,6 +6,8 @@
 package displaylist
 
 import (
+	"image"
+
 	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
@@ -109,7 +111,8 @@ type BoxShadowData struct {
 type DrawImageData struct {
 	X, Y          int
 	Width, Height int
-	TextureID     int // Reference to texture atlas entry
+	TextureID     int         // Reference to texture atlas entry
+	Src           image.Image // Source image for software rasterizer (may be nil in GPU mode)
 	U0, V0        float32
 	U1, V1        float32
 }
@@ -244,7 +247,8 @@ func (dl *DisplayList) AddBoxShadow(x, y, width, height, blurRadius, spreadRadiu
 }
 
 // AddDrawImage adds an image drawing command.
-func (dl *DisplayList) AddDrawImage(x, y, width, height, textureID int, u0, v0, u1, v1 float32) {
+// src may be nil for GPU-only paths; the software rasterizer uses src for pixel data.
+func (dl *DisplayList) AddDrawImage(x, y, width, height, textureID int, src image.Image, u0, v0, u1, v1 float32) {
 	dl.commands = append(dl.commands, DrawCommand{
 		Type: CmdDrawImage,
 		Data: DrawImageData{
@@ -253,6 +257,7 @@ func (dl *DisplayList) AddDrawImage(x, y, width, height, textureID int, u0, v0, 
 			Width:     width,
 			Height:    height,
 			TextureID: textureID,
+			Src:       src,
 			U0:        u0,
 			V0:        v0,
 			U1:        u1,

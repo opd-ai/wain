@@ -263,7 +263,7 @@ func (c *displayListCanvas) DrawImage(img *Image, x, y, width, height int) {
 	if img == nil {
 		return
 	}
-	c.dl.AddDrawImage(x, y, width, height, img.id, 0.0, 0.0, 1.0, 1.0)
+	c.dl.AddDrawImage(x, y, width, height, img.id, img.data, 0.0, 0.0, 1.0, 1.0)
 }
 
 // LinearGradient fills a rectangle with a linear gradient.
