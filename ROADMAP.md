@@ -214,7 +214,7 @@ is not exercised end-to-end.
 
 **Tasks:**
 - [x] **Add GPU benchmark threshold to CI** (`.github/workflows/ci.yml`):
-  - `gpu-integration-tests` job runs `cmd/gpu-bench -frames 60 -max 2.0` when GPU hardware is available
+  - `benchmarks` job runs `cmd/gpu-bench -frames 60 -max 2.0` on all runners; the binary exits 0 with `backend=none` when no GPU is present
   - GPU frame time threshold: ≤ 2 ms (vs 16.7 ms software budget)
   - Results output to `/tmp/gpu-bench.json`
 - [ ] **Track GPU frame timing in benchmark summary**:
