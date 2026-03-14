@@ -164,10 +164,10 @@ Wain is a **statically-compiled Go UI toolkit** that links a Rust rendering libr
 **Why deferred:** The project's core value is static linking. AT-SPI2 requires a running dbus-daemon, making it environment-dependent regardless of binary linkage. This is an architectural trade-off, not a bug.
 
 **Tasks (if prioritized):**
-- [ ] Implement D-Bus client using pure-Go library (e.g., godbus/dbus)
-- [ ] Export widget tree as `Accessible` D-Bus objects
-- [ ] Implement `Component`, `Action`, `Text` interfaces
-- [ ] Add `accessibility-demo` for Orca screen reader testing
+- [x] Implement D-Bus client using pure-Go library (e.g., godbus/dbus)
+- [x] Export widget tree as `Accessible` D-Bus objects
+- [x] Implement `Component`, `Action`, `Text` interfaces
+- [x] Add `accessibility-demo` for Orca screen reader testing
 
 **Validation:** Orca can read widget labels and navigate via keyboard in a wain application.
 
