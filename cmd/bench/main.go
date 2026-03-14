@@ -39,13 +39,13 @@ const (
 
 // BenchResult is the JSON output of a bench run.
 type BenchResult struct {
-	Frames    int     `json:"frames"`
-	MeanMs    float64 `json:"mean_ms"`
-	MinMs     float64 `json:"min_ms"`
-	MaxMs     float64 `json:"max_ms"`
-	StdDevMs  float64 `json:"stddev_ms"`
+	Frames      int     `json:"frames"`
+	MeanMs      float64 `json:"mean_ms"`
+	MinMs       float64 `json:"min_ms"`
+	MaxMs       float64 `json:"max_ms"`
+	StdDevMs    float64 `json:"stddev_ms"`
 	ThresholdMs float64 `json:"threshold_ms,omitempty"`
-	Pass      bool    `json:"pass"`
+	Pass        bool    `json:"pass"`
 }
 
 func main() {

@@ -113,4 +113,3 @@ func ExampleNewScrollView() {
 	// Output:
 	// true
 }
-

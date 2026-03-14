@@ -1488,7 +1488,6 @@ func (a *App) bindAndInstall(registry *client.Registry, name, notFoundMsg, bindF
 	return nil
 }
 
-
 // bindDataDeviceManager binds wl_data_device_manager and creates a per-seat
 // data device for clipboard access.  Errors are non-fatal.
 func (a *App) bindDataDeviceManager(registry *client.Registry) error {
