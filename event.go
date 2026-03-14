@@ -138,28 +138,50 @@ type Key uint32
 
 // Common key constants (compatible with X11 keysyms and Linux input event codes).
 const (
-	KeyEscape    Key = 0xFF1B
-	KeyReturn    Key = 0xFF0D
-	KeyTab       Key = 0xFF09
+	// KeyEscape is the Escape key.
+	KeyEscape Key = 0xFF1B
+	// KeyReturn is the Return/Enter key.
+	KeyReturn Key = 0xFF0D
+	// KeyTab is the Tab key.
+	KeyTab Key = 0xFF09
+	// KeyBackspace is the Backspace key.
 	KeyBackspace Key = 0xFF08
-	KeyDelete    Key = 0xFFFF
-	KeyLeft      Key = 0xFF51
-	KeyUp        Key = 0xFF52
-	KeyRight     Key = 0xFF53
-	KeyDown      Key = 0xFF54
-	KeyHome      Key = 0xFF50
-	KeyEnd       Key = 0xFF57
-	KeyPageUp    Key = 0xFF55
-	KeyPageDown  Key = 0xFF56
-	KeySpace     Key = 0x0020
-	KeyShiftL    Key = 0xFFE1
-	KeyShiftR    Key = 0xFFE2
-	KeyControlL  Key = 0xFFE3
-	KeyControlR  Key = 0xFFE4
-	KeyAltL      Key = 0xFFE9
-	KeyAltR      Key = 0xFFEA
-	KeySuperL    Key = 0xFFEB
-	KeySuperR    Key = 0xFFEC
+	// KeyDelete is the Delete key.
+	KeyDelete Key = 0xFFFF
+	// KeyLeft is the Left arrow key.
+	KeyLeft Key = 0xFF51
+	// KeyUp is the Up arrow key.
+	KeyUp Key = 0xFF52
+	// KeyRight is the Right arrow key.
+	KeyRight Key = 0xFF53
+	// KeyDown is the Down arrow key.
+	KeyDown Key = 0xFF54
+	// KeyHome is the Home key.
+	KeyHome Key = 0xFF50
+	// KeyEnd is the End key.
+	KeyEnd Key = 0xFF57
+	// KeyPageUp is the Page Up key.
+	KeyPageUp Key = 0xFF55
+	// KeyPageDown is the Page Down key.
+	KeyPageDown Key = 0xFF56
+	// KeySpace is the Space key.
+	KeySpace Key = 0x0020
+	// KeyShiftL is the Left Shift key.
+	KeyShiftL Key = 0xFFE1
+	// KeyShiftR is the Right Shift key.
+	KeyShiftR Key = 0xFFE2
+	// KeyControlL is the Left Control key.
+	KeyControlL Key = 0xFFE3
+	// KeyControlR is the Right Control key.
+	KeyControlR Key = 0xFFE4
+	// KeyAltL is the Left Alt key.
+	KeyAltL Key = 0xFFE9
+	// KeyAltR is the Right Alt key.
+	KeyAltR Key = 0xFFEA
+	// KeySuperL is the Left Super (Windows/Command) key.
+	KeySuperL Key = 0xFFEB
+	// KeySuperR is the Right Super (Windows/Command) key.
+	KeySuperR Key = 0xFFEC
 )
 
 // Modifier represents keyboard modifiers.

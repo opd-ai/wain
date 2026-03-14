@@ -9,8 +9,10 @@ import (
 
 // Pixel format constants for wl_shm.
 const (
-	FormatARGB8888 = 0 // ARGB8888 format
-	FormatXRGB8888 = 1 // XRGB8888 format
+	// FormatARGB8888 is the ARGB8888 pixel format.
+	FormatARGB8888 = 0
+	// FormatXRGB8888 is the XRGB8888 pixel format (no alpha).
+	FormatXRGB8888 = 1
 )
 
 // Conn represents the subset of client.Connection methods needed by SHM objects.

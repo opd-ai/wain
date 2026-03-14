@@ -211,7 +211,9 @@ type Relocation struct {
 
 // Cache domain constants for relocations.
 const (
-	GemDomainRender      uint32 = 0x00000002
+	// GemDomainRender is the render pipeline domain (I915_GEM_DOMAIN_RENDER).
+	GemDomainRender uint32 = 0x00000002
+	// GemDomainInstruction is the instruction domain (I915_GEM_DOMAIN_INSTRUCTION).
 	GemDomainInstruction uint32 = 0x00000010
 )
 

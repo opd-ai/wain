@@ -81,77 +81,128 @@ const (
 
 // Request opcodes for core X11 protocol operations.
 const (
-	OpcodeCreateWindow      = 1
+	// OpcodeCreateWindow creates a new window.
+	OpcodeCreateWindow = 1
+	// OpcodeChangeWindowAttrs changes window attributes.
 	OpcodeChangeWindowAttrs = 2
-	OpcodeGetWindowAttrs    = 3
-	OpcodeDestroyWindow     = 4
-	OpcodeChangeSaveSet     = 6
-	OpcodeReparentWindow    = 7
-	OpcodeMapWindow         = 8
-	OpcodeUnmapWindow       = 9
-	OpcodeConfigureWindow   = 10
-	OpcodeInternAtom        = 16
-	OpcodeChangeProperty    = 18
-	OpcodeDeleteProperty    = 19
-	OpcodeGetProperty       = 20
-	OpcodeSendEvent         = 25
-	OpcodeCreateGC          = 55
-	OpcodePutImage          = 72
-	OpcodeQueryExtension    = 98
+	// OpcodeGetWindowAttrs gets window attributes.
+	OpcodeGetWindowAttrs = 3
+	// OpcodeDestroyWindow destroys a window.
+	OpcodeDestroyWindow = 4
+	// OpcodeChangeSaveSet changes the save set.
+	OpcodeChangeSaveSet = 6
+	// OpcodeReparentWindow reparents a window.
+	OpcodeReparentWindow = 7
+	// OpcodeMapWindow maps a window to the screen.
+	OpcodeMapWindow = 8
+	// OpcodeUnmapWindow unmaps a window from the screen.
+	OpcodeUnmapWindow = 9
+	// OpcodeConfigureWindow configures window geometry.
+	OpcodeConfigureWindow = 10
+	// OpcodeInternAtom interns an atom name.
+	OpcodeInternAtom = 16
+	// OpcodeChangeProperty changes a window property.
+	OpcodeChangeProperty = 18
+	// OpcodeDeleteProperty deletes a window property.
+	OpcodeDeleteProperty = 19
+	// OpcodeGetProperty gets a window property.
+	OpcodeGetProperty = 20
+	// OpcodeSendEvent sends an event to a window.
+	OpcodeSendEvent = 25
+	// OpcodeCreateGC creates a graphics context.
+	OpcodeCreateGC = 55
+	// OpcodePutImage puts an image to a drawable.
+	OpcodePutImage = 72
+	// OpcodeQueryExtension queries for an extension.
+	OpcodeQueryExtension = 98
 )
 
 // Predefined X11 atom IDs (XA_ constants from X11/Xatom.h).
 const (
-	AtomString        = 31 // XA_STRING
-	AtomWMName        = 39 // XA_WM_NAME
-	AtomWMNormalHints = 40 // XA_WM_NORMAL_HINTS
-	AtomWMSizeHints   = 41 // XA_WM_SIZE_HINTS
+	// AtomString is the XA_STRING atom.
+	AtomString = 31
+	// AtomWMName is the XA_WM_NAME atom.
+	AtomWMName = 39
+	// AtomWMNormalHints is the XA_WM_NORMAL_HINTS atom.
+	AtomWMNormalHints = 40
+	// AtomWMSizeHints is the XA_WM_SIZE_HINTS atom.
+	AtomWMSizeHints = 41
 )
 
 // WM_SIZE_HINTS flag bits used in WM_NORMAL_HINTS.
 const (
-	WMSizeHintsPMinSize = 1 << 4 // PMinSize: min size fields are set
-	WMSizeHintsPMaxSize = 1 << 5 // PMaxSize: max size fields are set
+	// WMSizeHintsPMinSize indicates min size fields are set.
+	WMSizeHintsPMinSize = 1 << 4
+	// WMSizeHintsPMaxSize indicates max size fields are set.
+	WMSizeHintsPMaxSize = 1 << 5
 )
 
 // Window attribute mask bits for CreateWindow and ChangeWindowAttributes.
 const (
-	CWBackPixmap       = 1 << 0
-	CWBackPixel        = 1 << 1
-	CWBorderPixmap     = 1 << 2
-	CWBorderPixel      = 1 << 3
-	CWBitGravity       = 1 << 4
-	CWWinGravity       = 1 << 5
-	CWBackingStore     = 1 << 6
-	CWBackingPlanes    = 1 << 7
-	CWBackingPixel     = 1 << 8
+	// CWBackPixmap sets the background pixmap.
+	CWBackPixmap = 1 << 0
+	// CWBackPixel sets the background pixel value.
+	CWBackPixel = 1 << 1
+	// CWBorderPixmap sets the border pixmap.
+	CWBorderPixmap = 1 << 2
+	// CWBorderPixel sets the border pixel value.
+	CWBorderPixel = 1 << 3
+	// CWBitGravity sets the bit gravity.
+	CWBitGravity = 1 << 4
+	// CWWinGravity sets the window gravity.
+	CWWinGravity = 1 << 5
+	// CWBackingStore sets the backing store mode.
+	CWBackingStore = 1 << 6
+	// CWBackingPlanes sets the backing planes.
+	CWBackingPlanes = 1 << 7
+	// CWBackingPixel sets the backing pixel value.
+	CWBackingPixel = 1 << 8
+	// CWOverrideRedirect sets the override redirect flag.
 	CWOverrideRedirect = 1 << 9
-	CWSaveUnder        = 1 << 10
-	CWEventMask        = 1 << 11
-	CWDontPropagate    = 1 << 12
-	CWColormap         = 1 << 13
-	CWCursor           = 1 << 14
+	// CWSaveUnder sets the save under flag.
+	CWSaveUnder = 1 << 10
+	// CWEventMask sets the event mask.
+	CWEventMask = 1 << 11
+	// CWDontPropagate sets the do not propagate mask.
+	CWDontPropagate = 1 << 12
+	// CWColormap sets the colormap.
+	CWColormap = 1 << 13
+	// CWCursor sets the cursor.
+	CWCursor = 1 << 14
 )
 
 // Event mask bits for receiving events.
 const (
-	EventMaskKeyPress           = 1 << 0
-	EventMaskKeyRelease         = 1 << 1
-	EventMaskButtonPress        = 1 << 2
-	EventMaskButtonRelease      = 1 << 3
-	EventMaskEnterWindow        = 1 << 4
-	EventMaskLeaveWindow        = 1 << 5
-	EventMaskPointerMotion      = 1 << 6
-	EventMaskExposure           = 1 << 15
-	EventMaskStructureNotify    = 1 << 17
+	// EventMaskKeyPress selects key press events.
+	EventMaskKeyPress = 1 << 0
+	// EventMaskKeyRelease selects key release events.
+	EventMaskKeyRelease = 1 << 1
+	// EventMaskButtonPress selects button press events.
+	EventMaskButtonPress = 1 << 2
+	// EventMaskButtonRelease selects button release events.
+	EventMaskButtonRelease = 1 << 3
+	// EventMaskEnterWindow selects pointer enter events.
+	EventMaskEnterWindow = 1 << 4
+	// EventMaskLeaveWindow selects pointer leave events.
+	EventMaskLeaveWindow = 1 << 5
+	// EventMaskPointerMotion selects pointer motion events.
+	EventMaskPointerMotion = 1 << 6
+	// EventMaskExposure selects exposure events.
+	EventMaskExposure = 1 << 15
+	// EventMaskStructureNotify selects structure notify events.
+	EventMaskStructureNotify = 1 << 17
+	// EventMaskSubstructureNotify selects substructure notify events.
 	EventMaskSubstructureNotify = 1 << 18
 )
 
 // Window classes for CreateWindow.
 const (
+	// WindowClassCopyFromParent copies the class from the parent.
 	WindowClassCopyFromParent = 0
-	WindowClassInputOutput    = 1
-	WindowClassInputOnly      = 2
+	// WindowClassInputOutput is for windows that can display graphics.
+	WindowClassInputOutput = 1
+	// WindowClassInputOnly is for windows that only receive input.
+	WindowClassInputOnly = 2
 )
 
 // RequestHeader represents the common header for all X11 requests.

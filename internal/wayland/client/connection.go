@@ -271,6 +271,7 @@ func (c *Connection) readMessagePayload(header wire.Header) error {
 	return nil
 }
 
+// ReadMessage reads and returns the next Wayland protocol message from the connection.
 func (c *Connection) ReadMessage() (*wire.Message, error) {
 	if c.closed {
 		return nil, ErrClosed

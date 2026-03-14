@@ -79,28 +79,42 @@ const (
 
 // Present request opcodes (relative to extension base opcode).
 const (
-	PresentQueryVersion  = 0
-	PresentPixmap        = 1
-	PresentNotifyMSC     = 2
-	PresentSelectInput   = 3
-	PresentQueryCapables = 4 // Present 1.2+
+	// PresentQueryVersion queries the extension version.
+	PresentQueryVersion = 0
+	// PresentPixmap presents a pixmap to a window.
+	PresentPixmap = 1
+	// PresentNotifyMSC requests notification at a specific MSC.
+	PresentNotifyMSC = 2
+	// PresentSelectInput selects input events to receive.
+	PresentSelectInput = 3
+	// PresentQueryCapables queries presentation capabilities (Present 1.2+).
+	PresentQueryCapables = 4
 )
 
 // Present event codes (relative to extension base event).
 const (
+	// PresentConfigureNotify indicates a configure event occurred.
 	PresentConfigureNotify = 0
-	PresentCompleteNotify  = 1
-	PresentIdleNotify      = 2
-	PresentRedirectNotify  = 3 // Present 1.2+
+	// PresentCompleteNotify indicates presentation completed.
+	PresentCompleteNotify = 1
+	// PresentIdleNotify indicates a pixmap became idle.
+	PresentIdleNotify = 2
+	// PresentRedirectNotify indicates a redirect occurred (Present 1.2+).
+	PresentRedirectNotify = 3
 )
 
 // PresentOption flags for PresentPixmap request.
 const (
-	PresentOptionNone       = 0
-	PresentOptionAsync      = 1 << 0 // Present 1.2+: request async flip if possible
-	PresentOptionCopy       = 1 << 1 // Present 1.2+: request copy instead of flip
-	PresentOptionUST        = 1 << 2 // Present 1.2+: target_msc is in UST (microseconds)
-	PresentOptionSuboptimal = 1 << 3 // Present 1.2+: presentation may be suboptimal
+	// PresentOptionNone uses default presentation behavior.
+	PresentOptionNone = 0
+	// PresentOptionAsync requests async flip if possible (Present 1.2+).
+	PresentOptionAsync = 1 << 0
+	// PresentOptionCopy requests copy instead of flip (Present 1.2+).
+	PresentOptionCopy = 1 << 1
+	// PresentOptionUST treats target_msc as UST (microseconds) (Present 1.2+).
+	PresentOptionUST = 1 << 2
+	// PresentOptionSuboptimal allows suboptimal presentation (Present 1.2+).
+	PresentOptionSuboptimal = 1 << 3
 )
 
 // CompleteKind indicates how the pixmap was presented.
@@ -287,11 +301,16 @@ func (e *Extension) SelectInput(conn Connection, eid, window XID, eventMask uint
 
 // PresentEventMask flags for SelectInput.
 const (
-	PresentEventMaskNone            = 0
+	// PresentEventMaskNone selects no events.
+	PresentEventMaskNone = 0
+	// PresentEventMaskConfigureNotify selects configure events.
 	PresentEventMaskConfigureNotify = 1 << 0
-	PresentEventMaskCompleteNotify  = 1 << 1
-	PresentEventMaskIdleNotify      = 1 << 2
-	PresentEventMaskRedirectNotify  = 1 << 3 // Present 1.2+
+	// PresentEventMaskCompleteNotify selects completion events.
+	PresentEventMaskCompleteNotify = 1 << 1
+	// PresentEventMaskIdleNotify selects idle events.
+	PresentEventMaskIdleNotify = 1 << 2
+	// PresentEventMaskRedirectNotify selects redirect events (Present 1.2+).
+	PresentEventMaskRedirectNotify = 1 << 3
 )
 
 // NotifyMSC requests notification when the display reaches a specific MSC value.

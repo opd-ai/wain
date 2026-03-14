@@ -35,38 +35,70 @@ type EventType uint8
 
 // Core X11 event types.
 const (
-	EventTypeKeyPress         EventType = 2
-	EventTypeKeyRelease       EventType = 3
-	EventTypeButtonPress      EventType = 4
-	EventTypeButtonRelease    EventType = 5
-	EventTypeMotionNotify     EventType = 6
-	EventTypeEnterNotify      EventType = 7
-	EventTypeLeaveNotify      EventType = 8
-	EventTypeFocusIn          EventType = 9
-	EventTypeFocusOut         EventType = 10
-	EventTypeExpose           EventType = 12
+	// EventTypeKeyPress is a key press event.
+	EventTypeKeyPress EventType = 2
+	// EventTypeKeyRelease is a key release event.
+	EventTypeKeyRelease EventType = 3
+	// EventTypeButtonPress is a mouse button press event.
+	EventTypeButtonPress EventType = 4
+	// EventTypeButtonRelease is a mouse button release event.
+	EventTypeButtonRelease EventType = 5
+	// EventTypeMotionNotify is a pointer motion event.
+	EventTypeMotionNotify EventType = 6
+	// EventTypeEnterNotify is a pointer enter window event.
+	EventTypeEnterNotify EventType = 7
+	// EventTypeLeaveNotify is a pointer leave window event.
+	EventTypeLeaveNotify EventType = 8
+	// EventTypeFocusIn is a keyboard focus gained event.
+	EventTypeFocusIn EventType = 9
+	// EventTypeFocusOut is a keyboard focus lost event.
+	EventTypeFocusOut EventType = 10
+	// EventTypeExpose is a window expose event.
+	EventTypeExpose EventType = 12
+	// EventTypeGraphicsExposure is a graphics expose event.
 	EventTypeGraphicsExposure EventType = 13
-	EventTypeNoExposure       EventType = 14
+	// EventTypeNoExposure is a no-exposure event.
+	EventTypeNoExposure EventType = 14
+	// EventTypeVisibilityNotify is a visibility change event.
 	EventTypeVisibilityNotify EventType = 15
-	EventTypeCreateNotify     EventType = 16
-	EventTypeDestroyNotify    EventType = 17
-	EventTypeUnmapNotify      EventType = 18
-	EventTypeMapNotify        EventType = 19
-	EventTypeMapRequest       EventType = 20
-	EventTypeReparentNotify   EventType = 21
-	EventTypeConfigureNotify  EventType = 22
+	// EventTypeCreateNotify is a window creation event.
+	EventTypeCreateNotify EventType = 16
+	// EventTypeDestroyNotify is a window destruction event.
+	EventTypeDestroyNotify EventType = 17
+	// EventTypeUnmapNotify is a window unmap event.
+	EventTypeUnmapNotify EventType = 18
+	// EventTypeMapNotify is a window map event.
+	EventTypeMapNotify EventType = 19
+	// EventTypeMapRequest is a window map request event.
+	EventTypeMapRequest EventType = 20
+	// EventTypeReparentNotify is a window reparent event.
+	EventTypeReparentNotify EventType = 21
+	// EventTypeConfigureNotify is a window configure event.
+	EventTypeConfigureNotify EventType = 22
+	// EventTypeConfigureRequest is a window configure request event.
 	EventTypeConfigureRequest EventType = 23
-	EventTypeGravityNotify    EventType = 24
-	EventTypeResizeRequest    EventType = 25
-	EventTypeCirculateNotify  EventType = 26
+	// EventTypeGravityNotify is a window gravity change event.
+	EventTypeGravityNotify EventType = 24
+	// EventTypeResizeRequest is a window resize request event.
+	EventTypeResizeRequest EventType = 25
+	// EventTypeCirculateNotify is a window circulate event.
+	EventTypeCirculateNotify EventType = 26
+	// EventTypeCirculateRequest is a window circulate request event.
 	EventTypeCirculateRequest EventType = 27
-	EventTypePropertyNotify   EventType = 28
-	EventTypeSelectionClear   EventType = 29
+	// EventTypePropertyNotify is a property change event.
+	EventTypePropertyNotify EventType = 28
+	// EventTypeSelectionClear is a selection clear event.
+	EventTypeSelectionClear EventType = 29
+	// EventTypeSelectionRequest is a selection request event.
 	EventTypeSelectionRequest EventType = 30
-	EventTypeSelectionNotify  EventType = 31
-	EventTypeColormapNotify   EventType = 32
-	EventTypeClientMessage    EventType = 33
-	EventTypeMappingNotify    EventType = 34
+	// EventTypeSelectionNotify is a selection notify event.
+	EventTypeSelectionNotify EventType = 31
+	// EventTypeColormapNotify is a colormap change event.
+	EventTypeColormapNotify EventType = 32
+	// EventTypeClientMessage is a client message event.
+	EventTypeClientMessage EventType = 33
+	// EventTypeMappingNotify is a mapping change event.
+	EventTypeMappingNotify EventType = 34
 )
 
 // String returns a human-readable event type name.

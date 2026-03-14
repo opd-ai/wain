@@ -9,27 +9,48 @@ type Keysym uint32
 
 // Common keysyms for basic keyboard support.
 const (
+	// KeysymBackSpace is the X11 keysym for Backspace.
 	KeysymBackSpace Keysym = 0xFF08
-	KeysymTab       Keysym = 0xFF09
-	KeysymReturn    Keysym = 0xFF0D
-	KeysymEscape    Keysym = 0xFF1B
-	KeysymDelete    Keysym = 0xFFFF
-	KeysymHome      Keysym = 0xFF50
-	KeysymLeft      Keysym = 0xFF51
-	KeysymUp        Keysym = 0xFF52
-	KeysymRight     Keysym = 0xFF53
-	KeysymDown      Keysym = 0xFF54
-	KeysymPageUp    Keysym = 0xFF55
-	KeysymPageDown  Keysym = 0xFF56
-	KeysymEnd       Keysym = 0xFF57
-	KeysymShiftL    Keysym = 0xFFE1
-	KeysymShiftR    Keysym = 0xFFE2
-	KeysymControlL  Keysym = 0xFFE3
-	KeysymControlR  Keysym = 0xFFE4
-	KeysymAltL      Keysym = 0xFFE9
-	KeysymAltR      Keysym = 0xFFEA
-	KeysymSuperL    Keysym = 0xFFEB
-	KeysymSuperR    Keysym = 0xFFEC
+	// KeysymTab is the X11 keysym for Tab.
+	KeysymTab Keysym = 0xFF09
+	// KeysymReturn is the X11 keysym for Return/Enter.
+	KeysymReturn Keysym = 0xFF0D
+	// KeysymEscape is the X11 keysym for Escape.
+	KeysymEscape Keysym = 0xFF1B
+	// KeysymDelete is the X11 keysym for Delete.
+	KeysymDelete Keysym = 0xFFFF
+	// KeysymHome is the X11 keysym for Home.
+	KeysymHome Keysym = 0xFF50
+	// KeysymLeft is the X11 keysym for Left arrow.
+	KeysymLeft Keysym = 0xFF51
+	// KeysymUp is the X11 keysym for Up arrow.
+	KeysymUp Keysym = 0xFF52
+	// KeysymRight is the X11 keysym for Right arrow.
+	KeysymRight Keysym = 0xFF53
+	// KeysymDown is the X11 keysym for Down arrow.
+	KeysymDown Keysym = 0xFF54
+	// KeysymPageUp is the X11 keysym for Page Up.
+	KeysymPageUp Keysym = 0xFF55
+	// KeysymPageDown is the X11 keysym for Page Down.
+	KeysymPageDown Keysym = 0xFF56
+	// KeysymEnd is the X11 keysym for End.
+	KeysymEnd Keysym = 0xFF57
+	// KeysymShiftL is the X11 keysym for Left Shift.
+	KeysymShiftL Keysym = 0xFFE1
+	// KeysymShiftR is the X11 keysym for Right Shift.
+	KeysymShiftR Keysym = 0xFFE2
+	// KeysymControlL is the X11 keysym for Left Control.
+	KeysymControlL Keysym = 0xFFE3
+	// KeysymControlR is the X11 keysym for Right Control.
+	KeysymControlR Keysym = 0xFFE4
+	// KeysymAltL is the X11 keysym for Left Alt.
+	KeysymAltL Keysym = 0xFFE9
+	// KeysymAltR is the X11 keysym for Right Alt.
+	KeysymAltR Keysym = 0xFFEA
+	// KeysymSuperL is the X11 keysym for Left Super (Windows/Command).
+	KeysymSuperL Keysym = 0xFFEB
+	// KeysymSuperR is the X11 keysym for Right Super (Windows/Command).
+	KeysymSuperR Keysym = 0xFFEC
 )
 
 // keymapEntry maps a keycode to its unshifted and shifted keysym values.

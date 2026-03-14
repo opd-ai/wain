@@ -22,19 +22,28 @@ import (
 
 // Atom constants for common selections and targets.
 const (
-	AtomPRIMARY   = 1
+	// AtomPRIMARY is the X11 PRIMARY selection atom.
+	AtomPRIMARY = 1
+	// AtomSECONDARY is the X11 SECONDARY selection atom.
 	AtomSECONDARY = 2
-	AtomCLIPBOARD = 69 // Standard clipboard atom number
+	// AtomCLIPBOARD is the X11 CLIPBOARD selection atom.
+	AtomCLIPBOARD = 69
 )
 
 // Well-known target MIME types.
 const (
+	// TargetUTF8String is the UTF-8 encoded string target.
 	TargetUTF8String = "UTF8_STRING"
-	TargetString     = "STRING"
-	TargetText       = "TEXT"
-	TargetTextPlain  = "text/plain"
-	TargetTargets    = "TARGETS"
-	TargetTimestamp  = "TIMESTAMP"
+	// TargetString is the Latin-1 encoded string target.
+	TargetString = "STRING"
+	// TargetText is a generic text target.
+	TargetText = "TEXT"
+	// TargetTextPlain is the text/plain MIME type target.
+	TargetTextPlain = "text/plain"
+	// TargetTargets requests the list of available targets.
+	TargetTargets = "TARGETS"
+	// TargetTimestamp requests the selection timestamp.
+	TargetTimestamp = "TIMESTAMP"
 )
 
 // Conn represents the subset of X11 connection methods needed by selection handling.

@@ -23,11 +23,17 @@ type WaylandPointerEvent struct {
 // WaylandPointerEventType identifies the specific pointer event type.
 type WaylandPointerEventType int
 
+// Wayland pointer event types.
 const (
+	// WaylandPointerEnter indicates the pointer entered a surface.
 	WaylandPointerEnter WaylandPointerEventType = iota
+	// WaylandPointerLeave indicates the pointer left a surface.
 	WaylandPointerLeave
+	// WaylandPointerMotion indicates the pointer moved.
 	WaylandPointerMotion
+	// WaylandPointerButton indicates a button was pressed or released.
 	WaylandPointerButton
+	// WaylandPointerAxis indicates axis (scroll) movement.
 	WaylandPointerAxis
 )
 
@@ -44,9 +50,13 @@ type WaylandKeyboardEvent struct {
 // WaylandKeyboardEventType identifies the specific keyboard event type.
 type WaylandKeyboardEventType int
 
+// Wayland keyboard event types.
 const (
+	// WaylandKeyboardEnter indicates keyboard focus entered a surface.
 	WaylandKeyboardEnter WaylandKeyboardEventType = iota
+	// WaylandKeyboardLeave indicates keyboard focus left a surface.
 	WaylandKeyboardLeave
+	// WaylandKeyboardKey indicates a key was pressed or released.
 	WaylandKeyboardKey
 )
 
@@ -64,12 +74,19 @@ type PointerEvent interface {
 // PointerEventType identifies pointer event types.
 type PointerEventType int
 
+// Pointer event types.
 const (
+	// PointerMove indicates the pointer moved.
 	PointerMove PointerEventType = iota
+	// PointerButtonPress indicates a button was pressed.
 	PointerButtonPress
+	// PointerButtonRelease indicates a button was released.
 	PointerButtonRelease
+	// PointerScroll indicates a scroll event.
 	PointerScroll
+	// PointerEnter indicates the pointer entered the window.
 	PointerEnter
+	// PointerLeave indicates the pointer left the window.
 	PointerLeave
 )
 
@@ -84,8 +101,11 @@ type KeyEvent interface {
 // KeyEventType identifies key event types.
 type KeyEventType int
 
+// Key event types.
 const (
+	// KeyPress indicates a key was pressed.
 	KeyPress KeyEventType = iota
+	// KeyRelease indicates a key was released.
 	KeyRelease
 )
 

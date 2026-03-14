@@ -14,23 +14,32 @@ import (
 
 // DRM fourcc format codes (subset relevant for UI rendering).
 const (
-	FormatARGB8888 = 0x34325241 // 'AR24' - ARGB 8:8:8:8
-	FormatXRGB8888 = 0x34325258 // 'XR24' - XRGB 8:8:8:8 (no alpha)
-	FormatABGR8888 = 0x34324241 // 'AB24' - ABGR 8:8:8:8
-	FormatXBGR8888 = 0x34324258 // 'XB24' - XBGR 8:8:8:8
+	// FormatARGB8888 is 'AR24' - ARGB 8:8:8:8.
+	FormatARGB8888 = 0x34325241
+	// FormatXRGB8888 is 'XR24' - XRGB 8:8:8:8 (no alpha).
+	FormatXRGB8888 = 0x34325258
+	// FormatABGR8888 is 'AB24' - ABGR 8:8:8:8.
+	FormatABGR8888 = 0x34324241
+	// FormatXBGR8888 is 'XB24' - XBGR 8:8:8:8.
+	FormatXBGR8888 = 0x34324258
 )
 
 // Modifier constants.
 const (
-	ModifierLinear  = 0x0000000000000000 // No tiling
-	ModifierInvalid = 0x00ffffffffffffff // Invalid modifier
+	// ModifierLinear indicates no tiling.
+	ModifierLinear = 0x0000000000000000
+	// ModifierInvalid is an invalid modifier sentinel.
+	ModifierInvalid = 0x00ffffffffffffff
 )
 
 // Flags for buffer creation.
 const (
-	FlagYInvert     = 1 // Y-axis is inverted (bottom-up)
-	FlagInterlaced  = 2 // Buffer contains interlaced data
-	FlagBottomFirst = 4 // Bottom field first
+	// FlagYInvert indicates Y-axis is inverted (bottom-up).
+	FlagYInvert = 1
+	// FlagInterlaced indicates buffer contains interlaced data.
+	FlagInterlaced = 2
+	// FlagBottomFirst indicates bottom field first.
+	FlagBottomFirst = 4
 )
 
 // Conn represents the subset of client.Connection methods needed by dmabuf objects.

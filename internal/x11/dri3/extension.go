@@ -75,15 +75,24 @@ const (
 
 // DRI3 request opcodes (relative to extension base opcode).
 const (
-	DRI3QueryVersion          = 0
-	DRI3Open                  = 1
-	DRI3PixmapFromBuffer      = 2
-	DRI3BufferFromPixmap      = 3
-	DRI3FenceFromFD           = 4
-	DRI3FDFromFence           = 5
+	// DRI3QueryVersion queries the extension version.
+	DRI3QueryVersion = 0
+	// DRI3Open opens a DRM device.
+	DRI3Open = 1
+	// DRI3PixmapFromBuffer creates a pixmap from a DMA-BUF.
+	DRI3PixmapFromBuffer = 2
+	// DRI3BufferFromPixmap exports a pixmap as a DMA-BUF.
+	DRI3BufferFromPixmap = 3
+	// DRI3FenceFromFD creates a sync fence from a file descriptor.
+	DRI3FenceFromFD = 4
+	// DRI3FDFromFence exports a sync fence as a file descriptor.
+	DRI3FDFromFence = 5
+	// DRI3GetSupportedModifiers queries supported buffer modifiers.
 	DRI3GetSupportedModifiers = 6
-	DRI3PixmapFromBuffers     = 7
-	DRI3BuffersFromPixmap     = 8
+	// DRI3PixmapFromBuffers creates a pixmap from multiple DMA-BUFs.
+	DRI3PixmapFromBuffers = 7
+	// DRI3BuffersFromPixmap exports a pixmap as multiple DMA-BUFs.
+	DRI3BuffersFromPixmap = 8
 )
 
 // XID represents an X11 resource identifier.
