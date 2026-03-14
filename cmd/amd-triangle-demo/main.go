@@ -77,95 +77,38 @@ func runDemo() error {
 }
 
 func setupX11AndGPU() (*demoContext, func(), error) {
-	fmt.Println("[1/8] Connecting to X11 server...")
-	conn, err := x11client.Connect("0")
-	if err != nil {
-		return nil, nil, fmt.Errorf("connect to X11: %w", err)
-	}
-	fmt.Println("       ✓ Connected to :0")
-
-	fmt.Println("\n[2/8] Querying DRI3 and Present extensions...")
-	dri3Ext, presentExt, renderFd, err := demo.QueryDRI3AndPresentExtensions(conn)
-	if err != nil {
-		conn.Close()
-		return nil, nil, err
-	}
-	fmt.Printf("       ✓ DRI3 version %d.%d\n", dri3Ext.MajorVersion(), dri3Ext.MinorVersion())
-	fmt.Printf("       ✓ Present version %d.%d\n", presentExt.MajorVersion(), presentExt.MinorVersion())
-
-	fmt.Println("\n[4/8] Opening DRM device for GPU access...")
-	fmt.Printf("       Device: %s\n", drmPath)
-
-	allocator, gpuCtx, err := setupGPU()
-	if err != nil {
-		syscall.Close(renderFd)
-		conn.Close()
+	if err := validateAMDGPU(); err != nil {
 		return nil, nil, err
 	}
 
-	window, err := setupX11Window(conn)
+	setup, err := demo.NewGPUTriangleSetup(drmPath, windowWidth, windowHeight)
 	if err != nil {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
 		return nil, nil, err
 	}
 
 	ctx := &demoContext{
-		conn:       conn,
-		dri3Ext:    dri3Ext,
-		presentExt: presentExt,
-		allocator:  allocator,
-		gpuCtx:     gpuCtx,
-		window:     window,
+		conn:       setup.Conn,
+		dri3Ext:    setup.DRI3Ext,
+		presentExt: setup.PresentExt,
+		allocator:  setup.Allocator,
+		gpuCtx:     setup.GPUCtx,
+		window:     setup.Window,
 	}
-
-	cleanup := func() {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
-	}
-
-	return ctx, cleanup, nil
+	return ctx, setup.Cleanup, nil
 }
 
-func setupGPU() (*render.Allocator, *render.GpuContext, error) {
-	fmt.Println("\n[5/8] Detecting AMD GPU generation...")
+// validateAMDGPU checks that the GPU at drmPath is an AMD RDNA generation.
+func validateAMDGPU() error {
+	fmt.Println("[Pre-check] Detecting AMD GPU generation...")
 	gpuGen := render.DetectGPU(drmPath)
 	if gpuGen == render.GpuUnknown {
-		return nil, nil, fmt.Errorf("GPU not detected or not supported")
+		return fmt.Errorf("GPU not detected or not supported")
 	}
-
 	if gpuGen != render.GpuAmdRdna1 && gpuGen != render.GpuAmdRdna2 && gpuGen != render.GpuAmdRdna3 {
-		return nil, nil, fmt.Errorf("not an AMD GPU (detected: %s)", gpuGen)
+		return fmt.Errorf("not an AMD GPU (detected: %s)", gpuGen)
 	}
-
 	fmt.Printf("       ✓ Detected: %s\n", gpuGen)
-
-	fmt.Println("\n[6/8] Creating buffer allocator...")
-	allocator, err := render.NewAllocator(drmPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("create allocator: %w", err)
-	}
-	fmt.Println("       ✓ Allocator created (AMDGPU driver)")
-
-	fmt.Println("\n[7/8] Creating GPU context...")
-	gpuCtx, err := demo.SetupGPUContext(allocator, drmPath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return allocator, gpuCtx, nil
-}
-
-func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
-	fmt.Println("\n[8/8] Creating X11 window...")
-	wid, err := demo.CreateX11WindowWithDefaults(conn, windowWidth, windowHeight)
-	if err != nil {
-		return 0, err
-	}
-	fmt.Printf("       ✓ Created and mapped window XID %d\n", wid)
-	return wid, nil
+	return nil
 }
 
 func createGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {

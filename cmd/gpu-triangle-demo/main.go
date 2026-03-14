@@ -21,7 +21,6 @@ package main
 
 import (
 	"fmt"
-	"syscall"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/render"
@@ -88,67 +87,20 @@ func runDemo() error {
 }
 
 func setupX11AndGPU() (*demoContext, func(), error) {
-	fmt.Println("[1/12] Connecting to X11 server...")
-	conn, err := x11client.Connect("0")
+	setup, err := demo.NewGPUTriangleSetup(demo.DefaultDRMPath, windowWidth, windowHeight)
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect to X11: %w", err)
-	}
-	fmt.Println("       ✓ Connected to :0")
-
-	dri3Ext, presentExt, renderFd, err := setupExtensions(conn)
-	if err != nil {
-		conn.Close()
-		return nil, nil, err
-	}
-
-	allocator, gpuCtx, err := setupGPU()
-	if err != nil {
-		syscall.Close(renderFd)
-		conn.Close()
-		return nil, nil, err
-	}
-
-	wid, err := setupX11Window(conn)
-	if err != nil {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
 		return nil, nil, err
 	}
 
 	ctx := &demoContext{
-		conn:       conn,
-		dri3Ext:    dri3Ext,
-		presentExt: presentExt,
-		allocator:  allocator,
-		gpuCtx:     gpuCtx,
-		window:     wid,
+		conn:       setup.Conn,
+		dri3Ext:    setup.DRI3Ext,
+		presentExt: setup.PresentExt,
+		allocator:  setup.Allocator,
+		gpuCtx:     setup.GPUCtx,
+		window:     setup.Window,
 	}
-	cleanup := func() {
-		allocator.Close()
-		syscall.Close(renderFd)
-		conn.Close()
-	}
-	return ctx, cleanup, nil
-}
-
-func setupExtensions(conn *x11client.Connection) (*dri3.Extension, *present.Extension, int, error) {
-	fmt.Println("\n[2/12] Querying DRI3 and Present extensions...")
-	return demo.QueryDRI3AndPresentExtensions(conn)
-}
-
-func setupGPU() (*render.Allocator, *render.GpuContext, error) {
-	return demo.SetupGPUAllocator(demo.DefaultDRMPath, 5, 12)
-}
-
-func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
-	fmt.Println("\n[8/12] Creating X11 window...")
-	wid, err := demo.CreateX11WindowWithDefaults(conn, windowWidth, windowHeight)
-	if err != nil {
-		return 0, err
-	}
-	fmt.Printf("       ✓ Created and mapped window XID %d\n", wid)
-	return wid, nil
+	return ctx, setup.Cleanup, nil
 }
 
 func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {

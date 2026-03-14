@@ -108,6 +108,15 @@ type MemorySnapshot struct {
 var globalMemStats = NewMemoryStats()
 
 // GetMemoryStats returns the global memory statistics.
+//
+// GetMemoryStats provides a snapshot of current GPU buffer allocation state
+// for monitoring and profiling. It is safe to call from any goroutine.
+//
+// Example usage:
+//
+//	snap := render.GetMemoryStats()
+//	fmt.Printf("Allocated: %d buffers / %d bytes (peak %d bytes)\n",
+//	    snap.AllocatedBuffers, snap.AllocatedBytes, snap.PeakAllocatedBytes)
 func GetMemoryStats() MemorySnapshot {
 	return globalMemStats.Snapshot()
 }
