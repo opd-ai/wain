@@ -242,6 +242,13 @@ jobs:
           jq -r '"Mean frame time: \(.mean_ms) ms  (threshold: \(.threshold_ms // "none") ms)  pass=\(.pass)"' \
             /tmp/bench-endtoend.json
 
+      - name: Run cmd/gpu-bench GPU frame timing (≤ 2 ms on hardware; no-op on non-GPU runners)
+        continue-on-error: true
+        run: |
+          go run ./cmd/gpu-bench -frames 60 -max 2.0 | tee /tmp/gpu-bench.json
+          echo "=== cmd/gpu-bench result ==="
+          cat /tmp/gpu-bench.json
+
       - name: Post frame-time summary
         if: always()
         run: |
@@ -251,3 +258,13 @@ jobs:
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           jq -r '"| Mean (ms) | \(.mean_ms) |", "| Min (ms) | \(.min_ms) |", "| Max (ms) | \(.max_ms) |", "| StdDev (ms) | \(.stddev_ms) |", "| Pass | \(.pass) |"' \
             /tmp/bench-endtoend.json >> $GITHUB_STEP_SUMMARY || true
+          # GPU bench summary (skip when no GPU present)
+          if [ -f /tmp/gpu-bench.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## GPU Frame Time" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            jq -r '"| Backend | \(.backend) |", "| Mean (ms) | \(.mean_ms // "N/A") |", "| Threshold (ms) | \(.threshold_ms // "none") |", "| Pass | \(.pass) |"' \
+              /tmp/gpu-bench.json >> $GITHUB_STEP_SUMMARY || true
+          fi

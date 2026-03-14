@@ -292,6 +292,29 @@ func (a *App) LoadImage(path string) (*Image, error) {
 	return a.resources.LoadImage(path)
 }
 
+// LoadImageFromReader loads an image from an [io.Reader].
+//
+// The format is auto-detected from magic bytes; PNG and JPEG are supported.
+// filenameHint is optional and used only to improve error messages.
+//
+// Example:
+//
+//	resp, err := http.Get("https://example.com/icon.png")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer resp.Body.Close()
+//	img, err := app.LoadImageFromReader(resp.Body, "icon.png")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+func (a *App) LoadImageFromReader(r io.Reader, filenameHint string) (*Image, error) {
+	if a.resources == nil {
+		return nil, ErrNotRunning
+	}
+	return a.resources.LoadImageFromReader(r, filenameHint)
+}
+
 // DefaultFont returns the embedded default font.
 //
 // The default font supports printable ASCII characters (0x20-0x7E)

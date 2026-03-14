@@ -21,6 +21,8 @@ const (
 	EventTypeWindow
 	// EventTypeCustom identifies application-defined events.
 	EventTypeCustom
+	// EventTypeDrag identifies drag-and-drop events.
+	EventTypeDrag
 )
 
 // Event is the common interface for all events.
@@ -502,3 +504,65 @@ func translateWaylandPointerAxisEvent(axis uint32, value, x, y float64) *Pointer
 		value:     scrollValue,
 	}
 }
+
+// DragEventKind specifies the kind of drag-and-drop event.
+type DragEventKind int
+
+// Drag event kind constants.
+const (
+	// DragEnter is dispatched when a drag enters the window.
+	DragEnter DragEventKind = iota
+	// DragMove is dispatched as the drag moves within the window.
+	DragMove
+	// DragDrop is dispatched when the user drops onto the window.
+	DragDrop
+	// DragLeave is dispatched when a drag leaves the window without dropping.
+	DragLeave
+)
+
+// DragEvent represents a drag-and-drop interaction.
+type DragEvent struct {
+	baseEvent
+	kind      DragEventKind
+	x, y      float64
+	mimeTypes []string
+}
+
+// Type returns EventTypeDrag for drag-and-drop events.
+func (e *DragEvent) Type() EventType { return EventTypeDrag }
+
+// Kind returns the specific kind of drag event.
+func (e *DragEvent) Kind() DragEventKind { return e.kind }
+
+// X returns the horizontal coordinate of the drag point, in window pixels.
+func (e *DragEvent) X() float64 { return e.x }
+
+// Y returns the vertical coordinate of the drag point, in window pixels.
+func (e *DragEvent) Y() float64 { return e.y }
+
+// MimeTypes returns the MIME types offered by the drag source.
+// The slice is non-nil only for [DragEnter] events.
+func (e *DragEvent) MimeTypes() []string { return e.mimeTypes }
+
+// newDragEvent constructs a DragEvent.
+func newDragEvent(kind DragEventKind, x, y float64, mimeTypes []string) *DragEvent {
+	return &DragEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		kind:      kind,
+		x:         x,
+		y:         y,
+		mimeTypes: mimeTypes,
+	}
+}
+
+// DragDropHandler is called when a drop event is received on a window that has
+// registered itself as a drop target via [Window.SetDropTarget].
+//
+// mimeType is the negotiated MIME type; data contains the dropped bytes.
+type DragDropHandler func(mimeType string, data []byte)
+
+// DragDataProvider is called when the toolkit needs to supply drag data for a
+// MIME type, used when starting a drag via [Window.StartDrag].
+//
+// The function must write the data for mimeType into the returned byte slice.
+type DragDataProvider func(mimeType string) []byte

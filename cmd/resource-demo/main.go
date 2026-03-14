@@ -62,8 +62,8 @@ func main() {
 		os.Remove(imgPath)
 	}
 
-	// Note: LoadImageFromReader is not exposed in the public API yet
-	// This would be added in a future phase for advanced use cases
+	// Note: LoadImageFromReader is available for loading images from any io.Reader.
+	// Example: app.LoadImageFromReader(resp.Body, "remote.png")
 
 	fmt.Println("\nResource management demo complete!")
 	fmt.Println("Phase 9.5: Font and image loading API validated.")

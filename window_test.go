@@ -355,3 +355,30 @@ func TestWindow_EventHandlers(t *testing.T) {
 		t.Error("ScaleChange callback not called")
 	}
 }
+
+func TestAppWindowsSnapshot(t *testing.T) {
+	a := &App{running: true}
+
+	snap0 := a.Windows()
+	if len(snap0) != 0 {
+		t.Fatalf("expected 0 windows, got %d", len(snap0))
+	}
+
+	w1 := &Window{title: "first"}
+	w2 := &Window{title: "second"}
+	a.windows = append(a.windows, w1, w2)
+
+	snap := a.Windows()
+	if len(snap) != 2 {
+		t.Fatalf("expected 2 windows, got %d", len(snap))
+	}
+	if snap[0] != w1 || snap[1] != w2 {
+		t.Error("Windows() returned wrong windows")
+	}
+
+	// Mutating the snapshot must not affect the internal slice.
+	snap[0] = nil
+	if a.windows[0] != w1 {
+		t.Error("mutating Windows() snapshot affected internal slice")
+	}
+}

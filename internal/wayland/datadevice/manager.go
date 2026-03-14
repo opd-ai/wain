@@ -435,6 +435,44 @@ func (d *Device) SelectionChannel() <-chan *Offer {
 	return d.selectionChan
 }
 
+// StartDrag initiates a drag-and-drop operation from this device.
+// source is the data source providing drag data; origin is the surface the drag
+// originates from; icon is an optional surface used as the drag icon (0 = no icon);
+// serial is the input-event serial that triggered the drag.
+func (d *Device) StartDrag(source *Source, origin, icon, serial uint32) error {
+	var sourceID uint32
+	if source != nil {
+		sourceID = source.id
+	}
+	args := []wire.Argument{
+		{Type: wire.ArgTypeObject, Value: sourceID},
+		{Type: wire.ArgTypeObject, Value: origin},
+		{Type: wire.ArgTypeObject, Value: icon},
+		{Type: wire.ArgTypeUint32, Value: serial},
+	}
+	return d.conn.SendRequest(d.id, 0, args)
+}
+
+// DragEnterChannel returns the channel for drag-enter events.
+func (d *Device) DragEnterChannel() <-chan DragEnterEvent {
+	return d.dragEnterChan
+}
+
+// DragLeaveChannel returns the channel for drag-leave events.
+func (d *Device) DragLeaveChannel() <-chan struct{} {
+	return d.dragLeaveChan
+}
+
+// DragMotionChannel returns the channel for drag-motion events.
+func (d *Device) DragMotionChannel() <-chan DragMotionEvent {
+	return d.dragMotionChan
+}
+
+// DropChannel returns the channel for drop events.
+func (d *Device) DropChannel() <-chan struct{} {
+	return d.dropChan
+}
+
 // Offer represents the wl_data_offer interface.
 type Offer struct {
 	objectBase

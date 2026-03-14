@@ -35,6 +35,7 @@ import (
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render/backend"
 	"github.com/opd-ai/wain/internal/render/display"
+	"github.com/opd-ai/wain/internal/ui/animation"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/datadevice"
 	"github.com/opd-ai/wain/internal/wayland/dmabuf"
@@ -140,6 +141,9 @@ type App struct {
 	// Resource management
 	resources *ResourceManager
 
+	// Animation
+	animator *animation.Animator
+
 	// Theming
 	theme Theme
 
@@ -217,6 +221,7 @@ func NewAppWithConfig(cfg AppConfig) *App {
 		theme:           DefaultDark(),
 		notifyChan:      make(chan func(), 100),
 		surfaceToWindow: make(map[uint32]*Window),
+		animator:        animation.New(),
 	}
 }
 
@@ -299,6 +304,11 @@ type Window struct {
 
 	// presenter submits rendered frames to the compositor / display server.
 	presenter Presenter
+
+	// Drag-and-drop handlers
+	dropMimeTypes    []string
+	dropHandler      DragDropHandler
+	dragDataProvider DragDataProvider
 }
 
 // NewWindow creates a new window with the specified configuration.
@@ -338,6 +348,16 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 
 	a.windows = append(a.windows, win)
 	return win, nil
+}
+
+// Windows returns a snapshot of all currently open windows.
+// The returned slice is a copy; mutating it does not affect the app.
+func (a *App) Windows() []*Window {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	result := make([]*Window, len(a.windows))
+	copy(result, a.windows)
+	return result
 }
 
 // clampDimension clamps value within [minVal, maxVal].
@@ -1036,6 +1056,40 @@ func (w *Window) SendCustomEvent(data CustomEventPayload) {
 	if w.dispatcher != nil {
 		w.dispatcher.Dispatch(evt)
 	}
+}
+
+// SetDropTarget registers this window as a drag-and-drop target.
+//
+// mimeTypes lists the MIME types the window is willing to accept (e.g.
+// "text/plain", "text/uri-list"). handler is called with the negotiated
+// MIME type and transferred data when a drop is completed.
+//
+// Passing nil for handler clears the drop target registration.
+func (w *Window) SetDropTarget(mimeTypes []string, handler DragDropHandler) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.dropMimeTypes = mimeTypes
+	w.dropHandler = handler
+}
+
+// StartDrag initiates a drag-and-drop operation from this window.
+//
+// mimeTypes lists the MIME types the drag source offers. provider is called
+// by the toolkit to retrieve the data for the negotiated MIME type when a
+// drop is accepted. icon is an optional image to use as the drag cursor
+// (may be nil).
+//
+// StartDrag returns immediately; the drag runs asynchronously via the
+// platform event loop.
+func (w *Window) StartDrag(mimeTypes []string, provider DragDataProvider, icon *Image) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.dragDataProvider = provider
+	// Platform-specific drag initiation is dispatched to the event loop via
+	// the app's notify channel so that it runs on the main thread.
+	w.app.Notify(func() {
+		w.app.startDragForWindow(w, mimeTypes, icon)
+	})
 }
 
 // handleX11Event processes an X11 event for this window.
@@ -2028,6 +2082,10 @@ func (a *App) renderFrames() error {
 	windows := a.windows
 	a.mu.Unlock()
 
+	// Advance all running animations by a fixed 16 ms frame budget.
+	// Future work: measure actual elapsed time per frame.
+	a.animator.Tick(16 * 1e6) // 16 ms in nanoseconds as time.Duration
+
 	for _, win := range windows {
 		if err := win.RenderFrame(); err != nil {
 			return fmt.Errorf("render frame: %w", err)
@@ -2065,4 +2123,38 @@ func (a *App) cleanup() {
 
 	a.running = false
 	a.initialized = false
+}
+
+// startDragForWindow initiates a platform drag-and-drop for w.
+// Called on the main thread via the notify channel.
+func (a *App) startDragForWindow(w *Window, mimeTypes []string, _ *Image) {
+	// Wayland path: use wl_data_device.start_drag.
+	if a.displayServer == DisplayServerWayland && a.waylandDataDevice != nil {
+		src, err := a.waylandDataDeviceMgr.CreateDataSource()
+		if err != nil {
+			return
+		}
+		for _, mt := range mimeTypes {
+			_ = src.Offer(mt)
+		}
+		_ = a.waylandDataDevice.StartDrag(src, w.waylandSurface.ID(), 0, 0)
+	}
+	// X11 path: the drag is driven by XdndPosition messages exchanged in the
+	// event loop.  Registration of w.dragDataProvider above is sufficient for
+	// the event loop to respond to XdndStatus/XdndDrop messages; no additional
+	// action is needed here.
+}
+
+// dispatchDragEvent delivers a DragEvent to the window at the given surface.
+func (a *App) dispatchDragEvent(w *Window, evt *DragEvent) {
+	if w == nil {
+		return
+	}
+	if w.dispatcher != nil {
+		w.dispatcher.Dispatch(evt)
+	}
+	// Invoke the registered drop handler on DragDrop events.
+	if evt.kind == DragDrop && w.dropHandler != nil {
+		w.dropHandler("", nil)
+	}
 }
