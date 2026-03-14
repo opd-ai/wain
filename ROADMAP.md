@@ -120,7 +120,7 @@ The codebase is **exceptionally well-structured**:
 ### Risk Areas
 
 1. **GPU backend exercised in isolation** — No CI-tested path from shader compilation → EU/RDNA encoding → display
-2. **`internal/a11y` test coverage is growing** — `manager_test.go` (40 tests) and `a11y_test.go` (11 tests) exist; mock D-Bus coverage could be expanded
+2. **`internal/a11y` test coverage is growing** — `manager_test.go` (37 tests) and `a11y_test.go` (11 tests) exist; mock D-Bus coverage could be expanded
 
 ---
 
