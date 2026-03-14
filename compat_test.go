@@ -27,8 +27,10 @@ func TestAPICompat(t *testing.T) {
 // function signatures change. The blank identifier discards the value.
 
 // App constructor and lifecycle.
-var _ func() *wain.App = wain.NewApp
-var _ func(wain.AppConfig) *wain.App = wain.NewAppWithConfig
+var (
+	_ func() *wain.App               = wain.NewApp
+	_ func(wain.AppConfig) *wain.App = wain.NewAppWithConfig
+)
 
 // Window constructor.
 var _ func(*wain.App, wain.WindowConfig) (*wain.Window, error) = func(a *wain.App, cfg wain.WindowConfig) (*wain.Window, error) {
@@ -36,29 +38,35 @@ var _ func(*wain.App, wain.WindowConfig) (*wain.Window, error) = func(a *wain.Ap
 }
 
 // Widget constructors.
-var _ func(string, wain.Size) *wain.Button = wain.NewButton
-var _ func(string, wain.Size) *wain.Label = wain.NewLabel
-var _ func(string, wain.Size) *wain.TextInput = wain.NewTextInput
-var _ func(wain.Size) *wain.Panel = wain.NewPanel
-var _ func() *wain.Row = wain.NewRow
-var _ func() *wain.Column = wain.NewColumn
-var _ func() *wain.Stack = wain.NewStack
-var _ func(int) *wain.Grid = wain.NewGrid
-var _ func(wain.Size) *wain.ScrollView = wain.NewScrollView
-var _ func(wain.Size) *wain.Spacer = wain.NewSpacer
+var (
+	_ func(string, wain.Size) *wain.Button    = wain.NewButton
+	_ func(string, wain.Size) *wain.Label     = wain.NewLabel
+	_ func(string, wain.Size) *wain.TextInput = wain.NewTextInput
+	_ func(wain.Size) *wain.Panel             = wain.NewPanel
+	_ func() *wain.Row                        = wain.NewRow
+	_ func() *wain.Column                     = wain.NewColumn
+	_ func() *wain.Stack                      = wain.NewStack
+	_ func(int) *wain.Grid                    = wain.NewGrid
+	_ func(wain.Size) *wain.ScrollView        = wain.NewScrollView
+	_ func(wain.Size) *wain.Spacer            = wain.NewSpacer
+)
 
 // Accessibility.
 var _ func(string) *wain.AccessibilityManager = wain.EnableAccessibility
 
 // Window methods.
-var _ func(*wain.Window) error = (*wain.Window).RenderFrame
-var _ func(*wain.Window, string) error = (*wain.Window).SetTitle
-var _ func(*wain.Window) error = (*wain.Window).Close
-var _ func(*wain.Window) *wain.EventDispatcher = (*wain.Window).Dispatcher
+var (
+	_ func(*wain.Window) error                 = (*wain.Window).RenderFrame
+	_ func(*wain.Window, string) error         = (*wain.Window).SetTitle
+	_ func(*wain.Window) error                 = (*wain.Window).Close
+	_ func(*wain.Window) *wain.EventDispatcher = (*wain.Window).Dispatcher
+)
 
 // App methods.
-var _ func(*wain.App) error = (*wain.App).Run
-var _ func(*wain.App) = (*wain.App).Quit
+var (
+	_ func(*wain.App) error = (*wain.App).Run
+	_ func(*wain.App)       = (*wain.App).Quit
+)
 
 // Presenter interface — any implementation must satisfy Present + Close.
 var _ wain.Presenter = (*presenterCheck)(nil)
