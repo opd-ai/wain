@@ -12,9 +12,9 @@ import (
 	"os"
 
 	"github.com/opd-ai/wain/internal/wayland/datadevice"
-	x11wire "github.com/opd-ai/wain/internal/x11/wire"
-	"github.com/opd-ai/wain/internal/x11/selection"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
+	"github.com/opd-ai/wain/internal/x11/selection"
+	x11wire "github.com/opd-ai/wain/internal/x11/wire"
 )
 
 // SetClipboard sets the clipboard to the provided text.

@@ -107,8 +107,8 @@ type App struct {
 	waylandPointer    *input.Pointer
 
 	// X11-specific objects
-	x11Window      x11client.XID
-	x11GC          x11client.XID
+	x11Window       x11client.XID
+	x11GC           x11client.XID
 	x11SelectionMgr *selection.Manager
 
 	// Wayland clipboard objects

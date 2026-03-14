@@ -19,11 +19,11 @@ type mockX11SelectionConn struct {
 func newMockX11SelectionConn() *mockX11SelectionConn {
 	return &mockX11SelectionConn{
 		atoms: map[string]uint32{
-			"CLIPBOARD":        69,
-			"UTF8_STRING":      100,
-			"TARGETS":          101,
-			"TEXT":             102,
-			"_WAIN_SELECTION":  200,
+			"CLIPBOARD":       69,
+			"UTF8_STRING":     100,
+			"TARGETS":         101,
+			"TEXT":            102,
+			"_WAIN_SELECTION": 200,
 		},
 		nextXID: 1000,
 	}

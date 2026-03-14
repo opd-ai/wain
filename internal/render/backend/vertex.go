@@ -127,7 +127,7 @@ func rectToNDC(x, y, w, h, fbWidth, fbHeight int) (x0, y0, x1, y1 float32) {
 	y0 = 1.0 - float32(y*2)/float32(fbHeight)
 	x1 = float32((x+w)*2)/float32(fbWidth) - 1.0
 	y1 = 1.0 - float32((y+h)*2)/float32(fbHeight)
-	return
+	return x0, y0, x1, y1
 }
 
 // rectToVertices converts a filled rectangle to 6 vertices (2 triangles).

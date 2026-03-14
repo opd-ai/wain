@@ -110,7 +110,7 @@ func scaledSourceCoord(dstPos, dstOrigin, srcOrigin int, scale float64) (s0, s1 
 	frac = f - float64(fi)
 	s0 = srcOrigin + fi
 	s1 = s0 + 1
-	return
+	return s0, s1, frac
 }
 
 // BlitScaled copies a rectangular region from src to dst with bilinear filtering.

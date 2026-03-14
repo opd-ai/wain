@@ -211,19 +211,19 @@ func TestBuildWMSizeHints(t *testing.T) {
 			wantFlags: 0,
 		},
 		{
-			name:      "min size only",
-			minW:      200, minH: 100,
+			name: "min size only",
+			minW: 200, minH: 100,
 			wantFlags: 1 << 4, // PMinSize
 		},
 		{
-			name:      "max size only",
-			maxW:      1920, maxH: 1080,
+			name: "max size only",
+			maxW: 1920, maxH: 1080,
 			wantFlags: 1 << 5, // PMaxSize
 		},
 		{
-			name:      "both constraints",
-			minW:      200, minH: 100,
-			maxW:      1920, maxH: 1080,
+			name: "both constraints",
+			minW: 200, minH: 100,
+			maxW: 1920, maxH: 1080,
 			wantFlags: (1 << 4) | (1 << 5), // PMinSize | PMaxSize
 		},
 	}
