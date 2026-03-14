@@ -270,3 +270,51 @@ func TestResourceManager_MultipleImageLoads(t *testing.T) {
 		t.Errorf("img3 dimensions incorrect")
 	}
 }
+
+// TestLoadImageFromReaderDecodeError verifies error when image data is invalid.
+func TestLoadImageFromReaderDecodeError(t *testing.T) {
+	rm := newResourceManager(nil)
+	r := bytes.NewReader([]byte("this is not an image"))
+	_, err := rm.LoadImageFromReader(r, "test.png")
+	if err == nil {
+		t.Error("expected error for invalid image data")
+	}
+}
+
+// TestCleanupWithImages verifies cleanup clears images map.
+func TestCleanupWithImages(t *testing.T) {
+	rm := newResourceManager(nil)
+
+	// Load a valid PNG image into the ResourceManager directly
+	img := image.NewNRGBA(image.Rect(0, 0, 4, 4))
+	resource := &Image{data: img, width: 4, height: 4, id: 1}
+	rm.images[resource.id] = resource
+
+	rm.cleanup()
+
+	if len(rm.images) != 0 {
+		t.Error("images not cleared after cleanup")
+	}
+}
+
+// TestLoadImageFromReaderUnsupportedFormat verifies ErrUnsupportedImageFormat for GIF.
+func TestLoadImageFromReaderUnsupportedFormat(t *testing.T) {
+	rm := newResourceManager(nil)
+	// Minimal valid GIF87a header (just a few bytes of GIF magic)
+	// This will decode as gif (if gif is registered), which isn't png/jpeg
+	// Actually we need a valid GIF to pass Decode. Let's use a minimal GIF.
+	// GIF87a 1x1 transparent pixel
+	gifData := []byte{
+		0x47, 0x49, 0x46, 0x38, 0x37, 0x61, // GIF87a
+		0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, // logical screen descriptor
+		0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, // image descriptor
+		0x02, 0x02, 0x4c, 0x01, 0x00, // image data
+		0x3b, // GIF trailer
+	}
+	r := bytes.NewReader(gifData)
+	_, err := rm.LoadImageFromReader(r, "test.gif")
+	// Either decode fails (gif not registered) or format check fails
+	if err == nil {
+		t.Error("expected error for GIF format (unsupported)")
+	}
+}

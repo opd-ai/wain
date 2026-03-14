@@ -452,3 +452,67 @@ func TestDragEventType(t *testing.T) {
 		t.Errorf("MimeTypes() = %v", evt.MimeTypes())
 	}
 }
+
+// TestFocusNextEmptyChain verifies FocusNext is a no-op with empty chain.
+func TestFocusNextEmptyChain(t *testing.T) {
+	fm := NewFocusManager()
+	fm.FocusNext() // must not panic
+}
+
+// TestFocusPrevEmptyChain verifies FocusPrev is a no-op with empty chain.
+func TestFocusPrevEmptyChain(t *testing.T) {
+	fm := NewFocusManager()
+	fm.FocusPrev() // must not panic
+}
+
+// TestDispatchPointerConsumedByWidget verifies dispatchPointer stops when widget consumes.
+func TestDispatchPointerConsumedByWidget(t *testing.T) {
+	d := NewEventDispatcher()
+
+	root := &BaseWidget{}
+	root.SetBounds(0, 0, 100, 100)
+	d.SetWidgetRoot(root)
+
+	handlerCalled := false
+	root.OnPointer(func(evt *PointerEvent) {
+		evt.Consume()
+	})
+
+	d.OnPointer(func(evt *PointerEvent) {
+		handlerCalled = true
+	})
+
+	click := &PointerEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: PointerButtonPress,
+		x:         50,
+		y:         50,
+	}
+	d.Dispatch(click)
+	if handlerCalled {
+		t.Error("registered handler should not be called when widget consumed event")
+	}
+}
+
+// TestDispatchKeyHandlerConsumed verifies dispatchToKeyHandlers stops when consumed.
+func TestDispatchKeyHandlerConsumed(t *testing.T) {
+	d := NewEventDispatcher()
+
+	secondCalled := false
+	d.OnKey(func(evt *KeyEvent) {
+		evt.Consume()
+	})
+	d.OnKey(func(evt *KeyEvent) {
+		secondCalled = true
+	})
+
+	keyEvt := &KeyEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: KeyPress,
+		key:       KeyReturn,
+	}
+	d.Dispatch(keyEvt)
+	if secondCalled {
+		t.Error("second key handler should not be called after event consumed")
+	}
+}

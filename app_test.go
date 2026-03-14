@@ -1,12 +1,27 @@
 package wain
 
 import (
+	"bytes"
+	"context"
 	"errors"
+	"image"
+	"image/color"
+	"image/png"
+	"io"
 	"testing"
 
 	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
+
+// newOnePxPNGReader returns an io.Reader containing a 1×1 white PNG image.
+func newOnePxPNGReader() io.Reader {
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.White)
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return &buf
+}
 
 // TestDisplayServerString verifies the String() method on DisplayServer.
 func TestDisplayServerString(t *testing.T) {
@@ -977,5 +992,90 @@ func TestHitTestParentNoChild(t *testing.T) {
 	hit := d.hitTest(parent, 80, 80)
 	if hit != parent {
 		t.Errorf("hitTest returned %v, want parent", hit)
+	}
+}
+
+// mockPresenter is a test double for Presenter.
+type mockPresenter struct {
+	presentErr error
+}
+
+func (m *mockPresenter) Present(_ context.Context) error { return m.presentErr }
+func (m *mockPresenter) Close() error                    { return nil }
+
+// TestRenderFrameWithPresenter verifies RenderFrame calls presenter.Present.
+func TestRenderFrameWithPresenter(t *testing.T) {
+	sw, err := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	if err != nil {
+		t.Skipf("software backend unavailable: %v", err)
+	}
+	w := &Window{}
+	w.renderBridge = NewRenderBridge(sw)
+	w.rootWidget = &BaseWidget{}
+	w.presenter = &mockPresenter{}
+
+	if err := w.RenderFrame(); err != nil {
+		t.Errorf("RenderFrame failed: %v", err)
+	}
+}
+
+// TestRenderFramePresenterError verifies RenderFrame wraps presenter errors.
+func TestRenderFramePresenterError(t *testing.T) {
+	sw, err := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	if err != nil {
+		t.Skipf("software backend unavailable: %v", err)
+	}
+	w := &Window{}
+	w.renderBridge = NewRenderBridge(sw)
+	w.presenter = &mockPresenter{presentErr: errors.New("present failed")}
+
+	err = w.RenderFrame()
+	if err == nil {
+		t.Error("expected error from presenter, got nil")
+	}
+}
+
+// TestNewAppWithConfigZeroDimensions verifies zero width/height are defaulted.
+func TestNewAppWithConfigZeroDimensions(t *testing.T) {
+	app := NewAppWithConfig(AppConfig{Width: 0, Height: 0})
+	if app.width != 800 {
+		t.Errorf("width = %d, want 800", app.width)
+	}
+	if app.height != 600 {
+		t.Errorf("height = %d, want 600", app.height)
+	}
+}
+
+// TestAppResourceMethodsWithInitializedResources covers App-level resource methods
+// when resources is properly initialized (non-nil path).
+func TestAppResourceMethodsWithInitializedResources(t *testing.T) {
+	a := &App{}
+	a.resources = newResourceManager(nil)
+	if err := a.resources.initDefaultFont(); err != nil {
+		t.Skip("could not load embedded font:", err)
+	}
+
+	// DefaultFont — non-nil path
+	font := a.DefaultFont()
+	if font == nil {
+		t.Error("DefaultFont should not be nil after initDefaultFont")
+	}
+
+	// LoadFont — non-nil path
+	f, err := a.LoadFont("dummy.ttf", 12.0)
+	if err != nil {
+		t.Fatalf("LoadFont failed: %v", err)
+	}
+	if f.size != 12.0 {
+		t.Errorf("LoadFont size = %v, want 12.0", f.size)
+	}
+
+	// LoadImageFromReader — non-nil path (PNG)
+	img, err := a.LoadImageFromReader(newOnePxPNGReader(), "test.png")
+	if err != nil {
+		t.Fatalf("LoadImageFromReader failed: %v", err)
+	}
+	if img.width <= 0 || img.height <= 0 {
+		t.Error("loaded image has zero dimensions")
 	}
 }

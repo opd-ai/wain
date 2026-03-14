@@ -233,3 +233,22 @@ func TestServeClipboardSource_Cancellation(t *testing.T) {
 		// Non-blocking; goroutine may still be running briefly — acceptable.
 	}
 }
+
+// TestSelectClipboardMime verifies MIME type selection preferences.
+func TestSelectClipboardMime(t *testing.T) {
+	tests := []struct {
+		offered []string
+		want    string
+	}{
+		{[]string{"text/plain;charset=utf-8", "text/plain"}, "text/plain;charset=utf-8"},
+		{[]string{"text/plain"}, "text/plain"},
+		{[]string{"image/png"}, ""},
+		{nil, ""},
+		{[]string{"text/plain;charset=utf-8"}, "text/plain;charset=utf-8"},
+	}
+	for _, tt := range tests {
+		if got := selectClipboardMime(tt.offered); got != tt.want {
+			t.Errorf("selectClipboardMime(%v) = %q, want %q", tt.offered, got, tt.want)
+		}
+	}
+}

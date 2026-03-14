@@ -768,3 +768,50 @@ func TestSpacerDrawAndStyle(t *testing.T) {
 	s.Draw(canvas)
 	s.SetStyle(StyleOverride{})
 }
+
+// TestBufferCanvasDrawImageNilImg verifies DrawImage with nil image is a no-op.
+func TestBufferCanvasDrawImageNilImg(t *testing.T) {
+	c, _ := makeTestCanvas(16, 16)
+	c.DrawImage(nil, 0, 0, 16, 16) // must not panic
+}
+
+// TestBufferCanvasDrawImageNilData verifies DrawImage with nil image data is a no-op.
+func TestBufferCanvasDrawImageNilData(t *testing.T) {
+	c, _ := makeTestCanvas(16, 16)
+	img := &Image{data: nil, width: 4, height: 4}
+	c.DrawImage(img, 0, 0, 16, 16) // must not panic
+}
+
+// TestBufferCanvasDrawImageEmptyBounds verifies DrawImage when imageToBuffer returns nil.
+func TestBufferCanvasDrawImageEmptyBounds(t *testing.T) {
+	c, _ := makeTestCanvas(16, 16)
+	// Image with 0-size bounds — imageToBuffer returns nil
+	empty := image.NewNRGBA(image.Rect(0, 0, 0, 0))
+	img := &Image{data: empty, width: 0, height: 0}
+	c.DrawImage(img, 0, 0, 16, 16) // must not panic
+}
+
+// TestUploadImageToAtlasNilAtlas verifies uploadImageToAtlas returns ErrNoAtlas when atlas is nil.
+func TestUploadImageToAtlasNilAtlas(t *testing.T) {
+	rm := newResourceManager(nil)
+	// rm.textureAtlas is nil by default
+	src := image.NewNRGBA(image.Rect(0, 0, 4, 4))
+	img := &Image{id: 1, data: src, width: 4, height: 4}
+	err := rm.uploadImageToAtlas(img)
+	if err != ErrNoAtlas {
+		t.Errorf("expected ErrNoAtlas, got %v", err)
+	}
+}
+
+// TestLabelDrawEmptyText verifies Label.Draw with empty text is a no-op.
+func TestLabelDrawEmptyText(t *testing.T) {
+	lbl := NewLabel("", Size{Width: 50, Height: 10})
+	c, _ := makeTestCanvas(64, 64)
+	lbl.Draw(c) // early return path
+}
+
+// TestBufferCanvasRadialGradientWider verifies RadialGradient when height < width.
+func TestBufferCanvasRadialGradientWider(t *testing.T) {
+	c, _ := makeTestCanvas(64, 64)
+	c.RadialGradient(0, 0, 64, 32, RGBA(255, 0, 0, 255), RGBA(0, 0, 255, 255))
+}
