@@ -248,8 +248,8 @@ func TestRing_ConcurrentAcquire(t *testing.T) {
 				// Simulate work
 				time.Sleep(time.Microsecond)
 
-				ring.MarkDisplaying(slot.Index)
-				ring.MarkReleased(slot.Index)
+				_ = ring.MarkDisplaying(slot.Index)
+				_ = ring.MarkReleased(slot.Index)
 			}
 		}()
 	}
