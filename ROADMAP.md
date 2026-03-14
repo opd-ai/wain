@@ -65,9 +65,9 @@ Wain is a **statically-compiled Go UI toolkit** that:
 |---|-------------|--------|----------|-----------------|
 | 1 | Single static binary (no dynamic deps) | ✅ Achieved | CI: `ldd bin/wain` = "not a dynamic executable"; Makefile enforces `-extldflags '-static'` | — |
 | 2 | Wayland client (9 packages) | ✅ Achieved | `internal/wayland/`: wire, socket, client, shm, xdg, input, dmabuf, datadevice, output; 9 packages with 85–100% test coverage | — |
-| 3 | X11 client (9 packages) | ✅ Achieved | `internal/x11/`: wire, client, events, gc, shm, dri3, present, dpi, selection, dnd; 10 packages with 75–100% coverage | — |
+| 3 | X11 client (10 packages) | ✅ Achieved | `internal/x11/`: wire, client, events, gc, shm, dri3, present, dpi, selection, dnd; 10 packages with 75–100% coverage | — |
 | 4 | Software 2D rasterizer (7 packages) | ✅ Achieved | `internal/raster/`: primitives, curves, composite, effects, text, displaylist, consumer; coverage 85–94% | — |
-| 5 | UI widget layer (5 packages) | ✅ Achieved | `internal/ui/`: layout, pctwidget, widgets, decorations, scale, animation; Button, TextInput, ScrollContainer implemented | — |
+| 5 | UI widget layer (6 packages) | ✅ Achieved | `internal/ui/`: layout, pctwidget, widgets, decorations, scale, animation; Button, TextInput, ScrollContainer implemented | — |
 | 6 | GPU buffer infrastructure | ✅ Achieved | `render-sys/src/allocator.rs`, `slab.rs`, `drm.rs`, `i915.rs`, `xe.rs`, `amd.rs` (~3800 lines Rust) | — |
 | 7 | GPU command submission | ⚠️ Partial | `render-sys/src/batch.rs`, `pipeline.rs`, `surface.rs`, `cmd/` exist (~2500 lines); Intel Gen9–12 batches functional; GPU backend wired into `App.RenderFrame` via `backend.Renderer` interface | No dedicated `cmd/gpu-ui-demo` for interactive UI rendered entirely via GPU; `gpu_pipeline_test.go` end-to-end test not yet created |
 | 8 | Shader frontend (naga) | ✅ Achieved | `render-sys/src/shader.rs` (538 lines); 7 WGSL shaders in `render-sys/shaders/`; `cmd/shader-test` validates all 7 | — |
