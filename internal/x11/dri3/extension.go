@@ -259,7 +259,7 @@ func (e *Extension) PixmapFromBuffers(conn Connection, pixmap, drawable XID,
 	strides, offsets []uint32, fds []int,
 ) error {
 	if err := e.validatePixmapFromBuffersParams(strides, offsets, fds); err != nil {
-		return err
+		return fmt.Errorf("dri3: validate PixmapFromBuffers params: %w", err)
 	}
 
 	request := e.buildPixmapFromBuffersRequest(pixmap, drawable, width, height,

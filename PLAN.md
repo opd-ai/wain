@@ -88,7 +88,7 @@ Performance (Step 5) and GPU integration (Step 6) require Steps 1–4. Accessibi
 
 ---
 
-### Step 1: Add `Pixels() []byte` to `SoftwareBackend` and implement SHM presenters
+### Step 1: Add `Pixels() []byte` to `SoftwareBackend` and implement SHM presenters ✅ DONE
 
 **Why first**: Every other step depends on software rendering working. CI has no GPU;
 the software path is the only one exercisable in automated tests and by most users.
@@ -129,7 +129,7 @@ go-stats-generator analyze ./internal/render/display/ --skip-tests --format json
 
 ---
 
-### Step 2: Wire presentation pipeline into `Window.RenderFrame()` (public API)
+### Step 2: Wire presentation pipeline into `Window.RenderFrame()` (public API) ✅ DONE
 
 **Why second**: Depends on Step 1 (software presenters). This is the core functional
 gap: Gap 1. Without this step, every application using the public API shows a blank
@@ -173,7 +173,7 @@ go-stats-generator analyze . --skip-tests --format json --sections functions \
 
 ---
 
-### Step 3: Implement `cmd/widget-demo` interactive display (replace stubs)
+### Step 3: Implement `cmd/widget-demo` interactive display (replace stubs) ✅ DONE
 
 **Why third**: Depends on Step 2 (working `App.Run()` + presentation pipeline).
 `cmd/widget-demo` is the most prominent demo in the README; its stub state damages
@@ -205,7 +205,7 @@ go-stats-generator analyze cmd/widget-demo/ --skip-tests --format json \
 
 ---
 
-### Step 4: Add software-path CI benchmark and raster SIMD pre-allocation fixes
+### Step 4: Add software-path CI benchmark and raster SIMD pre-allocation fixes ✅ DONE
 
 **Why fourth**: Performance targets are stated product guarantees (HARDWARE.md:
 `≤16ms` software frame at 1080p). This step creates the measurement infrastructure
@@ -258,7 +258,7 @@ go-stats-generator analyze ./internal/render/backend/ --skip-tests --format json
 
 ---
 
-### Step 5: GPU UI rendering — wire display list to GPU batch submission
+### Step 5: GPU UI rendering — wire display list to GPU batch submission ⚠️ BLOCKED (requires Intel Gen9+ hardware and Rust shader implementation)
 
 **Why fifth**: Depends on Steps 1–2 (pipeline plumbing in place). The GPU
 infrastructure exists (batch buffers, shaders, pipeline state) but no UI-level
@@ -304,7 +304,7 @@ go test -tags=integration -run TestGPURenderUIScene ./internal/integration/... -
 
 ---
 
-### Step 6: AT-SPI2 screen reader integration (`internal/a11y/atspi`)
+### Step 6: AT-SPI2 screen reader integration (`internal/a11y/atspi`) ✅ DONE
 
 **Why sixth**: The only gap not on the critical rendering path. Depends on a working
 `App.Run()` (Step 2) since AT-SPI2 needs to register with the running application.
@@ -354,7 +354,7 @@ go-stats-generator analyze ./internal/a11y/atspi/ --skip-tests --format json \
 
 ---
 
-### Step 7: Error context wrapping and resource leak remediation
+### Step 7: Error context wrapping and resource leak remediation ✅ DONE
 
 **Why seventh**: 96 bare error returns in library code make debugging production
 failures difficult; 15 resource-acquisition sites lack `defer close()`. These are
@@ -411,7 +411,7 @@ go-stats-generator analyze . --skip-tests --format json --sections patterns \
 
 ---
 
-### Step 8: API stabilization — compatibility tests and v1.0.0 tag
+### Step 8: API stabilization — compatibility tests and v1.0.0 tag ✅ DONE
 
 **Why eighth**: Requires Steps 1–7 to be done — a stable API commitment is only
 meaningful when the core functionality works. The `STABILITY.md` and `compat_test.go`

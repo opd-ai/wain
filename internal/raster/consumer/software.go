@@ -44,7 +44,7 @@ func (sc *SoftwareConsumer) Render(dl *displaylist.DisplayList, buf *primitives.
 
 	for _, cmd := range dl.Commands() {
 		if err := sc.renderCommand(cmd, buf); err != nil {
-			return err
+			return fmt.Errorf("consumer: render command %v: %w", cmd.Type, err)
 		}
 	}
 

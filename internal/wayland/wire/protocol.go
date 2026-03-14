@@ -370,7 +370,7 @@ func EncodeMessage(msg *Message) ([]byte, []int, error) {
 
 // encodeArguments encodes message arguments and collects file descriptors.
 func encodeArguments(w io.Writer, args []Argument) ([]int, error) {
-	var fds []int
+	fds := make([]int, 0, len(args))
 	for i := range args {
 		fd, err := encodeArgument(w, &args[i])
 		if err != nil {

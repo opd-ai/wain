@@ -201,7 +201,7 @@ func (r *Ring) tryAcquireSlot() (*Slot, bool) {
 func (r *Ring) markSlotTransition(index int, from, to SlotState, after func(*Slot)) error {
 	slot, err := r.GetSlot(index)
 	if err != nil {
-		return err
+		return fmt.Errorf("ring: get slot %d: %w", index, err)
 	}
 
 	slot.mu.Lock()
@@ -237,7 +237,7 @@ func (r *Ring) MarkReleased(index int) error {
 func (r *Ring) MarkAvailable(index int) error {
 	slot, err := r.GetSlot(index)
 	if err != nil {
-		return err
+		return fmt.Errorf("ring: get slot %d: %w", index, err)
 	}
 	slot.setState(StateAvailable)
 	return nil

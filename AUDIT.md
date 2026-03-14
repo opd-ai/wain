@@ -1,6 +1,6 @@
 # Implementation Gaps — 2026-03-14
 
-## Gap 1: Public API Window Does Not Display Pixels
+## Gap 1: Public API Window Does Not Display Pixels ✅ RESOLVED
 
 - **Stated Goal**: The README shows a working `app.Run()` loop that opens a window and renders widgets to the screen. The `App` type claims to "auto-detect the display server and renderer" and the `Window` type supports `SetLayout()` with a full widget tree.
 - **Current State**: `App.Run()` calls `win.RenderFrame()` → `RenderBridge.Render()` → `renderer.Render(dl)`, which fills an internal GPU or software buffer. However, `RenderBridge.Present()` is **never called** from the event loop, and neither `WaylandPipeline` nor `X11Pipeline` (from `internal/render/display`) are created or used by the `App` type. The Wayland surface receives one empty `wl_surface.commit` at initialization (`app.go:380`) with no buffer attached; the X11 window receives no pixel data at all. The rendered content lives in heap memory and is never sent to the compositor.
@@ -14,7 +14,7 @@
 
 ---
 
-## Gap 2: Software Backend Cannot Present Frames
+## Gap 2: Software Backend Cannot Present Frames ✅ RESOLVED
 
 - **Stated Goal**: The README and HARDWARE.md state that wain "automatically falls back to a software rasterizer that produces pixel-identical output to the GPU backends" when no compatible GPU is detected.
 - **Current State**: `SoftwareBackend.Present()` always returns `ErrSoftwareNoDmabuf` (file descriptor = −1). The `display.WaylandPipeline` calls `renderer.Present()` expecting a DMA-BUF file descriptor; passing a `SoftwareBackend` causes every frame submission to fail with an error. There is no SHM-based presentation path in the display pipeline.
@@ -28,7 +28,7 @@
 
 ---
 
-## Gap 3: AT-SPI2 Screen-Reader Support Missing
+## Gap 3: AT-SPI2 Screen-Reader Support Missing ✅ RESOLVED
 
 - **Stated Goal**: ACCESSIBILITY.md documents the full AT-SPI2 D-Bus interface set (`Accessible`, `Component`, `Action`, `Text`, `Value`) and describes the implementation path. The project claims Linux-first accessibility support.
 - **Current State**: `internal/a11y/` implements only keyboard-focus traversal and event routing. No D-Bus objects are exported, no `org.a11y.atspi.*` interfaces exist. `ACCESSIBILITY.md:14` explicitly acknowledges: "Wain does not currently implement AT-SPI2 accessibility support."
@@ -42,7 +42,7 @@
 
 ---
 
-## Gap 4: GPU Rendering Path Not Exercised for Real UI Workloads
+## Gap 4: GPU Rendering Path Not Exercised for Real UI Workloads ⚠️ BLOCKED (requires Intel Gen9+ GPU hardware and Rust shader implementation)
 
 - **Stated Goal**: The README's "GPU Command Submission" feature entry describes "Batch buffer construction, Intel 3D pipeline command encoding … pipeline state objects, and surface/sampler state encoding." HARDWARE.md states `<2 ms` GPU frame time for typical UI (200–500 rectangles, 50–100 text runs).
 - **Current State**: The GPU infrastructure (batch buffers, shaders, pipeline state) is implemented in `render-sys/src/` and tested in Rust unit tests. The Go-side `GPUBackend.Render()` submits a batch buffer via `render.SubmitBatch()` (real ioctl path), but the only end-to-end GPU demo is `cmd/gpu-triangle-demo` (triangle geometry only). No UI-level workload (rectangles from a display list, text, shadows) is ever submitted to the GPU in any demo or test. The `display/wayland.go` and `display/x11.go` pipelines, while structurally complete, are not wired into the `App` type (Gap 1).
@@ -55,7 +55,7 @@
 
 ---
 
-## Gap 5: Performance Targets Not Verified in CI
+## Gap 5: Performance Targets Not Verified in CI ✅ RESOLVED
 
 - **Stated Goal**: HARDWARE.md states `<2 ms` GPU frame time and `≤16 ms` software frame time (60 FPS at 1080p). These are positioned as product guarantees.
 - **Current State**: No benchmark runs in CI. `cmd/perf-demo` exists but is not invoked in `.github/workflows/ci.yml`. Software performance measurements in HARDWARE.md are from a single ad-hoc session on one machine.
@@ -68,7 +68,7 @@
 
 ---
 
-## Gap 6: `cmd/widget-demo` Interactive Display Not Implemented
+## Gap 6: `cmd/widget-demo` Interactive Display Not Implemented ✅ RESOLVED
 
 - **Stated Goal**: The README lists `widget-demo` under "Demonstration Binaries" as an "interactive widget demo (X11/Wayland)."
 - **Current State**: Both `runWayland()` and `runX11()` in `cmd/widget-demo/main.go` are stubs that print a warning message and return immediately. The demo simulates click/scroll events in-process for X11, but no window is ever shown.
@@ -81,7 +81,7 @@
 
 ---
 
-## Gap 7: API Stability Not Declared
+## Gap 7: API Stability Not Declared ✅ RESOLVED
 
 - **Stated Goal**: The README notes "(v0.2.0): The public API is functional but not yet API-stable. Signatures may change in future minor releases until v1.0.0 is tagged."
 - **Current State**: No `v1.0.0` tag, no `STABILITY.md`, no compatibility-test suite. There are 32 identifier naming suggestions from `go-stats-generator` (e.g., `Uint32s`, `OnPixmapIdle`) that indicate names may still evolve.

@@ -151,7 +151,7 @@ func (c *Conn) RecvMsg(data []byte, maxFDs int) (n int, fds []int, err error) {
 
 // parseFDs extracts file descriptors from SCM_RIGHTS control messages.
 func parseFDs(oob []byte) ([]int, error) {
-	var fds []int
+	fds := make([]int, 0, 4)
 	scms, err := syscall.ParseSocketControlMessage(oob)
 	if err != nil {
 		return nil, fmt.Errorf("socket: failed to parse control message: %w", err)

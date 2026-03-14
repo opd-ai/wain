@@ -243,7 +243,8 @@ func (t *Toplevel) handleConfigureEvent(args []wire.Argument) error {
 	statesData := args[2].Value.([]byte)
 
 	// Parse states array (each state is a uint32).
-	var states []State
+	numStates := len(statesData) / 4
+	states := make([]State, 0, numStates)
 	for i := 0; i+3 < len(statesData); i += 4 {
 		stateVal := uint32(statesData[i]) |
 			uint32(statesData[i+1])<<8 |

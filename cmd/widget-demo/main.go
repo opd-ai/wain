@@ -22,6 +22,7 @@ import (
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/ui/widgets"
+	"github.com/opd-ai/wain/internal/wayland/client"
 	x11client "github.com/opd-ai/wain/internal/x11/client"
 	"github.com/opd-ai/wain/internal/x11/gc"
 	"github.com/opd-ai/wain/internal/x11/wire"
@@ -329,6 +330,36 @@ func generateScrollItems(count int) []string {
 	return items
 }
 
+// waylandSurface holds Wayland surface/toplevel objects for a demo window.
+type waylandSurface struct {
+	ctx     *demo.WaylandContext
+	surface *client.Surface
+}
+
+// setupWaylandWindow creates a titled toplevel window using the provided Wayland globals.
+func setupWaylandWindow(wlCtx *demo.WaylandContext, title string) (*waylandSurface, error) {
+	surface, err := wlCtx.Compositor.CreateSurface()
+	if err != nil {
+		return nil, fmt.Errorf("create surface: %w", err)
+	}
+
+	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
+	if err != nil {
+		return nil, fmt.Errorf("create xdg_surface: %w", err)
+	}
+
+	toplevel, err := xdgSurface.GetToplevel()
+	if err != nil {
+		return nil, fmt.Errorf("create xdg_toplevel: %w", err)
+	}
+	toplevel.SetTitle(title)
+	if err := surface.Commit(); err != nil {
+		return nil, fmt.Errorf("initial commit: %w", err)
+	}
+
+	return &waylandSurface{ctx: wlCtx, surface: surface}, nil
+}
+
 // runWayland displays the widget demo on a Wayland compositor.
 // It connects to the compositor, creates a surface, renders the initial frame
 // and then presents ~90 frames at ~30 FPS (≈3 seconds) before exiting.
@@ -344,23 +375,9 @@ func runWayland(app *application) error {
 		return fmt.Errorf("setup Wayland globals: %w", err)
 	}
 
-	surface, err := wlCtx.Compositor.CreateSurface()
+	ws, err := setupWaylandWindow(wlCtx, "wain Widget Demo")
 	if err != nil {
-		return fmt.Errorf("create surface: %w", err)
-	}
-
-	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
-	if err != nil {
-		return fmt.Errorf("create xdg_surface: %w", err)
-	}
-
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return fmt.Errorf("create xdg_toplevel: %w", err)
-	}
-	toplevel.SetTitle("wain Widget Demo")
-	if err := surface.Commit(); err != nil {
-		return fmt.Errorf("initial commit: %w", err)
+		return err
 	}
 
 	fmt.Println("      ✓ Wayland window created and visible")
@@ -373,7 +390,7 @@ func runWayland(app *application) error {
 		if app.needsRedraw || i == 0 {
 			app.render()
 		}
-		if err := demo.AttachAndDisplayBuffer(wlCtx.SHM, surface, app.buffer, windowWidth, windowHeight); err != nil {
+		if err := demo.AttachAndDisplayBuffer(ws.ctx.SHM, ws.surface, app.buffer, windowWidth, windowHeight); err != nil {
 			return fmt.Errorf("frame %d: %w", i, err)
 		}
 		time.Sleep(frameDur)
