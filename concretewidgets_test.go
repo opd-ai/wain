@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/opd-ai/wain/internal/raster/primitives"
+	"github.com/opd-ai/wain/internal/raster/text"
 )
 
 // Test helper to create PointerEvent
@@ -814,4 +815,31 @@ func TestLabelDrawEmptyText(t *testing.T) {
 func TestBufferCanvasRadialGradientWider(t *testing.T) {
 	c, _ := makeTestCanvas(64, 64)
 	c.RadialGradient(0, 0, 64, 32, RGBA(255, 0, 0, 255), RGBA(0, 0, 255, 255))
+}
+
+// TestBufferCanvasDrawTextValidFont verifies DrawText with a valid font/atlas.
+func TestBufferCanvasDrawTextValidFont(t *testing.T) {
+	a, err := text.NewAtlas()
+	if err != nil {
+		t.Skip("embedded font atlas unavailable:", err)
+	}
+	buf, _ := primitives.NewBuffer(100, 50)
+	c := newBufferCanvas(buf, 0, 0)
+	font := &Font{atlas: a, size: 12}
+	c.DrawText("hi", 0, 0, font, RGB(0, 0, 0))
+}
+
+// hugeImage is a mock image.Image whose Bounds() returns dimensions > 16384.
+type hugeImage struct{}
+
+func (h *hugeImage) ColorModel() color.Model          { return color.RGBAModel }
+func (h *hugeImage) Bounds() image.Rectangle         { return image.Rect(0, 0, 16385, 1) }
+func (h *hugeImage) At(x, y int) color.Color          { return color.Black }
+
+// TestImageToBufferOversizedImage covers the primitives.NewBuffer error path.
+func TestImageToBufferOversizedImage(t *testing.T) {
+result := imageToBuffer(&hugeImage{})
+if result != nil {
+t.Error("expected nil for oversized image, got non-nil buffer")
+}
 }

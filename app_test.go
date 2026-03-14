@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/png"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/opd-ai/wain/internal/raster/primitives"
@@ -1078,4 +1079,104 @@ func TestAppResourceMethodsWithInitializedResources(t *testing.T) {
 	if img.width <= 0 || img.height <= 0 {
 		t.Error("loaded image has zero dimensions")
 	}
+
+	// LoadImage — non-nil path (write a temp PNG and load it)
+	tmpFile := t.TempDir() + "/test.png"
+	if tf, ferr := os.Create(tmpFile); ferr == nil {
+		_ = png.Encode(tf, image.NewRGBA(image.Rect(0, 0, 1, 1)))
+		tf.Close()
+		if img2, lerr := a.LoadImage(tmpFile); lerr != nil {
+			t.Fatalf("LoadImage failed: %v", lerr)
+		} else if img2.width <= 0 {
+			t.Error("LoadImage returned zero-width image")
+		}
+	}
+}
+
+// TestWindowSetTitleDisplayServerBranches covers Wayland/X11 switch arms in SetTitle.
+func TestWindowSetTitleDisplayServerBranches(t *testing.T) {
+// Wayland path with nil toplevel (skips the set, no error)
+app := &App{displayServer: DisplayServerWayland}
+w := &Window{app: app}
+if err := w.SetTitle("wayland title"); err != nil {
+t.Errorf("Wayland/nil-toplevel SetTitle: %v", err)
+}
+
+// X11 path with zero x11Window (skips the set, no error)
+app2 := &App{displayServer: DisplayServerX11}
+w2 := &Window{app: app2}
+if err := w2.SetTitle("x11 title"); err != nil {
+t.Errorf("X11/zero-window SetTitle: %v", err)
+}
+}
+
+// TestWindowSetSizeDisplayServerBranches covers Wayland/X11 switch arms in SetSize.
+func TestWindowSetSizeDisplayServerBranches(t *testing.T) {
+// Wayland returns nil immediately (client-side resize not allowed)
+app := &App{displayServer: DisplayServerWayland}
+w := &Window{app: app, width: 800, height: 600}
+if err := w.SetSize(1024, 768); err != nil {
+t.Errorf("Wayland SetSize: %v", err)
+}
+
+// X11 path with zero x11Window (skips configure, no error)
+app2 := &App{displayServer: DisplayServerX11}
+w2 := &Window{app: app2}
+if err := w2.SetSize(1024, 768); err != nil {
+t.Errorf("X11/zero-window SetSize: %v", err)
+}
+}
+
+// TestWindowSetMinMaxSizeDisplayServerBranches covers switch arms in SetMinSize/SetMaxSize.
+func TestWindowSetMinMaxSizeDisplayServerBranches(t *testing.T) {
+app := &App{displayServer: DisplayServerWayland}
+w := &Window{app: app}
+if err := w.SetMinSize(100, 100); err != nil {
+t.Errorf("Wayland SetMinSize: %v", err)
+}
+if err := w.SetMaxSize(1920, 1080); err != nil {
+t.Errorf("Wayland SetMaxSize: %v", err)
+}
+
+app2 := &App{displayServer: DisplayServerX11}
+w2 := &Window{app: app2}
+if err := w2.SetMinSize(100, 100); err != nil {
+t.Errorf("X11/zero-window SetMinSize: %v", err)
+}
+if err := w2.SetMaxSize(1920, 1080); err != nil {
+t.Errorf("X11/zero-window SetMaxSize: %v", err)
+}
+}
+
+// TestWindowSetFullscreenDisplayServerBranches covers switch arms in SetFullscreen.
+func TestWindowSetFullscreenDisplayServerBranches(t *testing.T) {
+// Wayland with nil toplevel (applyWaylandFullscreen returns nil)
+app := &App{displayServer: DisplayServerWayland}
+w := &Window{app: app}
+if err := w.SetFullscreen(true); err != nil {
+t.Errorf("Wayland SetFullscreen(true): %v", err)
+}
+if err := w.SetFullscreen(false); err != nil {
+t.Errorf("Wayland SetFullscreen(false): %v", err)
+}
+
+// X11 with zero x11Window (skips the call, no error)
+app2 := &App{displayServer: DisplayServerX11}
+w2 := &Window{app: app2}
+if err := w2.SetFullscreen(true); err != nil {
+t.Errorf("X11/zero-window SetFullscreen: %v", err)
+}
+}
+
+// TestWindowCloseDisplayServerBranches covers switch arms in Close.
+func TestWindowCloseDisplayServerBranches(t *testing.T) {
+// Wayland with nil surface (skips destroy, no error)
+app := &App{displayServer: DisplayServerWayland}
+w := &Window{app: app}
+w.Close()
+
+// X11 with zero x11Window (skips destroy, no error)
+app2 := &App{displayServer: DisplayServerX11}
+w2 := &Window{app: app2}
+w2.Close()
 }

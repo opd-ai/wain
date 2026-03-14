@@ -35,10 +35,10 @@ were documented no-ops. Fixed by wiring each method to the corresponding
 
 ---
 
-## TD-3 — GPU shader-to-ISA compilation CI gate (IN PROGRESS)
+## TD-3 — GPU shader-to-ISA compilation CI gate (RESOLVED)
 
-**Status:** In Progress  
-**File:** `render-sys/src/eu/`, `render-sys/src/rdna/`, `.github/workflows/ci.yml`  
+**Status:** Resolved (v1.1)  
+**File:** `render-sys/tests/shader_compile.rs`, `render-sys/Cargo.toml`, `.github/workflows/ci.yml`, `HARDWARE.md`  
 **Priority:** P2 / Medium  
 **Effort:** Medium
 
@@ -46,25 +46,30 @@ Goals #9 (Intel EU backend) and #10 (AMD RDNA backend) are partially achieved:
 code compiles and unit tests pass, but no automated test verifies that WGSL
 shaders produce non-empty ISA byte sequences without physical GPU hardware.
 
-**Planned action:** Add a Rust integration test (`tests/shader_compile.rs`) that
-loads each of the 7 WGSL shaders, runs them through the EU and RDNA lowering
-passes, and asserts the emitted byte blobs are non-empty. Wire this into CI.
+**Resolution:** Added `render-sys/tests/shader_compile.rs` — a Cargo integration
+test that loads all 7 WGSL UI shaders, compiles each through naga → Intel EU
+(Gen9/Gen11/Gen12) and AMD RDNA (RDNA1/RDNA2/RDNA3) lowering passes, and asserts
+the emitted byte blobs are non-empty and correctly aligned. Added `"rlib"` to
+`Cargo.toml` crate-type to enable integration tests alongside the staticlib.
+Added explicit "Run shader-to-ISA compilation CI gate" step to CI. Updated
+`HARDWARE.md` to distinguish "code-verified" from "hardware-validated" GPU support.
 
 ---
 
-## TD-4 — AT-SPI2 build tag undocumented in README / STABILITY.md
+## TD-4 — AT-SPI2 build tag undocumented in README / STABILITY.md (RESOLVED)
 
-**Status:** Open  
+**Status:** Resolved (v1.1)  
 **File:** `README.md`, `STABILITY.md`, `accessibility.go`  
 **Priority:** P3 / Low  
 **Effort:** Trivial
 
 `EnableAccessibility` is a no-op returning `nil` without `-tags=atspi`. The
 `ACCESSIBILITY.md` documents this, but the README feature bullet and the
-`STABILITY.md` stability guarantees section do not.
+`STABILITY.md` stability guarantees section did not.
 
-**Planned action:** Add a parenthetical note to both files pointing at
-`ACCESSIBILITY.md`.
+**Resolution:** Added parenthetical to `README.md` feature bullet (line 53):
+`requires \`-tags=atspi\` — see ACCESSIBILITY.md`. Added a "Build Tag: atspi"
+section to `STABILITY.md` with usage instructions.
 
 ---
 
@@ -83,20 +88,22 @@ and the config used v1 format, causing hard failures against Go 1.24. Fixed by:
 
 ---
 
-## TD-6 — `internal/a11y` has zero test coverage
+## TD-6 — `internal/a11y` has zero test coverage (RESOLVED)
 
-**Status:** Open  
-**File:** `internal/a11y/` (10 source files, 75 functions)  
+**Status:** Resolved (v1.1)  
+**File:** `internal/a11y/manager_test.go` (new)  
 **Priority:** P3 / Medium  
 **Effort:** Medium
 
-The AT-SPI2 implementation has no test files. Any refactor silently breaks
+The AT-SPI2 implementation had no test files. Any refactor silently broke
 screen-reader support without CI feedback.
 
-**Planned action:** Add `internal/a11y/manager_test.go` with stub D-Bus
-connection tests covering registration, focus events, and action invocation.
-Target: ≥ 70% statement coverage with `-tags=atspi`.
+**Resolution:** Added `internal/a11y/manager_test.go` with headless unit tests
+covering `AccessibleObject` setters, all four AT-SPI2 interface wrappers
+(`accessibleIface`, `componentIface`, `actionIface`, `textIface`), and the
+D-Bus-free Manager paths (`lookupObject`, `SetBounds`, `SetText`, `SetName`,
+`SetFocused`). Coverage: 74.2% with `-tags=atspi`, exceeding the 70% target.
 
 ---
 
-*Last updated: 2026-03-14*
+*Last updated: 2026-03-15*

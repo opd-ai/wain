@@ -252,3 +252,23 @@ func TestSelectClipboardMime(t *testing.T) {
 		}
 	}
 }
+
+// TestX11SelectionAdapterBuildRequest verifies the pure buildRequest method.
+func TestX11SelectionAdapterBuildRequest(t *testing.T) {
+a := &x11SelectionAdapter{} // conn is nil; buildRequest doesn't use it
+payload := []byte{1, 2, 3, 4, 5}
+buf := a.buildRequest(10, 0, payload)
+if len(buf) == 0 {
+t.Error("buildRequest returned empty buffer")
+}
+// Verify 4-byte alignment
+if len(buf)%4 != 0 {
+t.Errorf("buildRequest result not 4-byte aligned: len=%d", len(buf))
+}
+
+// Empty payload path
+buf2 := a.buildRequest(1, 0, nil)
+if len(buf2)%4 != 0 {
+t.Errorf("buildRequest (nil payload) not 4-byte aligned: len=%d", len(buf2))
+}
+}

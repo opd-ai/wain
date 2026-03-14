@@ -7,7 +7,7 @@ license = "MIT"
 
 [lib]
 name = "render_sys"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "rlib"]
 
 [dependencies]
 nix = { version = "0.27", features = ["ioctl"] }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/raster/text"
 )
 
 // mockEvent is a simple event implementation for testing.
@@ -257,3 +258,19 @@ func TestDisplayListCanvasDrawTextNilAtlas(t *testing.T) {
 	font := &Font{size: 14} // atlas is nil
 	canvas.DrawText("hello", 0, 0, font, RGB(0, 0, 0))
 }
+
+// TestDisplayListCanvasDrawTextValidFont verifies DrawText with a valid font/atlas.
+func TestDisplayListCanvasDrawTextValidFont(t *testing.T) {
+a, err := text.NewAtlas()
+if err != nil {
+t.Skip("embedded font atlas unavailable:", err)
+}
+dl := displaylist.New()
+canvas := newDisplayListCanvas(dl)
+font := &Font{atlas: a, size: 14}
+canvas.DrawText("hello", 0, 0, font, RGB(255, 255, 255))
+// Also exercise the font.size == 0 branch (uses default 14)
+fontNoSize := &Font{atlas: a, size: 0}
+canvas.DrawText("world", 0, 0, fontNoSize, RGB(0, 0, 0))
+}
+

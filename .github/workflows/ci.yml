@@ -48,6 +48,12 @@ jobs:
           cargo test --manifest-path render-sys/Cargo.toml \
             --target x86_64-unknown-linux-musl
 
+      - name: Run shader-to-ISA compilation CI gate
+        run: |
+          cargo test --manifest-path render-sys/Cargo.toml \
+            --target x86_64-unknown-linux-musl \
+            --test shader_compile -- --nocapture
+
       - name: Build Rust static library (musl)
         run: |
           cargo build --release \

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"image/gif"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -317,4 +318,21 @@ func TestLoadImageFromReaderUnsupportedFormat(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for GIF format (unsupported)")
 	}
+}
+
+// TestLoadImageFromReaderGIFUnsupported encodes a real GIF and verifies the
+// ErrUnsupportedImageFormat path in LoadImageFromReader.
+func TestLoadImageFromReaderGIFUnsupported(t *testing.T) {
+// Encode a 1x1 GIF using image/gif (registers the "gif" format).
+img := image.NewPaletted(image.Rect(0, 0, 1, 1), []color.Color{color.Black})
+var buf bytes.Buffer
+if err := gif.Encode(&buf, img, nil); err != nil {
+t.Skip("gif.Encode failed:", err)
+}
+
+rm := newResourceManager(nil)
+_, err := rm.LoadImageFromReader(&buf, "test.gif")
+if err == nil {
+t.Fatal("expected error for GIF (unsupported format)")
+}
 }

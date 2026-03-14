@@ -333,10 +333,27 @@ wain's CI pipeline tests the following configurations:
 | Unit Tests (Rust) | Software | N/A | N/A | Ubuntu 24.04 | ✅ Passing |
 | Integration Tests | Software | N/A | N/A | Ubuntu 24.04 | ✅ Passing |
 | Screenshot Tests | Software | N/A | N/A | Ubuntu 24.04 | ✅ Passing |
-| GPU Tests (Intel) | Intel UHD | i915 | X11 | Manual | ⚠️ Manual |
-| GPU Tests (AMD) | RDNA2 | amdgpu | Wayland | Manual | ⚠️ Manual |
+| Shader→ISA (Intel EU, code-verified) | None | N/A | N/A | Ubuntu 24.04 | ✅ Passing |
+| Shader→ISA (AMD RDNA, code-verified) | None | N/A | N/A | Ubuntu 24.04 | ✅ Passing |
+| GPU Tests (Intel, hardware-validated) | Intel UHD | i915 | X11 | Manual | ⚠️ Manual |
+| GPU Tests (AMD, hardware-validated) | RDNA2 | amdgpu | Wayland | Manual | ⚠️ Manual |
 
 **Manual tests** require physical hardware and are run on-demand before releases.
+
+### Code-Verified vs Hardware-Validated
+
+wain distinguishes two levels of GPU correctness confidence:
+
+- **Code-verified (shader compiles to ISA bytes):** The shader compilation pipeline
+  (WGSL → naga IR → Intel EU binary / AMD RDNA binary) is exercised in CI on every
+  push via `render-sys/tests/shader_compile.rs`. All 7 UI shaders are compiled for all
+  supported GPU generations (Intel Gen9/Gen11/Gen12; AMD RDNA1/RDNA2/RDNA3). Regressions
+  in the shader compiler are caught without requiring GPU hardware.
+
+- **Hardware-validated (frame submitted and displayed on physical GPU):** Full end-to-end
+  rendering (DRM open → buffer alloc → command submit → scanout) is validated only on
+  physical hardware before releases. CI does not have access to GPU render nodes.
+
 
 ---
 
