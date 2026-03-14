@@ -129,6 +129,12 @@ type App struct {
 	waylandDataDeviceMgr *datadevice.Manager
 	waylandDataDevice    *datadevice.Device
 
+	// Wayland drag-and-drop state
+	waylandDragOffer   *datadevice.Offer // current offer during an in-progress drag
+	waylandDragSurface uint32            // surface ID of the window being dragged over
+	waylandDragX       float64
+	waylandDragY       float64
+
 	// Rendering backend
 	renderer    backend.Renderer
 	backendType backend.BackendType
@@ -2054,7 +2060,14 @@ func (a *App) processWaylandEvents() error {
 	}
 
 	// Dispatch the event to the appropriate object handler
-	return a.dispatchWaylandEvent(msg)
+	if err := a.dispatchWaylandEvent(msg); err != nil {
+		return err
+	}
+
+	// Process any drag-and-drop channel events that may have been populated
+	// by the data device handlers during message dispatch.
+	a.processWaylandDragEvents()
+	return nil
 }
 
 // dispatchWaylandEvent routes a Wayland event to the appropriate window handler.
@@ -2068,6 +2081,86 @@ func (a *App) dispatchWaylandEvent(msg *wlwire.Message) error {
 	}
 
 	return nil
+}
+
+// processWaylandDragEvents polls the data device's drag channels and dispatches
+// the appropriate DragEvent to the window currently under the drag pointer.
+// This must be called after each message dispatch so that events posted to the
+// channels by the data device handlers are consumed promptly.
+func (a *App) processWaylandDragEvents() {
+	if a.waylandDataDevice == nil {
+		return
+	}
+
+	select {
+	case ev := <-a.waylandDataDevice.DragEnterChannel():
+		a.waylandDragOffer = ev.Offer
+		a.waylandDragSurface = ev.Surface
+		a.waylandDragX = ev.X
+		a.waylandDragY = ev.Y
+		win := a.lookupWindow(ev.Surface)
+		if win != nil && ev.Offer != nil {
+			accepted := negotiateDragMime(win.dropMimeTypes, ev.Offer.MimeTypes())
+			if accepted != "" {
+				_ = ev.Offer.Accept(ev.Serial, accepted)
+			}
+			mimeTypes := ev.Offer.MimeTypes()
+			a.dispatchDragEvent(win, newDragEvent(DragEnter, ev.X, ev.Y, mimeTypes))
+		}
+	default:
+	}
+
+	select {
+	case ev := <-a.waylandDataDevice.DragMotionChannel():
+		a.waylandDragX = ev.X
+		a.waylandDragY = ev.Y
+		win := a.lookupWindow(a.waylandDragSurface)
+		if win != nil {
+			a.dispatchDragEvent(win, newDragEvent(DragMove, ev.X, ev.Y, nil))
+		}
+	default:
+	}
+
+	select {
+	case <-a.waylandDataDevice.DragLeaveChannel():
+		win := a.lookupWindow(a.waylandDragSurface)
+		if win != nil {
+			a.dispatchDragEvent(win, newDragEvent(DragLeave, a.waylandDragX, a.waylandDragY, nil))
+		}
+		a.waylandDragOffer = nil
+		a.waylandDragSurface = 0
+	default:
+	}
+
+	select {
+	case <-a.waylandDataDevice.DropChannel():
+		win := a.lookupWindow(a.waylandDragSurface)
+		if win != nil && a.waylandDragOffer != nil {
+			mimeType := negotiateDragMime(win.dropMimeTypes, a.waylandDragOffer.MimeTypes())
+			var data []byte
+			if mimeType != "" {
+				data, _ = a.waylandDragOffer.ReadData(mimeType)
+				_ = a.waylandDragOffer.Finish()
+			}
+			a.dispatchDragEvent(win, newDragDropEvent(a.waylandDragX, a.waylandDragY, mimeType, data))
+		}
+		a.waylandDragOffer = nil
+		a.waylandDragSurface = 0
+	default:
+	}
+}
+
+// negotiateDragMime returns the first MIME type in accepted that also appears
+// in offered, or an empty string if none match.
+func negotiateDragMime(accepted, offered []string) string {
+	for _, a := range accepted {
+		for _, o := range offered {
+			if a == o {
+				return a
+			}
+		}
+	}
+	return ""
 }
 
 // renderFrames renders frames for all dirty windows.
@@ -2149,6 +2242,6 @@ func (a *App) dispatchDragEvent(w *Window, evt *DragEvent) {
 	}
 	// Invoke the registered drop handler on DragDrop events.
 	if evt.kind == DragDrop && w.dropHandler != nil {
-		w.dropHandler("", nil)
+		w.dropHandler(evt.mimeType, evt.data)
 	}
 }

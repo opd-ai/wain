@@ -526,6 +526,9 @@ type DragEvent struct {
 	kind      DragEventKind
 	x, y      float64
 	mimeTypes []string
+	// mimeType and data are populated for DragDrop events.
+	mimeType string
+	data     []byte
 }
 
 // Type returns EventTypeDrag for drag-and-drop events.
@@ -544,6 +547,14 @@ func (e *DragEvent) Y() float64 { return e.y }
 // The slice is non-nil only for [DragEnter] events.
 func (e *DragEvent) MimeTypes() []string { return e.mimeTypes }
 
+// MimeType returns the negotiated MIME type for [DragDrop] events.
+// It is empty for all other event kinds.
+func (e *DragEvent) MimeType() string { return e.mimeType }
+
+// Data returns the transferred payload for [DragDrop] events.
+// It is nil for all other event kinds.
+func (e *DragEvent) Data() []byte { return e.data }
+
 // newDragEvent constructs a DragEvent.
 func newDragEvent(kind DragEventKind, x, y float64, mimeTypes []string) *DragEvent {
 	return &DragEvent{
@@ -552,6 +563,19 @@ func newDragEvent(kind DragEventKind, x, y float64, mimeTypes []string) *DragEve
 		x:         x,
 		y:         y,
 		mimeTypes: mimeTypes,
+	}
+}
+
+// newDragDropEvent constructs a DragDrop event carrying the negotiated
+// MIME type and transferred payload.
+func newDragDropEvent(x, y float64, mimeType string, data []byte) *DragEvent {
+	return &DragEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		kind:      DragDrop,
+		x:         x,
+		y:         y,
+		mimeType:  mimeType,
+		data:      data,
 	}
 }
 
