@@ -476,3 +476,86 @@ Each test:
 ---
 
 *Generated for Phase 4.2 (UI Shader Authoring) — Last updated: 2026-03-08*
+
+---
+
+## How to Add a New WGSL Shader
+
+Follow these steps to add a new shader to the wain GPU pipeline:
+
+### 1. Write the WGSL Shader
+
+Create a new file in `render-sys/shaders/`:
+
+```bash
+touch render-sys/shaders/my_effect.wgsl
+```
+
+Minimum required structure — all shaders must define `vs_main` and `fs_main`:
+
+```wgsl
+// my_effect.wgsl — describe what this shader renders
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) uv: vec2<f32>,
+}
+
+@vertex
+fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+    // Procedural quad generation (reuse this pattern)
+    let x = f32((vertex_index & 1u) * 2u) - 1.0;
+    let y = f32((vertex_index >> 1u) * 2u) - 1.0;
+    var out: VertexOutput;
+    out.position = vec4<f32>(x, y, 0.0, 1.0);
+    out.uv = vec2<f32>(x * 0.5 + 0.5, 0.5 - y * 0.5);
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // Your fragment logic here
+    return vec4<f32>(in.uv, 0.0, 1.0);
+}
+```
+
+### 2. Register the Shader in `build.rs`
+
+Open `render-sys/build.rs` and add your shader to the list of shaders that are compiled at build time. Look for the shader registry array and add an entry:
+
+```rust
+("my_effect", include_str!("shaders/my_effect.wgsl")),
+```
+
+### 3. Add a CI Validation Entry in `shader.rs`
+
+Open `render-sys/src/shader.rs` and add a test case so the naga validator runs on your shader in CI:
+
+```rust
+#[test]
+fn test_my_effect_shader() {
+    let src = include_str!("../shaders/my_effect.wgsl");
+    let result = parse_shader(src, ShaderLanguage::WGSL);
+    assert!(result.is_ok(), "my_effect.wgsl failed: {:?}", result.err());
+    let module = result.unwrap();
+    assert!(has_entry_point(&module, "vs_main", ShaderStage::Vertex));
+    assert!(has_entry_point(&module, "fs_main", ShaderStage::Fragment));
+}
+```
+
+### 4. Add a Go-Side Command Type (if needed)
+
+If the shader corresponds to a new draw operation, add a new `CommandType` constant in `internal/raster/displaylist/commands.go`, a matching `DrawXxxData` struct, and a new pipeline type in `internal/render/backend/batch.go`.
+
+### 5. Verify
+
+```bash
+# Validate the shader compiles with naga
+cd render-sys && cargo test test_my_effect_shader --target x86_64-unknown-linux-musl
+
+# Rebuild the Rust library
+make build-rust
+
+# Run the full test suite
+go test ./...
+```

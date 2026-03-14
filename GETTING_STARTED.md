@@ -344,3 +344,55 @@ For applications with many widgets, consider:
 ## License
 
 Wain is released under the MIT License. See [LICENSE](LICENSE) for details.
+
+## GPU Usage
+
+### Verifying GPU Detection
+
+Wain auto-detects the best available renderer: Intel EU → AMD RDNA → software fallback.
+Enable verbose logging to see which backend was selected:
+
+```go
+app, err := wain.NewApp(wain.AppConfig{
+    Verbose: true,
+})
+```
+
+Look for output like:
+```
+wain: detected Intel Gen12 GPU at /dev/dri/renderD128 — using GPU renderer
+```
+or
+```
+wain: GPU not available — falling back to software renderer
+```
+
+### Forcing Software Rendering
+
+To always use the CPU rasterizer (useful for CI or headless environments):
+
+```go
+app, err := wain.NewApp(wain.AppConfig{
+    ForceSoftware: true,
+})
+```
+
+### Running the Auto-Render Demo
+
+The `cmd/auto-render-demo` binary renders a sample UI and prints the detected backend:
+
+```bash
+cd cmd/auto-render-demo && go run .
+```
+
+With `WAIN_VERBOSE=1` in the environment, GPU selection details are logged to stderr.
+
+### GPU Requirements
+
+| Backend | Requirement |
+|---------|-------------|
+| Intel EU | Gen9+ GPU, `/dev/dri/renderD128` readable |
+| AMD RDNA | RDNA 1+, `/dev/dri/renderD128` readable |
+| Software | No special requirements |
+
+Both GPU backends require `librender_sys.a` (built via `make` or `cargo build` in `render-sys/`). See [HARDWARE.md](HARDWARE.md) for supported GPUs and driver requirements.
