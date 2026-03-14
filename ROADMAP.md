@@ -153,7 +153,7 @@ is not exercised end-to-end.
 
 ### Priority 2: Increase Public API Test Coverage
 
-**Gap:** Root package `wain` test coverage has improved significantly with 325+ test functions across 12 test files. Some specific lifecycle tests remain unimplemented.
+**Gap:** Root package `wain` test coverage has improved significantly with 325+ test functions across 17 test files in the repo root (13 in `package wain`, 4 in `package wain_test`). Some specific lifecycle tests remain unimplemented.
 
 **Tasks:**
 - [x] **Add `App` lifecycle tests** (`app_test.go`):
