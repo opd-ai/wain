@@ -1476,19 +1476,32 @@ func findAndBindGlobal(registry *client.Registry, name, notFoundMsg, bindFailMsg
 	return id, nil
 }
 
+// bindAndInstall looks up and binds a Wayland global, then calls install with
+// the resulting object ID to construct, register, and assign the protocol object.
+// outerCtx wraps any error with calling context.
+func (a *App) bindAndInstall(registry *client.Registry, name, notFoundMsg, bindFailMsg, outerCtx string, install func(uint32)) error {
+	id, err := findAndBindGlobal(registry, name, notFoundMsg, bindFailMsg)
+	if err != nil {
+		return fmt.Errorf("%s: %w", outerCtx, err)
+	}
+	install(id)
+	return nil
+}
+
+
 // bindDataDeviceManager binds wl_data_device_manager and creates a per-seat
 // data device for clipboard access.  Errors are non-fatal.
 func (a *App) bindDataDeviceManager(registry *client.Registry) error {
-	ddmID, err := findAndBindGlobal(registry, "wl_data_device_manager",
+	return a.bindAndInstall(registry,
+		"wl_data_device_manager",
 		"wl_data_device_manager not advertised by compositor",
-		"failed to bind wl_data_device_manager")
-	if err != nil {
-		return fmt.Errorf("app: bind data device manager: %w", err)
-	}
-	mgr := datadevice.NewManager(a.waylandConn, ddmID)
-	a.waylandConn.RegisterObject(mgr)
-	a.waylandDataDeviceMgr = mgr
-	return nil
+		"failed to bind wl_data_device_manager",
+		"app: bind data device manager",
+		func(id uint32) {
+			mgr := datadevice.NewManager(a.waylandConn, id)
+			a.waylandConn.RegisterObject(mgr)
+			a.waylandDataDeviceMgr = mgr
+		})
 }
 
 // bindDmabuf optionally binds zwp_linux_dmabuf_v1.
@@ -1522,17 +1535,16 @@ func (a *App) bindCompositor(registry *client.Registry) error {
 	a.waylandCompositor = compositor
 
 	// Bind shm
-	shmID, err := findAndBindGlobal(registry, "wl_shm",
+	return a.bindAndInstall(registry,
+		"wl_shm",
 		"wl_shm not found",
-		"failed to bind shm")
-	if err != nil {
-		return fmt.Errorf("app: bind compositor: shm: %w", err)
-	}
-	shmObj := shm.NewSHM(a.waylandConn, shmID)
-	a.waylandConn.RegisterObject(shmObj)
-	a.waylandShm = shmObj
-
-	return nil
+		"failed to bind shm",
+		"app: bind compositor: shm",
+		func(id uint32) {
+			shmObj := shm.NewSHM(a.waylandConn, id)
+			a.waylandConn.RegisterObject(shmObj)
+			a.waylandShm = shmObj
+		})
 }
 
 // bindShellProtocols binds xdg-shell and related window management protocols.

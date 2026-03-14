@@ -84,25 +84,15 @@ func buildLayout(app *wain.App) *wain.Column {
 func runHeadless() {
 	fmt.Println("=== wain hello example (headless) ===")
 
-	col := wain.NewColumn()
-	col.SetPadding(20)
-	col.SetGap(10)
-
-	label := wain.NewLabel("Press the button below.", wain.Size{Width: 100, Height: 30})
-	col.Add(label)
-
-	btn := wain.NewButton("Say Hello", wain.Size{Width: 50, Height: 20})
-	clicked := false
-	btn.OnClick(func() {
-		clicked = true
-		fmt.Println("Hello from wain!")
-	})
-	col.Add(btn)
-
+	col := buildLayout(nil)
 	fmt.Printf("Layout: Column with %d children\n", len(col.Children()))
+
+	// Access the button from the layout to verify it was wired correctly.
+	btn := col.Children()[1].(*wain.Button)
 	fmt.Printf("Button text: %q\n", btn.Text())
 
 	// Simulate a click to verify callback wiring.
+	clicked := false
 	btn.OnClick(func() { clicked = true })
 	fmt.Printf("Click handler registered: %v\n", !clicked)
 	fmt.Println("=== done ===")

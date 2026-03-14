@@ -343,16 +343,10 @@ func setupWaylandWindow(wlCtx *demo.WaylandContext, title string) (*waylandSurfa
 		return nil, fmt.Errorf("create surface: %w", err)
 	}
 
-	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
-	if err != nil {
-		return nil, fmt.Errorf("create xdg_surface: %w", err)
+	if _, _, err := demo.CreateXdgWindow(wlCtx.Conn, wlCtx.WmBase, surface, title); err != nil {
+		return nil, fmt.Errorf("create xdg window: %w", err)
 	}
 
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return nil, fmt.Errorf("create xdg_toplevel: %w", err)
-	}
-	toplevel.SetTitle(title)
 	if err := surface.Commit(); err != nil {
 		return nil, fmt.Errorf("initial commit: %w", err)
 	}

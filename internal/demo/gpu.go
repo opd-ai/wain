@@ -51,7 +51,17 @@ func SetupGPUAllocator(drmPath string, stepNum, totalSteps int) (*render.Allocat
 	return allocator, gpuCtx, nil
 }
 
-// SetupGPUAllocatorSimple creates and initializes a GPU buffer allocator without context.
+// AllocateBuffer allocates a GPU buffer of the given dimensions with no tiling.
+// Returns the buffer handle, a cleanup function that destroys the buffer, and
+// any error encountered.
+func AllocateBuffer(allocator *render.Allocator, width, height, bpp uint32) (*render.BufferHandle, func(), error) {
+	buffer, err := allocator.Allocate(width, height, bpp, render.TilingNone)
+	if err != nil {
+		return nil, nil, fmt.Errorf("allocate buffer: %w", err)
+	}
+	return buffer, func() { buffer.Destroy() }, nil
+}
+
 // It displays a simple progress message with the given step number.
 // Returns the allocator or an error if setup fails.
 // The caller is responsible for closing the allocator when done.

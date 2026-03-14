@@ -118,13 +118,11 @@ func setupX11Context() (*demoContext, func(), error) {
 
 func createGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {
 	fmt.Println("\n[7/9] Allocating GPU buffer...")
-	buffer, err := ctx.allocator.Allocate(windowWidth, windowHeight, bpp, render.TilingNone)
+	buffer, cleanup, err := demo.AllocateBuffer(ctx.allocator, windowWidth, windowHeight, bpp)
 	if err != nil {
-		return nil, nil, fmt.Errorf("allocate buffer: %w", err)
+		return nil, nil, err
 	}
 	fmt.Printf("      ✓ Allocated %dx%d buffer (stride: %d)\n", buffer.Width, buffer.Height, buffer.Stride)
-
-	cleanup := func() { buffer.Destroy() }
 	return buffer, cleanup, nil
 }
 

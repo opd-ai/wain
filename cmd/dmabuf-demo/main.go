@@ -154,16 +154,10 @@ func bindCompositorGlobal(registry *client.Registry) (*client.Compositor, error)
 
 // bindDmabufGlobal finds and binds the zwp_linux_dmabuf_v1 global.
 func bindDmabufGlobal(conn *client.Connection, registry *client.Registry) (*dmabuf.Dmabuf, error) {
-	g := registry.FindGlobal("zwp_linux_dmabuf_v1")
-	if g == nil {
-		return nil, fmt.Errorf("zwp_linux_dmabuf_v1 not found (compositor doesn't support DMA-BUF)")
-	}
-	id, err := registry.BindDmabuf(g)
+	obj, err := demo.BindDmabuf(conn, registry)
 	if err != nil {
-		return nil, fmt.Errorf("bind dmabuf: %w", err)
+		return nil, err
 	}
-	obj := dmabuf.NewDmabuf(conn, id)
-	conn.RegisterObject(obj)
 	fmt.Println("      ✓ Bound to zwp_linux_dmabuf_v1")
 	return obj, nil
 }
@@ -180,13 +174,11 @@ func bindXdgWmBaseGlobal(conn *client.Connection, registry *client.Registry) (*x
 
 func createGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {
 	fmt.Println("\n[4/8] Allocating GPU buffer...")
-	buffer, err := ctx.allocator.Allocate(windowWidth, windowHeight, bpp, render.TilingNone)
+	buffer, cleanup, err := demo.AllocateBuffer(ctx.allocator, windowWidth, windowHeight, bpp)
 	if err != nil {
-		return nil, nil, fmt.Errorf("allocate buffer: %w", err)
+		return nil, nil, err
 	}
 	fmt.Printf("      ✓ Allocated %dx%d buffer (stride: %d)\n", buffer.Width, buffer.Height, buffer.Stride)
-
-	cleanup := func() { buffer.Destroy() }
 	return buffer, cleanup, nil
 }
 

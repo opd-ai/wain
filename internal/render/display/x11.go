@@ -293,35 +293,17 @@ func (p *X11Pipeline) PresentRendered(ctx context.Context) error {
 	if p.closed {
 		return presentpkg.ErrPresenterClosed
 	}
-
-	fb, err := p.pool.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("display: acquire framebuffer: %w", err)
+	ensure := func(fb *Framebuffer) error {
+		if err := p.ensureX11Pixmap(fb); err != nil {
+			return fmt.Errorf("display: ensure pixmap: %w", err)
+		}
+		return nil
 	}
-
-	fd, err := p.renderer.Present()
-	if err != nil {
-		p.releaseFramebuffer(fb)
-		return fmt.Errorf("display: export dmabuf: %w", err)
+	commit := func(fb *Framebuffer) error {
+		if err := p.presentPixmap(fb); err != nil {
+			return fmt.Errorf("display/x11: present pixmap: %w", err)
+		}
+		return nil
 	}
-
-	if fb.Fd < 0 {
-		fb.Fd = fd
-		w, h := p.renderer.Dimensions()
-		fb.Width = uint32(w)
-		fb.Height = uint32(h)
-		fb.Stride = uint32(w) * 4
-	}
-
-	if err := p.ensureX11Pixmap(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return fmt.Errorf("display: ensure pixmap: %w", err)
-	}
-
-	if err := p.presentPixmap(fb); err != nil {
-		p.releaseFramebuffer(fb)
-		return fmt.Errorf("display/x11: present pixmap: %w", err)
-	}
-
-	return p.pool.MarkDisplaying(fb)
+	return presentRenderedFramebuffer(ctx, p.pool, p.renderer, p.releaseFramebuffer, ensure, commit)
 }
