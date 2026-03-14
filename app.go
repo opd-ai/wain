@@ -37,6 +37,7 @@ import (
 	"github.com/opd-ai/wain/internal/render/display"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/datadevice"
+	"github.com/opd-ai/wain/internal/wayland/dmabuf"
 	"github.com/opd-ai/wain/internal/wayland/input"
 	"github.com/opd-ai/wain/internal/wayland/shm"
 	wlwire "github.com/opd-ai/wain/internal/wayland/wire"
@@ -116,6 +117,7 @@ type App struct {
 	waylandSeat       *input.Seat
 	waylandKeyboard   *input.Keyboard
 	waylandPointer    *input.Pointer
+	waylandDmabuf     *dmabuf.Dmabuf // optional — nil when compositor lacks zwp_linux_dmabuf_v1
 
 	// X11-specific objects
 	x11Window       x11client.XID
@@ -397,6 +399,13 @@ func (w *Window) initWaylandWindow() error {
 
 	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
 		w.presenter = display.NewSoftwareWaylandPresenter(w.app.waylandShm, w.waylandSurface, sw)
+	} else if _, ok := w.app.renderer.(*backend.GPUBackend); ok && w.app.waylandDmabuf != nil {
+		pipeline, err := display.NewWaylandPipeline(w.waylandSurface, w.app.waylandDmabuf, w.app.renderer)
+		if err != nil {
+			log.Printf("Warning: GPU Wayland pipeline unavailable: %v", err)
+		} else {
+			w.presenter = display.NewGPUWaylandPresenter(pipeline)
+		}
 	}
 
 	return nil
@@ -504,6 +513,15 @@ func (w *Window) initX11Window() error {
 			// Non-fatal: window will open but pixels won't be pushed.
 			if w.app.verbose {
 				log.Printf("Warning: failed to create X11 presenter: %v", err)
+			}
+		} else {
+			w.presenter = p
+		}
+	} else if _, ok := w.app.renderer.(*backend.GPUBackend); ok {
+		p, err := display.NewGPUX11PresenterFromConn(w.app.x11Conn, w.x11Window, w.app.renderer)
+		if err != nil {
+			if w.app.verbose {
+				log.Printf("Warning: GPU X11 pipeline unavailable: %v", err)
 			}
 		} else {
 			w.presenter = p
@@ -1410,6 +1428,10 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	if err := a.bindDataDeviceManager(registry); err != nil && a.verbose {
 		log.Printf("Warning: clipboard unavailable: %v", err)
 	}
+	// DMA-BUF support — optional, required only for GPU rendering path.
+	if err := a.bindDmabuf(registry); err != nil && a.verbose {
+		log.Printf("Warning: DMA-BUF unavailable (GPU path disabled): %v", err)
+	}
 	if err := a.bindInputDevices(registry); err != nil {
 		return err
 	}
@@ -1443,6 +1465,23 @@ func (a *App) bindDataDeviceManager(registry *client.Registry) error {
 	mgr := datadevice.NewManager(a.waylandConn, ddmID)
 	a.waylandConn.RegisterObject(mgr)
 	a.waylandDataDeviceMgr = mgr
+	return nil
+}
+
+// bindDmabuf optionally binds zwp_linux_dmabuf_v1.
+// Failure is non-fatal — the GPU presentation path is simply disabled.
+func (a *App) bindDmabuf(registry *client.Registry) error {
+	global := registry.FindGlobal("zwp_linux_dmabuf_v1")
+	if global == nil {
+		return fmt.Errorf("zwp_linux_dmabuf_v1 not advertised by compositor")
+	}
+	id, err := registry.Bind(global.Name, "zwp_linux_dmabuf_v1", global.Version)
+	if err != nil {
+		return fmt.Errorf("failed to bind zwp_linux_dmabuf_v1: %w", err)
+	}
+	db := dmabuf.NewDmabuf(a.waylandConn, id)
+	a.waylandConn.RegisterObject(db)
+	a.waylandDmabuf = db
 	return nil
 }
 

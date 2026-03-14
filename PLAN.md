@@ -169,7 +169,7 @@ project goals.
 
 ---
 
-### Step 3: Wire GPU DMA-BUF Presentation Path
+### ~~Step 3: Wire GPU DMA-BUF Presentation Path~~ ✅ DONE
 
 > **Root cause**: The GPU backend (`internal/render/backend/gpu.go`) builds batch buffers and
 > submits them via `render.SubmitBatch()`, but `GPUBackend.Present()` does not connect to
@@ -203,7 +203,7 @@ project goals.
 
 ---
 
-### Step 4: Add Software Rasterizer Benchmarks to CI
+### ~~Step 4: Add Software Rasterizer Benchmarks to CI~~ ✅ DONE
 
 > **Root cause**: HARDWARE.md claims ≤16ms software frame time at 1080p (60 FPS) but no benchmark
 > runs in CI. `cmd/perf-demo` exists but is not invoked in `.github/workflows/ci.yml`. SIMD

@@ -255,3 +255,43 @@ func (p *WaylandPipeline) Close() error {
 	p.closed = true
 	return p.pool.Close()
 }
+
+// PresentRendered presents the most recently rendered GPU frame to the Wayland
+// compositor without re-rendering. The caller must have already invoked the
+// renderer's Render method before calling this.
+func (p *WaylandPipeline) PresentRendered(ctx context.Context) error {
+	if p.closed {
+		return presentpkg.ErrPresenterClosed
+	}
+
+	fb, err := p.pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("display: acquire framebuffer: %w", err)
+	}
+
+	fd, err := p.renderer.Present()
+	if err != nil {
+		p.releaseFramebuffer(fb)
+		return fmt.Errorf("display: export dmabuf: %w", err)
+	}
+
+	if fb.Fd < 0 {
+		fb.Fd = fd
+		w, h := p.renderer.Dimensions()
+		fb.Width = uint32(w)
+		fb.Height = uint32(h)
+		fb.Stride = uint32(w) * 4
+	}
+
+	if err := p.ensureWaylandBuffer(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return fmt.Errorf("display: ensure wl_buffer: %w", err)
+	}
+
+	if err := p.commitToSurface(fb); err != nil {
+		p.releaseFramebuffer(fb)
+		return err
+	}
+
+	return p.pool.MarkDisplaying(fb)
+}
