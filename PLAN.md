@@ -213,7 +213,7 @@ largest usability blocker for adopters.
   go doc github.com/opd-ai/wain | grep -E "func New(Button|TextInput|Scroll)"
   ```
 
-#### 2c — `example/` directory: minimal working application
+#### 2c — `example/` directory: minimal working application ✅ (2026-03-13)
 - **Files**: `example/hello/main.go` (new)
 - **What**: A minimal working application — creates a window, adds a `Button`, handles the
   click event, prints to stdout — importable as `github.com/opd-ai/wain/example/hello`.
@@ -226,12 +226,15 @@ largest usability blocker for adopters.
   go build ./example/...
   grep "internal/" example/hello/main.go && echo "FAIL: internal import" || echo "OK"
   ```
+- **Also added**: `Window.SetLayout(PublicWidget)` in `app.go` and `layoutAdapter` in
+  `publicwidget.go` to bridge public widget trees to the render/event infrastructure.
 
-#### 2d — Version bump
+#### 2d — Version bump ✅ (2026-03-13)
 - **File**: `go.mod`, `README.md`, `RELEASE.md`
 - **What**: Bump to `v0.2.0` with an "unstable but usable" notice. Tag the commit.
 - **Dependencies**: Steps 2b + 2c
 - **Acceptance**: `go list -m github.com/opd-ai/wain` returns `v0.2.0`; git tag exists.
+- **Status**: README.md and RELEASE.md updated; git tag `v0.2.0` created.
 
 ---
 
