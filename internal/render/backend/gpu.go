@@ -99,7 +99,7 @@ func New(cfg Config) (*GPUBackend, error) {
 
 	vertexBuffer, renderTarget, err := allocateBuffers(allocator, cfg)
 	if err != nil {
-		render.DestroyContext(cfg.DRMPath, ctx)
+		_ = render.DestroyContext(cfg.DRMPath, ctx)
 		allocator.Close()
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func allocateBuffers(allocator *render.Allocator, cfg Config) (*render.BufferHan
 
 	renderTarget, err := allocator.Allocate(uint32(cfg.Width), uint32(cfg.Height), 32, render.TilingY)
 	if err != nil {
-		vertexBuffer.Destroy()
+		_ = vertexBuffer.Destroy()
 		return nil, nil, fmt.Errorf("backend: render target allocation failed: %w", err)
 	}
 
@@ -200,11 +200,11 @@ func compileSolidFillShader(drmPath string) []byte {
 // Destroy frees all GPU resources.
 func (b *GPUBackend) Destroy() error {
 	if b.vertexBuffer != nil {
-		b.vertexBuffer.Destroy()
+		_ = b.vertexBuffer.Destroy()
 		b.vertexBuffer = nil
 	}
 	if b.renderTarget != nil {
-		b.renderTarget.Destroy()
+		_ = b.renderTarget.Destroy()
 		b.renderTarget = nil
 	}
 	if b.allocator != nil {

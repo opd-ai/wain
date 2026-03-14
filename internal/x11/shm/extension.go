@@ -154,7 +154,7 @@ func QueryExtension(conn Connection) (*Extension, error) {
 
 	// Query extension version
 	var buf bytes.Buffer
-	wire.EncodeRequestHeader(&buf, baseOpcode+ShmQueryVersion, 0, 1)
+	_ = wire.EncodeRequestHeader(&buf, baseOpcode+ShmQueryVersion, 0, 1)
 
 	reply, err := conn.SendRequestAndReply(buf.Bytes())
 	if err != nil {
@@ -236,16 +236,16 @@ func (ext *Extension) AttachSegment(conn Connection, seg *Segment) error {
 	var buf bytes.Buffer
 
 	// ShmAttach request: header(4) + shmseg(4) + shmid(4) + read-only(1) + pad(3)
-	wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmAttach, 0, 4)
-	wire.EncodeUint32(&buf, uint32(seg.ID))
-	wire.EncodeUint32(&buf, uint32(seg.ShmID))
+	_ = wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmAttach, 0, 4)
+	_ = wire.EncodeUint32(&buf, uint32(seg.ID))
+	_ = wire.EncodeUint32(&buf, uint32(seg.ShmID))
 
 	readOnlyByte := uint8(0)
 	if seg.ReadOnly {
 		readOnlyByte = 1
 	}
 	buf.WriteByte(readOnlyByte)
-	wire.EncodePadding(&buf, 3)
+	_ = wire.EncodePadding(&buf, 3)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("shm: AttachSegment failed: %w", err)
@@ -264,8 +264,8 @@ func (ext *Extension) DetachSegment(conn Connection, seg *Segment) error {
 	var buf bytes.Buffer
 
 	// ShmDetach request: header(4) + shmseg(4)
-	wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmDetach, 0, 2)
-	wire.EncodeUint32(&buf, uint32(seg.ID))
+	_ = wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmDetach, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(seg.ID))
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("shm: DetachSegment failed: %w", err)
@@ -329,10 +329,10 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 	// src-x(2) + src-y(2) + src-width(2) + src-height(2) +
 	// dst-x(2) + dst-y(2) + depth(1) + format(1) + send-event(1) + pad(1) +
 	// shmseg(4) + offset(4)
-	wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmPutImage, 0, 10)
+	_ = wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmPutImage, 0, 10)
 	_ = wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, srcX, srcY)
-	wire.EncodeUint16(&buf, width)  // src-width (use full width)
-	wire.EncodeUint16(&buf, height) // src-height (use full height)
+	_ = wire.EncodeUint16(&buf, width)  // src-width (use full width)
+	_ = wire.EncodeUint16(&buf, height) // src-height (use full height)
 	_ = wire.EncodeInt16(&buf, dstX)
 	_ = wire.EncodeInt16(&buf, dstY)
 	buf.WriteByte(depth)
@@ -343,10 +343,10 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 		sendEventByte = 1
 	}
 	buf.WriteByte(sendEventByte)
-	wire.EncodePadding(&buf, 1)
+	_ = wire.EncodePadding(&buf, 1)
 
-	wire.EncodeUint32(&buf, uint32(seg.ID))
-	wire.EncodeUint32(&buf, 0) // offset into segment (always 0 for now)
+	_ = wire.EncodeUint32(&buf, uint32(seg.ID))
+	_ = wire.EncodeUint32(&buf, 0) // offset into segment (always 0 for now)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("shm: PutImage failed: %w", err)

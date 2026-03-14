@@ -306,13 +306,13 @@ func (e *Extension) buildPixmapFromBuffersRequest(pixmap, drawable XID,
 	_ = wire.EncodeUint32(&buf, uint32(drawable))
 	_ = wire.EncodeUint8(&buf, uint8(len(fds)))
 	_ = wire.EncodePadding(&buf, 3)
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
-	wire.EncodeUint32(&buf, fourcc)
+	_ = wire.EncodeUint16(&buf, width)
+	_ = wire.EncodeUint16(&buf, height)
+	_ = wire.EncodeUint32(&buf, fourcc)
 
 	for i := range strides {
-		wire.EncodeUint32(&buf, strides[i])
-		wire.EncodeUint32(&buf, offsets[i])
+		_ = wire.EncodeUint32(&buf, strides[i])
+		_ = wire.EncodeUint32(&buf, offsets[i])
 	}
 
 	_ = wire.EncodeUint8(&buf, depth)

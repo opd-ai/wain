@@ -28,7 +28,7 @@ func (b *GPUBackend) submitBatchesWithScissor(batches []Batch, vertexData []byte
 	if err != nil {
 		return fmt.Errorf("submit: allocate batch buffer: %w", err)
 	}
-	defer batchBuffer.Destroy()
+	defer func() { _ = batchBuffer.Destroy() }()
 
 	batchData, relocs := b.buildBatchBuffer(batches, 0, len(vertexData)/20, scissorRects)
 
@@ -113,7 +113,7 @@ func (b *GPUBackend) writeBufferData(buffer *render.BufferHandle, data []byte, b
 	if err != nil {
 		return fmt.Errorf("mmap %s buffer: %w", bufferType, err)
 	}
-	defer syscall.Munmap(mem)
+	defer func() { _ = syscall.Munmap(mem) }()
 
 	copy(mem, data)
 	return nil

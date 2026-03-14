@@ -494,8 +494,8 @@ func makeCompleteNotifyEvent(kind CompleteKind, mode CompleteMode, serial uint32
 	_ = binary.Write(buf, binary.LittleEndian, serial)
 	_ = binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
 	_ = binary.Write(buf, binary.LittleEndian, uint32(0x500001)) // pixmap
-	binary.Write(buf, binary.LittleEndian, ust)
-	binary.Write(buf, binary.LittleEndian, msc)
+	_ = binary.Write(buf, binary.LittleEndian, ust)
+	_ = binary.Write(buf, binary.LittleEndian, msc)
 
 	return buf.Bytes()
 }
@@ -512,11 +512,11 @@ func makeIdleNotifyEvent(pixmap XID) []byte {
 	buf.Write([]byte{0, 0, 0, 0}) // length
 
 	// Event body
-	binary.Write(buf, binary.LittleEndian, uint32(0x600001)) // event ID
-	binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
-	binary.Write(buf, binary.LittleEndian, uint32(0))        // serial
-	binary.Write(buf, binary.LittleEndian, uint32(pixmap))   // pixmap
-	binary.Write(buf, binary.LittleEndian, uint32(0))        // idle_fence
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x600001)) // event ID
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))        // serial
+	_ = binary.Write(buf, binary.LittleEndian, uint32(pixmap))   // pixmap
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0))        // idle_fence
 	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0})                // pad
 
 	return buf.Bytes()

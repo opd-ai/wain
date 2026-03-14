@@ -185,7 +185,7 @@ func (a *x11SelectionAdapter) GetProperty(window, property, typ, offset, length 
 
 	// GetProperty request: window(4) + property(4) + type(4) + longOffset(4) + longLength(4) = 20 bytes
 	buf := new(bytes.Buffer)
-	x11wire.EncodeRequestHeader(buf, x11wire.OpcodeGetProperty, deleteByte, 6) // 6 × 4 = 24 bytes
+	_ = x11wire.EncodeRequestHeader(buf, x11wire.OpcodeGetProperty, deleteByte, 6) // 6 × 4 = 24 bytes
 	binary.Write(buf, binary.LittleEndian, window)                             //nolint:errcheck
 	binary.Write(buf, binary.LittleEndian, property)                           //nolint:errcheck
 	binary.Write(buf, binary.LittleEndian, typ)                                //nolint:errcheck
@@ -221,7 +221,7 @@ func (a *x11SelectionAdapter) GetProperty(window, property, typ, offset, length 
 func (a *x11SelectionAdapter) DeleteProperty(window, property uint32) error {
 	// DeleteProperty request: window(4) + property(4) = 8 bytes → 3 × 4 units
 	buf := new(bytes.Buffer)
-	x11wire.EncodeRequestHeader(buf, x11wire.OpcodeDeleteProperty, 0, 3)
+	_ = x11wire.EncodeRequestHeader(buf, x11wire.OpcodeDeleteProperty, 0, 3)
 	binary.Write(buf, binary.LittleEndian, window)   //nolint:errcheck
 	binary.Write(buf, binary.LittleEndian, property) //nolint:errcheck
 	return a.conn.SendRequest(buf.Bytes())
@@ -232,7 +232,7 @@ func (a *x11SelectionAdapter) buildRequest(opcode, data1 uint8, payload []byte) 
 	totalBytes := 4 + len(payload) // header(4) + payload
 	units := uint16((totalBytes + 3) / 4)
 	buf := new(bytes.Buffer)
-	x11wire.EncodeRequestHeader(buf, opcode, data1, units)
+	_ = x11wire.EncodeRequestHeader(buf, opcode, data1, units)
 	buf.Write(payload)
 	// Pad to 4-byte boundary
 	if pad := totalBytes % 4; pad != 0 {

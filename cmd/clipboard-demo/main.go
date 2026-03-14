@@ -43,8 +43,8 @@ func demonstrateWaylandAPI() {
 	fmt.Printf("✓ Created wl_data_source (ID: %d)\n", source.ID())
 
 	// Offer MIME types
-	source.Offer("text/plain")
-	source.Offer("text/html")
+	_ = source.Offer("text/plain")
+	_ = source.Offer("text/html")
 	fmt.Println("✓ Offered MIME types: text/plain, text/html")
 
 	// Get data device for a seat
@@ -52,7 +52,7 @@ func demonstrateWaylandAPI() {
 	fmt.Printf("✓ Created wl_data_device (ID: %d)\n", device.ID())
 
 	// Set clipboard selection
-	device.SetSelection(source, 12345)
+	_ = device.SetSelection(source, 12345)
 	fmt.Println("✓ Set clipboard selection with serial 12345")
 
 	demo.PrintFeatureList("Protocol features:", []string{
@@ -81,11 +81,11 @@ func demonstrateX11API() {
 	fmt.Printf("✓ Created selection manager for window 500\n")
 
 	// Set clipboard
-	manager.SetClipboard("Hello, clipboard!")
+	_ = manager.SetClipboard("Hello, clipboard!")
 	fmt.Println("✓ Set CLIPBOARD selection: 'Hello, clipboard!'")
 
 	// Set PRIMARY selection
-	manager.SetPrimary("Selected text")
+	_ = manager.SetPrimary("Selected text")
 	fmt.Println("✓ Set PRIMARY selection: 'Selected text'")
 
 	demo.PrintFeatureList("Protocol features:", []string{

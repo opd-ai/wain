@@ -224,7 +224,7 @@ func TestServeClipboardSource_Cancellation(t *testing.T) {
 	}()
 
 	// Simulate compositor cancelling the source.
-	source.HandleEvent(2, nil) // opcode 2 = cancelled
+	_ = source.HandleEvent(2, nil) // opcode 2 = cancelled
 
 	select {
 	case <-done:

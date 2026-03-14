@@ -50,7 +50,7 @@ func TestWaylandClientStack(t *testing.T) {
 	// Step 2: Read wl_callback.done event from compositor
 	// Event should be: object=2 (callback), opcode=0 (done), data=callback_data
 	response := make([]byte, 1024)
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 
 	n, err := conn.Read(response)
 	if err != nil {
@@ -195,7 +195,7 @@ func (mc *mockCompositor) serve() {
 		default:
 		}
 
-		mc.listener.(*net.UnixListener).SetDeadline(time.Now().Add(100 * time.Millisecond))
+		_ = mc.listener.(*net.UnixListener).SetDeadline(time.Now().Add(100 * time.Millisecond))
 		conn, err := mc.listener.Accept()
 		if err != nil {
 			if ne, ok := err.(net.Error); ok && ne.Timeout() {
@@ -214,7 +214,7 @@ func (mc *mockCompositor) handleClient(conn net.Conn) {
 	defer conn.Close()
 
 	buf := make([]byte, 4096)
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 
 	n, err := conn.Read(buf)
 	if err != nil {
@@ -266,11 +266,11 @@ func encodeSyncRequest(t *testing.T, displayID, callbackID uint32) []byte {
 	size := uint16(12) // header (8) + new_id (4)
 	opcode := uint16(0)
 
-	binary.Write(&buf, binary.LittleEndian, displayID)
-	binary.Write(&buf, binary.LittleEndian, uint32(size)<<16|uint32(opcode))
+	_ = binary.Write(&buf, binary.LittleEndian, displayID)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(size)<<16|uint32(opcode))
 
 	// Arg: new_id (callback object ID)
-	binary.Write(&buf, binary.LittleEndian, callbackID)
+	_ = binary.Write(&buf, binary.LittleEndian, callbackID)
 
 	return buf.Bytes()
 }
@@ -284,11 +284,11 @@ func encodeCallbackDone(callbackID, callbackData uint32) []byte {
 	size := uint16(12) // header (8) + uint32 (4)
 	opcode := uint16(0)
 
-	binary.Write(&buf, binary.LittleEndian, callbackID)
-	binary.Write(&buf, binary.LittleEndian, uint32(size)<<16|uint32(opcode))
+	_ = binary.Write(&buf, binary.LittleEndian, callbackID)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(size)<<16|uint32(opcode))
 
 	// Arg: callback_data (uint32)
-	binary.Write(&buf, binary.LittleEndian, callbackData)
+	_ = binary.Write(&buf, binary.LittleEndian, callbackData)
 
 	return buf.Bytes()
 }
@@ -321,17 +321,17 @@ func TestX11ProtocolIntegration(t *testing.T) {
 	// Minimal CreateWindow request
 	buf.WriteByte(1)                                     // opcode
 	buf.WriteByte(24)                                    // depth (24-bit color)
-	binary.Write(&buf, binary.LittleEndian, uint16(8))   // length (8 * 4 = 32 bytes)
-	binary.Write(&buf, binary.LittleEndian, uint32(100)) // wid
-	binary.Write(&buf, binary.LittleEndian, uint32(1))   // parent (root)
-	binary.Write(&buf, binary.LittleEndian, int16(0))    // x
-	binary.Write(&buf, binary.LittleEndian, int16(0))    // y
-	binary.Write(&buf, binary.LittleEndian, uint16(400)) // width
-	binary.Write(&buf, binary.LittleEndian, uint16(300)) // height
-	binary.Write(&buf, binary.LittleEndian, uint16(0))   // border_width
-	binary.Write(&buf, binary.LittleEndian, uint16(1))   // class (InputOutput)
-	binary.Write(&buf, binary.LittleEndian, uint32(0))   // visual (CopyFromParent)
-	binary.Write(&buf, binary.LittleEndian, uint32(0))   // value_mask (none)
+	_ = binary.Write(&buf, binary.LittleEndian, uint16(8))   // length (8 * 4 = 32 bytes)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(100)) // wid
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(1))   // parent (root)
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))    // x
+	_ = binary.Write(&buf, binary.LittleEndian, int16(0))    // y
+	_ = binary.Write(&buf, binary.LittleEndian, uint16(400)) // width
+	_ = binary.Write(&buf, binary.LittleEndian, uint16(300)) // height
+	_ = binary.Write(&buf, binary.LittleEndian, uint16(0))   // border_width
+	_ = binary.Write(&buf, binary.LittleEndian, uint16(1))   // class (InputOutput)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))   // visual (CopyFromParent)
+	_ = binary.Write(&buf, binary.LittleEndian, uint32(0))   // value_mask (none)
 
 	request := buf.Bytes()
 

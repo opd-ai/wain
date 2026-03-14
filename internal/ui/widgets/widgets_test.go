@@ -466,7 +466,7 @@ func BenchmarkButtonDraw(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		btn.Draw(buf, 10, 10)
+		_ = btn.Draw(buf, 10, 10)
 	}
 }
 
@@ -477,6 +477,6 @@ func BenchmarkTextInputDraw(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		input.Draw(buf, 10, 10)
+		_ = input.Draw(buf, 10, 10)
 	}
 }

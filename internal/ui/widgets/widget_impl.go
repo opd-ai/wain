@@ -794,7 +794,7 @@ func (s *ScrollContainer) Draw(buf *primitives.Buffer, x, y int) error {
 
 		// Only draw if visible
 		if childY+h > y && childY < y+s.height {
-			child.Draw(buf, x, childY)
+			_ = child.Draw(buf, x, childY)
 		}
 
 		childY += h

@@ -421,7 +421,7 @@ func TestRing_Stats(t *testing.T) {
 	}
 
 	// Mark displaying
-	ring.MarkDisplaying(slot1.Index)
+	_ = ring.MarkDisplaying(slot1.Index)
 	stats = ring.Stats()
 	if stats["displaying"] != 1 || stats["available"] != 3 {
 		t.Errorf("after displaying: stats = %v, want {displaying:1 available:3}", stats)

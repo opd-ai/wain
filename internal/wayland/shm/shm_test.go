@@ -102,7 +102,7 @@ func TestMmapFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("MmapFile failed: %v", err)
 	}
-	defer MunmapFile(data)
+	defer func() { _ = MunmapFile(data) }()
 
 	if len(data) != size {
 		t.Errorf("Mmap size mismatch: got %d, want %d", len(data), size)
@@ -299,7 +299,7 @@ func TestPoolCreateBuffer(t *testing.T) {
 	if err := pool.Map(); err != nil {
 		t.Fatalf("Map failed: %v", err)
 	}
-	defer pool.Unmap()
+	defer func() { _ = pool.Unmap() }()
 
 	tests := []struct {
 		name    string
@@ -455,7 +455,7 @@ func TestPoolResize(t *testing.T) {
 	if err := pool.Map(); err != nil {
 		t.Fatalf("Map failed: %v", err)
 	}
-	defer pool.Unmap()
+	defer func() { _ = pool.Unmap() }()
 
 	// Resize to larger size.
 	const newSize = 8192
@@ -567,7 +567,7 @@ func TestIntegration(t *testing.T) {
 	if err := pool.Map(); err != nil {
 		t.Fatalf("Map failed: %v", err)
 	}
-	defer pool.Unmap()
+	defer func() { _ = pool.Unmap() }()
 
 	// Create buffer.
 	buf, err := pool.CreateBuffer(0, width, height, stride, FormatARGB8888)
@@ -599,7 +599,7 @@ func TestIntegration(t *testing.T) {
 	}
 
 	// Simulate release event.
-	buf.HandleEvent(0, []wire.Argument{})
+	_ = buf.HandleEvent(0, []wire.Argument{})
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel2()

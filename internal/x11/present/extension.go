@@ -248,22 +248,22 @@ func (e *Extension) PresentPixmap(conn Connection, opts PixmapPresentOptions) er
 	// options(4) + target_msc(8) + divisor(8) + remainder(8) + notifies_len(4)
 	//
 	// Total: 68 bytes = 17 * 4-byte units
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentPixmap, 0, 18)
-	wire.EncodeUint32(&buf, uint32(opts.Window))
-	wire.EncodeUint32(&buf, uint32(opts.Pixmap))
-	wire.EncodeUint32(&buf, opts.Serial)
-	wire.EncodeUint32(&buf, uint32(opts.ValidRegion))
-	wire.EncodeUint32(&buf, uint32(opts.UpdateRegion))
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentPixmap, 0, 18)
+	_ = wire.EncodeUint32(&buf, uint32(opts.Window))
+	_ = wire.EncodeUint32(&buf, uint32(opts.Pixmap))
+	_ = wire.EncodeUint32(&buf, opts.Serial)
+	_ = wire.EncodeUint32(&buf, uint32(opts.ValidRegion))
+	_ = wire.EncodeUint32(&buf, uint32(opts.UpdateRegion))
 	_ = wire.EncodeInt16(&buf, opts.XOff)
 	_ = wire.EncodeInt16(&buf, opts.YOff)
-	wire.EncodeUint32(&buf, 0) // target_crtc (0 = any CRTC)
-	wire.EncodeUint32(&buf, 0) // wait_fence (0 = none)
-	wire.EncodeUint32(&buf, 0) // idle_fence (0 = none)
-	wire.EncodeUint32(&buf, opts.Options)
+	_ = wire.EncodeUint32(&buf, 0) // target_crtc (0 = any CRTC)
+	_ = wire.EncodeUint32(&buf, 0) // wait_fence (0 = none)
+	_ = wire.EncodeUint32(&buf, 0) // idle_fence (0 = none)
+	_ = wire.EncodeUint32(&buf, opts.Options)
 	_ = wire.EncodeUint64(&buf, opts.TargetMSC)
 	_ = wire.EncodeUint64(&buf, opts.Divisor)
 	_ = wire.EncodeUint64(&buf, opts.Remainder)
-	wire.EncodeUint32(&buf, 0) // notifies_len (no notify list)
+	_ = wire.EncodeUint32(&buf, 0) // notifies_len (no notify list)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("%w: %v", ErrPresentFailed, err)
@@ -286,10 +286,10 @@ func (e *Extension) SelectInput(conn Connection, eid, window XID, eventMask uint
 
 	// PresentSelectInput request: header(4) + eid(4) + window(4) + event_mask(4)
 	// Total: 16 bytes = 4 * 4-byte units
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentSelectInput, 0, 4)
-	wire.EncodeUint32(&buf, uint32(eid))
-	wire.EncodeUint32(&buf, uint32(window))
-	wire.EncodeUint32(&buf, eventMask)
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentSelectInput, 0, 4)
+	_ = wire.EncodeUint32(&buf, uint32(eid))
+	_ = wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeUint32(&buf, eventMask)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("present: SelectInput failed: %w", err)
@@ -330,10 +330,10 @@ func (e *Extension) NotifyMSC(conn Connection, window XID,
 	// PresentNotifyMSC request: header(4) + window(4) + serial(4) + pad(4) +
 	// target_msc(8) + divisor(8) + remainder(8)
 	// Total: 40 bytes = 10 * 4-byte units
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentNotifyMSC, 0, 10)
-	wire.EncodeUint32(&buf, uint32(window))
-	wire.EncodeUint32(&buf, serial)
-	wire.EncodeUint32(&buf, 0) // pad
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+PresentNotifyMSC, 0, 10)
+	_ = wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeUint32(&buf, serial)
+	_ = wire.EncodeUint32(&buf, 0) // pad
 	encodeNotifyMSCTiming(&buf, targetMSC, divisor, remainder)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
@@ -346,7 +346,7 @@ func (e *Extension) NotifyMSC(conn Connection, window XID,
 func encodeNotifyMSCTiming(buf *bytes.Buffer, targetMSC, divisor, remainder uint64) {
 	_ = wire.EncodeUint64(buf, targetMSC)
 	_ = wire.EncodeUint64(buf, divisor)
-	wire.EncodeUint64(buf, remainder)
+	_ = wire.EncodeUint64(buf, remainder)
 }
 
 // CompleteNotifyEvent represents a PresentCompleteNotify event.

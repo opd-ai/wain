@@ -69,7 +69,7 @@ func main() {
 	fmt.Println("Window will remain open for 2 seconds...")
 
 	// Keep window open briefly
-	win.SetTitle("Resource Demo - Success")
+	_ = win.SetTitle("Resource Demo - Success")
 
 	// Note: In a real app, you'd call app.Run() here to start the event loop.
 	// For this demo, we're just testing the resource loading APIs.

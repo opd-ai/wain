@@ -123,8 +123,8 @@ func setup() (*demoContext, func(), error) {
 	fmt.Println("      ✓ Window created")
 
 	cleanup := func() {
-		toplevel.Destroy()
-		xdgSurface.Destroy()
+		_ = toplevel.Destroy()
+		_ = xdgSurface.Destroy()
 		conn.Close()
 	}
 

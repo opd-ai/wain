@@ -14,13 +14,13 @@ func makeEventData(values ...interface{}) []byte {
 	for _, v := range values {
 		switch val := v.(type) {
 		case uint32:
-			binary.Write(&buf, binary.LittleEndian, val)
+			_ = binary.Write(&buf, binary.LittleEndian, val)
 		case int32:
-			binary.Write(&buf, binary.LittleEndian, val)
+			_ = binary.Write(&buf, binary.LittleEndian, val)
 		case uint16:
-			binary.Write(&buf, binary.LittleEndian, val)
+			_ = binary.Write(&buf, binary.LittleEndian, val)
 		case int16:
-			binary.Write(&buf, binary.LittleEndian, val)
+			_ = binary.Write(&buf, binary.LittleEndian, val)
 		case uint8:
 			buf.WriteByte(val)
 		case bool:

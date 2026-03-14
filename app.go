@@ -2208,7 +2208,7 @@ func (a *App) cleanup() {
 	}
 
 	if a.renderer != nil {
-		a.renderer.Destroy()
+		_ = a.renderer.Destroy()
 		a.renderer = nil
 	}
 

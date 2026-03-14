@@ -17,7 +17,7 @@ func TestNewSoftwareBackend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSoftwareBackend failed: %v", err)
 	}
-	defer backend.Destroy()
+	defer func() { _ = backend.Destroy() }()
 
 	w, h := backend.Dimensions()
 	if w != cfg.Width || h != cfg.Height {
@@ -64,7 +64,7 @@ func TestSoftwareBackendRender(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSoftwareBackend failed: %v", err)
 	}
-	defer backend.Destroy()
+	defer func() { _ = backend.Destroy() }()
 
 	// Create a simple display list
 	dl := displaylist.New()
@@ -93,7 +93,7 @@ func TestSoftwareBackendRenderWithDamage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSoftwareBackend failed: %v", err)
 	}
-	defer backend.Destroy()
+	defer func() { _ = backend.Destroy() }()
 
 	// Create display list with multiple rects
 	dl := displaylist.New()
@@ -121,7 +121,7 @@ func TestSoftwareBackendRenderNilDisplayList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSoftwareBackend failed: %v", err)
 	}
-	defer backend.Destroy()
+	defer func() { _ = backend.Destroy() }()
 
 	err = backend.Render(nil)
 	if err != ErrNilDisplayList {
@@ -139,7 +139,7 @@ func TestSoftwareBackendPresent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSoftwareBackend failed: %v", err)
 	}
-	defer backend.Destroy()
+	defer func() { _ = backend.Destroy() }()
 
 	fd, err := backend.Present()
 	if err != ErrSoftwareNoDmabuf {

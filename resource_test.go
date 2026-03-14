@@ -224,7 +224,7 @@ func TestResourceManager_MultipleImageLoads(t *testing.T) {
 		path := filepath.Join(tmpDir, name)
 		img := image.NewRGBA(image.Rect(0, 0, width, height))
 		f, _ := os.Create(path)
-		png.Encode(f, img)
+		_ = png.Encode(f, img)
 		f.Close()
 		return path
 	}

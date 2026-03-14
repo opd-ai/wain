@@ -164,7 +164,7 @@ func CreateGC(conn Connection, drawable XID, mask uint32, attrs []uint32) (XID, 
 
 	// Encode attribute values
 	for _, attr := range attrs {
-		wire.EncodeUint32(&buf, attr)
+		_ = wire.EncodeUint32(&buf, attr)
 	}
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
@@ -180,7 +180,7 @@ func FreeGC(conn Connection, gc XID) error {
 
 	// FreeGC request is 8 bytes total (header + GC ID)
 	_ = wire.EncodeRequestHeader(&buf, OpcodeFreeGC, 0, 2)
-	wire.EncodeUint32(&buf, uint32(gc))
+	_ = wire.EncodeUint32(&buf, uint32(gc))
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("gc: FreeGC failed: %w", err)
