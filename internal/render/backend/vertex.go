@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
@@ -24,6 +25,19 @@ type Vertex struct {
 
 // packVertices packs all vertices from batches into a flat byte array.
 func (b *GPUBackend) packVertices(batches []Batch) ([]byte, error) {
+	// Warn once when text commands are present but no font atlas is configured.
+	if b.fontAtlas == nil {
+		for _, batch := range batches {
+			for _, cmd := range batch.Commands {
+				if cmd.Type == displaylist.CmdDrawText {
+					b.warnAtlasOnce.Do(func() {
+						log.Printf("wain/backend: font atlas not set — text rendering disabled")
+					})
+					break
+				}
+			}
+		}
+	}
 	// Estimate total vertex count (conservative upper bound: 6 vertices per command)
 	estimatedVertices := 0
 	for _, batch := range batches {

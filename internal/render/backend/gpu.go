@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -45,6 +46,9 @@ type GPUBackend struct {
 
 	// Font atlas for text rendering
 	fontAtlas *text.Atlas
+
+	// warnAtlasOnce ensures the nil-atlas warning is emitted only once per backend instance.
+	warnAtlasOnce sync.Once
 
 	// Frame profiler for performance metrics
 	profiler *FrameProfiler

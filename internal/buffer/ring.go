@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 )
 
 // SlotState represents the lifecycle state of a buffer slot in the ring.
@@ -115,6 +114,10 @@ type Ring struct {
 
 	// mu protects ring-level state.
 	mu sync.Mutex
+
+	// cond is broadcast whenever a slot becomes available or released,
+	// replacing the previous 5 ms polling loop in AcquireForWriting.
+	cond *sync.Cond
 }
 
 // NewRing creates a ring buffer with the specified number of slots.
@@ -133,11 +136,13 @@ func NewRing(size int) (*Ring, error) {
 		}
 	}
 
-	return &Ring{
+	r := &Ring{
 		slots:       slots,
 		size:        size,
 		nextAcquire: 0,
-	}, nil
+	}
+	r.cond = sync.NewCond(&r.mu)
+	return r, nil
 }
 
 // Size returns the number of slots in the ring.
@@ -157,29 +162,31 @@ func (r *Ring) GetSlot(index int) (*Slot, error) {
 // AcquireForWriting acquires the next available slot for rendering.
 // Blocks until a slot becomes available or the context is canceled.
 // The caller must call Release(slot.Index) when done presenting.
+//
+// Uses a sync.Cond broadcast from MarkReleased to avoid polling.
 func (r *Ring) AcquireForWriting(ctx context.Context) (*Slot, error) {
-	const pollInterval = 5 * time.Millisecond
+	// Wake the cond when the context is canceled so the blocked goroutine exits.
+	stop := context.AfterFunc(ctx, func() { r.cond.Broadcast() })
+	defer stop()
 
-	for {
-		if slot, ok := r.tryAcquireSlot(); ok {
-			return slot, nil
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("acquire canceled: %w", ctx.Err())
-		case <-time.After(pollInterval):
-			// Retry
-		}
-	}
-}
-
-// tryAcquireSlot performs a single non-blocking scan for an available or
-// released slot, transitioning it to StateRendering on success.
-func (r *Ring) tryAcquireSlot() (*Slot, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	for {
+		if slot, ok := r.tryAcquireSlotLocked(); ok {
+			return slot, nil
+		}
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("acquire canceled: %w", ctx.Err())
+		}
+		r.cond.Wait()
+	}
+}
+
+// tryAcquireSlotLocked performs a single non-blocking scan for an available or
+// released slot, transitioning it to StateRendering on success.
+// Caller must hold r.mu.
+func (r *Ring) tryAcquireSlotLocked() (*Slot, bool) {
 	for i := 0; i < r.size; i++ {
 		idx := (r.nextAcquire + i) % r.size
 		slot := r.slots[idx]
@@ -227,9 +234,13 @@ func (r *Ring) MarkDisplaying(index int) error {
 // MarkReleased transitions a slot from displaying to released state and signals waiters.
 // Call this from the event handler when receiving a release/idle notification.
 func (r *Ring) MarkReleased(index int) error {
-	return r.markSlotTransition(index, StateDisplaying, StateReleased, func(s *Slot) {
+	err := r.markSlotTransition(index, StateDisplaying, StateReleased, func(s *Slot) {
 		s.signalRelease()
 	})
+	if err == nil {
+		r.cond.Broadcast()
+	}
+	return err
 }
 
 // MarkAvailable immediately transitions a slot to available state.

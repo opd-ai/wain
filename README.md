@@ -275,7 +275,7 @@ wain/
 │   ├── example-app/        # Complete reference application
 │   ├── widget-demo/        # Interactive widget demonstration
 │   ├── bench/              # Software rendering benchmarks
-│   └── ...                 # 22 additional demo and tool binaries
+│   └── ...                 # 18 additional demo and tool binaries
 ├── example/                # Standalone examples using only the public API
 │   ├── hello/              # Minimal hello-world application
 │   └── multi-window/       # Multiple windows demonstration
