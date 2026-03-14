@@ -103,19 +103,19 @@ Wain is a **statically-compiled Go UI toolkit** that:
 
 The GPU backend infrastructure exists (batch buffers, shaders, pipeline state) but the end-to-end path from display list → GPU commands → presentation is not exercised for real UI workloads beyond triangle demos.
 
-- [ ] **1.1** Wire `GPUBackend.Render()` to emit actual Intel/AMD GPU commands for solid fills, rounded rects, text
+- [x] **1.1** Wire `GPUBackend.Render()` to emit actual Intel/AMD GPU commands for solid fills, rounded rects, text
   - File: `internal/render/backend/gpu.go` (currently skeleton implementation)
   - Currently falls back to software; needs batch buffer population with vertex data
   
-- [ ] **1.2** Implement `renderSolidRect()`, `renderRoundedRect()`, `renderText()` GPU paths
+- [x] **1.2** Implement `renderSolidRect()`, `renderRoundedRect()`, `renderText()` GPU paths
   - Reference: `render-sys/shaders/solid_fill.wgsl`, `rounded_rect.wgsl`, `sdf_text.wgsl`
   - Requires vertex attribute layout matching shader inputs
   
-- [ ] **1.3** Add GPU frame presentation via DMA-BUF to Wayland (`zwp_linux_dmabuf_v1`) and X11 (DRI3)
+- [x] **1.3** Add GPU frame presentation via DMA-BUF to Wayland (`zwp_linux_dmabuf_v1`) and X11 (DRI3)
   - Existing: `internal/wayland/dmabuf`, `internal/x11/dri3`
   - Gap: Not connected to GPUBackend render target
   
-- [ ] **Validation:** `cmd/gpu-display-demo` renders a complete widget hierarchy with GPU, not software
+- [x] **Validation:** `cmd/gpu-display-demo` renders a complete widget hierarchy with GPU, not software
 
 ### Priority 2: Add Performance Regression Testing
 
