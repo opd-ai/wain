@@ -233,3 +233,27 @@ func TestLayoutAdapterChildrenNonContainer(t *testing.T) {
 		t.Logf("Children() returned %d entries for Label; may be non-nil (OK if empty)", len(got))
 	}
 }
+
+// TestBasePublicWidgetDraw verifies Draw is callable (no-op).
+func TestBasePublicWidgetDraw(t *testing.T) {
+	w := NewBasePublicWidget(100, 50)
+	dl := displaylist.New()
+	canvas := newDisplayListCanvas(dl)
+	w.Draw(canvas) // no-op, must not panic
+}
+
+// TestDisplayListCanvasDrawImageNonNil verifies DrawImage with a non-nil image.
+func TestDisplayListCanvasDrawImageNonNil(t *testing.T) {
+	dl := displaylist.New()
+	canvas := newDisplayListCanvas(dl)
+	img := &Image{id: 1, width: 10, height: 10}
+	canvas.DrawImage(img, 0, 0, 10, 10)
+}
+
+// TestDisplayListCanvasDrawTextNilAtlas verifies DrawText with nil atlas is a no-op.
+func TestDisplayListCanvasDrawTextNilAtlas(t *testing.T) {
+	dl := displaylist.New()
+	canvas := newDisplayListCanvas(dl)
+	font := &Font{size: 14} // atlas is nil
+	canvas.DrawText("hello", 0, 0, font, RGB(0, 0, 0))
+}

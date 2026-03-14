@@ -719,3 +719,52 @@ func TestBaseWidgetHandleTouchAndFocus(t *testing.T) {
 	w2 := &BaseWidget{}
 	w2.HandleTouch(evt)
 }
+
+// TestWidgetAdapterDraw verifies widgetAdapter.Draw creates a canvas and draws.
+func TestWidgetAdapterDraw(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	lbl := NewLabel("test", Size{Width: 50, Height: 5})
+	adapter := newWidgetAdapter(lbl)
+	wa := adapter
+	if err := wa.Draw(buf, 0, 0); err != nil {
+		t.Errorf("widgetAdapter.Draw: %v", err)
+	}
+}
+
+// TestScrollViewSetStyle verifies SetStyle on ScrollView does not panic.
+func TestScrollViewSetStyle(t *testing.T) {
+	s := NewScrollView(Size{Width: 100, Height: 100})
+	s.SetStyle(StyleOverride{})
+}
+
+// TestImageWidgetDrawAndStyle verifies ImageWidget.Draw and SetStyle.
+func TestImageWidgetDrawAndStyle(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	canvas := newBufferCanvas(buf, 0, 0)
+
+	// Nil image — should early return without panic
+	iw := NewImageWidget(nil, Size{Width: 50, Height: 50})
+	iw.Draw(canvas)
+
+	// Non-nil image
+	img := &Image{width: 2, height: 2, data: &testImageStub{}}
+	iw2 := NewImageWidget(img, Size{Width: 50, Height: 50})
+	iw2.Draw(canvas)
+	iw2.SetStyle(StyleOverride{})
+}
+
+// testImageStub implements image.Image for testing.
+type testImageStub struct{}
+
+func (t *testImageStub) ColorModel() color.Model { return color.RGBAModel }
+func (t *testImageStub) Bounds() image.Rectangle { return image.Rect(0, 0, 2, 2) }
+func (t *testImageStub) At(x, y int) color.Color { return color.RGBA{255, 0, 0, 255} }
+
+// TestSpacerDrawAndStyle verifies Spacer Draw and SetStyle are no-ops.
+func TestSpacerDrawAndStyle(t *testing.T) {
+	buf, _ := primitives.NewBuffer(50, 50)
+	canvas := newBufferCanvas(buf, 0, 0)
+	s := NewSpacer(Size{Width: 10, Height: 10})
+	s.Draw(canvas)
+	s.SetStyle(StyleOverride{})
+}

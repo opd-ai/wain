@@ -95,47 +95,47 @@ func TestDragEventAccessors(t *testing.T) {
 
 // TestDispatchDragEventWithDispatcher verifies dispatchDragEvent calls the dispatcher.
 func TestDispatchDragEventWithDispatcher(t *testing.T) {
-d := NewEventDispatcher()
-var received *DragEvent
-// Use OnPointer since DragEvent dispatches via Dispatch() which routes to drag channel
-// Actually let's add a raw check on the dispatcher
+	d := NewEventDispatcher()
+	var received *DragEvent
+	// Use OnPointer since DragEvent dispatches via Dispatch() which routes to drag channel
+	// Actually let's add a raw check on the dispatcher
 
-app := &App{}
-w := &Window{dispatcher: d}
+	app := &App{}
+	w := &Window{dispatcher: d}
 
-// Register a custom handler via the dispatcher
-called := false
-d.OnCustom(func(e *CustomEvent) {
-called = true
-})
+	// Register a custom handler via the dispatcher
+	called := false
+	d.OnCustom(func(e *CustomEvent) {
+		called = true
+	})
 
-evt := newDragDropEvent(5, 5, "text/plain", []byte("data"))
-app.dispatchDragEvent(w, evt)
-_ = received
+	evt := newDragDropEvent(5, 5, "text/plain", []byte("data"))
+	app.dispatchDragEvent(w, evt)
+	_ = received
 
-// Drag event goes to registered drop handler, not to dispatcher's OnCustom
-// We just verify no panic and that the dispatcher path was hit
-_ = called
+	// Drag event goes to registered drop handler, not to dispatcher's OnCustom
+	// We just verify no panic and that the dispatcher path was hit
+	_ = called
 }
 
 // TestDispatchDragEventNilWindow verifies dispatchDragEvent is safe with nil window.
 func TestDispatchDragEventNilWindow(t *testing.T) {
-app := &App{}
-evt := newDragDropEvent(0, 0, "", nil)
-app.dispatchDragEvent(nil, evt) // must not panic
+	app := &App{}
+	evt := newDragDropEvent(0, 0, "", nil)
+	app.dispatchDragEvent(nil, evt) // must not panic
 }
 
 // TestNewDragEventFields verifies newDragEvent populates all fields.
 func TestNewDragEventFields(t *testing.T) {
-mimes := []string{"image/png", "text/uri-list"}
-evt := newDragEvent(DragEnter, 10.0, 20.0, mimes)
-if evt.Kind() != DragEnter {
-t.Errorf("Kind() = %v, want DragEnter", evt.Kind())
-}
-if evt.X() != 10.0 || evt.Y() != 20.0 {
-t.Errorf("X/Y = %v/%v", evt.X(), evt.Y())
-}
-if len(evt.MimeTypes()) != 2 {
-t.Errorf("MimeTypes len = %d", len(evt.MimeTypes()))
-}
+	mimes := []string{"image/png", "text/uri-list"}
+	evt := newDragEvent(DragEnter, 10.0, 20.0, mimes)
+	if evt.Kind() != DragEnter {
+		t.Errorf("Kind() = %v, want DragEnter", evt.Kind())
+	}
+	if evt.X() != 10.0 || evt.Y() != 20.0 {
+		t.Errorf("X/Y = %v/%v", evt.X(), evt.Y())
+	}
+	if len(evt.MimeTypes()) != 2 {
+		t.Errorf("MimeTypes len = %d", len(evt.MimeTypes()))
+	}
 }
