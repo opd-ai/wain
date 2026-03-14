@@ -115,7 +115,7 @@ The codebase is **exceptionally well-structured**:
 - Zero circular dependencies
 - Consistent naming conventions (31 minor violations, mostly single-letter loop vars)
 - Strong test coverage in internal packages (85–100%)
-- Root package has 325+ test functions across 12 test files
+- Root package has 325+ test functions across 17 test files (13 in `package wain`, 4 in `package wain_test`)
 
 ### Risk Areas
 
