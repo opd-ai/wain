@@ -196,7 +196,7 @@ func TestHandleSelectionRequest(t *testing.T) {
 		t.Fatalf("NewManager failed: %v", err)
 	}
 
-	mgr.SetClipboard("Test data")
+	_ = mgr.SetClipboard("Test data")
 
 	// Simulate a SelectionRequest event
 	requestor := uint32(600)
@@ -268,8 +268,8 @@ func TestHandleSelectionClear(t *testing.T) {
 		t.Fatalf("NewManager failed: %v", err)
 	}
 
-	mgr.SetClipboard("Test")
-	mgr.SetPrimary("Primary")
+	_ = mgr.SetClipboard("Test")
+	_ = mgr.SetPrimary("Primary")
 
 	if !mgr.OwnsClipboard() || !mgr.OwnsPrimary() {
 		t.Fatal("Expected to own both selections")
@@ -360,7 +360,7 @@ func TestConvertSelectionData(t *testing.T) {
 	}
 
 	testData := "Test clipboard data with unicode: ñ,ü,é,中文"
-	mgr.SetClipboard(testData)
+	_ = mgr.SetClipboard(testData)
 
 	if !bytes.Equal(mgr.clipboardData, []byte(testData)) {
 		t.Errorf("Clipboard data mismatch")

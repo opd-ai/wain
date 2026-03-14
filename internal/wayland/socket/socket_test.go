@@ -201,6 +201,7 @@ func TestSendRecvMultipleFDs(t *testing.T) {
 				fds = append(fds, int(f.Fd()))
 				files = append(files, f)
 			}
+			_ = files // prevent GC of file handles before test completes
 
 			msg := []byte("multi-fd message")
 			n, err := c1.SendMsg(msg, fds)
