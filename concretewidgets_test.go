@@ -843,3 +843,68 @@ func TestImageToBufferOversizedImage(t *testing.T) {
 		t.Error("expected nil for oversized image, got non-nil buffer")
 	}
 }
+
+// TestLinearGradientAngle verifies that the angle parameter controls gradient direction.
+func TestLinearGradientAngle(t *testing.T) {
+	const sz = 64
+
+	// angle=0: left-to-right — leftmost column ≈ startColor (red), rightmost ≈ endColor (blue).
+	t.Run("angle0", func(t *testing.T) {
+		c, buf := makeTestCanvas(sz, sz)
+		c.LinearGradient(0, 0, sz, sz, RGB(255, 0, 0), RGB(0, 0, 255), 0)
+		// Left column: high red, low blue.
+		idx := (sz/2)*buf.Stride + 0*4
+		rL := buf.Pixels[idx+2]
+		bL := buf.Pixels[idx]
+		// Right column: low red, high blue.
+		idx = (sz/2)*buf.Stride + (sz-1)*4
+		rR := buf.Pixels[idx+2]
+		bR := buf.Pixels[idx]
+		if rL <= rR {
+			t.Errorf("angle=0: expected left red (%d) > right red (%d)", rL, rR)
+		}
+		if bL >= bR {
+			t.Errorf("angle=0: expected left blue (%d) < right blue (%d)", bL, bR)
+		}
+	})
+
+	// angle=90: top-to-bottom — top row ≈ startColor (red), bottom row ≈ endColor (blue).
+	t.Run("angle90", func(t *testing.T) {
+		c, buf := makeTestCanvas(sz, sz)
+		c.LinearGradient(0, 0, sz, sz, RGB(255, 0, 0), RGB(0, 0, 255), 90)
+		// Top row: high red, low blue.
+		idxTop := 0*buf.Stride + (sz/2)*4
+		rTop := buf.Pixels[idxTop+2]
+		bTop := buf.Pixels[idxTop]
+		// Bottom row: low red, high blue.
+		idxBot := (sz-1)*buf.Stride + (sz/2)*4
+		rBot := buf.Pixels[idxBot+2]
+		bBot := buf.Pixels[idxBot]
+		if rTop <= rBot {
+			t.Errorf("angle=90: expected top red (%d) > bottom red (%d)", rTop, rBot)
+		}
+		if bTop >= bBot {
+			t.Errorf("angle=90: expected top blue (%d) < bottom blue (%d)", bTop, bBot)
+		}
+	})
+
+	// angle=180: right-to-left — opposite of angle=0.
+	t.Run("angle180", func(t *testing.T) {
+		c, buf := makeTestCanvas(sz, sz)
+		c.LinearGradient(0, 0, sz, sz, RGB(255, 0, 0), RGB(0, 0, 255), 180)
+		// Right column: high red, low blue.
+		idxR := (sz/2)*buf.Stride + (sz-1)*4
+		rR := buf.Pixels[idxR+2]
+		bR := buf.Pixels[idxR]
+		// Left column: low red, high blue.
+		idxL := (sz/2)*buf.Stride + 0*4
+		rL := buf.Pixels[idxL+2]
+		bL := buf.Pixels[idxL]
+		if rR <= rL {
+			t.Errorf("angle=180: expected right red (%d) > left red (%d)", rR, rL)
+		}
+		if bR >= bL {
+			t.Errorf("angle=180: expected right blue (%d) < left blue (%d)", bR, bL)
+		}
+	})
+}

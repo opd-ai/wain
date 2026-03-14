@@ -8,13 +8,10 @@
 //   - SoftwareConsumer: CPU-based rasterization for vector primitives
 //   - GPUConsumer: GPU-accelerated rendering with batch submission
 //
-// Software Rasterizer Limitations:
-//
-// The SoftwareConsumer does not implement the CmdDrawImage display list command.
-// Image compositing is available through the composite package's Blit and BlitScaled
-// functions, but DrawImage command execution requires a GPU backend. This is a
-// deliberate design decision to keep the software rasterizer focused on vector
-// primitives while GPU-accelerated texture sampling handles image operations.
+// The SoftwareConsumer handles all DisplayList command types, including
+// CmdDrawImage. Image blitting uses bilinear scaling via
+// internal/raster/composite.BlitScaled. If DrawImageData.Src is nil
+// (GPU-only path), the call is silently skipped.
 //
 // GPU Consumer:
 //

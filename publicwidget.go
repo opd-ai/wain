@@ -1,6 +1,10 @@
 package wain
 
-import "github.com/opd-ai/wain/internal/raster/displaylist"
+import (
+	"math"
+
+	"github.com/opd-ai/wain/internal/raster/displaylist"
+)
 
 // PublicWidget is the stable public interface for all UI widgets in wain.
 //
@@ -43,6 +47,14 @@ type PublicWidget interface {
 	// The canvas provides a high-level drawing API that abstracts over
 	// GPU and software rendering backends.
 	Draw(Canvas)
+
+	// SetOpacity sets the widget's opacity in the range [0.0, 1.0].
+	// Values outside the range are clamped. An opacity of 0.0 makes the
+	// widget fully transparent; 1.0 (default) makes it fully opaque.
+	SetOpacity(alpha float64)
+
+	// Opacity returns the current opacity value in [0.0, 1.0].
+	Opacity() float64
 }
 
 // Container extends PublicWidget for widgets that can contain child widgets.
@@ -142,6 +154,7 @@ type BasePublicWidget struct {
 	width, height int
 	children      []PublicWidget
 	visible       bool
+	opacity       float64
 
 	// Event handlers
 	onEvent func(Event) bool
@@ -153,6 +166,7 @@ func NewBasePublicWidget(width, height int) BasePublicWidget {
 		width:   width,
 		height:  height,
 		visible: true,
+		opacity: 1.0,
 	}
 }
 
@@ -212,6 +226,25 @@ func (w *BasePublicWidget) IsVisible() bool {
 	return w.visible
 }
 
+// SetOpacity sets the widget's opacity, clamped to [0.0, 1.0].
+// An opacity of 0.0 is fully transparent; 1.0 (default) is fully opaque.
+func (w *BasePublicWidget) SetOpacity(alpha float64) {
+	switch {
+	case alpha < 0.0:
+		w.opacity = 0.0
+	case alpha > 1.0:
+		w.opacity = 1.0
+	default:
+		w.opacity = alpha
+	}
+}
+
+// Opacity returns the widget's current opacity in [0.0, 1.0].
+// The default value is 1.0 (fully opaque), which is set by NewBasePublicWidget.
+func (w *BasePublicWidget) Opacity() float64 {
+	return w.opacity
+}
+
 // OnEvent registers a callback to handle events for this widget.
 // OnEvent expects a callback that returns true if it consumes the event.
 func (w *BasePublicWidget) OnEvent(handler func(Event) bool) {
@@ -268,10 +301,13 @@ func (c *displayListCanvas) DrawImage(img *Image, x, y, width, height int) {
 
 // LinearGradient fills a rectangle with a linear gradient.
 func (c *displayListCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, angle float64) {
-	// Convert angle to start/end points
-	// For simplicity, assume 0 degrees = horizontal left-to-right
-	x0, y0 := x, y+height/2
-	x1, y1 := x+width, y+height/2
+	rad := angle * math.Pi / 180
+	cx, cy := float64(x+width/2), float64(y+height/2)
+	hw, hh := float64(width)/2, float64(height)/2
+	x0 := int(cx - hw*math.Cos(rad))
+	y0 := int(cy - hh*math.Sin(rad))
+	x1 := int(cx + hw*math.Cos(rad))
+	y1 := int(cy + hh*math.Sin(rad))
 	c.dl.AddLinearGradient(x, y, width, height, x0, y0, x1, y1, startColor.toInternal(), endColor.toInternal())
 }
 

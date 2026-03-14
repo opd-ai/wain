@@ -273,3 +273,41 @@ func TestDisplayListCanvasDrawTextValidFont(t *testing.T) {
 	fontNoSize := &Font{atlas: a, size: 0}
 	canvas.DrawText("world", 0, 0, fontNoSize, RGB(0, 0, 0))
 }
+
+// TestSetOpacity validates clamping and storage of the opacity value.
+func TestSetOpacity(t *testing.T) {
+	w := NewBasePublicWidget(100, 100)
+
+	// Default is 1.0 (set by NewBasePublicWidget).
+	if got := w.Opacity(); got != 1.0 {
+		t.Errorf("default Opacity() = %v, want 1.0", got)
+	}
+
+	// Valid range [0, 1].
+	w.SetOpacity(0.5)
+	if got := w.Opacity(); got != 0.5 {
+		t.Errorf("Opacity() = %v after SetOpacity(0.5), want 0.5", got)
+	}
+
+	// Below zero is clamped to 0.
+	w.SetOpacity(-0.1)
+	if got := w.Opacity(); got != 0.0 {
+		t.Errorf("Opacity() = %v after SetOpacity(-0.1), want 0.0", got)
+	}
+
+	// Above one is clamped to 1.
+	w.SetOpacity(1.5)
+	if got := w.Opacity(); got != 1.0 {
+		t.Errorf("Opacity() = %v after SetOpacity(1.5), want 1.0", got)
+	}
+
+	// Exact boundary values.
+	w.SetOpacity(0.0)
+	if got := w.Opacity(); got != 0.0 {
+		t.Errorf("Opacity() = %v after SetOpacity(0.0), want 0.0", got)
+	}
+	w.SetOpacity(1.0)
+	if got := w.Opacity(); got != 1.0 {
+		t.Errorf("Opacity() = %v after SetOpacity(1.0), want 1.0", got)
+	}
+}

@@ -80,10 +80,42 @@ const (
 //	panel.SetGap(5)
 //	panel.Add(header)
 //	panel.Add(content)
+//
+// opacityMixin provides SetOpacity and Opacity implementations for
+// layout container types that do not embed BasePublicWidget.
+type opacityMixin struct {
+	opacity float64
+}
+
+// SetOpacity sets the opacity, clamped to [0.0, 1.0].
+func (o *opacityMixin) SetOpacity(alpha float64) {
+	switch {
+	case alpha < 0.0:
+		o.opacity = 0.0
+	case alpha > 1.0:
+		o.opacity = 1.0
+	default:
+		o.opacity = alpha
+	}
+}
+
+// Opacity returns the current opacity in [0.0, 1.0].
+// The default is 1.0 (fully opaque) when the mixin is initialised via
+// newOpacityMixin.
+func (o *opacityMixin) Opacity() float64 {
+	return o.opacity
+}
+
+// newOpacityMixin returns an opacityMixin with the default opacity of 1.0.
+func newOpacityMixin() opacityMixin {
+	return opacityMixin{opacity: 1.0}
+}
+
 type Panel struct {
 	internal      *pctwidget.Panel
 	styleOverride *StyleOverride
 	theme         *Theme
+	opacityMixin
 }
 
 // NewPanel creates a new Panel with percentage-based dimensions.
@@ -93,7 +125,7 @@ type Panel struct {
 // appearance.
 func NewPanel(size Size) *Panel {
 	internal := pctwidget.NewPanel(size.Width, size.Height)
-	return &Panel{internal: internal}
+	return &Panel{internal: internal, opacityMixin: newOpacityMixin()}
 }
 
 // Add appends a child widget to this panel.

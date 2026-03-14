@@ -3,6 +3,7 @@ package wain
 import (
 	"image"
 	"image/color"
+	"math"
 
 	"github.com/opd-ai/wain/internal/raster/composite"
 	"github.com/opd-ai/wain/internal/raster/effects"
@@ -139,11 +140,14 @@ func (c *bufferCanvas) DrawImage(img *Image, x, y, width, height int) {
 }
 
 // LinearGradient fills a rectangle with a linear gradient.
-func (c *bufferCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, _ float64) {
-	x0 := c.xOff + x
-	y0 := c.yOff + y + height/2
-	x1 := c.xOff + x + width
-	y1 := c.yOff + y + height/2
+func (c *bufferCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, angle float64) {
+	rad := angle * math.Pi / 180
+	cx, cy := float64(c.xOff+x+width/2), float64(c.yOff+y+height/2)
+	hw, hh := float64(width)/2, float64(height)/2
+	x0 := int(cx - hw*math.Cos(rad))
+	y0 := int(cy - hh*math.Sin(rad))
+	x1 := int(cx + hw*math.Cos(rad))
+	y1 := int(cy + hh*math.Sin(rad))
 	effects.LinearGradient(c.buf, c.xOff+x, c.yOff+y, width, height,
 		x0, y0, startColor.toInternal(),
 		x1, y1, endColor.toInternal())

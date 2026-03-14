@@ -99,6 +99,8 @@ jobs:
             go test -v -run TestAccessibility ./...
           CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
             go test -v -run TestExampleApp ./internal/integration
+          CGO_LDFLAGS="${PWD}/render-sys/target/x86_64-unknown-linux-musl/release/librender_sys.a -ldl -lm -lpthread" \
+            go test -tags=integration -v -run TestGPUPipelineEndToEnd ./internal/integration
 
       - name: Run build verification
         run: |

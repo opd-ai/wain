@@ -1,53 +1,121 @@
 # Implementation Gaps — 2026-03-14
 
-## ImageWidget Silently Invisible in Software Mode
+## Canvas.LinearGradient Ignores Angle Parameter
 
-- **Stated Goal**: The README lists `ImageWidget` as a first-class widget alongside Button, Label, and TextInput with no caveats. Users expect `NewImageWidget(img, size)` to display an image in all rendering modes.
-- **Current State**: `ImageWidget.Draw` emits a `CmdDrawImage` display-list command (`concretewidgets.go:606`). The software rasterizer's consumer (`internal/raster/consumer/software.go:90–92`) hits the case branch `case displaylist.CmdDrawImage: // Skip for now — GPU backend handles this` and discards the command silently. On any system running in software mode (`ForceSoftware: true`, or no supported GPU), every `ImageWidget` renders as empty space with no error, no log message, and no visual placeholder.
-- **Impact**: Any application running on a non-GPU machine (the majority of CI and user environments) that uses `ImageWidget` will display broken UIs with invisible images. The feature is advertised without the software-mode caveat.
-- **Closing the Gap**: Implement `SoftwareConsumer.renderDrawImage` in `internal/raster/consumer/software.go`. Extract the image pixels from the display-list command's `Image` field, convert to `image.RGBA` if necessary, and call `composite.BlitScaled(dst, src, x, y, w, h)` (already available in `internal/raster/composite`). Add a unit test `TestImageWidgetSoftwarePath` that renders an `ImageWidget` through a `SoftwareConsumer` and asserts the output buffer is non-zero in the widget's bounding box.
-
----
-
-## GPU Rendering Pipeline Not Exercised End-to-End in CI
-
-- **Stated Goal**: The README claims "GPU Command Submission — Intel i915/Xe and AMD RDNA batch command generation with DMA-BUF export" and "Shader Compilation — WGSL shaders compiled to Intel EU and AMD RDNA native ISA via naga" as first-class features. The feature table presents GPU rendering as production-ready.
-- **Current State**: `GPUBackend.Render()` constructs command batches and submits them via `submitBatchesWithScissor` (`internal/render/backend/gpu.go:221`). The shader-to-ISA compilation CI gate (`cargo test --test shader_compile`) verifies non-empty binary blobs without hardware. However, the complete path — widget tree → display list → GPU batch → execbuffer/amdgpu CS → DMA-BUF → compositor — is only tested when `/dev/dri/renderD128` is present (`ci.yml`, `gpu-check` step), which is never true on standard GitHub Actions runners. There is no mock-hardware integration test.
-- **Impact**: GPU rendering regressions (wrong batch encoding, broken DMA-BUF handoff, pipeline state corruption) go undetected in CI. Developers cannot verify GPU correctness without physical Intel/AMD hardware.
-- **Closing the Gap**: (1) Add a software-emulated GPU integration test in `internal/integration/gpu_pipeline_test.go` that creates a `GPUBackend` with a mock DRM allocator, renders a simple display list, and asserts the batch byte sequence is non-empty and structurally valid (correct header, non-zero length). (2) Wire the test under a build tag `//go:build integration` so it runs unconditionally in CI without requiring hardware. (3) Add a `cmd/gpu-ui-demo` that renders a complete widget tree via GPU path, exercising the full pipeline on hardware runners when available.
-
----
-
-## AT-SPI2 Accessibility Has 0.0% Effective Test Coverage
-
-- **Stated Goal**: The README states "AT-SPI2 Accessibility — D-Bus screen reader integration with Accessible, Component, Action, and Text interfaces." `ACCESSIBILITY.md` documents four D-Bus interfaces. `STABILITY.md` lists `EnableAccessibility` and `AccessibilityManager` as stability-pinned public API.
-- **Current State**: `internal/a11y/` contains 10 source files and 75 functions implementing the four AT-SPI2 interfaces. `manager_test.go` and `a11y_test.go` exist but exercise only struct-field setters (e.g., `SetBounds`, `SetText`) without using the build tag `atspi`. Running `go test ./internal/a11y/` reports `coverage: 0.0% of statements` because all implementation code is guarded by `//go:build atspi`. The D-Bus export paths, method handlers (`GetRole`, `GetDescription`, `DoAction`, `GetText`), and the Manager's object registration are completely untested.
-- **Impact**: Any regression in the D-Bus interface implementations (wrong return types, broken property serialization, panics in signal emission) is invisible to CI. Screen-reader users (the primary audience for this feature) would experience silent failures.
-- **Closing the Gap**: Add `//go:build atspi` to the test files and update the CI matrix to run `go test -tags=atspi ./internal/a11y/` with a mock D-Bus session using `github.com/godbus/dbus/v5`'s `SessionBusPrivate` + `Auth(dbus.AuthAnonymous())` pattern (no display server required). Tests should cover: object registration, `GetRole`/`GetName`/`GetDescription` return values, `DoAction` callback invocation, and `SetFocused` signal emission.
-
----
-
-## Frame-Delivery Path (`internal/render/display`) Undertested
-
-- **Stated Goal**: The README and architecture documentation describe a complete frame delivery pipeline: GPU renders to a DMA-BUF or shared-memory buffer; the display layer hands it to the Wayland compositor or X11 server each frame.
-- **Current State**: `internal/render/display/` implements `WaylandPipeline`, `X11Pipeline`, `SoftwareWaylandPresenter`, and `SoftwareX11Presenter`. `go test -cover ./internal/render/display/` reports **1.9% coverage**. The `renderToFramebuffer`, `ensureWaylandBuffer`, and `PresentBuffer` functions — the frame-delivery hot path — are not covered. `internal/render/present/` (which contains `RenderAndPresent`, the top-level orchestrator) has **0 test files**.
-- **Impact**: A regression in any frame-presentation path produces a broken display or a crash with no CI signal. The 60 FPS benchmark only validates the rasterizer in isolation, not the pipeline from rasterizer to screen.
-- **Closing the Gap**: (1) Add `present_test.go` with mock `FramebufferPool` and `PlatformPresenter` implementations that record `RenderToFramebuffer` and `PresentBuffer` calls; assert correct sequencing. (2) Add display tests using `net.Pipe()` to simulate a Wayland socket and verify that `WaylandPipeline.RenderAndPresent` sends a `wl_surface.attach`+`commit` sequence. Both test files require no physical display server.
-
----
-
-## `AcquireForWriting` Uses Polling Instead of Condition Signaling
-
-- **Stated Goal**: The README promises "Double/Triple Buffering — frame synchronization with compositor." The architecture description implies low-latency frame delivery.
-- **Current State**: `internal/buffer/ring.go:160–175` — `AcquireForWriting` polls for an available slot using a 5 ms `time.After` tick. Under compositor back-pressure all slots may be in `StateDisplaying`, forcing the render goroutine to spin-wait for up to 5 ms before retrying. This adds up to 5 ms of extra latency per frame (≈30% of the 16.7 ms budget) and wastes CPU cycles.
-- **Impact**: Frame delivery latency is degraded under load or on slow compositors. On a 60 FPS budget, a 5 ms poll adds 30% overhead to worst-case frame times.
-- **Closing the Gap**: Replace the `time.After` poll with a condition variable (`sync.Cond`) or a release notification channel. In `markSlotTransition` (called by `MarkReleased`), call `cond.Signal()` after the state change. `AcquireForWriting` waits on the condition variable instead of sleeping. This reduces worst-case acquisition latency from 5 ms to ≈100 µs (OS scheduling granularity). Validate with: `go test -bench=BenchmarkAcquireForWriting ./internal/buffer/` and verify p99 latency drops.
+- **Stated Goal**: The `Canvas` interface (`publicwidget.go:111–112`) documents `LinearGradient` as:
+  _"The angle is in degrees (0 = left-to-right, 90 = top-to-bottom)."_ This implies users can
+  draw gradients at arbitrary angles (horizontal, vertical, diagonal) to achieve varied visual
+  effects in custom widgets.
+- **Current State**: Both concrete `Canvas` implementations silently discard the `angle`
+  argument. `displayListCanvas.LinearGradient` (`publicwidget.go:270–278`) contains the comment
+  _"For simplicity, assume 0 degrees = horizontal left-to-right"_ and always computes a
+  horizontal gradient. `bufferCanvas.LinearGradient` (`concretewidgets.go:142–150`) uses
+  `_ float64` for the angle, explicitly discarding it. Any call with `angle != 0` (e.g., vertical
+  gradient at 90°, or diagonal at 45°) renders the same left-to-right gradient without any
+  warning or error.
+- **Impact**: Widgets that use `Canvas.LinearGradient` with a non-zero angle will silently
+  render incorrectly. This affects custom widget implementations that try to draw vertical
+  (top-to-bottom) or diagonal gradients — a common UI pattern for button highlight effects and
+  backgrounds. There is no compile-time or runtime indication that the angle was ignored.
+- **Closing the Gap**: In both `displayListCanvas.LinearGradient` and
+  `bufferCanvas.LinearGradient`, replace the hard-coded horizontal calculation with proper
+  angle-to-vector conversion:
+  ```go
+  import "math"
+  rad := angle * math.Pi / 180
+  cx, cy := float64(x+width/2), float64(y+height/2)
+  hw, hh := float64(width)/2, float64(height)/2
+  x0 := int(cx - hw*math.Cos(rad))
+  y0 := int(cy - hh*math.Sin(rad))
+  x1 := int(cx + hw*math.Cos(rad))
+  y1 := int(cy + hh*math.Sin(rad))
+  ```
+  Apply this in both `publicwidget.go` and `concretewidgets.go`. Add a test
+  `TestLinearGradientAngle90` that verifies `angle=90` produces a top-to-bottom gradient (top
+  row ≈ `startColor`, bottom row ≈ `endColor`).
 
 ---
 
-## GPU Documentation Gap
+## SetOpacity Documented But Not Implemented
 
-- **Stated Goal**: The README prominently lists GPU rendering as a key feature. `HARDWARE.md` documents a supported GPU hardware matrix (Intel Gen9–Xe, AMD RDNA 1–3).
-- **Current State**: `HARDWARE.md` covers hardware compatibility but does not explain: how to verify GPU detection at runtime (`./bin/wain --detect-gpu` or equivalent), how to force GPU vs software mode via `AppConfig.ForceSoftware`, how to interpret `auto-render-demo` output, or how to add new WGSL shaders. A new user with an Intel Gen12 laptop has no guided path from "I have this GPU" to "I can see a GPU-rendered frame."
-- **Impact**: GPU-capable users default to software rendering because they cannot discover or enable GPU acceleration. The project's headline GPU feature goes unused.
-- **Closing the Gap**: (1) Add a "GPU Usage" section to `GETTING_STARTED.md` covering runtime GPU detection (`AppConfig{Verbose: true}` outputs backend selection), forced software fallback, and `cmd/auto-render-demo` interpretation. (2) Add `render-sys/shaders/README.md` documenting how to add a shader: write WGSL, add to `shaders.rs` constant table, add a CI validation entry in `shader_compile.rs`.
+- **Stated Goal**: The public `animate.go` package-level godoc (`animate.go:46`) and the
+  `internal/ui/animation/animation.go` usage example (`animation.go:20`) both use
+  `widget.SetOpacity(v)` as the canonical demonstration of how to animate a widget property.
+  This strongly implies to users that `SetOpacity` is a standard method on `wain` widgets.
+- **Current State**: `SetOpacity` does not exist on any type in the codebase. A search for
+  `func.*SetOpacity` across all `.go` files returns no results. Any application developer who
+  reads the godoc for `App.Animate` or `Animator.Add` and copies the example will get a
+  compile error.
+- **Impact**: New users following the canonical example from the public API documentation will
+  encounter an unexplained compile failure immediately. This undermines the "first application"
+  experience described in `GETTING_STARTED.md` and `TUTORIAL.md`. The error is particularly
+  confusing because the code compiles successfully for all other advertised APIs.
+- **Closing the Gap**: Choose one of two fixes:
+  1. **Implement `SetOpacity`** (preferred): Add `SetOpacity(alpha float64)` to the `Widget`
+     interface and `PublicWidget` interface. Implement on `BasePublicWidget` (store `opacity`
+     field, default 1.0). Pass the opacity as a multiplier on the `alpha` channel in each
+     `drawListCanvas` draw call. This makes the example compile and provides a genuinely useful
+     widget capability.
+  2. **Update the examples**: Replace `widget.SetOpacity(v)` in both `animate.go:46` and
+     `animation.go:20` with a method that actually exists, such as
+     `label.SetText(fmt.Sprintf("%.0f%%", v*100))`. This is minimal but does not add the
+     missing feature.
+
+---
+
+## Stale Package Documentation Contradicts Implementation
+
+- **Stated Goal**: Package documentation in `internal/raster/consumer/doc.go` describes the
+  `consumer` package's capabilities and limitations so contributors know what is and is not
+  handled by the software rasterizer.
+- **Current State**: Lines 13–17 of `doc.go` state:
+  > _"The SoftwareConsumer does not implement the CmdDrawImage display list command.
+  > Image compositing is available through the composite package's Blit and BlitScaled
+  > functions, but DrawImage command execution requires a GPU backend."_
+  This was accurate before technical debt item TD-2 was resolved in v1.1. However,
+  `software.go:96–112` now contains a working `renderDrawImage` implementation that converts
+  any `image.Image` to a `primitives.Buffer` and blits it via `composite.BlitScaled`. The
+  `CmdDrawImage` case in `renderCommand` (line 85–87) calls this function. The stale comment
+  is directly contradicted by the code.
+- **Impact**: Contributors reading `doc.go` will incorrectly believe `ImageWidget` is a
+  GPU-only feature and may duplicate work or avoid adding image-related functionality to the
+  software path. It also obscures the fact that the old gap reported in the previous `GAPS.md`
+  has been fixed, creating confusion about the project's actual state.
+- **Closing the Gap**: Replace the "Software Rasterizer Limitations" subsection in
+  `internal/raster/consumer/doc.go` with a description of what `renderDrawImage` does:
+  > _"The SoftwareConsumer handles all `DisplayList` command types, including `CmdDrawImage`.
+  > Image blitting uses bilinear scaling via `internal/raster/composite.BlitScaled`. If the
+  > `DrawImageData.Src` field is nil (GPU-only path), the call is silently skipped."_
+  Validate with `go doc github.com/opd-ai/wain/internal/raster/consumer`.
+
+---
+
+## GPU Rendering Pipeline Has No Hardware-Independent End-to-End Test
+
+- **Stated Goal**: The README claims "GPU Command Submission — Intel i915/Xe and AMD RDNA batch
+  command generation with DMA-BUF export" as a production feature. The CI pipeline runs the
+  shader-to-ISA compilation gate (`render-sys/tests/shader_compile.rs`) unconditionally. Users
+  and contributors expect the GPU rendering path to be regression-tested in CI.
+- **Current State**: The shader→ISA compilation gate verifies that WGSL shaders parse and
+  produce non-empty native ISA byte blobs. However, the path from a widget tree through the
+  display list, GPU batch encoding, execbuffer submission, and DMA-BUF export to the compositor
+  is only exercised when `/dev/dri/renderD128` is physically present (CI step
+  `id: gpu-check`). Standard GitHub Actions runners have no DRM device, so every CI run skips
+  the GPU integration job. `HARDWARE.md` correctly marks GPU rendering as "hardware-validated:
+  manual only", but this gap is not surfaced in the README's feature table.
+- **Impact**: GPU rendering regressions in batch encoding, pipeline state objects, DMA-BUF
+  buffer layout, or the Go→Rust FFI boundary go undetected between hardware-validated releases.
+  The shader-to-ISA gate covers compilation correctness but not the rendering pipeline
+  orchestration in Go (`internal/render/backend/gpu.go`, `internal/render/display/`).
+- **Closing the Gap**:
+  1. Add `internal/integration/gpu_pipeline_test.go` with `//go:build integration`. The test
+     should construct a `GPUBackend` with a mock `BufferAllocator` that returns a fixed-size
+     heap allocation (using `primitives.NewBuffer`), render a minimal display list containing
+     one `CmdFillRect`, and assert: (a) the returned batch byte slice is non-empty; (b) the
+     first 4 bytes match the expected Intel MI command header or AMD PM4 header depending on
+     detected GPU generation; (c) no error is returned.
+  2. Wire `go test -tags integration ./internal/integration/...` into the CI `build-and-test`
+     job unconditionally (it must not require hardware; the mock allocator must make it runnable
+     in any environment).
+  3. Update `README.md` to note that the hardware integration tests are manual-only, keeping
+     the distinction visible to contributors.
