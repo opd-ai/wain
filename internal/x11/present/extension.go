@@ -261,8 +261,8 @@ func (e *Extension) PresentPixmap(conn Connection, opts PixmapPresentOptions) er
 	wire.EncodeUint32(&buf, 0) // wait_fence (0 = none)
 	wire.EncodeUint32(&buf, 0) // idle_fence (0 = none)
 	wire.EncodeUint32(&buf, opts.Options)
-	wire.EncodeUint64(&buf, opts.TargetMSC)
-	wire.EncodeUint64(&buf, opts.Divisor)
+	_ = wire.EncodeUint64(&buf, opts.TargetMSC)
+	_ = wire.EncodeUint64(&buf, opts.Divisor)
 	wire.EncodeUint64(&buf, opts.Remainder)
 	wire.EncodeUint32(&buf, 0) // notifies_len (no notify list)
 

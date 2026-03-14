@@ -212,9 +212,9 @@ func (c *Connection) CreateWindow(parent XID, x, y int16, width, height, borderW
 	// Encode arguments
 	wire.EncodeUint32(&buf, uint32(wid))
 	wire.EncodeUint32(&buf, uint32(parent))
-	wire.EncodeInt16(&buf, x)
-	wire.EncodeInt16(&buf, y)
-	wire.EncodeUint16(&buf, width)
+	_ = wire.EncodeInt16(&buf, x)
+	_ = wire.EncodeInt16(&buf, y)
+	_ = wire.EncodeUint16(&buf, width)
 	wire.EncodeUint16(&buf, height)
 	wire.EncodeUint16(&buf, borderWidth)
 	wire.EncodeUint16(&buf, class)
@@ -297,7 +297,7 @@ func (c *Connection) ConfigureWindow(window XID, mask ConfigureWindowMask, value
 	wire.EncodeRequestHeader(&buf, wire.OpcodeConfigureWindow, 0, msgLen)
 	wire.EncodeUint32(&buf, uint32(window))
 	wire.EncodeUint16(&buf, uint16(mask))
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodePadding(&buf, 2)
 
 	// Encode values
 	for _, v := range values {

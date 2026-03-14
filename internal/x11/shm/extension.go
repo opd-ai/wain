@@ -210,7 +210,7 @@ func (ext *Extension) CreateSegment(conn Connection, size int, readOnly bool) (*
 	addr, errno := shmAttach(shmID)
 	if errno != 0 {
 		// Clean up segment on failure
-		syscall.Syscall(syscall.SYS_SHMCTL, shmID, ipcRmid, 0)
+		_, _, _ = syscall.Syscall(syscall.SYS_SHMCTL, shmID, ipcRmid, 0)
 		return nil, fmt.Errorf("%w: shmat failed: %v", ErrShmFailed, errno)
 	}
 
@@ -330,10 +330,10 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 	// dst-x(2) + dst-y(2) + depth(1) + format(1) + send-event(1) + pad(1) +
 	// shmseg(4) + offset(4)
 	wire.EncodeRequestHeader(&buf, ext.baseOpcode+ShmPutImage, 0, 10)
-	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, srcX, srcY)
+	_ = wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, srcX, srcY)
 	wire.EncodeUint16(&buf, width)  // src-width (use full width)
 	wire.EncodeUint16(&buf, height) // src-height (use full height)
-	wire.EncodeInt16(&buf, dstX)
+	_ = wire.EncodeInt16(&buf, dstX)
 	wire.EncodeInt16(&buf, dstY)
 	buf.WriteByte(depth)
 	buf.WriteByte(format)
