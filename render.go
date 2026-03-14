@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
+	"github.com/opd-ai/wain/internal/render"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
 
@@ -180,4 +181,21 @@ func unionRects(a, b displaylist.Rect) displaylist.Rect {
 		Width:  x2 - x1,
 		Height: y2 - y1,
 	}
+}
+
+// MemorySnapshot is an immutable snapshot of GPU buffer allocation statistics.
+// It is returned by [GetMemoryStats].
+type MemorySnapshot = render.MemorySnapshot
+
+// GetMemoryStats returns a snapshot of current GPU buffer allocation statistics.
+// It is safe to call from any goroutine.
+//
+// Example:
+//
+// snap := wain.GetMemoryStats()
+// fmt.Printf("GPU buffers: %d allocated, %d bytes in use\n",
+//
+//	snap.AllocatedBuffers, snap.AllocatedBytes)
+func GetMemoryStats() MemorySnapshot {
+	return render.GetMemoryStats()
 }
