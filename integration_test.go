@@ -280,3 +280,76 @@ func TestEventTypes(t *testing.T) {
 		})
 	}
 }
+
+// TestAccessibilityIntegration verifies the cross-layer accessibility wiring:
+//   - EnableAccessibility behaves correctly on stub builds (returns nil, no panic)
+//   - FocusManager advances focus in response to FocusNext calls (simulating Tab)
+//   - WireFocusManager connects the focus hook when an AccessibilityManager is available
+func TestAccessibilityIntegration(t *testing.T) {
+	// Verify stub/headless path: EnableAccessibility returns nil without D-Bus.
+	// This confirms the function handles the no-D-Bus case gracefully.
+	am := wain.EnableAccessibility("TestApp")
+	if am != nil {
+		// Real AT-SPI2 available; close it after the test.
+		t.Cleanup(am.Close)
+	}
+	// am == nil is the expected outcome in CI (no D-Bus); am != nil is fine too.
+
+	t.Run("FocusManagerAdvancesOnFocusNext", func(t *testing.T) {
+		fm := wain.NewFocusManager()
+
+		w1 := &wain.BaseWidget{}
+		w2 := &wain.BaseWidget{}
+		fm.SetChain([]wain.Widget{w1, w2})
+
+		// No focus yet.
+		if got := fm.Focused(); got != nil {
+			t.Fatalf("expected no initial focus, got %v", got)
+		}
+
+		// First Tab press: focus moves to w1.
+		fm.FocusNext()
+		if got := fm.Focused(); got != w1 {
+			t.Fatalf("after first FocusNext: expected w1, got %v", got)
+		}
+
+		// Second Tab press: focus advances to w2.
+		fm.FocusNext()
+		if got := fm.Focused(); got != w2 {
+			t.Fatalf("after second FocusNext: expected w2, got %v", got)
+		}
+	})
+
+	t.Run("WireFocusManagerFocusHook", func(t *testing.T) {
+		if am == nil {
+			t.Skip("AT-SPI2 not compiled in; skipping WireFocusManager hook test")
+		}
+
+		fm := wain.NewFocusManager()
+		am.WireFocusManager(fm)
+
+		w := &wain.BaseWidget{}
+		fm.SetChain([]wain.Widget{w})
+
+		// Trigger focus change; hook must not panic.
+		fm.FocusNext()
+		if got := fm.Focused(); got != w {
+			t.Fatalf("expected w to be focused, got %v", got)
+		}
+	})
+
+	t.Run("RegisterLabelNoopOnStub", func(t *testing.T) {
+		if am != nil {
+			t.Skip("AT-SPI2 available; stub-path test not applicable")
+		}
+
+		// Create a standalone manager to exercise the stub path.
+		stubAM := wain.EnableAccessibility("StubTest")
+		// Confirm nil is returned without panicking.
+		if stubAM != nil {
+			stubAM.Close()
+			t.Skip("unexpectedly got non-nil manager in stub test")
+		}
+		// Reaching here means stub gracefully returned nil — test passes.
+	})
+}

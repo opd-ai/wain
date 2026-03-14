@@ -62,7 +62,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo stats wain-demo event-demo example-app bench
+.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo gpu-ui-demo stats wain-demo event-demo example-app bench
 
 all: build
 
@@ -246,6 +246,18 @@ widget-demo: rust $(DL_STUB_OBJ)
 	    -o bin/widget-demo github.com/opd-ai/wain/cmd/widget-demo
 	@if ! ldd bin/widget-demo 2>&1 | grep -q "not a dynamic executable"; then \
 		echo "ERROR: bin/widget-demo has dynamic dependencies:" && ldd bin/widget-demo && exit 1; \
+	fi
+
+gpu-ui-demo: rust $(DL_STUB_OBJ)
+	mkdir -p bin
+	CC=$(CC) CGO_ENABLED=1 \
+	  CGO_LDFLAGS="$(CURDIR)/$(RUST_LIB) $(CURDIR)/$(DL_STUB_OBJ) -ldl -lm -lpthread" \
+	  CGO_LDFLAGS_ALLOW=".*" \
+	  go build \
+	    -ldflags "-extldflags '-static'" \
+	    -o bin/gpu-ui-demo github.com/opd-ai/wain/cmd/gpu-ui-demo
+	@if ! ldd bin/gpu-ui-demo 2>&1 | grep -q "not a dynamic executable"; then \
+		echo "ERROR: bin/gpu-ui-demo has dynamic dependencies:" && ldd bin/gpu-ui-demo && exit 1; \
 	fi
 
 dmabuf-demo: rust $(DL_STUB_OBJ)

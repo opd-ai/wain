@@ -25,41 +25,13 @@ type Vertex struct {
 
 // packVertices packs all vertices from batches into a flat byte array.
 func (b *GPUBackend) packVertices(batches []Batch) ([]byte, error) {
-	// Warn once when text commands are present but no font atlas is configured.
-	if b.fontAtlas == nil {
-		for _, batch := range batches {
-			for _, cmd := range batch.Commands {
-				if cmd.Type == displaylist.CmdDrawText {
-					b.warnAtlasOnce.Do(func() {
-						log.Printf("wain/backend: font atlas not set — text rendering disabled")
-					})
-					break
-				}
-			}
-		}
-	}
-	// Estimate total vertex count (conservative upper bound: 6 vertices per command)
-	estimatedVertices := 0
-	for _, batch := range batches {
-		estimatedVertices += len(batch.Commands) * 6
+	b.warnAtlasAbsent(batches)
+
+	data, err := b.allocVertexData(batches)
+	if err != nil {
+		return nil, err
 	}
 
-	// Each vertex is 20 bytes (2*float32 + 2*float32 + 4*uint8)
-	const vertexSize = 20
-	estimatedSize := estimatedVertices * vertexSize
-
-	// Calculate buffer size from width (each pixel is 4 bytes)
-	bufferSize := int(b.vertexBuffer.Width * b.vertexBuffer.Stride)
-
-	if estimatedSize > bufferSize {
-		return nil, fmt.Errorf("%w: need %d bytes, have %d",
-			ErrVertexBufferFull, estimatedSize, bufferSize)
-	}
-
-	// Allocate vertex data buffer
-	data := make([]byte, 0, estimatedSize)
-
-	// Pack vertices for each batch
 	for _, batch := range batches {
 		batchData, err := packBatchVertices(batch, b.width, b.height, b.fontAtlas)
 		if err != nil {
@@ -69,6 +41,45 @@ func (b *GPUBackend) packVertices(batches []Batch) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// warnAtlasAbsent emits a one-time log warning when text commands are present
+// but no font atlas has been configured on the backend.
+func (b *GPUBackend) warnAtlasAbsent(batches []Batch) {
+	if b.fontAtlas != nil {
+		return
+	}
+	for _, batch := range batches {
+		for _, cmd := range batch.Commands {
+			if cmd.Type == displaylist.CmdDrawText {
+				b.warnAtlasOnce.Do(func() {
+					log.Printf("wain/backend: font atlas not set — text rendering disabled")
+				})
+				return
+			}
+		}
+	}
+}
+
+// allocVertexData estimates the vertex buffer requirement for the given batches,
+// validates it fits within the allocated vertex buffer, and returns a
+// pre-allocated byte slice for packing.
+func (b *GPUBackend) allocVertexData(batches []Batch) ([]byte, error) {
+	const vertexSize = 20 // 2×float32 pos + 2×float32 UV + 4×uint8 color
+
+	estimatedVertices := 0
+	for _, batch := range batches {
+		estimatedVertices += len(batch.Commands) * 6
+	}
+	estimatedSize := estimatedVertices * vertexSize
+
+	bufferSize := int(b.vertexBuffer.Width * b.vertexBuffer.Stride)
+	if estimatedSize > bufferSize {
+		return nil, fmt.Errorf("%w: need %d bytes, have %d",
+			ErrVertexBufferFull, estimatedSize, bufferSize)
+	}
+
+	return make([]byte, 0, estimatedSize), nil
 }
 
 // packBatchVertices packs vertices for a single batch.
