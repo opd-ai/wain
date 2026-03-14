@@ -62,33 +62,33 @@ func TestAccessibilityManagerWireFocusManagerWithRegistered(t *testing.T) {
 // newTestAccessibilityManager creates an AccessibilityManager with a stub mgr for
 // headless testing (no AT-SPI2 required).
 func newTestAccessibilityManager() *AccessibilityManager {
-return &AccessibilityManager{
-mgr:       &a11y.Manager{},
-widgetIDs: make(map[Widget]uint64),
-}
+	return &AccessibilityManager{
+		mgr:       &a11y.Manager{},
+		widgetIDs: make(map[Widget]uint64),
+	}
 }
 
 // TestAccessibilityManagerClose_NonNil covers the am.mgr.Close() path.
 func TestAccessibilityManagerClose_NonNil(t *testing.T) {
-am := newTestAccessibilityManager()
-am.Close() // must not panic
+	am := newTestAccessibilityManager()
+	am.Close() // must not panic
 }
 
 // TestAccessibilityManagerRegisterMethods covers RegisterPanel/Button/Label/Entry/ScrollPane.
 func TestAccessibilityManagerRegisterMethods(t *testing.T) {
-am := newTestAccessibilityManager()
-am.RegisterPanel("panel", 0)
-am.RegisterButton("btn", 0, nil)
-am.RegisterLabel("lbl", 0)
-am.RegisterEntry("entry", 0)
-am.RegisterScrollPane("scroll", 0)
+	am := newTestAccessibilityManager()
+	am.RegisterPanel("panel", 0)
+	am.RegisterButton("btn", 0, nil)
+	am.RegisterLabel("lbl", 0)
+	am.RegisterEntry("entry", 0)
+	am.RegisterScrollPane("scroll", 0)
 }
 
 // TestAccessibilityManagerSetMethods covers SetBounds/SetFocused/SetText/SetName.
 func TestAccessibilityManagerSetMethods(t *testing.T) {
-am := newTestAccessibilityManager()
-am.SetBounds(1, 0, 0, 100, 50)
-am.SetFocused(1, true)
-am.SetText(1, "hello")
-am.SetName(1, "mywidget")
+	am := newTestAccessibilityManager()
+	am.SetBounds(1, 0, 0, 100, 50)
+	am.SetFocused(1, true)
+	am.SetText(1, "hello")
+	am.SetName(1, "mywidget")
 }

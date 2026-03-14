@@ -404,29 +404,29 @@ var _ DisplayListEmitter = (*mockWidget)(nil)
 
 // TestRenderBridge_WalkWidget_EmitError covers the error path from EmitDisplayList.
 func TestRenderBridge_WalkWidget_EmitError(t *testing.T) {
-errExpected := errors.New("emit failed")
-renderer := &mockRenderer{}
-bridge := NewRenderBridge(renderer)
-bridge.MarkDirty()
-root := &mockWidget{emitError: errExpected}
+	errExpected := errors.New("emit failed")
+	renderer := &mockRenderer{}
+	bridge := NewRenderBridge(renderer)
+	bridge.MarkDirty()
+	root := &mockWidget{emitError: errExpected}
 
-err := bridge.Render(root)
-if err == nil {
-t.Fatal("expected error from walkWidget, got nil")
-}
+	err := bridge.Render(root)
+	if err == nil {
+		t.Fatal("expected error from walkWidget, got nil")
+	}
 }
 
 // TestRenderBridge_WalkWidget_ChildEmitError covers the error path from a child widget.
 func TestRenderBridge_WalkWidget_ChildEmitError(t *testing.T) {
-errExpected := errors.New("child emit failed")
-renderer := &mockRenderer{}
-bridge := NewRenderBridge(renderer)
-bridge.MarkDirty()
-child := &mockWidget{emitError: errExpected}
-root := &mockWidget{children: []Widget{child}}
+	errExpected := errors.New("child emit failed")
+	renderer := &mockRenderer{}
+	bridge := NewRenderBridge(renderer)
+	bridge.MarkDirty()
+	child := &mockWidget{emitError: errExpected}
+	root := &mockWidget{children: []Widget{child}}
 
-err := bridge.Render(root)
-if err == nil {
-t.Fatal("expected error from child walkWidget, got nil")
-}
+	err := bridge.Render(root)
+	if err == nil {
+		t.Fatal("expected error from child walkWidget, got nil")
+	}
 }

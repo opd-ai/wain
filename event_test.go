@@ -522,217 +522,217 @@ func TestDispatchKeyHandlerConsumed(t *testing.T) {
 // TestDispatchKeyFocusedWidgetConsumes covers the early-return in dispatchKey
 // when the focused widget consumes the key event.
 func TestDispatchKeyFocusedWidgetConsumes(t *testing.T) {
-d := NewEventDispatcher()
-btn := &BaseWidget{}
-btn.OnKey(func(e *KeyEvent) { e.Consume() })
-d.focusManager.SetChain([]Widget{btn})
-d.focusManager.Focus(btn)
+	d := NewEventDispatcher()
+	btn := &BaseWidget{}
+	btn.OnKey(func(e *KeyEvent) { e.Consume() })
+	d.focusManager.SetChain([]Widget{btn})
+	d.focusManager.Focus(btn)
 
-handlerCalled := false
-d.OnKey(func(e *KeyEvent) { handlerCalled = true })
+	handlerCalled := false
+	d.OnKey(func(e *KeyEvent) { handlerCalled = true })
 
-d.Dispatch(&KeyEvent{
-baseEvent: baseEvent{timestamp: time.Now()},
-eventType: KeyPress,
-key:       Key(0x41),
-})
-if handlerCalled {
-t.Error("global handler should not be called when focused widget consumed event")
-}
+	d.Dispatch(&KeyEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: KeyPress,
+		key:       Key(0x41),
+	})
+	if handlerCalled {
+		t.Error("global handler should not be called when focused widget consumed event")
+	}
 }
 
 // TestDispatchTouchWidgetRootConsumes covers the early-return in dispatchTouch
 // when the widget handles and consumes a touch event.
 func TestDispatchTouchWidgetRootConsumes(t *testing.T) {
-d := NewEventDispatcher()
-btn := &BaseWidget{}
-btn.SetBounds(0, 0, 100, 100)
-btn.OnTouch(func(e *TouchEvent) { e.Consume() })
+	d := NewEventDispatcher()
+	btn := &BaseWidget{}
+	btn.SetBounds(0, 0, 100, 100)
+	btn.OnTouch(func(e *TouchEvent) { e.Consume() })
 
-d.SetWidgetRoot(btn)
+	d.SetWidgetRoot(btn)
 
-handlerCalled := false
-d.OnTouch(func(e *TouchEvent) { handlerCalled = true })
+	handlerCalled := false
+	d.OnTouch(func(e *TouchEvent) { handlerCalled = true })
 
-d.Dispatch(&TouchEvent{
-baseEvent: baseEvent{timestamp: time.Now()},
-eventType: TouchDown,
-x:         50,
-y:         50,
-})
-if handlerCalled {
-t.Error("global touch handler should not be called when widget consumed event")
-}
+	d.Dispatch(&TouchEvent{
+		baseEvent: baseEvent{timestamp: time.Now()},
+		eventType: TouchDown,
+		x:         50,
+		y:         50,
+	})
+	if handlerCalled {
+		t.Error("global touch handler should not be called when widget consumed event")
+	}
 }
 
 // TestTranslateX11KeyPressEvent verifies X11 KeyPress-to-KeyEvent translation.
 func TestTranslateX11KeyPressEvent(t *testing.T) {
-e := events.KeyPressEvent{Detail: 38} // keycode 38
-evt := translateX11KeyPressEvent(e)
-if evt.eventType != KeyPress {
-t.Errorf("eventType = %v, want KeyPress", evt.eventType)
-}
-if evt.key != Key(38) {
-t.Errorf("key = %v, want 38", evt.key)
-}
+	e := events.KeyPressEvent{Detail: 38} // keycode 38
+	evt := translateX11KeyPressEvent(e)
+	if evt.eventType != KeyPress {
+		t.Errorf("eventType = %v, want KeyPress", evt.eventType)
+	}
+	if evt.key != Key(38) {
+		t.Errorf("key = %v, want 38", evt.key)
+	}
 }
 
 // TestTranslateX11KeyReleaseEvent verifies X11 KeyRelease-to-KeyEvent translation.
 func TestTranslateX11KeyReleaseEvent(t *testing.T) {
-e := events.KeyReleaseEvent{Detail: 39}
-evt := translateX11KeyReleaseEvent(e)
-if evt.eventType != KeyRelease {
-t.Errorf("eventType = %v, want KeyRelease", evt.eventType)
-}
+	e := events.KeyReleaseEvent{Detail: 39}
+	evt := translateX11KeyReleaseEvent(e)
+	if evt.eventType != KeyRelease {
+		t.Errorf("eventType = %v, want KeyRelease", evt.eventType)
+	}
 }
 
 // TestTranslateX11ButtonPressEvent verifies all branches (regular + scroll).
 func TestTranslateX11ButtonPressEvent(t *testing.T) {
-// Regular left mouse button (Detail=1)
-e1 := events.ButtonPressEvent{Detail: 1, EventX: 10, EventY: 20}
-r1 := translateX11ButtonPressEvent(e1)
-if pe, ok := r1.(*PointerEvent); !ok || pe.eventType != PointerButtonPress {
-t.Error("button 1: expected PointerButtonPress")
-}
+	// Regular left mouse button (Detail=1)
+	e1 := events.ButtonPressEvent{Detail: 1, EventX: 10, EventY: 20}
+	r1 := translateX11ButtonPressEvent(e1)
+	if pe, ok := r1.(*PointerEvent); !ok || pe.eventType != PointerButtonPress {
+		t.Error("button 1: expected PointerButtonPress")
+	}
 
-// Scroll up (Detail=4)
-e4 := events.ButtonPressEvent{Detail: 4}
-r4 := translateX11ButtonPressEvent(e4)
-if pe, ok := r4.(*PointerEvent); !ok || pe.eventType != PointerScroll {
-t.Error("button 4: expected PointerScroll")
-}
+	// Scroll up (Detail=4)
+	e4 := events.ButtonPressEvent{Detail: 4}
+	r4 := translateX11ButtonPressEvent(e4)
+	if pe, ok := r4.(*PointerEvent); !ok || pe.eventType != PointerScroll {
+		t.Error("button 4: expected PointerScroll")
+	}
 
-// Scroll down (Detail=5)
-e5 := events.ButtonPressEvent{Detail: 5}
-r5 := translateX11ButtonPressEvent(e5)
-if pe, ok := r5.(*PointerEvent); !ok || pe.value != 1.0 {
-t.Error("button 5: expected scroll value 1.0")
-}
+	// Scroll down (Detail=5)
+	e5 := events.ButtonPressEvent{Detail: 5}
+	r5 := translateX11ButtonPressEvent(e5)
+	if pe, ok := r5.(*PointerEvent); !ok || pe.value != 1.0 {
+		t.Error("button 5: expected scroll value 1.0")
+	}
 }
 
 // TestTranslateX11ButtonReleaseEvent verifies scroll-button filter and regular release.
 func TestTranslateX11ButtonReleaseEvent(t *testing.T) {
-// Scroll button release is filtered (returns nil)
-e4 := events.ButtonReleaseEvent{Detail: 4}
-if r := translateX11ButtonReleaseEvent(e4); r != nil {
-t.Error("scroll release should be nil")
-}
+	// Scroll button release is filtered (returns nil)
+	e4 := events.ButtonReleaseEvent{Detail: 4}
+	if r := translateX11ButtonReleaseEvent(e4); r != nil {
+		t.Error("scroll release should be nil")
+	}
 
-// Regular button release
-e1 := events.ButtonReleaseEvent{Detail: 1}
-if r := translateX11ButtonReleaseEvent(e1); r == nil {
-t.Error("regular release should not be nil")
-}
+	// Regular button release
+	e1 := events.ButtonReleaseEvent{Detail: 1}
+	if r := translateX11ButtonReleaseEvent(e1); r == nil {
+		t.Error("regular release should not be nil")
+	}
 }
 
 // TestTranslateX11MotionNotifyEvent verifies X11 motion-to-PointerEvent translation.
 func TestTranslateX11MotionNotifyEvent(t *testing.T) {
-e := events.MotionNotifyEvent{EventX: 42, EventY: 7}
-evt := translateX11MotionNotifyEvent(e)
-if evt.eventType != PointerMove {
-t.Errorf("eventType = %v, want PointerMove", evt.eventType)
-}
-if evt.x != 42 || evt.y != 7 {
-t.Errorf("pos = (%v,%v), want (42,7)", evt.x, evt.y)
-}
+	e := events.MotionNotifyEvent{EventX: 42, EventY: 7}
+	evt := translateX11MotionNotifyEvent(e)
+	if evt.eventType != PointerMove {
+		t.Errorf("eventType = %v, want PointerMove", evt.eventType)
+	}
+	if evt.x != 42 || evt.y != 7 {
+		t.Errorf("pos = (%v,%v), want (42,7)", evt.x, evt.y)
+	}
 }
 
 // TestTranslateX11ConfigureNotifyEvent verifies X11 configure-to-WindowEvent translation.
 func TestTranslateX11ConfigureNotifyEvent(t *testing.T) {
-e := events.ConfigureNotifyEvent{Width: 800, Height: 600}
-evt := translateX11ConfigureNotifyEvent(e)
-if evt.eventType != WindowResize {
-t.Errorf("eventType = %v, want WindowResize", evt.eventType)
-}
-if evt.width != 800 || evt.height != 600 {
-t.Errorf("size = (%v,%v), want (800,600)", evt.width, evt.height)
-}
+	e := events.ConfigureNotifyEvent{Width: 800, Height: 600}
+	evt := translateX11ConfigureNotifyEvent(e)
+	if evt.eventType != WindowResize {
+		t.Errorf("eventType = %v, want WindowResize", evt.eventType)
+	}
+	if evt.width != 800 || evt.height != 600 {
+		t.Errorf("size = (%v,%v), want (800,600)", evt.width, evt.height)
+	}
 }
 
 // TestLinuxToKeysym verifies the Linux keycode-to-keysym mapping.
 func TestLinuxToKeysym(t *testing.T) {
-// Key in map (e.g., keycode 28 = KeyReturn)
-if got := linuxToKeysym(28); got != KeyReturn {
-t.Errorf("linuxToKeysym(28) = %v, want KeyReturn", got)
-}
-// Key not in map — pass-through
-const unmapped = uint32(999)
-if got := linuxToKeysym(unmapped); got != Key(999) {
-t.Errorf("linuxToKeysym(999) = %v, want 999", got)
-}
+	// Key in map (e.g., keycode 28 = KeyReturn)
+	if got := linuxToKeysym(28); got != KeyReturn {
+		t.Errorf("linuxToKeysym(28) = %v, want KeyReturn", got)
+	}
+	// Key not in map — pass-through
+	const unmapped = uint32(999)
+	if got := linuxToKeysym(unmapped); got != Key(999) {
+		t.Errorf("linuxToKeysym(999) = %v, want 999", got)
+	}
 }
 
 // TestTranslateWaylandKeyEvent verifies Wayland key event translation.
 func TestTranslateWaylandKeyEvent(t *testing.T) {
-// key press (state=1)
-press := translateWaylandKeyEvent(30, 1)
-if press.eventType != KeyPress {
-t.Errorf("press: eventType = %v, want KeyPress", press.eventType)
-}
+	// key press (state=1)
+	press := translateWaylandKeyEvent(30, 1)
+	if press.eventType != KeyPress {
+		t.Errorf("press: eventType = %v, want KeyPress", press.eventType)
+	}
 
-// key release (state=0)
-release := translateWaylandKeyEvent(30, 0)
-if release.eventType != KeyRelease {
-t.Errorf("release: eventType = %v, want KeyRelease", release.eventType)
-}
+	// key release (state=0)
+	release := translateWaylandKeyEvent(30, 0)
+	if release.eventType != KeyRelease {
+		t.Errorf("release: eventType = %v, want KeyRelease", release.eventType)
+	}
 }
 
 // TestTranslateWaylandPointerButtonEvent verifies Wayland pointer button translation.
 func TestTranslateWaylandPointerButtonEvent(t *testing.T) {
-press := translateWaylandPointerButtonEvent(0x110, 1, 5.0, 10.0)
-if press.eventType != PointerButtonPress {
-t.Errorf("press eventType = %v, want PointerButtonPress", press.eventType)
-}
+	press := translateWaylandPointerButtonEvent(0x110, 1, 5.0, 10.0)
+	if press.eventType != PointerButtonPress {
+		t.Errorf("press eventType = %v, want PointerButtonPress", press.eventType)
+	}
 
-rel := translateWaylandPointerButtonEvent(0x110, 0, 5.0, 10.0)
-if rel.eventType != PointerButtonRelease {
-t.Errorf("release eventType = %v, want PointerButtonRelease", rel.eventType)
-}
+	rel := translateWaylandPointerButtonEvent(0x110, 0, 5.0, 10.0)
+	if rel.eventType != PointerButtonRelease {
+		t.Errorf("release eventType = %v, want PointerButtonRelease", rel.eventType)
+	}
 }
 
 // TestTranslateWaylandPointerMotionEvent verifies Wayland motion event translation.
 func TestTranslateWaylandPointerMotionEvent(t *testing.T) {
-evt := translateWaylandPointerMotionEvent(3.0, 7.0)
-if evt.eventType != PointerMove {
-t.Errorf("eventType = %v, want PointerMove", evt.eventType)
-}
-if evt.x != 3.0 || evt.y != 7.0 {
-t.Errorf("pos = (%v,%v), want (3,7)", evt.x, evt.y)
-}
+	evt := translateWaylandPointerMotionEvent(3.0, 7.0)
+	if evt.eventType != PointerMove {
+		t.Errorf("eventType = %v, want PointerMove", evt.eventType)
+	}
+	if evt.x != 3.0 || evt.y != 7.0 {
+		t.Errorf("pos = (%v,%v), want (3,7)", evt.x, evt.y)
+	}
 }
 
 // TestTranslateWaylandPointerAxisEvent verifies Wayland scroll axis translation.
 func TestTranslateWaylandPointerAxisEvent(t *testing.T) {
-// Vertical axis (axis=0)
-vert := translateWaylandPointerAxisEvent(0, 30.0, 0, 0)
-if vert.axis != ScrollAxisVertical {
-t.Errorf("axis = %v, want ScrollAxisVertical", vert.axis)
-}
-// Horizontal axis (axis=1)
-horiz := translateWaylandPointerAxisEvent(1, 10.0, 0, 0)
-if horiz.axis != ScrollAxisHorizontal {
-t.Errorf("axis = %v, want ScrollAxisHorizontal", horiz.axis)
-}
+	// Vertical axis (axis=0)
+	vert := translateWaylandPointerAxisEvent(0, 30.0, 0, 0)
+	if vert.axis != ScrollAxisVertical {
+		t.Errorf("axis = %v, want ScrollAxisVertical", vert.axis)
+	}
+	// Horizontal axis (axis=1)
+	horiz := translateWaylandPointerAxisEvent(1, 10.0, 0, 0)
+	if horiz.axis != ScrollAxisHorizontal {
+		t.Errorf("axis = %v, want ScrollAxisHorizontal", horiz.axis)
+	}
 }
 
 // TestExtractX11DisplayNumber verifies the display-number parsing helper.
 func TestExtractX11DisplayNumber(t *testing.T) {
-a := &App{}
-tests := []struct {
-input string
-want  string
-}{
-{":0", "0"},
-{":1", "1"},
-{":1.0", "1"},
-{"localhost:2", "2"},
-{"", "0"},
-{"0", "0"},
-{"1", "1"},
-}
-for _, tt := range tests {
-if got := a.extractX11DisplayNumber(tt.input); got != tt.want {
-t.Errorf("extractX11DisplayNumber(%q) = %q, want %q", tt.input, got, tt.want)
-}
-}
+	a := &App{}
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{":0", "0"},
+		{":1", "1"},
+		{":1.0", "1"},
+		{"localhost:2", "2"},
+		{"", "0"},
+		{"0", "0"},
+		{"1", "1"},
+	}
+	for _, tt := range tests {
+		if got := a.extractX11DisplayNumber(tt.input); got != tt.want {
+			t.Errorf("extractX11DisplayNumber(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
 }

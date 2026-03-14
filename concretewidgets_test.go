@@ -832,14 +832,14 @@ func TestBufferCanvasDrawTextValidFont(t *testing.T) {
 // hugeImage is a mock image.Image whose Bounds() returns dimensions > 16384.
 type hugeImage struct{}
 
-func (h *hugeImage) ColorModel() color.Model          { return color.RGBAModel }
-func (h *hugeImage) Bounds() image.Rectangle         { return image.Rect(0, 0, 16385, 1) }
-func (h *hugeImage) At(x, y int) color.Color          { return color.Black }
+func (h *hugeImage) ColorModel() color.Model { return color.RGBAModel }
+func (h *hugeImage) Bounds() image.Rectangle { return image.Rect(0, 0, 16385, 1) }
+func (h *hugeImage) At(x, y int) color.Color { return color.Black }
 
 // TestImageToBufferOversizedImage covers the primitives.NewBuffer error path.
 func TestImageToBufferOversizedImage(t *testing.T) {
-result := imageToBuffer(&hugeImage{})
-if result != nil {
-t.Error("expected nil for oversized image, got non-nil buffer")
-}
+	result := imageToBuffer(&hugeImage{})
+	if result != nil {
+		t.Error("expected nil for oversized image, got non-nil buffer")
+	}
 }

@@ -261,16 +261,15 @@ func TestDisplayListCanvasDrawTextNilAtlas(t *testing.T) {
 
 // TestDisplayListCanvasDrawTextValidFont verifies DrawText with a valid font/atlas.
 func TestDisplayListCanvasDrawTextValidFont(t *testing.T) {
-a, err := text.NewAtlas()
-if err != nil {
-t.Skip("embedded font atlas unavailable:", err)
+	a, err := text.NewAtlas()
+	if err != nil {
+		t.Skip("embedded font atlas unavailable:", err)
+	}
+	dl := displaylist.New()
+	canvas := newDisplayListCanvas(dl)
+	font := &Font{atlas: a, size: 14}
+	canvas.DrawText("hello", 0, 0, font, RGB(255, 255, 255))
+	// Also exercise the font.size == 0 branch (uses default 14)
+	fontNoSize := &Font{atlas: a, size: 0}
+	canvas.DrawText("world", 0, 0, fontNoSize, RGB(0, 0, 0))
 }
-dl := displaylist.New()
-canvas := newDisplayListCanvas(dl)
-font := &Font{atlas: a, size: 14}
-canvas.DrawText("hello", 0, 0, font, RGB(255, 255, 255))
-// Also exercise the font.size == 0 branch (uses default 14)
-fontNoSize := &Font{atlas: a, size: 0}
-canvas.DrawText("world", 0, 0, fontNoSize, RGB(0, 0, 0))
-}
-

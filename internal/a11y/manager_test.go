@@ -454,89 +454,89 @@ func TestManagerSetFocusedUnknown(t *testing.T) {
 
 // TestStateSetHighIndex exercises Set, Clear, Has for indices >= 32.
 func TestStateSetHighIndex(t *testing.T) {
-const highState StateIndex = 40 // >= 32
-var ss StateSet
-ss.Set(highState)
-if !ss.Has(highState) {
-t.Error("expected high-index state to be set")
-}
-if ss[1] == 0 {
-t.Error("expected second word to be non-zero")
-}
-ss.Clear(highState)
-if ss.Has(highState) {
-t.Error("expected high-index state to be cleared")
-}
+	const highState StateIndex = 40 // >= 32
+	var ss StateSet
+	ss.Set(highState)
+	if !ss.Has(highState) {
+		t.Error("expected high-index state to be set")
+	}
+	if ss[1] == 0 {
+		t.Error("expected second word to be non-zero")
+	}
+	ss.Clear(highState)
+	if ss.Has(highState) {
+		t.Error("expected high-index state to be cleared")
+	}
 }
 
 // --- text_iface.go (remaining uncovered functions) ----------------------
 
 // TestTextIfaceGetTextAfterOffset covers GetTextAfterOffset valid and out-of-range.
 func TestTextIfaceGetTextAfterOffset(t *testing.T) {
-obj := &AccessibleObject{text: "abc"}
-tx := &textIface{obj}
+	obj := &AccessibleObject{text: "abc"}
+	tx := &textIface{obj}
 
-ch, start, end, err := tx.GetTextAfterOffset(1, 0)
-if err != nil || ch != "b" || start != 1 || end != 2 {
-t.Errorf("GetTextAfterOffset(1): got %q [%d,%d] %v", ch, start, end, err)
-}
+	ch, start, end, err := tx.GetTextAfterOffset(1, 0)
+	if err != nil || ch != "b" || start != 1 || end != 2 {
+		t.Errorf("GetTextAfterOffset(1): got %q [%d,%d] %v", ch, start, end, err)
+	}
 
-// Out of range — returns empty string, no error.
-ch, _, _, err = tx.GetTextAfterOffset(99, 0)
-if err != nil || ch != "" {
-t.Errorf("GetTextAfterOffset out-of-range: got %q %v", ch, err)
-}
+	// Out of range — returns empty string, no error.
+	ch, _, _, err = tx.GetTextAfterOffset(99, 0)
+	if err != nil || ch != "" {
+		t.Errorf("GetTextAfterOffset out-of-range: got %q %v", ch, err)
+	}
 }
 
 // TestTextIfaceGetTextBeforeOffset covers GetTextBeforeOffset valid and edge cases.
 func TestTextIfaceGetTextBeforeOffset(t *testing.T) {
-obj := &AccessibleObject{text: "abc"}
-tx := &textIface{obj}
+	obj := &AccessibleObject{text: "abc"}
+	tx := &textIface{obj}
 
-ch, start, end, err := tx.GetTextBeforeOffset(2, 0)
-if err != nil || ch != "b" || start != 1 || end != 2 {
-t.Errorf("GetTextBeforeOffset(2): got %q [%d,%d] %v", ch, start, end, err)
-}
+	ch, start, end, err := tx.GetTextBeforeOffset(2, 0)
+	if err != nil || ch != "b" || start != 1 || end != 2 {
+		t.Errorf("GetTextBeforeOffset(2): got %q [%d,%d] %v", ch, start, end, err)
+	}
 
-// Offset 0 → returns empty.
-ch, _, _, err = tx.GetTextBeforeOffset(0, 0)
-if err != nil || ch != "" {
-t.Errorf("GetTextBeforeOffset(0): got %q %v", ch, err)
-}
+	// Offset 0 → returns empty.
+	ch, _, _, err = tx.GetTextBeforeOffset(0, 0)
+	if err != nil || ch != "" {
+		t.Errorf("GetTextBeforeOffset(0): got %q %v", ch, err)
+	}
 
-// Offset beyond length → returns empty.
-ch, _, _, err = tx.GetTextBeforeOffset(99, 0)
-if err != nil || ch != "" {
-t.Errorf("GetTextBeforeOffset(99): got %q %v", ch, err)
-}
+	// Offset beyond length → returns empty.
+	ch, _, _, err = tx.GetTextBeforeOffset(99, 0)
+	if err != nil || ch != "" {
+		t.Errorf("GetTextBeforeOffset(99): got %q %v", ch, err)
+	}
 }
 
 // TestTextIfaceGetDefaultAttributeSet covers the default attribute set getter.
 func TestTextIfaceGetDefaultAttributeSet(t *testing.T) {
-obj := &AccessibleObject{text: "x"}
-tx := &textIface{obj}
-attrs, err := tx.GetDefaultAttributeSet()
-if err != nil || len(attrs) != 0 {
-t.Errorf("GetDefaultAttributeSet: got %v %v", attrs, err)
-}
+	obj := &AccessibleObject{text: "x"}
+	tx := &textIface{obj}
+	attrs, err := tx.GetDefaultAttributeSet()
+	if err != nil || len(attrs) != 0 {
+		t.Errorf("GetDefaultAttributeSet: got %v %v", attrs, err)
+	}
 }
 
 // TestTextIfaceGetTextAtOffsetOutOfRange covers the offset >= n branch.
 func TestTextIfaceGetTextAtOffsetOutOfRange(t *testing.T) {
-obj := &AccessibleObject{text: "hi"}
-tx := &textIface{obj}
-ch, start, end, err := tx.GetTextAtOffset(99, 0)
-if err != nil || ch != "" || start != 0 || end != 0 {
-t.Errorf("GetTextAtOffset(99): got %q [%d,%d] %v", ch, start, end, err)
-}
+	obj := &AccessibleObject{text: "hi"}
+	tx := &textIface{obj}
+	ch, start, end, err := tx.GetTextAtOffset(99, 0)
+	if err != nil || ch != "" || start != 0 || end != 0 {
+		t.Errorf("GetTextAtOffset(99): got %q [%d,%d] %v", ch, start, end, err)
+	}
 }
 
 // TestTextIfaceSetCaretOutOfRange covers the out-of-range offset branch.
 func TestTextIfaceSetCaretOutOfRange(t *testing.T) {
-obj := &AccessibleObject{text: "hi"}
-tx := &textIface{obj}
-ok, err := tx.SetCaret(99)
-if err != nil || ok {
-t.Errorf("SetCaret(99): expected (false, nil), got (%v, %v)", ok, err)
-}
+	obj := &AccessibleObject{text: "hi"}
+	tx := &textIface{obj}
+	ok, err := tx.SetCaret(99)
+	if err != nil || ok {
+		t.Errorf("SetCaret(99): expected (false, nil), got (%v, %v)", ok, err)
+	}
 }
