@@ -60,3 +60,14 @@ test-output.txt
 # Stale binaries in repo root (should be in bin/)
 /example-app
 /gen-atlas
+/widget-demo
+/bench
+/wain-demo
+/event-demo
+/wayland-demo
+/x11-demo
+/dmabuf-demo
+/gpu-triangle-demo
+/double-buffer-demo
+/x11-dmabuf-demo
+/gpu-shader-demo
