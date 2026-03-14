@@ -49,7 +49,8 @@ zero-dependency binaries that run on any Linux distribution.
 - **X11 Protocol** — server connection, windows, DRI3, Present, MIT-SHM,
   clipboard, drag-and-drop, and HiDPI detection (`internal/x11/`)
 - **AT-SPI2 Accessibility** — D-Bus screen reader integration with
-  Accessible, Component, Action, and Text interfaces (`internal/a11y/`)
+  Accessible, Component, Action, and Text interfaces (`internal/a11y/`);
+  requires `-tags=atspi` (see [ACCESSIBILITY.md](./ACCESSIBILITY.md))
 - **Theming** — DefaultDark, DefaultLight, and HighContrast built-in themes
   (`theme.go`)
 - **Clipboard** — read/write clipboard on both Wayland and X11

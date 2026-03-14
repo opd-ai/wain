@@ -76,9 +76,9 @@ jobs:
             go test ./...
 
       - name: Run staticcheck / golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          version: v2
           args: --timeout=5m
 
       - name: Run integration tests

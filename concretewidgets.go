@@ -1,6 +1,11 @@
 package wain
 
 import (
+	"image"
+	"image/color"
+
+	"github.com/opd-ai/wain/internal/raster/composite"
+	"github.com/opd-ai/wain/internal/raster/effects"
 	"github.com/opd-ai/wain/internal/raster/primitives"
 	textpkg "github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/ui/widgets"
@@ -119,24 +124,71 @@ func (c *bufferCanvas) DrawText(txt string, x, y int, font *Font, color Color) {
 	)
 }
 
-// DrawImage renders an image.
-func (c *bufferCanvas) DrawImage(_ *Image, _, _, _, _ int) {
-	// Image rendering not supported in buffer canvas adapter yet.
+// DrawImage renders an image by converting it to a primitives.Buffer
+// and compositing it into the canvas buffer using bilinear scaling.
+func (c *bufferCanvas) DrawImage(img *Image, x, y, width, height int) {
+	if img == nil || img.data == nil || c.buf == nil {
+		return
+	}
+	src := imageToBuffer(img.data)
+	if src == nil {
+		return
+	}
+	srcW, srcH := img.width, img.height
+	composite.BlitScaled(c.buf, c.xOff+x, c.yOff+y, width, height, src, 0, 0, srcW, srcH)
 }
 
 // LinearGradient fills a rectangle with a linear gradient.
-func (c *bufferCanvas) LinearGradient(_, _, _, _ int, _, _ Color, _ float64) {
-	// Gradients not supported in buffer canvas adapter yet.
+func (c *bufferCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, _ float64) {
+	x0 := c.xOff + x
+	y0 := c.yOff + y + height/2
+	x1 := c.xOff + x + width
+	y1 := c.yOff + y + height/2
+	effects.LinearGradient(c.buf, c.xOff+x, c.yOff+y, width, height,
+		x0, y0, startColor.toInternal(),
+		x1, y1, endColor.toInternal())
 }
 
 // RadialGradient fills a rectangle with a radial gradient.
-func (c *bufferCanvas) RadialGradient(_, _, _, _ int, _, _ Color) {
-	// Gradients not supported in buffer canvas adapter yet.
+func (c *bufferCanvas) RadialGradient(x, y, width, height int, centerColor, edgeColor Color) {
+	cx := c.xOff + x + width/2
+	cy := c.yOff + y + height/2
+	r := width / 2
+	if height < width {
+		r = height / 2
+	}
+	effects.RadialGradient(c.buf, c.xOff+x, c.yOff+y, width, height, cx, cy, r,
+		centerColor.toInternal(), edgeColor.toInternal())
 }
 
-// BoxShadow renders a box shadow.
-func (c *bufferCanvas) BoxShadow(_, _, _, _, _, _, _ int, _ Color) {
-	// Box shadows not supported in buffer canvas adapter yet.
+// BoxShadow renders a box shadow around the given rectangle.
+func (c *bufferCanvas) BoxShadow(x, y, width, height, offsetX, offsetY, blur int, clr Color) {
+	effects.BoxShadow(c.buf, c.xOff+x+offsetX, c.yOff+y+offsetY, width, height, blur, clr.toInternal())
+}
+
+// imageToBuffer converts a standard Go image.Image to a primitives.Buffer in
+// ARGB8888 format (little-endian byte order: B, G, R, A per pixel).
+func imageToBuffer(img image.Image) *primitives.Buffer {
+	b := img.Bounds()
+	w, h := b.Max.X-b.Min.X, b.Max.Y-b.Min.Y
+	if w <= 0 || h <= 0 {
+		return nil
+	}
+	buf, err := primitives.NewBuffer(w, h)
+	if err != nil {
+		return nil
+	}
+	for py := 0; py < h; py++ {
+		for px := 0; px < w; px++ {
+			c := color.NRGBAModel.Convert(img.At(b.Min.X+px, b.Min.Y+py)).(color.NRGBA)
+			idx := py*buf.Stride + px*4
+			buf.Pixels[idx] = c.B
+			buf.Pixels[idx+1] = c.G
+			buf.Pixels[idx+2] = c.R
+			buf.Pixels[idx+3] = c.A
+		}
+	}
+	return buf
 }
 
 // Button is a clickable button widget with text and onClick callback.

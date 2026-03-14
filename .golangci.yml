@@ -1,41 +1,32 @@
-# golangci-lint configuration for wain
-# See https://golangci-lint.run/usage/configuration/
-
+version: "2"
 run:
-  timeout: 5m
-  tests: true
   modules-download-mode: readonly
-
+  tests: true
 linters:
-  enable:
-    - govet
-    - staticcheck
-    - ineffassign
-    - unused
-    - errcheck
-    - gosimple
-    - structcheck
-    - varcheck
-    - deadcode
-
-linters-settings:
-  govet:
-    # Disable the unsafeptr check which incorrectly flags legitimate syscall usage.
-    # The pattern `unsafe.Pointer(syscallResult)` is safe when the uintptr comes
-    # from a syscall that returns a pointer (like shmat), as documented in
-    # unsafe.Pointer rule (6). The go vet check cannot distinguish safe syscall
-    # patterns from unsafe arbitrary conversions, resulting in false positives.
-    #
-    # References:
-    # - https://pkg.go.dev/unsafe#Pointer (rule 6)
-    # - https://github.com/golang/go/issues/34972
-    disable:
-      - unsafeptr
-
-issues:
-  exclude-rules:
-    # Allow legitimate unsafe.Pointer usage in SHM implementation
-    - path: internal/x11/shm/
-      linters:
-        - govet
-      text: "possible misuse of unsafe.Pointer"
+  settings:
+    govet:
+      disable:
+        - unsafeptr
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - govet
+        path: internal/x11/shm/
+        text: possible misuse of unsafe.Pointer
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

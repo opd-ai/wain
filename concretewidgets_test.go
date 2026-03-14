@@ -1,8 +1,12 @@
 package wain
 
 import (
+	"image"
+	"image/color"
 	"testing"
 	"time"
+
+	"github.com/opd-ai/wain/internal/raster/primitives"
 )
 
 // Test helper to create PointerEvent
@@ -420,5 +424,81 @@ func TestSpacerImplementsPublicWidget(t *testing.T) {
 	consumed := spacer.HandleEvent(newClickEvent(5, 5))
 	if consumed {
 		t.Error("spacer should not consume events")
+	}
+}
+
+// makeTestCanvas creates a bufferCanvas backed by a buffer of the given size.
+func makeTestCanvas(w, h int) (*bufferCanvas, *primitives.Buffer) {
+	buf, err := primitives.NewBuffer(w, h)
+	if err != nil {
+		panic(err)
+	}
+	return &bufferCanvas{buf: buf}, buf
+}
+
+// hasNonZeroPixel returns true if any pixel in buf has at least one non-zero byte.
+func hasNonZeroPixel(buf *primitives.Buffer) bool {
+	for _, b := range buf.Pixels {
+		if b != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// TestBufferCanvasDrawImage verifies that DrawImage composites visible pixels.
+func TestBufferCanvasDrawImage(t *testing.T) {
+	c, buf := makeTestCanvas(64, 64)
+
+	// Create a 4×4 solid red standard image.
+	src := image.NewNRGBA(image.Rect(0, 0, 4, 4))
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
+			src.SetNRGBA(x, y, color.NRGBA{R: 255, G: 0, B: 0, A: 255})
+		}
+	}
+	img := &Image{data: src, width: 4, height: 4}
+
+	c.DrawImage(img, 0, 0, 16, 16)
+
+	if !hasNonZeroPixel(buf) {
+		t.Error("DrawImage produced no visible pixels")
+	}
+}
+
+// TestBufferCanvasLinearGradient verifies that LinearGradient writes pixels.
+func TestBufferCanvasLinearGradient(t *testing.T) {
+	c, buf := makeTestCanvas(64, 64)
+
+	start := RGBA(255, 0, 0, 255)
+	end := RGBA(0, 0, 255, 255)
+	c.LinearGradient(0, 0, 64, 64, start, end, 0)
+
+	if !hasNonZeroPixel(buf) {
+		t.Error("LinearGradient produced no visible pixels")
+	}
+}
+
+// TestBufferCanvasRadialGradient verifies that RadialGradient writes pixels.
+func TestBufferCanvasRadialGradient(t *testing.T) {
+	c, buf := makeTestCanvas(64, 64)
+
+	center := RGBA(255, 255, 0, 255)
+	edge := RGBA(0, 0, 0, 255)
+	c.RadialGradient(0, 0, 64, 64, center, edge)
+
+	if !hasNonZeroPixel(buf) {
+		t.Error("RadialGradient produced no visible pixels")
+	}
+}
+
+// TestBufferCanvasBoxShadow verifies that BoxShadow writes pixels.
+func TestBufferCanvasBoxShadow(t *testing.T) {
+	c, buf := makeTestCanvas(128, 128)
+
+	c.BoxShadow(10, 10, 40, 40, 5, 5, 8, RGBA(0, 0, 0, 200))
+
+	if !hasNonZeroPixel(buf) {
+		t.Error("BoxShadow produced no visible pixels")
 	}
 }
