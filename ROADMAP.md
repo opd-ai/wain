@@ -136,7 +136,7 @@ The Intel EU backend (`render-sys/src/eu/`) and AMD RDNA backend (`render-sys/sr
 is not exercised end-to-end.
 
 **Tasks:**
-- [ ] **Add GPU pipeline integration test** (`internal/integration/gpu_pipeline_test.go`):
+- [ ] **Add GPU pipeline integration test** (`internal/integration/gpu_pipeline_test.go`, `TestGPUPipeline`):
   - Compile `solid_fill.wgsl` to EU binary via naga+lowering
   - Build batch buffer with state setup and primitive draw
   - Submit to GPU via execbuffer2 / amdgpu CS ioctl
@@ -145,7 +145,7 @@ is not exercised end-to-end.
 - [ ] **Create `cmd/gpu-ui-demo`**: Interactive UI rendered entirely via GPU backend (validates claim "GPU-accelerated graphics")
 - [x] **Add CI GPU smoke test**: `.github/workflows/ci.yml` includes `gpu-integration-tests` job that runs `TestGPURenderingTriangle` when `/dev/dri/renderD128` is available
 
-**Validation:** `go test -tags=integration ./internal/integration -run TestGPUPipeline` should pass on Intel/AMD hardware.
+**Future validation (once `TestGPUPipeline` is implemented):** `go test -tags=integration ./internal/integration -run TestGPUPipeline` should pass on Intel/AMD hardware.
 
 **Impact:** Fully achieves goals #7 (GPU command submission), #9 (Intel EU backend), #10 (AMD RDNA backend).
 
