@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"math"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/render"
@@ -132,7 +133,7 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 	commands := make([]uint32, 0, 2048)
 	relocs := make([]render.Relocation, 0, 16)
 
-	commands = encodePipelineHeader(commands, scissorRects)
+	commands, relocs = b.encodePipelineHeader(commands, relocs, scissorRects)
 	commands, relocs = b.encodeBatchDrawCalls(commands, relocs, batches, vertexOffset)
 	commands = encodePipelineFooter(commands)
 
@@ -140,14 +141,14 @@ func (b *GPUBackend) buildBatchBuffer(batches []Batch, vertexOffset uint32, tota
 }
 
 // encodePipelineHeader encodes pipeline setup commands.
-func encodePipelineHeader(commands []uint32, scissorRects []ScissorRect) []uint32 {
-	commands = append(commands, 0x69040000)     // PIPELINE_SELECT
-	commands = encodeStateBaseAddress(commands) // STATE_BASE_ADDRESS
-	commands = append(commands, 0x780B0000)     // 3DSTATE_VF_STATISTICS
+func (b *GPUBackend) encodePipelineHeader(commands []uint32, relocs []render.Relocation, scissorRects []ScissorRect) ([]uint32, []render.Relocation) {
+	commands = append(commands, 0x69040000) // PIPELINE_SELECT
+	commands, relocs = b.encodeStateBaseAddress(commands, relocs)
+	commands = append(commands, 0x780B0000) // 3DSTATE_VF_STATISTICS
 	if len(scissorRects) > 0 {
 		commands = encodeScissorCommands(commands, scissorRects)
 	}
-	return commands
+	return commands, relocs
 }
 
 // encodeBatchDrawCalls encodes pipeline state and draw calls for all batches.
@@ -183,33 +184,46 @@ func commandsToBytes(commands []uint32) []byte {
 }
 
 // encodeStateBaseAddress configures GPU base pointers for state buffers.
-func encodeStateBaseAddress(commands []uint32) []uint32 {
+//
+// Phase 5.2: adds a relocation for the Surface State Base Address so the GPU
+// kernel can patch in the render-target buffer's GPU-virtual address at submission.
+func (b *GPUBackend) encodeStateBaseAddress(commands []uint32, relocs []render.Relocation) ([]uint32, []render.Relocation) {
+	// DWord 2 holds the Surface State Base Address; the kernel fills it via relocation.
+	surfaceAddrOffset := uint64((len(commands) + 2) * 4)
+	relocs = append(relocs, render.Relocation{
+		Offset:       surfaceAddrOffset,
+		TargetHandle: b.targetHandle,
+		Delta:        0,
+	})
 	return append(commands,
-		0x61010009, // Opcode: STATE_BASE_ADDRESS, length=10 dwords
+		0x61010009, // Opcode: STATE_BASE_ADDRESS, length = 10 (11 DWords)
 		0x00000000, // General State Base Address (unused)
-		0x00000000, // Surface State Base Address (will add relocation in Phase 5.2)
+		0x00000000, // Surface State Base Address (patched by relocation above)
 		0x00000000, // Dynamic State Base Address
 		0x00000000, // Indirect Object Base Address
 		0x00000000, // Instruction Base Address
-		0x00000000, // General State Base Address Modify Enable
-		0x00000000, // Surface State Base Address Modify Enable
-		0x00000000, // Dynamic State Base Address Modify Enable
-		0x00000000, // Indirect Object Base Address Modify Enable
-		0x00000000, // Instruction Base Address Modify Enable
-	)
+		0x00000000, // General State Base Address Modify Enable (0 = keep current)
+		0x00000001, // Surface State Base Address Modify Enable (1 = apply relocation)
+		0x00000000, // Dynamic State Base Address Modify Enable (0 = keep current)
+		0x00000000, // Indirect Object Base Address Modify Enable (0 = keep current)
+		0x00000000, // Instruction Base Address Modify Enable (0 = keep current)
+	), relocs
 }
 
-// encodeScissorCommands emits GPU commands for scissor rectangle clipping.
+// encodeScissorCommands emits 3DSTATE_SCISSOR_STATE_POINTERS with inline scissor data.
+//
+// Phase 5.2: the scissor rectangle descriptors are embedded inline immediately
+// after the 2-DWord command, and the pointer is computed as a batch-buffer offset.
 func encodeScissorCommands(commands []uint32, scissorRects []ScissorRect) []uint32 {
-	scissorData := buildScissorStateBuffer(scissorRects)
-	// In a full implementation, we would allocate a state buffer for scissor data
-	// and emit 3DSTATE_SCISSOR_STATE_POINTERS with a relocation.
-	// For now, we emit a placeholder command to enable scissor test.
+	// Inline scissor data starts after the 2-DWord 3DSTATE_SCISSOR_STATE_POINTERS command.
+	scissorDataOffset := uint32((len(commands) + 2) * 4)
 	commands = append(commands,
-		0x780F0001, // 3DSTATE_SCISSOR_STATE_POINTERS
-		0x00000001, // Scissor enable flag (simplified)
+		0x780F0001,        // 3DSTATE_SCISSOR_STATE_POINTERS (length = 1, 2 DWords)
+		scissorDataOffset, // offset to inline scissor descriptor(s)
 	)
-	_ = scissorData // Use scissor data in full implementation
+	for _, rect := range scissorRects {
+		commands = append(commands, encodeScissorState(rect)...)
+	}
 	return commands
 }
 
@@ -264,40 +278,75 @@ func encodePrimitive(commands []uint32, vertexCount, vertexStart uint32) []uint3
 }
 
 // encodePipelineState emits pipeline-specific state commands.
+//
+// Phase 5.2: viewport and scissor state pointers reference inline descriptors
+// appended immediately after the command headers.  The 3DSTATE_PS is expanded
+// to its full 12-DWord Gen9 format (opcode 0x7820).
 func (b *GPUBackend) encodePipelineState(commands []uint32, pipeline PipelineType) []uint32 {
-	// Simplified pipeline state - full state will be expanded in Phase 5.2
-	// For now, just emit viewport and scissor
+	// The pipeline header is: vpCC(2) + scissor(2) + PS(12) = 16 DWords.
+	// Inline state immediately follows at offset (len(commands) + 16) × 4.
+	const pipelineHeaderDWords = 16
+	ccVPOffset := uint32((len(commands) + pipelineHeaderDWords) * 4)
+	// SCISSOR_RECT follows CC_VIEWPORT (2 DWords = 8 bytes).
+	scissorOffset := ccVPOffset + 8
 
-	// 3DSTATE_VIEWPORT_STATE_POINTERS_CC: Set viewport
-	commands = append(commands, 0x78230001)
-	commands = append(commands, 0x00000000) // Viewport state pointer (stub)
+	// 3DSTATE_VIEWPORT_STATE_POINTERS_CC (opcode 0x7823, length = 1 → 2 DWords)
+	commands = append(commands, 0x78230001, ccVPOffset)
+	// 3DSTATE_SCISSOR_STATE_POINTERS (opcode 0x780F, length = 1 → 2 DWords)
+	commands = append(commands, 0x780F0001, scissorOffset)
+	// 3DSTATE_PS: full 12-DWord Gen9 form (opcode 0x7820, length = 11).
+	commands = b.encodePixelShaderState(commands, pipeline)
 
-	// 3DSTATE_SCISSOR_STATE_POINTERS: Set scissor rect
-	commands = append(commands, 0x780F0001)
-	commands = append(commands, 0x00000000) // Scissor state pointer (stub)
-
-	// Pipeline-specific state (shader bindings, blend state, etc.)
-	switch pipeline {
-	case PipelineSolidFill:
-		// Solid fill needs minimal state
-		commands = append(commands, 0x781D0001) // 3DSTATE_PS (pixel shader stub)
-		commands = append(commands, 0x00000000)
-
-	case PipelineTextured:
-		// Textured quad needs sampler state
-		commands = append(commands, 0x781D0001) // 3DSTATE_PS
-		commands = append(commands, 0x00000001) // Enable texturing flag
-
-	case PipelineText:
-		// SDF text uses texture + alpha test
-		commands = append(commands, 0x781D0001)
-		commands = append(commands, 0x00000002)
-
-	default:
-		// Other pipelines use default state
-		commands = append(commands, 0x781D0001)
-		commands = append(commands, 0x00000000)
-	}
-
+	// Inline CC_VIEWPORT descriptor (2 DWords): minDepth = 0.0, maxDepth = 1.0.
+	commands = appendCCViewport(commands)
+	// Inline SCISSOR_RECT descriptor (2 DWords): full render-target coverage.
+	commands = appendScissorDescriptor(commands, b.width, b.height)
 	return commands
+}
+
+// encodePixelShaderState emits a full 12-DWord 3DSTATE_PS command (Gen9 Phase 5.2).
+//
+// Opcode: 0x7820, length = 11 (12 DWords total).
+// The kernel start pointer DWords are zero here; on real hardware a relocation
+// would patch them to the compiled shader binary's GPU virtual address.
+func (b *GPUBackend) encodePixelShaderState(commands []uint32, pipeline PipelineType) []uint32 {
+	// DW3: dispatch settings — bit 0 enables SIMD8 dispatch.
+	dw3 := uint32(1) // SIMD8 dispatch
+	switch pipeline {
+	case PipelineTextured:
+		dw3 |= 1 << 8 // sampler count = 1
+	case PipelineText:
+		dw3 |= (1 << 8) | (1 << 9) // sampler count = 1, alpha-test enable
+	}
+	return append(commands,
+		0x7820000B, // 3DSTATE_PS: opcode 0x7820, length = 11 (12 DWords)
+		0x00000000, // kernel start pointer low  (relocation fills on real HW)
+		0x00000000, // kernel start pointer high
+		dw3,        // dispatch settings (SIMD8 + pipeline-specific flags)
+		0x00000000, // per-thread scratch space
+		0x001F0000, // max threads = 31, push-constant enable
+		0x00000000, // reserved
+		0x00000000, // reserved
+		0x00000000, // reserved
+		0x00000000, // reserved
+		0x00000000, // reserved
+		0x00000000, // reserved
+	)
+}
+
+// appendCCViewport encodes a CC_VIEWPORT descriptor (2 DWords: minDepth, maxDepth).
+func appendCCViewport(commands []uint32) []uint32 {
+	return append(commands,
+		0x00000000,            // minDepth = 0.0 (IEEE 754)
+		math.Float32bits(1.0), // maxDepth = 1.0
+	)
+}
+
+// appendScissorDescriptor encodes a SCISSOR_RECT descriptor (2 DWords).
+// The scissor covers the full render target at (0,0) to (width, height).
+func appendScissorDescriptor(commands []uint32, width, height int) []uint32 {
+	return append(commands,
+		0x00000000,                         // minX = 0, minY = 0
+		(uint32(height)<<16)|uint32(width), // maxY << 16 | maxX
+	)
 }
