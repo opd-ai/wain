@@ -219,12 +219,6 @@ func TestGPUConsumerEmptyDisplayList(t *testing.T) {
 	}
 }
 
-// gpuAvailable checks if a GPU device is available for testing.
-func gpuAvailable() bool {
-	_, err := os.Stat("/dev/dri/renderD128")
-	return err == nil
-}
-
 // fdMockGPURenderer is a test GPURenderer that returns a file-backed fd from Present.
 // It writes pixelData to a temp file and returns a dup'd fd, simulating DMA-BUF export.
 type fdMockGPURenderer struct {

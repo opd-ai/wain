@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -113,9 +112,4 @@ func saveImage(img image.Image, path string) error {
 	return png.Encode(f, img)
 }
 
-// encodeImageToPNG encodes an image to PNG format in memory.
-func encodeImageToPNG(img image.Image) *bytes.Buffer {
-	var buf bytes.Buffer
-	png.Encode(&buf, img)
-	return &buf
-}
+

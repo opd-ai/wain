@@ -28,7 +28,6 @@ type RenderBridge struct {
 
 	renderer    backend.Renderer
 	displayList *displaylist.DisplayList
-	damageRects []displaylist.Rect
 
 	// Track dirty state
 	dirty       bool

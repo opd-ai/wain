@@ -155,7 +155,6 @@ type Connection interface {
 // Extension represents the Present extension state.
 type Extension struct {
 	baseOpcode   uint8
-	baseEvent    uint8
 	supported    bool
 	majorVersion uint32
 	minorVersion uint32

@@ -122,7 +122,6 @@ type App struct {
 
 	// X11-specific objects
 	x11Window       x11client.XID
-	x11GC           x11client.XID
 	x11SelectionMgr *selection.Manager
 
 	// Wayland clipboard objects
@@ -287,7 +286,6 @@ type Window struct {
 
 	// Platform-specific objects (X11)
 	x11Window x11client.XID
-	x11GC     x11client.XID
 
 	// Event handlers
 	onResize      func(width, height int)

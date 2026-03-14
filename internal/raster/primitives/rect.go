@@ -4,14 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"unsafe"
-
-	"golang.org/x/sys/cpu"
 )
-
-// hasAVX2 is true when the CPU supports AVX2 256-bit SIMD instructions.
-// When true, blendRow processes 4 pixels per iteration using 32-bit arithmetic
-// that the compiler auto-vectorises to 256-bit SIMD stores.
-var hasAVX2 = cpu.X86.HasAVX2
 
 // fillRow writes pixel (as a uint32) into count consecutive 4-byte slots
 // starting at dst[0]. Using unsafe uint32 writes lets the Go compiler (and
@@ -26,8 +19,8 @@ func fillRow(dst []byte, pixel uint32, count int) {
 // blendRow alpha-blends a single source color onto every pixel in dst.
 // The per-color blend factors are precomputed and passed in as uint32 to
 // avoid recomputing them for every pixel. The inner loop operates on 4-byte
-// ARGB8888 words and is structured to auto-vectorise to AVX2 (8×32-bit lanes)
-// when hasAVX2 is true.
+// ARGB8888 words and is structured so the compiler can auto-vectorise to
+// wider SIMD stores when supported by the CPU.
 func blendRow(dst []byte, srcR, srcG, srcB, srcA, invA uint32) {
 	n := len(dst) / 4
 	words := unsafe.Slice((*uint32)(unsafe.Pointer(unsafe.SliceData(dst))), n)

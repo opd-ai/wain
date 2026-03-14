@@ -10,13 +10,6 @@ import (
 	"github.com/opd-ai/wain/internal/render"
 )
 
-// submitBatches builds and submits a GPU batch buffer for all batches.
-//
-// Phase 5.1 complete implementation with full 3D pipeline state and draw calls.
-func (b *GPUBackend) submitBatches(batches []Batch, vertexData []byte) error {
-	return b.submitBatchesWithScissor(batches, vertexData, nil)
-}
-
 // submitBatchesWithScissor builds and submits a GPU batch buffer with optional scissor rects.
 //
 // Phase 5.4 implementation: damage tracking with scissor clipping.
