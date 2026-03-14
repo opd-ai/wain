@@ -234,10 +234,11 @@ func (m *Manager) sendSelectionNotify(requestor, selection, target, property, ti
 
 // HandleSelectionClear processes a SelectionClear event.
 func (m *Manager) HandleSelectionClear(selection uint32) {
-	if selection == m.clipboardAtom {
+	switch selection {
+	case m.clipboardAtom:
 		m.ownsClipboard = false
 		m.clipboardData = nil
-	} else if selection == AtomPRIMARY {
+	case AtomPRIMARY:
 		m.ownsPrimary = false
 		m.primaryData = nil
 	}

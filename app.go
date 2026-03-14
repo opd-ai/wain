@@ -1417,11 +1417,11 @@ func (a *App) tryWaylandConnection() error {
 
 	waylandPath := fmt.Sprintf("%s/%s", xdgRuntimeDir, waylandDisplay)
 	if _, err := os.Stat(waylandPath); err != nil {
-		return fmt.Errorf("Wayland socket not found at %s: %w", waylandPath, err)
+		return fmt.Errorf("wayland socket not found at %s: %w", waylandPath, err)
 	}
 
 	if err := a.connectWayland(waylandPath); err != nil {
-		return fmt.Errorf("Wayland connection to %s failed: %w", waylandPath, err)
+		return fmt.Errorf("wayland connection to %s failed: %w", waylandPath, err)
 	}
 
 	a.displayServer = DisplayServerWayland

@@ -129,10 +129,6 @@ func (c *Conn) SendMsg(data []byte, fds []int) (int, error) {
 //
 // The caller is responsible for closing the returned file descriptors.
 func (c *Conn) RecvMsg(data []byte, maxFDs int) (n int, fds []int, err error) {
-	if maxFDs > MaxFDsPerMessage {
-		maxFDs = MaxFDsPerMessage
-	}
-
 	oob := make([]byte, MaxControlMessageSize)
 	n, oobn, _, _, err := syscall.Recvmsg(c.fd, data, oob, 0)
 	if err != nil {

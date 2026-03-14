@@ -111,15 +111,16 @@ func TestBlit(t *testing.T) {
 			pixel := dst.At(checkX, checkY)
 
 			if tt.expectCopied {
-				if tt.srcColor.A == 255 {
+				switch tt.srcColor.A {
+				case 255:
 					if pixel != tt.srcColor {
 						t.Errorf("At(%d, %d) = %+v, want %+v (opaque copy)", checkX, checkY, pixel, tt.srcColor)
 					}
-				} else if tt.srcColor.A == 0 {
+				case 0:
 					if pixel != tt.dstColor {
 						t.Errorf("At(%d, %d) = %+v, want %+v (transparent source)", checkX, checkY, pixel, tt.dstColor)
 					}
-				} else {
+				default:
 					if pixel == tt.dstColor {
 						t.Errorf("At(%d, %d) = %+v, expected blending but got original dst color", checkX, checkY, pixel)
 					}

@@ -284,7 +284,7 @@ func queryX11Extensions(conn *x11client.Connection) (*dri3.Extension, *present.E
 
 	presentExt, err := present.QueryExtension(newPresentAdapter(conn))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Present extension not available: %w", err)
+		return nil, nil, fmt.Errorf("present extension not available: %w", err)
 	}
 
 	return dri3Ext, presentExt, nil

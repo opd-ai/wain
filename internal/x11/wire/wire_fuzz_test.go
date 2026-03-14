@@ -88,10 +88,8 @@ func FuzzDecodeUint8(f *testing.F) {
 			return
 		}
 
-		// Verify we got a valid uint8
-		if value > 255 {
-			t.Errorf("decoded value %d exceeds uint8 max", value)
-		}
+		// uint8 is always in valid range (0-255)
+		_ = value
 	})
 }
 

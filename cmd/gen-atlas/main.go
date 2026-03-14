@@ -171,7 +171,7 @@ func drawReplacementGlyph(sdf []uint8, width, height, xPos, yPos, size int) {
 	for py := 0; py < size; py++ {
 		for px := 0; px < size; px++ {
 			inside := (px >= 2 && px < size-2 && py >= 2 && py < size-2) &&
-				!(px >= 4 && px < size-4 && py >= 4 && py < size-4)
+				(px < 4 || px >= size-4 || py < 4 || py >= size-4)
 			var sdfVal uint8
 			if inside {
 				sdfVal = 200

@@ -119,7 +119,7 @@ func rectsOverlapOrClose(a, b Rect, margin int) bool {
 	bY2 := b.Y + b.Height + margin
 
 	// Check if rects overlap
-	return !(aX2 < bX1 || bX2 < aX1 || aY2 < bY1 || bY2 < aY1)
+	return aX2 >= bX1 && bX2 >= aX1 && aY2 >= bY1 && bY2 >= aY1
 }
 
 // mergeRects returns a rect that encompasses both input rects.
@@ -248,8 +248,8 @@ func FilterCommandsByDamage(commands []DrawCommand, damage []Rect) []DrawCommand
 
 // rectsIntersect returns true if two rects overlap.
 func rectsIntersect(a, b Rect) bool {
-	return !(a.X+a.Width <= b.X ||
-		b.X+b.Width <= a.X ||
-		a.Y+a.Height <= b.Y ||
-		b.Y+b.Height <= a.Y)
+	return a.X+a.Width > b.X &&
+		b.X+b.Width > a.X &&
+		a.Y+a.Height > b.Y &&
+		b.Y+b.Height > a.Y
 }
