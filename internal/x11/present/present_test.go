@@ -491,9 +491,9 @@ func makeCompleteNotifyEvent(kind CompleteKind, mode CompleteMode, serial uint32
 	buf.WriteByte(byte(mode))
 	buf.WriteByte(0) // pad
 	buf.WriteByte(0) // pad
-	binary.Write(buf, binary.LittleEndian, serial)
-	binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
-	binary.Write(buf, binary.LittleEndian, uint32(0x500001)) // pixmap
+	_ = binary.Write(buf, binary.LittleEndian, serial)
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x400001)) // window
+	_ = binary.Write(buf, binary.LittleEndian, uint32(0x500001)) // pixmap
 	binary.Write(buf, binary.LittleEndian, ust)
 	binary.Write(buf, binary.LittleEndian, msc)
 

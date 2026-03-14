@@ -195,9 +195,9 @@ func (app *application) render() {
 		primitives.Color{R: 50, G: 50, B: 50, A: 255})
 
 	// Buttons row
-	app.clickButton.Draw(app.buffer, 50, 60)
-	app.resetButton.Draw(app.buffer, 220, 60)
-	app.quitButton.Draw(app.buffer, 390, 60)
+	_ = app.clickButton.Draw(app.buffer, 50, 60)
+	_ = app.resetButton.Draw(app.buffer, 220, 60)
+	_ = app.quitButton.Draw(app.buffer, 390, 60)
 
 	// Status label
 	statusText := fmt.Sprintf("Status: %s", app.statusLabel)
@@ -207,12 +207,12 @@ func (app *application) render() {
 	// Text input
 	renderText(app.buffer, "Text Input:", 50, 160,
 		primitives.Color{R: 70, G: 70, B: 70, A: 255})
-	app.textInput.Draw(app.buffer, 50, 185)
+	_ = app.textInput.Draw(app.buffer, 50, 185)
 
 	// Scroll container
 	renderText(app.buffer, "Scrollable List:", 50, 240,
 		primitives.Color{R: 70, G: 70, B: 70, A: 255})
-	app.scrollList.Draw(app.buffer, 50, 265)
+	_ = app.scrollList.Draw(app.buffer, 50, 265)
 
 	// Scroll position indicator
 	scrollText := fmt.Sprintf("Scroll: %dpx / %dpx", app.scrollOffset, 1800)

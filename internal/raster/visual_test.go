@@ -317,6 +317,6 @@ func BenchmarkVisualRender(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		buf.Clear(primitives.Color{R: 0, G: 0, B: 0, A: 0})
-		sw.Render(dl, buf)
+		_ = sw.Render(dl, buf)
 	}
 }

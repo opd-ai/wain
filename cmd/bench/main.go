@@ -81,7 +81,7 @@ func runBench(frames int, maxMs float64) (BenchResult, error) {
 	if err != nil {
 		return BenchResult{}, fmt.Errorf("create software backend: %w", err)
 	}
-	defer b.Destroy()
+	defer func() { _ = b.Destroy() }()
 
 	scene := buildScene()
 

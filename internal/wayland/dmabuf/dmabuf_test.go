@@ -251,7 +251,7 @@ func TestHasFormat(t *testing.T) {
 	args := []wire.Argument{
 		{Type: wire.ArgTypeUint32, Value: uint32(FormatARGB8888)},
 	}
-	dmabuf.HandleEvent(0, args)
+	_ = dmabuf.HandleEvent(0, args)
 
 	if !dmabuf.HasFormat(FormatARGB8888) {
 		t.Error("should have format after event")

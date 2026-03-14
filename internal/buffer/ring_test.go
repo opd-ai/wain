@@ -203,7 +203,7 @@ func TestRing_WaitReleaseTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireForWriting() failed: %v", err)
 	}
-	ring.MarkDisplaying(slot.Index)
+	_ = ring.MarkDisplaying(slot.Index)
 
 	// Wait with short timeout (should fail)
 	ctxTimeout, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
@@ -293,7 +293,7 @@ func TestRing_InvalidStateTransitions(t *testing.T) {
 	}
 
 	// Mark as displaying
-	ring.MarkDisplaying(slot.Index)
+	_ = ring.MarkDisplaying(slot.Index)
 
 	// Try to mark as displaying again
 	err = ring.MarkDisplaying(slot.Index)
@@ -312,7 +312,7 @@ func TestRing_Reset(t *testing.T) {
 
 	// Acquire and mark slots in various states
 	slot1, _ := ring.AcquireForWriting(ctx)
-	ring.MarkDisplaying(slot1.Index)
+	_ = ring.MarkDisplaying(slot1.Index)
 
 	slot2, _ := ring.AcquireForWriting(ctx)
 	// Leave slot2 in rendering state

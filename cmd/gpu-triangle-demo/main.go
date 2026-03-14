@@ -117,7 +117,7 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 	const batchSize = 16 * 1024
 	batchBuffer, err := ctx.allocator.Allocate(batchSize, 1, 8, render.TilingNone)
 	if err != nil {
-		buffer.Destroy()
+		_ = buffer.Destroy()
 		return nil, nil, fmt.Errorf("allocate batch buffer: %w", err)
 	}
 
@@ -129,11 +129,11 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 	// Upload batch to GPU buffer via mmap
 	batchMem, err := batchBuffer.Mmap()
 	if err != nil {
-		batchBuffer.Destroy()
-		buffer.Destroy()
+		_ = batchBuffer.Destroy()
+		_ = buffer.Destroy()
 		return nil, nil, fmt.Errorf("mmap batch buffer: %w", err)
 	}
-	defer batchBuffer.Munmap(batchMem)
+	defer func() { _ = batchBuffer.Munmap(batchMem) }()
 
 	copy(batchMem, batchData)
 	fmt.Println("       ✓ Uploaded batch commands to GPU buffer")
@@ -144,19 +144,19 @@ func createAndRenderToGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(),
 
 	err = render.SubmitBatch(demo.DefaultDRMPath, batchBuffer.GemHandle(), uint32(len(batchData)), relocs, ctx.gpuCtx.ContextID)
 	if err != nil {
-		batchBuffer.Destroy()
-		buffer.Destroy()
+		_ = batchBuffer.Destroy()
+		_ = buffer.Destroy()
 		return nil, nil, fmt.Errorf("submit batch: %w", err)
 	}
 	fmt.Println("       ✓ Batch submitted and GPU execution completed!")
 
-	batchBuffer.Destroy()
+	_ = batchBuffer.Destroy()
 
 	fmt.Println("\n       [Phase 3.5 Achievement] GPU triangle rendering commands submitted!")
 	fmt.Println("       Full 3D pipeline configured: PIPELINE_SELECT → STATE → VERTEX → 3DPRIMITIVE")
 	fmt.Println("       Note: Actual rendering requires shader upload (Phase 4.5)")
 
-	cleanup := func() { buffer.Destroy() }
+	cleanup := func() { _ = buffer.Destroy() }
 	return buffer, cleanup, nil
 }
 

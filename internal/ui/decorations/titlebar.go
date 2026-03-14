@@ -298,9 +298,9 @@ func (t *TitleBar) Draw(buf *primitives.Buffer, x, y int) error {
 	minX, maxX, closeX := t.buttonPositions()
 	spacing := t.theme.ButtonSpacing
 
-	t.minBtn.Draw(buf, x+minX, y+spacing)
-	t.maxBtn.Draw(buf, x+maxX, y+spacing)
-	t.closeBtn.Draw(buf, x+closeX, y+spacing)
+	_ = t.minBtn.Draw(buf, x+minX, y+spacing)
+	_ = t.maxBtn.Draw(buf, x+maxX, y+spacing)
+	_ = t.closeBtn.Draw(buf, x+closeX, y+spacing)
 
 	return nil
 }

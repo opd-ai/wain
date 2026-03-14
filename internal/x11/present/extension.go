@@ -254,15 +254,15 @@ func (e *Extension) PresentPixmap(conn Connection, opts PixmapPresentOptions) er
 	wire.EncodeUint32(&buf, opts.Serial)
 	wire.EncodeUint32(&buf, uint32(opts.ValidRegion))
 	wire.EncodeUint32(&buf, uint32(opts.UpdateRegion))
-	wire.EncodeInt16(&buf, opts.XOff)
-	wire.EncodeInt16(&buf, opts.YOff)
+	_ = wire.EncodeInt16(&buf, opts.XOff)
+	_ = wire.EncodeInt16(&buf, opts.YOff)
 	wire.EncodeUint32(&buf, 0) // target_crtc (0 = any CRTC)
 	wire.EncodeUint32(&buf, 0) // wait_fence (0 = none)
 	wire.EncodeUint32(&buf, 0) // idle_fence (0 = none)
 	wire.EncodeUint32(&buf, opts.Options)
 	_ = wire.EncodeUint64(&buf, opts.TargetMSC)
 	_ = wire.EncodeUint64(&buf, opts.Divisor)
-	wire.EncodeUint64(&buf, opts.Remainder)
+	_ = wire.EncodeUint64(&buf, opts.Remainder)
 	wire.EncodeUint32(&buf, 0) // notifies_len (no notify list)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
@@ -344,8 +344,8 @@ func (e *Extension) NotifyMSC(conn Connection, window XID,
 }
 
 func encodeNotifyMSCTiming(buf *bytes.Buffer, targetMSC, divisor, remainder uint64) {
-	wire.EncodeUint64(buf, targetMSC)
-	wire.EncodeUint64(buf, divisor)
+	_ = wire.EncodeUint64(buf, targetMSC)
+	_ = wire.EncodeUint64(buf, divisor)
 	wire.EncodeUint64(buf, remainder)
 }
 

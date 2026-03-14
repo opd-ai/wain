@@ -251,8 +251,8 @@ func TestSynchronizer_FullCycle(t *testing.T) {
 	// Unregister old buffer from slot1, register new buffer
 	sync.UnregisterBuffer(wlBufferID1)
 	newBufferID := uint32(1003)
-	sync.RegisterBuffer(newBufferID, slot3.Index)
-	sync.MarkDisplaying(slot3.Index)
+	_ = sync.RegisterBuffer(newBufferID, slot3.Index)
+	_ = sync.MarkDisplaying(slot3.Index)
 
 	// Verify state
 	stats := sync.Stats()

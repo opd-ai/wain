@@ -334,7 +334,7 @@ func (ext *Extension) PutImage(conn Connection, drawable, gc XID, seg *Segment, 
 	wire.EncodeUint16(&buf, width)  // src-width (use full width)
 	wire.EncodeUint16(&buf, height) // src-height (use full height)
 	_ = wire.EncodeInt16(&buf, dstX)
-	wire.EncodeInt16(&buf, dstY)
+	_ = wire.EncodeInt16(&buf, dstY)
 	buf.WriteByte(depth)
 	buf.WriteByte(format)
 

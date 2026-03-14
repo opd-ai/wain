@@ -135,7 +135,7 @@ func runWaylandDemo() error {
 	if err != nil {
 		return err
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	pipeline, err := createWaylandPipeline(surface, dmabufObj, renderer)
 	if err != nil {
@@ -251,7 +251,7 @@ func runX11Demo() error {
 	if err != nil {
 		return err
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	pipeline, err := createX11Pipeline(conn, window, dri3Ext, presentExt, renderer)
 	if err != nil {

@@ -168,9 +168,9 @@ func (e *Extension) Open(conn Connection, drawable XID, provider uint32) (int, e
 	var buf bytes.Buffer
 
 	// DRI3Open request: header(4) + drawable(4) + provider(4)
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3Open, 0, 3)
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint32(&buf, provider)
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3Open, 0, 3)
+	_ = wire.EncodeUint32(&buf, uint32(drawable))
+	_ = wire.EncodeUint32(&buf, provider)
 
 	reply, fds, err := conn.SendRequestAndReplyWithFDs(buf.Bytes(), nil)
 	if err != nil {
@@ -219,13 +219,13 @@ func (e *Extension) PixmapFromBuffer(conn Connection, pixmap, drawable XID,
 	// DRI3PixmapFromBuffer request (version 1.0):
 	// header(4) + pixmap(4) + drawable(4) + size(4) + width(2) + height(2) +
 	// stride(2) + depth(1) + bpp(1)
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffer, 0, 6)
-	wire.EncodeUint32(&buf, uint32(pixmap))
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint32(&buf, size)
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
-	wire.EncodeUint16(&buf, stride)
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffer, 0, 6)
+	_ = wire.EncodeUint32(&buf, uint32(pixmap))
+	_ = wire.EncodeUint32(&buf, uint32(drawable))
+	_ = wire.EncodeUint32(&buf, size)
+	_ = wire.EncodeUint16(&buf, width)
+	_ = wire.EncodeUint16(&buf, height)
+	_ = wire.EncodeUint16(&buf, stride)
 	_ = wire.EncodeUint8(&buf, depth)
 	_ = wire.EncodeUint8(&buf, bpp)
 
@@ -301,11 +301,11 @@ func (e *Extension) buildPixmapFromBuffersRequest(pixmap, drawable XID,
 	var buf bytes.Buffer
 	msgLen := uint16(5 + 2*len(fds))
 
-	wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffers, 0, msgLen)
-	wire.EncodeUint32(&buf, uint32(pixmap))
-	wire.EncodeUint32(&buf, uint32(drawable))
+	_ = wire.EncodeRequestHeader(&buf, e.baseOpcode+DRI3PixmapFromBuffers, 0, msgLen)
+	_ = wire.EncodeUint32(&buf, uint32(pixmap))
+	_ = wire.EncodeUint32(&buf, uint32(drawable))
 	_ = wire.EncodeUint8(&buf, uint8(len(fds)))
-	wire.EncodePadding(&buf, 3)
+	_ = wire.EncodePadding(&buf, 3)
 	wire.EncodeUint16(&buf, width)
 	wire.EncodeUint16(&buf, height)
 	wire.EncodeUint32(&buf, fourcc)
@@ -315,9 +315,9 @@ func (e *Extension) buildPixmapFromBuffersRequest(pixmap, drawable XID,
 		wire.EncodeUint32(&buf, offsets[i])
 	}
 
-	wire.EncodeUint8(&buf, depth)
-	wire.EncodeUint8(&buf, bpp)
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodeUint8(&buf, depth)
+	_ = wire.EncodeUint8(&buf, bpp)
+	_ = wire.EncodePadding(&buf, 2)
 	_ = wire.EncodeUint64(&buf, uint64(modifier))
 
 	return buf.Bytes()
