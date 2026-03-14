@@ -11,6 +11,7 @@ zero-dependency binaries that run on any Linux distribution.
 
 ## Table of Contents
 
+- [Why Wain?](#why-wain)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -23,6 +24,24 @@ zero-dependency binaries that run on any Linux distribution.
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Why Wain?
+
+Most Go UI toolkits — including Fyne and Gio — require CGO and depend on
+system shared libraries (e.g., OpenGL, X11, Wayland client libs) that
+**cannot** be statically linked on Linux. Wain takes a different approach:
+
+| Toolkit | Static Linking | Zero Deps | Native Look | Cross-Platform | Pure Go |
+|---------|---------------|-----------|-------------|----------------|---------|
+| **Wain** | ✅ Yes (musl) | ✅ Yes | No (custom) | Linux only | Go + Rust |
+| **Fyne** | ❌ No | ❌ No | No (custom) | Yes | No (CGO) |
+| **Gio** | ❌ No | ❌ No | No (custom) | Yes | No (CGO) |
+| **GTK** | ❌ No | ❌ No | Yes (Linux) | Partial | No (CGO) |
+
+Wain implements Wayland and X11 display protocols directly and submits
+GPU commands to kernel DRM interfaces — no OpenGL, Vulkan, or system
+graphics libraries required. The result is a single, fully static binary
+with zero runtime dependencies.
 
 ## Features
 
