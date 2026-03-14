@@ -95,7 +95,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
 
 **Sub-tasks** (ordered by dependency):
 
-#### 1a — `render-sys/src/submit.rs`: Shader-to-batch binding
+#### 1a — `render-sys/src/submit.rs`: Shader-to-batch binding ✅ (2026-03-14)
 - **File**: `render-sys/src/submit.rs` (new)
 - **What**: Expose a `submit_shader_batch` function that accepts a compiled EU/RDNA binary
   (from `shader.rs` → `eu/mod.rs` or `rdna/mod.rs`) and a `BatchBuffer` (from `batch.rs`),
@@ -109,7 +109,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
   cd render-sys && cargo test submit 2>&1 | grep -E "test .* ok|FAILED"
   ```
 
-#### 1b — `render-sys/src/lib.rs`: FFI exports for shader submission
+#### 1b — `render-sys/src/lib.rs`: FFI exports for shader submission ✅ (2026-03-14)
 - **File**: `render-sys/src/lib.rs`
 - **What**: Add `render_submit_shader_batch(...)` as a `#[no_mangle] extern "C"` function.
   Inputs: shader source pointer + length, GPU type enum, batch pointer. Returns status code.
@@ -122,7 +122,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
   nm render-sys/target/x86_64-unknown-linux-musl/debug/librender_sys.a | grep render_submit_shader_batch
   ```
 
-#### 1c — `internal/render/binding.go`: Go CGO wrapper
+#### 1c — `internal/render/binding.go`: Go CGO wrapper ✅ (2026-03-14)
 - **File**: `internal/render/binding.go`
 - **What**: Add `SubmitShaderBatch(shaderSrc []byte, gpuType GPUType, batch *BatchBuffer) error`
   as a CGO wrapper around `render_submit_shader_batch`. Follow the existing pattern from
@@ -134,7 +134,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
   CGO_ENABLED=1 go build ./internal/render/ 2>&1
   ```
 
-#### 1d — `internal/render/backend/gpu.go`: Wire shader into frame pipeline
+#### 1d — `internal/render/backend/gpu.go`: Wire shader into frame pipeline ✅ (2026-03-14)
 - **File**: `internal/render/backend/gpu.go`
 - **What**: Call `render.SubmitShaderBatch` inside `renderFrame` (or equivalent) after
   building the display list, replacing the current fixed-function batch construction.
@@ -149,7 +149,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
     jq '.complexity.average_function_complexity'
   ```
 
-#### 1e — `cmd/gpu-shader-demo/main.go`: End-to-end demonstration
+#### 1e — `cmd/gpu-shader-demo/main.go`: End-to-end demonstration ✅ (2026-03-14)
 - **File**: `cmd/gpu-shader-demo/main.go` (new)
 - **What**: A demo that creates a window, compiles `solid_fill.wgsl` via the new path, and
   renders a coloured triangle. Modelled after `cmd/gpu-triangle-demo` but using the
@@ -164,7 +164,7 @@ as a critical gap in `ROADMAP.md`. All other steps are either independent or low
   ldd bin/gpu-shader-demo | grep -q "not a dynamic" && echo STATIC_OK
   ```
 
-#### 1f — `API.md`: Document shader → GPU → screen data flow
+#### 1f — `API.md`: Document shader → GPU → screen data flow ✅ (2026-03-14)
 - **File**: `API.md`
 - **What**: Add a "GPU Rendering Pipeline" section describing the path from WGSL source to
   EU/RDNA binary to batch submission to displayed frame, with a code example using the
@@ -186,7 +186,7 @@ largest usability blocker for adopters.
 
 **Sub-tasks** (ordered by dependency):
 
-#### 2a — Audit root package exports
+#### 2a — Audit root package exports ✅ (2026-03-14)
 - **File**: `publicwidget.go`, `concretewidgets.go`, `widget.go`
 - **What**: Enumerate all exported types and functions in the root `wain` package.
   Identify which widget behaviours are only accessible via `internal/ui/widgets` and
@@ -199,7 +199,7 @@ largest usability blocker for adopters.
     jq '[.functions[] | select(.package == "wain" and .is_exported)] | length'
   ```
 
-#### 2b — Re-export `internal/ui/widgets` types
+#### 2b — Re-export `internal/ui/widgets` types ✅ (2026-03-14)
 - **Files**: `publicwidget.go` (extend), or new `widgets.go` in root package
 - **What**: Add type aliases or thin wrapper constructors for `Button`, `TextInput`, and
   `ScrollContainer` so consumers use `wain.NewButton(...)` etc. without importing
@@ -249,7 +249,7 @@ risk and cognitive load during GPU integration work.
 
 **Sub-tasks** (ordered by impact, high first):
 
-#### 3a — `internal/wayland/input/`: Extract shared event dispatch helper
+#### 3a — `internal/wayland/input/`: Extract shared event dispatch helper ✅ (2026-03-14)
 - **Files**: `keyboard.go`, `pointer.go`, `touch.go` → new `dispatch.go` in same package
 - **What**: The 15–21-line input dispatch pattern (serialise axis/button/motion event, call
   registered callbacks) appears in 4 locations across the three input files. Extract into
@@ -263,7 +263,7 @@ risk and cognitive load during GPU integration work.
     jq '.duplication.clone_pairs'
   ```
 
-#### 3b — `internal/x11/wire/setup.go`: Extract decode sub-steps
+#### 3b — `internal/x11/wire/setup.go`: Extract decode sub-steps ✅ (2026-03-14)
 - **Files**: `internal/x11/wire/setup.go`
 - **What**: The 16–20-line X11 setup decode pattern appears 3× in `setup.go` (lines 340,
   361, 385). Extract `decodeScreen(r *Reader) Screen` and `decodeDepth(r *Reader) Depth`
@@ -277,7 +277,7 @@ risk and cognitive load during GPU integration work.
     jq '[.functions[] | select(.name == "decodeVisuals")] | .[0].complexity.cyclomatic'
   ```
 
-#### 3c — `internal/render/commands.go`: Extract command builder helpers
+#### 3c — `internal/render/commands.go`: Extract command builder helpers ✅ (2026-03-14)
 - **Files**: `internal/render/commands.go`
 - **What**: Five clone pairs (7–18-line blocks) exist in `commands.go` for repeated render
   command encoding patterns (lines 69, 79, 93, 98, 109, 125, 138, 160, 232, 240).
@@ -291,7 +291,7 @@ risk and cognitive load during GPU integration work.
     jq '.duplication.clone_pairs'
   ```
 
-#### 3d — `internal/raster/curves/bezier.go`: Extract sub-segment helper
+#### 3d — `internal/raster/curves/bezier.go`: Extract sub-segment helper ✅ (2026-03-14)
 - **Files**: `internal/raster/curves/bezier.go`
 - **What**: A 7–16-line curve sub-segment pattern appears 3× (lines 226, 235, 249, 258,
   267). Extract `subdivideBezier(p0, p1, p2, t float32) (Point, Point, Point)` helper.
