@@ -93,7 +93,7 @@ impl DrmDevice {
     /// # Example
     ///
     /// ```no_run
-    /// use render::drm::DrmDevice;
+    /// use render_sys::drm::DrmDevice;
     ///
     /// let device = DrmDevice::open("/dev/dri/renderD128")?;
     /// let generation = device.detect_gpu_generation()?;
