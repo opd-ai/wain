@@ -111,6 +111,9 @@ func newOpacityMixin() opacityMixin {
 	return opacityMixin{opacity: 1.0}
 }
 
+// Panel is a container widget with a background and optional border.
+// It supports percentage-based sizing and can hold child widgets.
+// Use NewPanel to create a Panel instance.
 type Panel struct {
 	internal      *pctwidget.Panel
 	styleOverride *StyleOverride
