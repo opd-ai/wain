@@ -217,9 +217,9 @@ is not exercised end-to-end.
   - `benchmarks` job runs `cmd/gpu-bench -frames 60 -max 2.0` on all runners; the binary exits 0 with `backend=none` when no GPU is present
   - GPU frame time threshold: ≤ 2 ms (vs 16.7 ms software budget)
   - Results output to `/tmp/gpu-bench.json`
-- [ ] **Track GPU frame timing in benchmark summary**:
-  - Add `## GPU Frame Time` section to CI step summary
-  - Compare against baseline across commits
+- [x] **Track GPU frame timing in benchmark summary**:
+  - CI posts `## GPU Frame Time` section to `$GITHUB_STEP_SUMMARY` from `/tmp/gpu-bench.json`
+- [ ] **Compare GPU frame timing against baseline across commits**
 
 **Validation:** GPU performance regressions are caught automatically on hardware runners.
 
