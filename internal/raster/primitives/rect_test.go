@@ -275,3 +275,29 @@ func TestMinMax(t *testing.T) {
 		t.Errorf("max(10, 5) = %d, want 10", max(10, 5))
 	}
 }
+
+func BenchmarkFillRectOpaque1080p(b *testing.B) {
+	buf, err := NewBuffer(1920, 1080)
+	if err != nil {
+		b.Fatal(err)
+	}
+	c := Color{R: 0x12, G: 0x34, B: 0x56, A: 0xff}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf.FillRect(0, 0, 1920, 1080, c)
+	}
+	b.SetBytes(int64(1920 * 1080 * 4))
+}
+
+func BenchmarkFillRectBlended1080p(b *testing.B) {
+	buf, err := NewBuffer(1920, 1080)
+	if err != nil {
+		b.Fatal(err)
+	}
+	c := Color{R: 0x12, G: 0x34, B: 0x56, A: 0x80}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf.FillRect(0, 0, 1920, 1080, c)
+	}
+	b.SetBytes(int64(1920 * 1080 * 4))
+}

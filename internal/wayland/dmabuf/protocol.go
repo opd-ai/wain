@@ -125,8 +125,11 @@ func (d *Dmabuf) HandleEvent(opcode uint16, args []wire.Argument) error {
 }
 
 // handleFormatEvent processes the deprecated format event (zwp_linux_dmabuf_v1 v1/v2).
-// TODO: Once the minimum required compositor version is raised to v3, remove this
-// handler and rely solely on modifier events. Tracked by opd-ai/wain#dmabuf-v3.
+// This handler is retained for backward compatibility with compositors that have not yet
+// upgraded to v3. Removing it would silently break DMA-BUF support on older wlroots,
+// Mutter/GNOME Shell < 44, and any compositor still advertising zwp_linux_dmabuf_v1
+// below version 3. Remove only after the minimum required compositor version is formally
+// raised to v3 across all supported distributions.
 func (d *Dmabuf) handleFormatEvent(args []wire.Argument) error {
 	if len(args) != 1 {
 		return fmt.Errorf("dmabuf: format event: expected 1 argument, got %d", len(args))

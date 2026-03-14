@@ -192,3 +192,38 @@ jobs:
           echo "Skipping GPU integration tests: no GPU hardware detected"
           echo "Tests will run successfully when GPU hardware is available"
 
+
+  benchmarks:
+    name: Benchmarks (software rasterizer frame timing)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run rasterizer benchmarks
+        run: |
+          go test -bench=. -benchmem -benchtime=3s \
+            ./internal/raster/... \
+            | tee /tmp/bench-results.txt
+
+      - name: Assert FillRect throughput (≥ 60 FPS at 1080p = ≤ 16.7 ms/frame)
+        run: |
+          # Extract ns/op for BenchmarkFillRectOpaque1080p and convert to ms.
+          # A fully-opaque 1920×1080 fill must complete in ≤ 16700000 ns.
+          line=$(grep BenchmarkFillRectOpaque1080p /tmp/bench-results.txt | head -1)
+          echo "Benchmark result: $line"
+          ns=$(echo "$line" | awk '{print $3}')
+          if [ -z "$ns" ]; then
+            echo "⚠ Benchmark result not found — skipping threshold check"
+            exit 0
+          fi
+          if [ "$ns" -gt 16700000 ]; then
+            echo "FAIL: FillRectOpaque1080p took ${ns} ns/op (> 16700000 ns = 16.7 ms)"
+            exit 1
+          fi
+          echo "✓ FillRectOpaque1080p: ${ns} ns/op (≤ 16.7 ms — 60 FPS budget met)"

@@ -120,49 +120,23 @@ func (c *bufferCanvas) DrawText(txt string, x, y int, font *Font, color Color) {
 }
 
 // DrawImage renders an image.
-func (c *bufferCanvas) DrawImage(img *Image, x, y, width, height int) {
-	// Image rendering not supported in buffer canvas adapter yet
-	_ = img
-	_ = x
-	_ = y
-	_ = width
-	_ = height
+func (c *bufferCanvas) DrawImage(_ *Image, _, _, _, _ int) {
+	// Image rendering not supported in buffer canvas adapter yet.
 }
 
 // LinearGradient fills a rectangle with a linear gradient.
-func (c *bufferCanvas) LinearGradient(x, y, width, height int, startColor, endColor Color, angle float64) {
-	// Gradients not supported in buffer canvas adapter yet
-	_ = x
-	_ = y
-	_ = width
-	_ = height
-	_ = startColor
-	_ = endColor
-	_ = angle
+func (c *bufferCanvas) LinearGradient(_, _, _, _ int, _, _ Color, _ float64) {
+	// Gradients not supported in buffer canvas adapter yet.
 }
 
 // RadialGradient fills a rectangle with a radial gradient.
-func (c *bufferCanvas) RadialGradient(x, y, width, height int, centerColor, edgeColor Color) {
-	// Gradients not supported in buffer canvas adapter yet
-	_ = x
-	_ = y
-	_ = width
-	_ = height
-	_ = centerColor
-	_ = edgeColor
+func (c *bufferCanvas) RadialGradient(_, _, _, _ int, _, _ Color) {
+	// Gradients not supported in buffer canvas adapter yet.
 }
 
 // BoxShadow renders a box shadow.
-func (c *bufferCanvas) BoxShadow(x, y, width, height, offsetX, offsetY, blur int, color Color) {
-	// Box shadows not supported in buffer canvas adapter yet
-	_ = x
-	_ = y
-	_ = width
-	_ = height
-	_ = offsetX
-	_ = offsetY
-	_ = blur
-	_ = color
+func (c *bufferCanvas) BoxShadow(_, _, _, _, _, _, _ int, _ Color) {
+	// Box shadows not supported in buffer canvas adapter yet.
 }
 
 // Button is a clickable button widget with text and onClick callback.

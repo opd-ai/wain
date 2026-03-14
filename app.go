@@ -1938,14 +1938,13 @@ func (a *App) processWaylandEvents() error {
 
 // dispatchWaylandEvent routes a Wayland event to the appropriate window handler.
 func (a *App) dispatchWaylandEvent(msg *wlwire.Message) error {
-	// First try to dispatch through the connection's object registry
+	// Dispatch through the connection's object registry. Object-level handlers
+	// (Keyboard, Pointer, etc.) fire surfaceID-keyed callbacks which are routed
+	// to the owning Window via lookupWindow — multi-window input routing is
+	// fully supported through the surfaceToWindow map.
 	if err := a.waylandConn.DispatchMessage(msg); err != nil {
 		return fmt.Errorf("dispatch wayland event: %w", err)
 	}
-
-	// TODO(future): Also dispatch to window-specific handlers for input events
-	// For now, the object-level handlers (Keyboard, Pointer, etc.) will
-	// handle events and eventually call back to windows through callbacks.
 
 	return nil
 }

@@ -181,17 +181,3 @@ func unionRects(a, b displaylist.Rect) displaylist.Rect {
 		Height: y2 - y1,
 	}
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}

@@ -265,9 +265,9 @@ func (p *X11Pipeline) createX11Pixmap(fb *Framebuffer) (uint32, error) {
 	return uint32(pixmapXID), nil
 }
 
-// OnPixmapIdle should be called when the X server sends a PresentIdleNotify event.
+// OnPixmapReady should be called when the X server sends a PresentIdleNotify event.
 // This marks the pixmap as available for reuse.
-func (p *X11Pipeline) OnPixmapIdle(pixmapID uint32) error {
+func (p *X11Pipeline) OnPixmapReady(pixmapID uint32) error {
 	return p.pool.OnRelease(pixmapID)
 }
 
