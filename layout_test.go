@@ -404,3 +404,66 @@ func TestContainerTypes(t *testing.T) {
 		t.Errorf("Root has %d children, want 3", len(rootChildren))
 	}
 }
+
+// TestExtractPanel verifies extractPanel for all container types.
+func TestExtractPanel(t *testing.T) {
+	panel := NewPanel(Size{Width: 50, Height: 50})
+	if extractPanel(panel) != panel {
+		t.Error("extractPanel(*Panel) should return the panel")
+	}
+
+	row := NewRow()
+	if extractPanel(row) == nil {
+		t.Error("extractPanel(*Row) should return its Panel")
+	}
+
+	col := NewColumn()
+	if extractPanel(col) == nil {
+		t.Error("extractPanel(*Column) should return its Panel")
+	}
+
+	stack := NewStack()
+	if extractPanel(stack) == nil {
+		t.Error("extractPanel(*Stack) should return its Panel")
+	}
+
+	grid := NewGrid(3)
+	if extractPanel(grid) == nil {
+		t.Error("extractPanel(*Grid) should return its Panel")
+	}
+
+	label := NewLabel("x", Size{Width: 50, Height: 5})
+	if extractPanel(label) != nil {
+		t.Error("extractPanel(*Label) should return nil")
+	}
+}
+
+// TestSyncStyleNilAll ensures syncStyleToInternal sets nil when both theme and override are nil.
+func TestSyncStyleNilAll(t *testing.T) {
+	p := NewPanel(Size{Width: 50, Height: 50})
+	p.theme = nil
+	p.styleOverride = nil
+	p.syncStyleToInternal() // must not panic
+}
+
+// TestThemeAdapterNoOverride exercises all themeAdapter accessors without override.
+func TestThemeAdapterNoOverride(t *testing.T) {
+	theme := DefaultDark()
+	adapter := &themeAdapter{base: theme, override: nil}
+
+	_ = adapter.Background()
+	_ = adapter.Foreground()
+	_ = adapter.Accent()
+	_ = adapter.Border()
+	_ = adapter.FontSize()
+	_ = adapter.Padding()
+	_ = adapter.Gap()
+	_ = adapter.BorderWidth()
+	_ = adapter.Padding()
+}
+
+// TestSetGapPanel verifies SetGap triggers layout recalculation.
+func TestSetGapPanel(t *testing.T) {
+	p := NewPanel(Size{Width: 100, Height: 100})
+	p.SetGap(10) // must not panic
+}

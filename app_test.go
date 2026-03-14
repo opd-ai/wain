@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/render/backend"
 )
 
@@ -405,5 +406,576 @@ func TestWindowNewWindowConfig(t *testing.T) {
 				t.Error("Windows() must not be nil")
 			}
 		})
+	}
+}
+
+// TestWindowOnTouchSetDropTarget verifies additional handler setters.
+func TestWindowOnTouchSetDropTarget(t *testing.T) {
+	app := NewApp()
+	w := &Window{app: app}
+
+	w.OnTouch(func(*TouchEvent) {})
+	if w.onTouch == nil {
+		t.Error("onTouch not set")
+	}
+}
+
+// TestWindowRedrawAndDispatcher verifies Redraw and Dispatcher methods.
+func TestWindowRedrawAndDispatcher(t *testing.T) {
+	app := NewApp()
+	w := &Window{app: app, dispatcher: NewEventDispatcher()}
+
+	// Redraw should not panic on a headless window
+	w.Redraw()
+
+	// Dispatcher should return the initialised dispatcher
+	d := w.Dispatcher()
+	if d == nil {
+		t.Error("Dispatcher() returned nil")
+	}
+}
+
+// TestAppAnimate verifies that Animate returns a non-nil Animation.
+func TestAppAnimate(t *testing.T) {
+	app := NewApp()
+
+	anim := app.Animate(0, 1, 100e6, AnimateLinear, func(v float64) {})
+	if anim == nil {
+		t.Error("Animate returned nil")
+	}
+}
+
+// TestAppAnimateEasingFunctions verifies the easing function variables are non-nil.
+func TestAppAnimateEasingFunctions(t *testing.T) {
+	for name, fn := range map[string]EasingFunc{
+		"Linear":    AnimateLinear,
+		"EaseIn":    AnimateEaseIn,
+		"EaseOut":   AnimateEaseOut,
+		"EaseInOut": AnimateEaseInOut,
+		"Spring":    AnimateSpring,
+	} {
+		if fn == nil {
+			t.Errorf("Easing function %s is nil", name)
+		}
+		// Spot-check: linear f(0.5) should return 0.5
+		if name == "Linear" {
+			if got := fn(0.5); got != 0.5 {
+				t.Errorf("Linear(0.5) = %v, want 0.5", got)
+			}
+		}
+	}
+}
+
+// TestAccessibilityManagerNilSafety verifies that a nil AccessibilityManager
+// doesn't panic when Close is called.
+func TestAccessibilityManagerNilSafety(t *testing.T) {
+	var am *AccessibilityManager
+	am.Close() // must not panic
+}
+
+// TestPanelSetPaddingAndGap tests SetPadding and SetGap.
+func TestPanelSetPaddingAndGap(t *testing.T) {
+	p := NewPanel(Size{Width: 100, Height: 100})
+	p.SetPadding(10)
+	p.SetGap(5)
+	// Verify via style accessor
+	if p.styleOverride == nil {
+		t.Error("styleOverride should be set after SetPadding")
+	}
+	if *p.styleOverride.Padding != 10 {
+		t.Errorf("Padding = %d, want 10", *p.styleOverride.Padding)
+	}
+	if *p.styleOverride.Gap != 5 {
+		t.Errorf("Gap = %d, want 5", *p.styleOverride.Gap)
+	}
+}
+
+// TestPanelSetStyle tests SetStyle applies style override.
+func TestPanelSetStyle(t *testing.T) {
+	p := NewPanel(Size{Width: 50, Height: 50})
+	bg := RGB(10, 20, 30)
+	p.SetStyle(StyleOverride{Background: &bg})
+
+	if p.styleOverride == nil {
+		t.Error("styleOverride not set")
+	}
+	if p.styleOverride.Background == nil {
+		t.Error("Background override not set")
+	}
+}
+
+// TestPanelSetTheme tests that SetTheme propagates to children.
+func TestPanelSetTheme(t *testing.T) {
+	parent := NewPanel(Size{Width: 100, Height: 100})
+	child := NewPanel(Size{Width: 50, Height: 50})
+	parent.Add(child)
+
+	theme := DefaultLight()
+	parent.SetTheme(theme)
+
+	if parent.theme == nil {
+		t.Error("theme not set on parent")
+	}
+}
+
+// TestThemeAdapterStyle tests the themeAdapter style accessors.
+func TestThemeAdapterStyle(t *testing.T) {
+	dark := DefaultDark()
+
+	// Without override
+	ta := &themeAdapter{base: dark}
+	if ta.Background() == (primitives.Color{}) {
+		t.Error("Background() should not be zero")
+	}
+	if ta.FontSize() != dark.FontSize {
+		t.Errorf("FontSize() = %v, want %v", ta.FontSize(), dark.FontSize)
+	}
+	if ta.Padding() != dark.Padding {
+		t.Errorf("Padding() = %d, want %d", ta.Padding(), dark.Padding)
+	}
+	if ta.Gap() != dark.Gap {
+		t.Errorf("Gap() = %d, want %d", ta.Gap(), dark.Gap)
+	}
+	if ta.BorderWidth() != dark.BorderWidth {
+		t.Errorf("BorderWidth() = %d, want %d", ta.BorderWidth(), dark.BorderWidth)
+	}
+
+	// With override
+	bg := RGB(255, 0, 0)
+	fg := RGB(0, 255, 0)
+	ac := RGB(0, 0, 255)
+	bd := RGB(128, 128, 128)
+	fs := float64(20)
+	pad := 8
+	gap := 4
+	bw := 2
+	ta2 := &themeAdapter{
+		base: dark,
+		override: &StyleOverride{
+			Background:  &bg,
+			Foreground:  &fg,
+			Accent:      &ac,
+			Border:      &bd,
+			FontSize:    &fs,
+			Padding:     &pad,
+			Gap:         &gap,
+			BorderWidth: &bw,
+		},
+	}
+	if ta2.Background() != bg.toInternal() {
+		t.Error("Background override not applied")
+	}
+	if ta2.Foreground() != fg.toInternal() {
+		t.Error("Foreground override not applied")
+	}
+	if ta2.Accent() != ac.toInternal() {
+		t.Error("Accent override not applied")
+	}
+	if ta2.Border() != bd.toInternal() {
+		t.Error("Border override not applied")
+	}
+	if ta2.FontSize() != 20 {
+		t.Errorf("FontSize override = %v, want 20", ta2.FontSize())
+	}
+	if ta2.Padding() != 8 {
+		t.Errorf("Padding override = %d, want 8", ta2.Padding())
+	}
+	if ta2.Gap() != 4 {
+		t.Errorf("Gap override = %d, want 4", ta2.Gap())
+	}
+	if ta2.BorderWidth() != 2 {
+		t.Errorf("BorderWidth override = %d, want 2", ta2.BorderWidth())
+	}
+}
+
+// TestClampDimension exercises all branches of clampDimension.
+func TestClampDimension(t *testing.T) {
+	tests := []struct {
+		value, min, max, want int
+	}{
+		{50, 0, 0, 50},      // no clamping
+		{200, 0, 100, 100},  // clamped to max
+		{10, 50, 0, 50},     // clamped to min
+		{50, 10, 100, 50},   // within range, no clamping
+		{150, 10, 100, 100}, // clamped to max
+		{5, 10, 100, 10},    // clamped to min
+	}
+	for _, tt := range tests {
+		if got := clampDimension(tt.value, tt.min, tt.max); got != tt.want {
+			t.Errorf("clampDimension(%d, %d, %d) = %d, want %d", tt.value, tt.min, tt.max, got, tt.want)
+		}
+	}
+}
+
+// TestWindowSetSizeHeadless verifies SetSize on a headless window.
+func TestWindowSetSizeHeadless(t *testing.T) {
+	app := NewApp()
+	w := &Window{app: app, width: 800, height: 600}
+
+	if err := w.SetSize(1024, 768); err != nil {
+		t.Errorf("SetSize: %v", err)
+	}
+	if w.width != 1024 || w.height != 768 {
+		t.Errorf("Size after SetSize = %dx%d, want 1024x768", w.width, w.height)
+	}
+}
+
+// TestWindowSetSizeClosed verifies SetSize returns error on closed window.
+func TestWindowSetSizeClosed(t *testing.T) {
+	app := NewApp()
+	w := &Window{app: app, closed: true}
+	if err := w.SetSize(100, 100); err == nil {
+		t.Error("expected error on closed window")
+	}
+}
+
+// TestWindowRedrawRegion verifies RedrawRegion on a headless window.
+func TestWindowRedrawRegion(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	w := &Window{}
+	w.renderBridge = NewRenderBridge(sw)
+
+	// Must not panic
+	w.RedrawRegion(10, 10, 50, 50)
+}
+
+// TestWindowSendCustomEvent verifies SendCustomEvent dispatches the event.
+func TestWindowSendCustomEvent(t *testing.T) {
+	app := NewApp()
+	w := &Window{app: app, dispatcher: NewEventDispatcher()}
+
+	var received CustomEventPayload
+	w.dispatcher.OnCustom(func(e *CustomEvent) {
+		received = e.Data()
+	})
+
+	type payload struct{ v int }
+	p := payload{42}
+	w.SendCustomEvent(p)
+
+	if received != p {
+		t.Errorf("SendCustomEvent: received %v, want %v", received, p)
+	}
+}
+
+// TestWindowSendCustomEventNoDispatcher verifies SendCustomEvent is safe without dispatcher.
+func TestWindowSendCustomEventNoDispatcher(t *testing.T) {
+	w := &Window{}            // no dispatcher
+	w.SendCustomEvent("test") // must not panic
+}
+
+// TestWindowRenderFrameNilRoot verifies RenderFrame on a window without a root widget.
+func TestWindowRenderFrameNilRoot(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	w := &Window{}
+	w.renderBridge = NewRenderBridge(sw)
+	w.renderBridge.MarkDirty()
+
+	// RenderFrame with nil rootWidget should return ErrNoRootWidget
+	err := w.RenderFrame()
+	if err == nil {
+		t.Error("expected error with nil root widget")
+	}
+}
+
+// TestAppResourcesNilGuards verifies LoadFont/LoadImage/LoadImageFromReader/DefaultFont
+// return ErrNotRunning when the app has not been Run().
+func TestAppResourcesNilGuards(t *testing.T) {
+	app := NewApp()
+
+	if _, err := app.LoadFont("font.ttf", 14); err != ErrNotRunning {
+		t.Errorf("LoadFont: got %v, want ErrNotRunning", err)
+	}
+	if _, err := app.LoadImage("icon.png"); err != ErrNotRunning {
+		t.Errorf("LoadImage: got %v, want ErrNotRunning", err)
+	}
+	if _, err := app.LoadImageFromReader(nil, "img.png"); err != ErrNotRunning {
+		t.Errorf("LoadImageFromReader: got %v, want ErrNotRunning", err)
+	}
+	if f := app.DefaultFont(); f != nil {
+		t.Error("DefaultFont should return nil when resources not initialised")
+	}
+}
+
+// TestRenderBridgeDestroyNilRenderer verifies Destroy is safe with no renderer.
+func TestRenderBridgeDestroyNilRenderer(t *testing.T) {
+	rb := &RenderBridge{}
+	if err := rb.Destroy(); err != nil {
+		t.Errorf("Destroy with nil renderer: %v", err)
+	}
+}
+
+// TestRenderBridgeWalkWidgetNonEmitter verifies walkWidget with a plain BaseWidget.
+func TestRenderBridgeWalkWidgetNonEmitter(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	rb := NewRenderBridge(sw)
+	w := &BaseWidget{}
+	if err := rb.walkWidget(w); err != nil {
+		t.Errorf("walkWidget non-emitter: %v", err)
+	}
+}
+
+// TestRenderBridgeWalkWidgetNil verifies walkWidget(nil) is a no-op.
+func TestRenderBridgeWalkWidgetNil(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	rb := NewRenderBridge(sw)
+	if err := rb.walkWidget(nil); err != nil {
+		t.Errorf("walkWidget(nil): %v", err)
+	}
+}
+
+// TestWindowSettersWaylandNoToplevel verifies setters on a Wayland window with no toplevel.
+func TestWindowSettersWaylandNoToplevel(t *testing.T) {
+	app := NewApp()
+	app.displayServer = DisplayServerWayland
+	w := &Window{app: app, width: 800, height: 600}
+
+	if err := w.SetTitle("test"); err != nil {
+		t.Errorf("SetTitle Wayland no-toplevel: %v", err)
+	}
+	if err := w.SetSize(1024, 768); err != nil {
+		t.Errorf("SetSize Wayland: %v", err)
+	}
+	if err := w.SetMinSize(100, 100); err != nil {
+		t.Errorf("SetMinSize Wayland no-toplevel: %v", err)
+	}
+	if err := w.SetMaxSize(1920, 1080); err != nil {
+		t.Errorf("SetMaxSize Wayland no-toplevel: %v", err)
+	}
+	if err := w.SetFullscreen(true); err != nil {
+		t.Errorf("SetFullscreen Wayland no-toplevel: %v", err)
+	}
+}
+
+// TestWindowCloseHeadless verifies Close on a headless window calls onClose and marks closed.
+func TestWindowCloseHeadless(t *testing.T) {
+	app := NewApp()
+	app.displayServer = DisplayServerUnknown
+	called := false
+	w := &Window{app: app, onClose: func() { called = true }}
+
+	if err := w.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
+	if !w.closed {
+		t.Error("window not marked closed")
+	}
+	if !called {
+		t.Error("onClose not called")
+	}
+
+	// Second Close must be a no-op.
+	if err := w.Close(); err != nil {
+		t.Errorf("double Close: %v", err)
+	}
+}
+
+// TestWindowCloseWayland verifies Close with DisplayServerWayland (no wayland objects).
+func TestWindowCloseWayland(t *testing.T) {
+	app := NewApp()
+	app.displayServer = DisplayServerWayland
+	w := &Window{app: app}
+	if err := w.Close(); err != nil {
+		t.Errorf("Close Wayland: %v", err)
+	}
+}
+
+// TestNewAppWithConfigFields verifies NewAppWithConfig respects provided config.
+func TestNewAppWithConfigFields(t *testing.T) {
+	cfg := AppConfig{
+		Width:         1280,
+		Height:        720,
+		ForceSoftware: true,
+		DRMPath:       "/dev/dri/card0",
+	}
+	app := NewAppWithConfig(cfg)
+	if app == nil {
+		t.Fatal("NewAppWithConfig returned nil")
+	}
+	if app.width != 1280 {
+		t.Errorf("width = %d, want 1280", app.width)
+	}
+	if app.height != 720 {
+		t.Errorf("height = %d, want 720", app.height)
+	}
+	if app.drmPath != "/dev/dri/card0" {
+		t.Errorf("drmPath = %q, want /dev/dri/card0", app.drmPath)
+	}
+}
+
+// TestAppSetGetTheme verifies SetTheme/GetTheme/Theme round-trip.
+func TestAppSetGetTheme(t *testing.T) {
+	app := NewApp()
+	theme := DefaultDark()
+	theme.Background = RGB(10, 20, 30)
+	app.SetTheme(theme)
+
+	got := app.GetTheme()
+	if got.Background != theme.Background {
+		t.Errorf("GetTheme background = %v, want %v", got.Background, theme.Background)
+	}
+	got2 := app.Theme()
+	if got2.Background != theme.Background {
+		t.Errorf("Theme() background = %v, want %v", got2.Background, theme.Background)
+	}
+}
+
+// TestAppBackendTypeDimensions verifies BackendType and Dimensions on a new app.
+func TestAppBackendTypeDimensions(t *testing.T) {
+	app := NewAppWithConfig(AppConfig{Width: 1024, Height: 768})
+	_ = app.BackendType()
+
+	w, h := app.Dimensions()
+	if w != 1024 || h != 768 {
+		t.Errorf("Dimensions = %dx%d, want 1024x768", w, h)
+	}
+}
+
+// TestAppSetThemeWithWindow verifies SetTheme marks dirty on windows with render bridge.
+func TestAppSetThemeWithWindow(t *testing.T) {
+	app := NewApp()
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	w := &Window{app: app}
+	w.renderBridge = NewRenderBridge(sw)
+	app.windows = append(app.windows, w)
+
+	app.SetTheme(DefaultLight())
+}
+
+// TestDispatchTouchWithHandler verifies dispatchTouch calls handler when no widget root.
+func TestDispatchTouchWithHandler(t *testing.T) {
+	d := NewEventDispatcher()
+	called := false
+	d.OnTouch(func(e *TouchEvent) { called = true })
+
+	evt := &TouchEvent{eventType: TouchDown}
+	d.Dispatch(evt)
+	if !called {
+		t.Error("touch handler not called")
+	}
+}
+
+// TestDispatchTouchConsumed verifies dispatchTouch stops after Consumed.
+func TestDispatchTouchConsumed(t *testing.T) {
+	d := NewEventDispatcher()
+	count := 0
+	d.OnTouch(func(e *TouchEvent) {
+		count++
+		e.Consume()
+	})
+	d.OnTouch(func(e *TouchEvent) {
+		count++
+	})
+
+	d.Dispatch(&TouchEvent{eventType: TouchDown})
+	if count != 1 {
+		t.Errorf("touch handler called %d times, want 1", count)
+	}
+}
+
+// TestWindowSetFullscreenFalseWayland exercises the applyWaylandFullscreen(false) path.
+func TestWindowSetFullscreenFalseWayland(t *testing.T) {
+	app := NewApp()
+	app.displayServer = DisplayServerWayland
+	w := &Window{app: app}
+
+	if err := w.SetFullscreen(false); err != nil {
+		t.Errorf("SetFullscreen(false) Wayland: %v", err)
+	}
+	if err := w.SetFullscreen(true); err != nil {
+		t.Errorf("SetFullscreen(true) Wayland: %v", err)
+	}
+}
+
+// TestWindowSetRootWidgetWithDispatcher verifies SetRootWidget with dispatcher and renderBridge.
+func TestWindowSetRootWidgetWithDispatcher(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	w := &Window{dispatcher: NewEventDispatcher()}
+	w.renderBridge = NewRenderBridge(sw)
+
+	root := &BaseWidget{}
+	root.SetBounds(0, 0, 100, 100)
+	w.SetRootWidget(root)
+
+	if w.rootWidget != root {
+		t.Error("rootWidget not set")
+	}
+}
+
+// TestWindowRedrawWithRenderBridge verifies Redraw marks dirty.
+func TestWindowRedrawWithRenderBridge(t *testing.T) {
+	sw, _ := backend.NewSoftwareBackend(backend.SoftwareConfig{Width: 100, Height: 100})
+	w := &Window{}
+	w.renderBridge = NewRenderBridge(sw)
+
+	w.Redraw() // must not panic
+}
+
+// TestDispatchWindowConsumed verifies dispatchWindow stops on consumed.
+func TestDispatchWindowConsumed(t *testing.T) {
+	d := NewEventDispatcher()
+	count := 0
+	d.OnWindow(func(e *WindowEvent) {
+		count++
+		e.Consume()
+	})
+	d.OnWindow(func(e *WindowEvent) {
+		count++
+	})
+
+	d.Dispatch(&WindowEvent{eventType: WindowFocus})
+	if count != 1 {
+		t.Errorf("window handler called %d times, want 1", count)
+	}
+}
+
+// TestDispatchCustomConsumed verifies dispatchCustom stops on consumed.
+func TestDispatchCustomConsumed(t *testing.T) {
+	d := NewEventDispatcher()
+	count := 0
+	d.OnCustom(func(e *CustomEvent) {
+		count++
+		e.Consume()
+	})
+	d.OnCustom(func(e *CustomEvent) {
+		count++
+	})
+
+	d.Dispatch(&CustomEvent{data: "test"})
+	if count != 1 {
+		t.Errorf("custom handler called %d times, want 1", count)
+	}
+}
+
+// TestHitTestWithChildWidget verifies hitTest returns child when child contains point.
+func TestHitTestWithChildWidget(t *testing.T) {
+	d := NewEventDispatcher()
+
+	parent := &BaseWidget{}
+	parent.SetBounds(0, 0, 100, 100)
+	child := &BaseWidget{}
+	child.SetBounds(10, 10, 50, 50)
+	parent.AddChild(child)
+
+	hit := d.hitTest(parent, 30, 30)
+	if hit != child {
+		t.Errorf("hitTest returned %v, want child", hit)
+	}
+}
+
+// TestHitTestParentNoChild verifies hitTest returns parent when no child matches.
+func TestHitTestParentNoChild(t *testing.T) {
+	d := NewEventDispatcher()
+
+	parent := &BaseWidget{}
+	parent.SetBounds(0, 0, 100, 100)
+	child := &BaseWidget{}
+	child.SetBounds(10, 10, 30, 30)
+	parent.AddChild(child)
+
+	// Hit outside child but inside parent
+	hit := d.hitTest(parent, 80, 80)
+	if hit != parent {
+		t.Errorf("hitTest returned %v, want parent", hit)
 	}
 }

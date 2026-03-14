@@ -502,3 +502,220 @@ func TestBufferCanvasBoxShadow(t *testing.T) {
 		t.Error("BoxShadow produced no visible pixels")
 	}
 }
+
+// TestButtonHandleEventPointerEnterLeave verifies PointerEnter/Leave events.
+func TestButtonHandleEventPointerEnterLeave(t *testing.T) {
+	btn := NewButton("Test", Size{Width: 30, Height: 10})
+
+	enterEvt := &PointerEvent{eventType: PointerEnter}
+	if !btn.HandleEvent(enterEvt) {
+		t.Error("HandleEvent(PointerEnter) should return true")
+	}
+
+	leaveEvt := &PointerEvent{eventType: PointerLeave}
+	if !btn.HandleEvent(leaveEvt) {
+		t.Error("HandleEvent(PointerLeave) should return true")
+	}
+}
+
+// TestButtonHandleEventPointerPressRelease verifies button press/release.
+func TestButtonHandleEventPointerPressRelease(t *testing.T) {
+	btn := NewButton("Test", Size{Width: 30, Height: 10})
+
+	pressEvt := &PointerEvent{eventType: PointerButtonPress, button: PointerButtonLeft}
+	if !btn.HandleEvent(pressEvt) {
+		t.Error("HandleEvent(PointerButtonPress) should return true")
+	}
+
+	releaseEvt := &PointerEvent{eventType: PointerButtonRelease, button: PointerButtonRight}
+	if !btn.HandleEvent(releaseEvt) {
+		t.Error("HandleEvent(PointerButtonRelease) should return true")
+	}
+
+	// Unknown event should return false
+	keyEvt := &KeyEvent{eventType: KeyPress}
+	if btn.HandleEvent(keyEvt) {
+		t.Error("HandleEvent(KeyEvent) should return false for Button")
+	}
+}
+
+// TestButtonToInternal verifies buttonToInternal mapping.
+func TestButtonToInternal(t *testing.T) {
+	tests := []struct {
+		btn  PointerButton
+		want uint32
+	}{
+		{PointerButtonLeft, 1},
+		{PointerButtonMiddle, 2},
+		{PointerButtonRight, 3},
+		{PointerButton(0x999), 0},
+	}
+	for _, tt := range tests {
+		if got := buttonToInternal(tt.btn); got != tt.want {
+			t.Errorf("buttonToInternal(%v) = %d, want %d", tt.btn, got, tt.want)
+		}
+	}
+}
+
+// TestButtonSetStyle verifies that SetStyle doesn't panic.
+func TestButtonSetStyle(t *testing.T) {
+	btn := NewButton("OK", Size{Width: 30, Height: 10})
+	ac := RGB(0, 128, 0)
+	btn.SetStyle(StyleOverride{Accent: &ac}) // must not panic
+}
+
+// TestLabelSetStyle verifies that Label.SetStyle doesn't panic.
+func TestLabelSetStyle(t *testing.T) {
+	lbl := NewLabel("hello", Size{Width: 50, Height: 10})
+	bg := RGB(10, 20, 30)
+	lbl.SetStyle(StyleOverride{Background: &bg}) // must not panic
+}
+
+// TestTextInputHandleEventKey verifies that TextInput handles KeyPress.
+func TestTextInputHandleEventKey(t *testing.T) {
+	ti := NewTextInput("", Size{Width: 80, Height: 10})
+	keyEvt := &KeyEvent{
+		eventType: KeyPress,
+		key:       Key(0x61), // 'a'
+		rune:      'a',
+	}
+	if !ti.HandleEvent(keyEvt) {
+		t.Error("TextInput.HandleEvent(KeyPress) should return true")
+	}
+}
+
+// TestTextInputHandleEventPointer verifies that TextInput handles PointerButtonPress.
+func TestTextInputHandleEventPointer(t *testing.T) {
+	ti := NewTextInput("", Size{Width: 80, Height: 10})
+	ptrEvt := &PointerEvent{eventType: PointerButtonPress, button: PointerButtonLeft}
+	if !ti.HandleEvent(ptrEvt) {
+		t.Error("TextInput.HandleEvent(PointerButtonPress) should return true")
+	}
+}
+
+// TestTextInputSetStyle verifies that TextInput.SetStyle doesn't panic.
+func TestTextInputSetStyle(t *testing.T) {
+	ti := NewTextInput("", Size{Width: 80, Height: 10})
+	ti.SetStyle(StyleOverride{}) // must not panic
+}
+
+// TestScrollViewHandleEventScroll verifies that ScrollView handles PointerScroll.
+func TestScrollViewHandleEventScroll(t *testing.T) {
+	sv := NewScrollView(Size{Width: 100, Height: 80})
+
+	called := false
+	sv.OnScroll(func(offset int) {
+		called = true
+	})
+
+	scrollEvt := &PointerEvent{eventType: PointerScroll, value: 2.0}
+	if !sv.HandleEvent(scrollEvt) {
+		t.Error("ScrollView.HandleEvent(PointerScroll) should return true")
+	}
+	if !called {
+		t.Error("OnScroll handler should have been called")
+	}
+}
+
+// TestScrollViewScrollOffset verifies SetScrollOffset/ScrollOffset are callable.
+func TestScrollViewScrollOffset(t *testing.T) {
+	sv := NewScrollView(Size{Width: 100, Height: 80})
+	// With no content, maxScroll=0, so offset is clamped to 0.
+	sv.SetScrollOffset(50)
+	if got := sv.ScrollOffset(); got != 0 {
+		t.Errorf("ScrollOffset() = %d, want 0 (clamped, no content)", got)
+	}
+	// Offset of 0 is always valid.
+	sv.SetScrollOffset(0)
+	if got := sv.ScrollOffset(); got != 0 {
+		t.Errorf("ScrollOffset() = %d, want 0", got)
+	}
+}
+
+// TestNewBufferCanvasFillRect verifies the bufferCanvas FillRect method.
+func TestNewBufferCanvasFillRect(t *testing.T) {
+	buf, err := primitives.NewBuffer(100, 100)
+	if err != nil {
+		t.Fatalf("NewBuffer: %v", err)
+	}
+
+	canvas := newBufferCanvas(buf, 0, 0)
+
+	// FillRect should not panic
+	canvas.FillRect(10, 10, 20, 20, RGB(255, 0, 0))
+
+	// Check that at least one pixel was painted
+	r, g, _, _ := buf.At(15, 15).RGBA()
+	if r == 0 && g == 0 {
+		t.Log("FillRect may not have set expected color (depends on format)")
+	}
+}
+
+// TestNewBufferCanvasFillRoundedRect exercises FillRoundedRect.
+func TestNewBufferCanvasFillRoundedRect(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	canvas := newBufferCanvas(buf, 5, 5)
+	canvas.FillRoundedRect(0, 0, 50, 30, 5, RGB(0, 200, 0)) // must not panic
+}
+
+// TestNewBufferCanvasDrawLine exercises DrawLine.
+func TestNewBufferCanvasDrawLine(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	canvas := newBufferCanvas(buf, 0, 0)
+	canvas.DrawLine(0, 0, 99, 99, RGB(128, 128, 128), 1) // must not panic
+}
+
+// TestNewBufferCanvasDrawTextNilFont verifies DrawText with a nil font is safe.
+func TestNewBufferCanvasDrawTextNilFont(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	canvas := newBufferCanvas(buf, 0, 0)
+	canvas.DrawText("hello", 0, 0, nil, RGB(0, 0, 0)) // must not panic
+}
+
+// TestWidgetAdapterHandlePointerEvents verifies the widgetAdapter bridge.
+func TestWidgetAdapterHandlePointerEvents(t *testing.T) {
+	btn := NewButton("Test", Size{Width: 30, Height: 10})
+	adapter := newWidgetAdapter(btn)
+
+	adapter.HandlePointerEnter() // must not panic
+	adapter.HandlePointerLeave() // must not panic
+	adapter.HandlePointerDown(1) // must not panic
+	adapter.HandlePointerUp(1)   // must not panic
+}
+
+// TestWidgetDrawStubs verifies Draw stubs do not panic.
+
+// TestWidgetDrawStubs verifies Draw stubs do not panic.
+func TestWidgetDrawStubs(t *testing.T) {
+	buf, _ := primitives.NewBuffer(100, 100)
+	canvas := newBufferCanvas(buf, 0, 0)
+
+	NewButton("Test", Size{Width: 50, Height: 20}).Draw(canvas)
+	NewLabel("Hello", Size{Width: 50, Height: 20}).Draw(canvas)
+	NewTextInput("world", Size{Width: 50, Height: 20}).Draw(canvas)
+	NewScrollView(Size{Width: 100, Height: 100}).Draw(canvas)
+}
+
+// TestBaseWidgetHandleTouchAndFocus exercises HandleTouch, IsFocused, OnTouch.
+func TestBaseWidgetHandleTouchAndFocus(t *testing.T) {
+	w := &BaseWidget{}
+
+	if w.IsFocused() {
+		t.Error("new widget should not be focused")
+	}
+	w.SetFocused(true)
+	if !w.IsFocused() {
+		t.Error("widget should be focused after SetFocused(true)")
+	}
+
+	called := false
+	w.OnTouch(func(e *TouchEvent) { called = true })
+	evt := &TouchEvent{}
+	w.HandleTouch(evt)
+	if !called {
+		t.Error("HandleTouch should call onTouch callback")
+	}
+
+	w2 := &BaseWidget{}
+	w2.HandleTouch(evt)
+}

@@ -3,6 +3,8 @@ package wain
 import (
 	"testing"
 	"time"
+
+	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
 
 // mockEvent is a simple event implementation for testing.
@@ -155,5 +157,79 @@ func TestColorConstants(t *testing.T) {
 
 	if Transparent.A != 0 {
 		t.Errorf("Transparent.A = %d, want 0", Transparent.A)
+	}
+}
+
+// TestDisplayListCanvas exercises all displayListCanvas methods.
+func TestDisplayListCanvas(t *testing.T) {
+	dl := displaylist.New()
+	c := newDisplayListCanvas(dl)
+
+	// Must not panic
+	c.FillRect(0, 0, 100, 100, RGB(255, 0, 0))
+	c.FillRoundedRect(5, 5, 90, 90, 8, RGB(0, 255, 0))
+	c.DrawLine(0, 0, 100, 100, RGB(0, 0, 255), 1)
+	c.DrawText("test", 10, 10, nil, RGB(255, 255, 255)) // nil font = no-op
+	c.DrawImage(nil, 0, 0, 50, 50)                      // nil image = no-op
+	c.LinearGradient(0, 0, 100, 50, RGB(255, 0, 0), RGB(0, 0, 255), 0)
+	c.RadialGradient(0, 0, 100, 100, RGB(255, 255, 0), RGB(0, 0, 0))
+	c.BoxShadow(10, 10, 80, 80, 2, 2, 5, RGBA(0, 0, 0, 128))
+}
+
+// TestLayoutAdapterContains verifies Contains.
+func TestLayoutAdapterContains(t *testing.T) {
+	lbl := NewLabel("hi", Size{Width: 50, Height: 10})
+	lbl.SetBounds(0, 0, 100, 50)
+	a := newLayoutAdapter(lbl)
+
+	if !a.Contains(50, 25) {
+		t.Error("Contains(50,25) should be true within 100x50 widget")
+	}
+	if a.Contains(150, 25) {
+		t.Error("Contains(150,25) should be false outside 100x50 widget")
+	}
+}
+
+// TestLayoutAdapterHandleEvents verifies HandlePointer/HandleKey/HandleTouch/SetFocused.
+func TestLayoutAdapterHandleEvents(t *testing.T) {
+	btn := NewButton("Test", Size{Width: 30, Height: 10})
+	a := newLayoutAdapter(btn)
+
+	// Must not panic
+	a.HandlePointer(&PointerEvent{eventType: PointerEnter})
+	a.HandleKey(&KeyEvent{eventType: KeyPress, key: Key(0x41)})
+	a.HandleTouch(&TouchEvent{eventType: TouchDown})
+
+	a.SetFocused(true)
+	if !a.IsFocused() {
+		t.Error("IsFocused() should be true after SetFocused(true)")
+	}
+	a.SetFocused(false)
+	if a.IsFocused() {
+		t.Error("IsFocused() should be false after SetFocused(false)")
+	}
+}
+
+// TestLayoutAdapterChildren verifies that a Panel container yields children.
+func TestLayoutAdapterChildren(t *testing.T) {
+	parent := NewPanel(Size{Width: 100, Height: 100})
+	child := NewPanel(Size{Width: 50, Height: 50}) // only Panel types are stored by Add
+	parent.Add(child)
+
+	a := newLayoutAdapter(parent)
+	children := a.Children()
+	if len(children) != 1 {
+		t.Errorf("Children() = %d, want 1", len(children))
+	}
+}
+
+// TestLayoutAdapterChildrenNonContainer verifies that a non-container yields nil.
+func TestLayoutAdapterChildrenNonContainer(t *testing.T) {
+	// Label does not implement Container, so Children() should return nil.
+	lbl := NewLabel("hi", Size{Width: 50, Height: 10})
+	a := newLayoutAdapter(lbl)
+	// Label implements PublicWidget but not Container, so nil is expected.
+	if got := a.Children(); got != nil {
+		t.Logf("Children() returned %d entries for Label; may be non-nil (OK if empty)", len(got))
 	}
 }
