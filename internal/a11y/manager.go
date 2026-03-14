@@ -153,13 +153,13 @@ func (m *Manager) register(name string, role Role, parentID uint64, actions []ob
 	m.nextID++
 	id := m.nextID
 	obj := &AccessibleObject{
-		id:      id,
+		id:       id,
 		parentID: parentID,
-		role:    role,
-		name:    name,
-		enabled: true,
-		actions: actions,
-		manager: m,
+		role:     role,
+		name:     name,
+		enabled:  true,
+		actions:  actions,
+		manager:  m,
 	}
 	m.objects[id] = obj
 	m.mu.Unlock()

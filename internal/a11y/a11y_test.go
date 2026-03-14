@@ -270,8 +270,8 @@ func TestTextIface(t *testing.T) {
 // TestClampOffsets verifies offset clamping behaviour.
 func TestClampOffsets(t *testing.T) {
 	cases := []struct {
-		text        string
-		start, end  int32
+		text         string
+		start, end   int32
 		wantS, wantE int
 	}{
 		{"hello", 0, 5, 0, 5},
