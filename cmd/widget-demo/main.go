@@ -399,11 +399,13 @@ func runWaylandFrameLoop(app *application, ws *waylandSurface) error {
 // gcConn adapts *x11client.Connection to gc.Connection.
 type gcConn struct{ conn *x11client.Connection }
 
+// AllocXID allocates a new X11 resource ID via the underlying connection.
 func (a *gcConn) AllocXID() (gc.XID, error) {
 	xid, err := a.conn.AllocXID()
 	return gc.XID(xid), err
 }
 
+// SendRequest sends a raw X11 protocol request via the underlying connection.
 func (a *gcConn) SendRequest(buf []byte) error { return a.conn.SendRequest(buf) }
 
 // runX11 displays the widget demo on an X11 server.
