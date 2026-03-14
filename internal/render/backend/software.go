@@ -117,6 +117,15 @@ func (sb *SoftwareBackend) Buffer() *primitives.Buffer {
 	return sb.buffer
 }
 
+// Pixels returns the raw ARGB8888 pixel data from the software render buffer.
+// Returns nil if the backend has not been initialized or has been destroyed.
+func (sb *SoftwareBackend) Pixels() []byte {
+	if sb.buffer == nil {
+		return nil
+	}
+	return sb.buffer.Pixels
+}
+
 // Dimensions returns the render target dimensions.
 func (sb *SoftwareBackend) Dimensions() (width, height int) {
 	return sb.width, sb.height

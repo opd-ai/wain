@@ -21,6 +21,7 @@ package wain
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ import (
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/text"
 	"github.com/opd-ai/wain/internal/render/backend"
+	"github.com/opd-ai/wain/internal/render/display"
 	"github.com/opd-ai/wain/internal/wayland/client"
 	"github.com/opd-ai/wain/internal/wayland/datadevice"
 	"github.com/opd-ai/wain/internal/wayland/input"
@@ -58,6 +60,15 @@ var (
 	// ErrInvalidWindowConfig is returned when window configuration is invalid.
 	ErrInvalidWindowConfig = errors.New("wain: invalid window configuration")
 )
+
+// Presenter is implemented by platform-specific types that commit rendered
+// pixels to the compositor or display server each frame.
+type Presenter interface {
+	// Present submits the current frame to the compositor.
+	Present(ctx context.Context) error
+	// Close releases platform resources held by the presenter.
+	Close() error
+}
 
 // DisplayServer represents the detected display server type.
 type DisplayServer int
@@ -283,6 +294,9 @@ type Window struct {
 
 	// Render bridge
 	renderBridge *RenderBridge
+
+	// presenter submits rendered frames to the compositor / display server.
+	presenter Presenter
 }
 
 // NewWindow creates a new window with the specified configuration.
@@ -379,6 +393,10 @@ func (w *Window) initWaylandWindow() error {
 
 	if err := w.waylandSurface.Commit(); err != nil {
 		return fmt.Errorf("failed to commit surface: %w", err)
+	}
+
+	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
+		w.presenter = display.NewSoftwareWaylandPresenter(w.app.waylandShm, w.waylandSurface, sw)
 	}
 
 	return nil
@@ -478,6 +496,18 @@ func (w *Window) initX11Window() error {
 
 	if err := w.app.x11Conn.MapWindow(w.x11Window); err != nil {
 		return fmt.Errorf("failed to map window: %w", err)
+	}
+
+	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
+		p, err := display.NewSoftwareX11Presenter(w.app.x11Conn, w.x11Window, sw)
+		if err != nil {
+			// Non-fatal: window will open but pixels won't be pushed.
+			if w.app.verbose {
+				log.Printf("Warning: failed to create X11 presenter: %v", err)
+			}
+		} else {
+			w.presenter = p
+		}
 	}
 
 	return nil
@@ -929,13 +959,24 @@ func (w *Window) RenderFrame() error {
 	w.mu.Lock()
 	rootWidget := w.rootWidget
 	renderBridge := w.renderBridge
+	presenter := w.presenter
 	w.mu.Unlock()
 
 	if renderBridge == nil {
 		return ErrNoRenderer
 	}
 
-	return renderBridge.Render(rootWidget)
+	if err := renderBridge.Render(rootWidget); err != nil {
+		return err
+	}
+
+	if presenter != nil {
+		if err := presenter.Present(context.Background()); err != nil {
+			return fmt.Errorf("present frame: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // Dispatcher returns the window's event dispatcher.
