@@ -293,3 +293,61 @@ func (c *displayListCanvas) BoxShadow(x, y, width, height, offsetX, offsetY, blu
 	shadowY := y + offsetY
 	c.dl.AddBoxShadow(shadowX, shadowY, width, height, blur, 0, color.toInternal())
 }
+
+// layoutAdapter wraps a PublicWidget tree and implements the Widget interface
+// used by the render bridge and event dispatcher. This is the bridge that
+// Window.SetLayout uses to attach a public-API widget tree to the window.
+type layoutAdapter struct {
+	pub     PublicWidget
+	focused bool
+}
+
+// newLayoutAdapter wraps a PublicWidget so it satisfies the Widget interface.
+func newLayoutAdapter(pub PublicWidget) *layoutAdapter {
+	return &layoutAdapter{pub: pub}
+}
+
+// Contains reports whether the point (x, y) lies within the widget's bounds.
+func (a *layoutAdapter) Contains(x, y float64) bool {
+	w, h := a.pub.Bounds()
+	return x >= 0 && y >= 0 && x < float64(w) && y < float64(h)
+}
+
+// Children returns child widgets as Widget values, each wrapped in a layoutAdapter.
+func (a *layoutAdapter) Children() []Widget {
+	c, ok := a.pub.(Container)
+	if !ok {
+		return nil
+	}
+	children := c.Children()
+	out := make([]Widget, len(children))
+	for i, child := range children {
+		out[i] = newLayoutAdapter(child)
+	}
+	return out
+}
+
+// HandlePointer converts the high-level PointerEvent and forwards it.
+func (a *layoutAdapter) HandlePointer(evt *PointerEvent) {
+	a.pub.HandleEvent(evt)
+}
+
+// HandleKey converts the high-level KeyEvent and forwards it.
+func (a *layoutAdapter) HandleKey(evt *KeyEvent) {
+	a.pub.HandleEvent(evt)
+}
+
+// HandleTouch converts the high-level TouchEvent and forwards it.
+func (a *layoutAdapter) HandleTouch(evt *TouchEvent) {
+	a.pub.HandleEvent(evt)
+}
+
+// SetFocused sets the widget's focus state.
+func (a *layoutAdapter) SetFocused(focused bool) {
+	a.focused = focused
+}
+
+// IsFocused reports whether the widget currently has keyboard focus.
+func (a *layoutAdapter) IsFocused() bool {
+	return a.focused
+}

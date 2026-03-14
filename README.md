@@ -168,10 +168,10 @@ Run the Phase 0 validation binary to verify the Go–Rust link:
 ./bin/wain
 # Output:
 #   render.Add(6, 7) = 13
-#   render library version: 0.1.0
+#   render library version: 0.2.0
 
 ./bin/wain --version
-# Output: wain version: 0.1.0
+# Output: wain version: 0.2.0
 ```
 
 Create a window using the public API (`app.go`):
@@ -197,6 +197,18 @@ func main() {
     app.Run() // blocks until app.Quit() is called
 }
 ```
+
+A minimal "hello world" example lives in [`example/hello/`](example/hello/):
+
+```bash
+go build github.com/opd-ai/wain/example/hello
+./hello
+```
+
+It demonstrates window creation, layout assembly, and button event handling using only the public API, and falls back to headless output when no display server is available.
+
+> **Note (v0.2.0):** The public API is functional but not yet API-stable. Signatures may
+> change in future minor releases until v1.0.0 is tagged.
 
 Build and run the Wayland or X11 demo (no CGO required):
 

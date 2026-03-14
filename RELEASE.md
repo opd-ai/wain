@@ -52,8 +52,8 @@ tar czf wain-libs-aarch64-unknown-linux-musl.tar.gz aarch64/
 
 1. **Tag the release:**
    ```bash
-   git tag -a v0.1.0 -m "Release v0.1.0"
-   git push origin v0.1.0
+   git tag -a v0.2.0 -m "Release v0.2.0"
+   git push origin v0.2.0
    ```
 
 2. **Create GitHub release:**
@@ -72,7 +72,7 @@ Users can download and extract the pre-built libraries:
 
 ```bash
 # Download for your platform
-wget https://github.com/opd-ai/wain/releases/download/v0.1.0/wain-libs-x86_64-unknown-linux-musl.tar.gz
+wget https://github.com/opd-ai/wain/releases/download/v0.2.0/wain-libs-x86_64-unknown-linux-musl.tar.gz
 
 # Extract
 tar xzf wain-libs-x86_64-unknown-linux-musl.tar.gz
@@ -97,10 +97,10 @@ After creating a release, verify that users can use it:
 
 ```bash
 # On a clean machine with only Go installed
-go get github.com/opd-ai/wain@v0.1.0
+go get github.com/opd-ai/wain@v0.2.0
 cd /tmp/test-wain
 go mod init test
-go get github.com/opd-ai/wain@v0.1.0
+go get github.com/opd-ai/wain@v0.2.0
 
 # Should fail gracefully, pointing users to wain-build or release downloads
 go build .

@@ -888,6 +888,22 @@ func (w *Window) SetRootWidget(widget Widget) {
 	}
 }
 
+// SetLayout attaches a PublicWidget tree as the root layout for the window.
+//
+// SetLayout is the preferred way for application code to attach widgets created
+// with the public API (wain.Column, wain.Row, wain.Button, etc.) to a window.
+// Internally it wraps the widget with an adapter so it satisfies the renderer's
+// Widget interface.
+//
+// Example:
+//
+//	col := wain.NewColumn()
+//	col.Add(wain.NewButton("OK", wain.Size{Width: 50, Height: 10}))
+//	win.SetLayout(col)
+func (w *Window) SetLayout(root PublicWidget) {
+	w.SetRootWidget(newLayoutAdapter(root))
+}
+
 // Redraw marks the entire window as needing a full redraw.
 func (w *Window) Redraw() {
 	w.mu.Lock()
