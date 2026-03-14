@@ -61,23 +61,11 @@ func (p *Pool) Unmap() error {
 
 // CreateBuffer creates a wl_buffer from this pool.
 func (p *Pool) CreateBuffer(offset, width, height, stride int32, format uint32) (*Buffer, error) {
-	if width <= 0 || height <= 0 {
-		return nil, fmt.Errorf("invalid buffer dimensions: %dx%d", width, height)
-	}
-
-	if stride <= 0 {
-		return nil, fmt.Errorf("invalid stride: %d", stride)
-	}
-
-	if offset < 0 || offset >= p.size {
-		return nil, fmt.Errorf("invalid offset: %d (pool size: %d)", offset, p.size)
+	if err := p.validateBufferParams(offset, width, height, stride); err != nil {
+		return nil, err
 	}
 
 	bufferSize := int32(height) * stride
-	if offset+bufferSize > p.size {
-		return nil, fmt.Errorf("buffer extends beyond pool (offset %d + size %d > pool size %d)", offset, bufferSize, p.size)
-	}
-
 	bufferID := p.conn.AllocID()
 
 	args := []wire.Argument{
@@ -103,6 +91,24 @@ func (p *Pool) CreateBuffer(offset, width, height, stride int32, format uint32) 
 	p.buffers[bufferID] = buffer
 
 	return buffer, nil
+}
+
+// validateBufferParams checks that the buffer geometry fits within the pool bounds.
+func (p *Pool) validateBufferParams(offset, width, height, stride int32) error {
+	if width <= 0 || height <= 0 {
+		return fmt.Errorf("invalid buffer dimensions: %dx%d", width, height)
+	}
+	if stride <= 0 {
+		return fmt.Errorf("invalid stride: %d", stride)
+	}
+	if offset < 0 || offset >= p.size {
+		return fmt.Errorf("invalid offset: %d (pool size: %d)", offset, p.size)
+	}
+	bufferSize := int32(height) * stride
+	if offset+bufferSize > p.size {
+		return fmt.Errorf("buffer extends beyond pool (offset %d + size %d > pool size %d)", offset, bufferSize, p.size)
+	}
+	return nil
 }
 
 // Resize changes the size of the pool.

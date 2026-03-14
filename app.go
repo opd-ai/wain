@@ -522,17 +522,28 @@ func (w *Window) initX11Window() error {
 // initX11Presenter selects and initialises the presenter for an X11 window.
 func (w *Window) initX11Presenter() {
 	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
-		p, err := display.NewSoftwareX11Presenter(w.app.x11Conn, w.x11Window, sw)
-		if err != nil && w.app.verbose {
+		w.tryInitSoftwareX11Presenter(sw)
+		return
+	}
+	if _, ok := w.app.renderer.(*backend.GPUBackend); ok {
+		w.tryInitGPUX11Presenter()
+	}
+}
+
+// tryInitSoftwareX11Presenter initialises a software-rendered X11 presenter.
+func (w *Window) tryInitSoftwareX11Presenter(sw *backend.SoftwareBackend) {
+	p, err := display.NewSoftwareX11Presenter(w.app.x11Conn, w.x11Window, sw)
+	if err != nil {
+		if w.app.verbose {
 			log.Printf("Warning: failed to create X11 presenter: %v", err)
-		} else if err == nil {
-			w.presenter = p
 		}
 		return
 	}
-	if _, ok := w.app.renderer.(*backend.GPUBackend); !ok {
-		return
-	}
+	w.presenter = p
+}
+
+// tryInitGPUX11Presenter initialises a GPU-accelerated X11 presenter.
+func (w *Window) tryInitGPUX11Presenter() {
 	p, err := display.NewGPUX11PresenterFromConn(w.app.x11Conn, w.x11Window, w.app.renderer)
 	if err != nil {
 		if w.app.verbose {

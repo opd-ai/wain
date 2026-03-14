@@ -138,30 +138,9 @@ func computeStats(times []float64, maxMs float64) BenchResult {
 		return BenchResult{Pass: true}
 	}
 
-	sum := 0.0
-	minT := times[0]
-	maxT := times[0]
-	for _, t := range times {
-		sum += t
-		if t < minT {
-			minT = t
-		}
-		if t > maxT {
-			maxT = t
-		}
-	}
+	sum, minT, maxT := sumAndBounds(times)
 	mean := sum / float64(len(times))
-
-	variance := 0.0
-	for _, t := range times {
-		d := t - mean
-		variance += d * d
-	}
-	variance /= float64(len(times))
-	stddev := 0.0
-	if variance > 0 {
-		stddev = approximateSqrt(variance)
-	}
+	stddev := computeStddev(times, mean)
 
 	pass := maxMs <= 0 || mean <= maxMs
 	result := BenchResult{
@@ -176,6 +155,36 @@ func computeStats(times []float64, maxMs float64) BenchResult {
 		result.ThresholdMs = maxMs
 	}
 	return result
+}
+
+// sumAndBounds returns the sum, minimum and maximum of the given values in a single pass.
+func sumAndBounds(times []float64) (sum, min, max float64) {
+	min = times[0]
+	max = times[0]
+	for _, t := range times {
+		sum += t
+		if t < min {
+			min = t
+		}
+		if t > max {
+			max = t
+		}
+	}
+	return sum, min, max
+}
+
+// computeStddev returns the population standard deviation of values around the given mean.
+func computeStddev(times []float64, mean float64) float64 {
+	variance := 0.0
+	for _, t := range times {
+		d := t - mean
+		variance += d * d
+	}
+	variance /= float64(len(times))
+	if variance <= 0 {
+		return 0
+	}
+	return approximateSqrt(variance)
 }
 
 // approximateSqrt computes an integer-free square root using Newton's method.

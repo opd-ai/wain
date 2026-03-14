@@ -381,7 +381,11 @@ func runWayland(app *application) error {
 	}
 
 	fmt.Println("      ✓ Wayland window created and visible")
+	return runWaylandFrameLoop(app, ws)
+}
 
+// runWaylandFrameLoop renders and presents ~90 frames at ~30 FPS via SHM attach.
+func runWaylandFrameLoop(app *application, ws *waylandSurface) error {
 	const (
 		frames   = 90
 		frameDur = 33 * time.Millisecond // ~30 FPS
@@ -395,7 +399,6 @@ func runWayland(app *application) error {
 		}
 		time.Sleep(frameDur)
 	}
-
 	return nil
 }
 
@@ -419,6 +422,24 @@ func runX11(app *application) error {
 	}
 	defer conn.Close()
 
+	wid, err := setupX11Window(conn)
+	if err != nil {
+		return err
+	}
+
+	adapter := &gcConn{conn: conn}
+	gcID, err := setupX11GC(adapter, wid)
+	if err != nil {
+		return err
+	}
+	defer gc.FreeGC(adapter, gcID) //nolint:errcheck
+
+	fmt.Println("      ✓ X11 window created and visible")
+	return runX11FrameLoop(app, adapter, wid, gcID)
+}
+
+// setupX11Window creates an X11 window and maps it to the screen.
+func setupX11Window(conn *x11client.Connection) (x11client.XID, error) {
 	root := conn.RootWindow()
 	wid, err := conn.CreateWindow(
 		root, 100, 100,
@@ -428,21 +449,25 @@ func runX11(app *application) error {
 		[]uint32{0x000000, wire.EventMaskExposure | wire.EventMaskKeyPress | wire.EventMaskButtonPress | wire.EventMaskPointerMotion},
 	)
 	if err != nil {
-		return fmt.Errorf("create window: %w", err)
+		return 0, fmt.Errorf("create window: %w", err)
 	}
 	if err := conn.MapWindow(wid); err != nil {
-		return fmt.Errorf("map window: %w", err)
+		return 0, fmt.Errorf("map window: %w", err)
 	}
+	return wid, nil
+}
 
-	adapter := &gcConn{conn: conn}
+// setupX11GC creates a graphics context bound to the given window.
+func setupX11GC(adapter *gcConn, wid x11client.XID) (gc.XID, error) {
 	gcID, err := gc.CreateGC(adapter, gc.XID(wid), 0, nil)
 	if err != nil {
-		return fmt.Errorf("create GC: %w", err)
+		return 0, fmt.Errorf("create GC: %w", err)
 	}
-	defer gc.FreeGC(adapter, gcID) //nolint:errcheck
+	return gcID, nil
+}
 
-	fmt.Println("      ✓ X11 window created and visible")
-
+// runX11FrameLoop renders and presents ~90 frames at ~30 FPS via PutImage.
+func runX11FrameLoop(app *application, adapter *gcConn, wid x11client.XID, gcID gc.XID) error {
 	const (
 		frames   = 90
 		frameDur = 33 * time.Millisecond // ~30 FPS
@@ -463,6 +488,5 @@ func runX11(app *application) error {
 		}
 		time.Sleep(frameDur)
 	}
-
 	return nil
 }

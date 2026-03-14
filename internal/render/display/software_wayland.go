@@ -90,7 +90,27 @@ func (p *SoftwareWaylandPresenter) ensureBuffer(width, height int) error {
 		return nil
 	}
 
-	// Destroy the old pool before re-creating.
+	p.destroyExistingPool()
+
+	stride := width * 4
+	size := stride * height
+
+	fd, err := p.allocatePoolMemfd(size)
+	if err != nil {
+		return err
+	}
+
+	if err := p.createShmPoolAndBuffer(fd, width, height, stride, size); err != nil {
+		return err
+	}
+
+	p.width = width
+	p.height = height
+	return nil
+}
+
+// destroyExistingPool releases the current SHM pool and backing file descriptor.
+func (p *SoftwareWaylandPresenter) destroyExistingPool() {
 	if p.pool != nil {
 		_ = p.pool.Destroy()
 		p.pool = nil
@@ -100,20 +120,24 @@ func (p *SoftwareWaylandPresenter) ensureBuffer(width, height int) error {
 		_ = syscall.Close(p.poolFd)
 		p.poolFd = -1
 	}
+}
 
-	stride := width * 4
-	size := stride * height
-
+// allocatePoolMemfd creates an anonymous memory file and sizes it to the given byte count.
+func (p *SoftwareWaylandPresenter) allocatePoolMemfd(size int) (int, error) {
 	fd, err := shm.CreateMemfd("wain-shm")
 	if err != nil {
-		return fmt.Errorf("memfd_create: %w", err)
+		return -1, fmt.Errorf("memfd_create: %w", err)
 	}
 	if err := syscall.Ftruncate(fd, int64(size)); err != nil {
 		_ = syscall.Close(fd)
-		return fmt.Errorf("ftruncate: %w", err)
+		return -1, fmt.Errorf("ftruncate: %w", err)
 	}
 	p.poolFd = fd
+	return fd, nil
+}
 
+// createShmPoolAndBuffer builds the wl_shm pool and wl_buffer for the given dimensions.
+func (p *SoftwareWaylandPresenter) createShmPoolAndBuffer(fd, width, height, stride, size int) error {
 	pool, err := p.shmGlobal.CreatePool(fd, int32(size))
 	if err != nil {
 		return fmt.Errorf("create_pool: %w", err)
@@ -129,9 +153,6 @@ func (p *SoftwareWaylandPresenter) ensureBuffer(width, height int) error {
 		_ = pool.Destroy()
 		return fmt.Errorf("create_buffer: %w", err)
 	}
-
 	p.buf = buf
-	p.width = width
-	p.height = height
 	return nil
 }

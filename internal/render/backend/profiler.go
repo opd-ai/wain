@@ -66,18 +66,21 @@ func (p *FrameProfiler) EndFrame() {
 
 	now := time.Now()
 
-	// Calculate times
 	frameTimeNs := now.Sub(p.frameStartTime).Nanoseconds()
 	cpuTimeNs := p.gpuSubmitTime.Sub(p.cpuStartTime).Nanoseconds()
 	gpuTimeNs := now.Sub(p.gpuSubmitTime).Nanoseconds()
 
-	// Update totals
 	p.totalFrames++
 	p.totalFrameTimeNs += frameTimeNs
 	p.totalCPUTimeNs += cpuTimeNs
 	p.totalGPUTimeNs += gpuTimeNs
 
-	// Update min/max
+	p.updateTimingBounds(frameTimeNs, cpuTimeNs, gpuTimeNs)
+	p.storeTimingHistory(frameTimeNs, cpuTimeNs, gpuTimeNs)
+}
+
+// updateTimingBounds updates the per-metric min and max with the current frame's values.
+func (p *FrameProfiler) updateTimingBounds(frameTimeNs, cpuTimeNs, gpuTimeNs int64) {
 	if frameTimeNs < p.minFrameTimeNs {
 		p.minFrameTimeNs = frameTimeNs
 	}
@@ -96,8 +99,10 @@ func (p *FrameProfiler) EndFrame() {
 	if gpuTimeNs > p.maxGPUTimeNs {
 		p.maxGPUTimeNs = gpuTimeNs
 	}
+}
 
-	// Store in circular buffer
+// storeTimingHistory appends the current frame's timing values to the circular history buffer.
+func (p *FrameProfiler) storeTimingHistory(frameTimeNs, cpuTimeNs, gpuTimeNs int64) {
 	p.recentFrameTimes[p.historyIndex] = frameTimeNs
 	p.recentCPUTimes[p.historyIndex] = cpuTimeNs
 	p.recentGPUTimes[p.historyIndex] = gpuTimeNs

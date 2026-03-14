@@ -73,14 +73,19 @@ func main() {
 		"internal/render/display",
 	}
 
-	allMethods := []MethodInfo{}
+	allMethods := collectAllMethods(packages)
+	printUndocumentedMethods(allMethods)
+}
 
+// collectAllMethods walks the given package directories and returns all
+// exported method definitions found in non-test Go source files.
+func collectAllMethods(packages []string) []MethodInfo {
+	var allMethods []MethodInfo
 	for _, pkg := range packages {
 		err := filepath.Walk(pkg, func(path string, info os.FileInfo, err error) error {
 			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
-
 			methods, err := analyzeFile(path)
 			if err == nil {
 				allMethods = append(allMethods, methods...)
@@ -91,9 +96,12 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 	}
+	return allMethods
+}
 
-	// Print undocumented methods
-	for _, m := range allMethods {
+// printUndocumentedMethods writes a report of methods missing GoDoc comments to stdout.
+func printUndocumentedMethods(methods []MethodInfo) {
+	for _, m := range methods {
 		if !m.hasComment {
 			fmt.Printf("%s:%d\n", m.filename, m.lineNum)
 			fmt.Printf("  Method: (%s) %s\n", m.receiver, m.name)
