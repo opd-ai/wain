@@ -141,7 +141,7 @@ is not exercised end-to-end.
   - Build batch buffer with state setup and primitive draw
   - Submit to GPU via execbuffer2 / amdgpu CS ioctl
   - Verify frame buffer contents
-- [x] **Wire GPU backend into `App.RenderFrame`**: `backend.Renderer` interface is invoked for widget tree rendering via `renderBridge.Render(rootWidget)` in `Window.RenderFrame()`
+- [x] **Wire GPU backend into `Window.RenderFrame` (called from App event loop)**: `backend.Renderer` interface is invoked for widget tree rendering via `renderBridge.Render(rootWidget)` in `Window.RenderFrame()`
 - [ ] **Create `cmd/gpu-ui-demo`**: Interactive UI rendered entirely via GPU backend (validates claim "GPU-accelerated graphics")
 - [x] **Add CI GPU smoke test**: `.github/workflows/ci.yml` includes `gpu-integration-tests` job that runs `TestGPURenderingTriangle` when `/dev/dri/renderD128` is available
 
