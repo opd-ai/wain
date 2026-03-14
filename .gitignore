@@ -34,6 +34,9 @@ baseline.json
 metrics.json
 post.json
 audit-*.json
+naming.json
+*-report.json
+review-metrics.json
 
 # Coverage and profiling artifacts
 *.out
@@ -71,3 +74,10 @@ test-output.txt
 /double-buffer-demo
 /x11-dmabuf-demo
 /gpu-shader-demo
+/amd-triangle-demo
+/callback-demo
+
+# Binaries in cmd/ subdirectories
+cmd/**/callback-demo
+cmd/**/*-demo
+!cmd/**/*.go
