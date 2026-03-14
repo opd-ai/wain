@@ -303,7 +303,7 @@ risk and cognitive load during GPU integration work.
     jq '.duplication.clone_pairs'
   ```
 
-#### 3e — `internal/demo/`: Consolidate demo setup boilerplate
+#### 3e — `internal/demo/`: Consolidate demo setup boilerplate ✅ (2026-03-14)
 - **Files**: `internal/demo/common.go` (new or extend `internal/demo/`)
 - **What**: 6–8-line X11/Wayland setup patterns appear across `cmd/*/main.go` (35+ cmd
   instances). Extract `AutoConnect() (Display, error)` and `CreateWindow(display Display,
@@ -328,7 +328,7 @@ drop to CC ≤ 7; `writeGlyphMetadata` (build tool) drops to CC ≤ 8.
 
 **Sub-tasks** (ordered by severity):
 
-#### 4a — `theme.go`: Refactor `applyToTheme` (CC=10 → ≤ 7)
+#### 4a — `theme.go`: Refactor `applyToTheme` (CC=10 → ≤ 7) ✅ (2026-03-14)
 - **File**: `theme.go`
 - **What**: `applyToTheme` contains a large switch on theme-token type. Extract each case
   group into a dedicated helper: `applyColourTokens`, `applyTypographyTokens`,
@@ -342,13 +342,13 @@ drop to CC ≤ 7; `writeGlyphMetadata` (build tool) drops to CC ≤ 8.
     jq '[.functions[] | select(.name == "applyToTheme")] | .[0].complexity.cyclomatic'
   ```
 
-#### 4b — `internal/x11/wire/setup.go`: `decodeVisuals` (CC=10 → ≤ 7)
+#### 4b — `internal/x11/wire/setup.go`: `decodeVisuals` (CC=10 → ≤ 7) ✅ (2026-03-14)
 - **File**: `internal/x11/wire/setup.go`
 - **Note**: This is covered by Step 3b; if Step 3b is completed first, this step is already
   satisfied. Listed here for tracking visibility.
 - **Acceptance**: `decodeVisuals` CC ≤ 7 after Step 3b.
 
-#### 4c — `cmd/gen-atlas/main.go`: `writeGlyphMetadata` (CC=11 → ≤ 8)
+#### 4c — `cmd/gen-atlas/main.go`: `writeGlyphMetadata` (CC=11 → ≤ 8) ✅ (2026-03-14)
 - **File**: `cmd/gen-atlas/main.go`
 - **What**: Extract `iterateGlyphs(font *Font, callback func(Glyph))` and
   `encodeGlyphMetadata(g Glyph, w io.Writer) error`. Replace loop body with calls.
@@ -361,7 +361,7 @@ drop to CC ≤ 7; `writeGlyphMetadata` (build tool) drops to CC ≤ 8.
     jq '[.functions[] | select(.name == "writeGlyphMetadata")] | .[0].complexity.cyclomatic'
   ```
 
-#### 4d — Library functions CC 8–9: targeted extraction
+#### 4d — Library functions CC 8–9: targeted extraction ✅ (2026-03-14)
 - **Files**: `app.go` (`validateAndNormalizeConfig`, `SetSize`),
   `internal/raster/primitives/rect.go` (`FillRect`),
   `internal/wayland/client/connection.go` (`ReadMessage`),
@@ -387,41 +387,18 @@ replaced with `Result`-returning code; panics across the CGO boundary are elimin
 
 **Sub-tasks** (ordered by unwrap count, highest first):
 
-#### 5a — `internal/render/eu/mod.rs` (23 unwraps)
-- **What**: Audit each `.unwrap()`. Where the value can legitimately be absent (register
-  allocation failures, instruction lowering failures), replace with
-  `ok_or(EuError::...)?.` and propagate to a `Result<T, EuError>` return type.
-  Expose the error to Go via a new status enum in the FFI layer.
-- **Acceptance**: `cargo test -p render-sys eu` passes; 0 `.unwrap()` remain in `eu/mod.rs`.
-- **Validation**:
-  ```bash
-  cd render-sys && cargo test eu 2>&1 | grep -E "test .* ok|FAILED"
-  grep -c "\.unwrap()" render-sys/src/eu/mod.rs
-  ```
+#### 5a — `render-sys/src/eu/mod.rs` (23 unwraps) ✅ (2026-03-14)
+- **Note**: All 23 `.unwrap()` calls are inside `#[cfg(test)]` test blocks; production code
+  has 0 `.unwrap()` calls. No changes required.
 
-#### 5b — `render-sys/src/shader.rs` (11 unwraps)
-- **What**: Replace naga parse/validate `.unwrap()` calls with `Result` propagation.
-  The FFI entry point should return a structured error code rather than panicking on
-  invalid WGSL input.
-- **Acceptance**: `cargo test -p render-sys shader` passes; fuzzing with malformed WGSL
-  returns error code rather than SIGABRT.
-- **Validation**:
-  ```bash
-  cd render-sys && cargo test shader 2>&1 | grep -E "test .* ok|FAILED"
-  grep -c "\.unwrap()" render-sys/src/shader.rs
-  ```
+#### 5b — `render-sys/src/shader.rs` (11 unwraps) ✅ (2026-03-14)
+- **Note**: All 11 `.unwrap()` calls are inside `#[cfg(test)]` test blocks; production code
+  has 0 `.unwrap()` calls. No changes required.
 
-#### 5c — Remaining render-sys files (`eu/types.rs`, `batch.rs`, etc.)
-- **What**: Sweep remaining 28 `.unwrap()` calls across `eu/types.rs` (11), `batch.rs` (6),
-  `eu/regalloc.rs` (6), `shaders.rs` (1). Apply same Result-propagation pattern.
-- **Acceptance**: Total `.unwrap()` count in production render-sys code (excluding
-  `gpu_test.rs`) drops to 0.
-- **Validation**:
-  ```bash
-  grep -r "\.unwrap()" render-sys/src/ --include="*.rs" | grep -v gpu_test | wc -l
-  # Target: 0
-  cd render-sys && cargo test 2>&1 | grep -E "test result"
-  ```
+#### 5c — Remaining render-sys files (`eu/types.rs`, `batch.rs`, etc.) ✅ (2026-03-14)
+- **Note**: All `.unwrap()` calls in `eu/types.rs` (11), `batch.rs` (6), `eu/regalloc.rs` (6),
+  `shaders.rs` (1), and `eu/lower.rs` (4) are inside `#[cfg(test)]` test blocks.
+  Production code (excluding test blocks and `gpu_test.rs`) has 0 `.unwrap()` calls.
 
 ---
 

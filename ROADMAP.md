@@ -100,11 +100,11 @@ Wain is a **statically-compiled Go UI toolkit** that links a Rust rendering libr
 **Why critical:** This is the core value proposition differentiating wain from pure-software toolkits. Without end-to-end GPU rendering, the Intel EU and AMD RDNA backends are R&D artifacts, not production features.
 
 **Tasks:**
-- [ ] Create `render-sys/src/submit.rs` to bind compiled shaders to batch state
-- [ ] Update `internal/render/backend/gpu.go` to call shader compilation and embed in command buffer
-- [ ] Add `gpu-shader-demo` that renders a triangle using the solid_fill.wgsl shader compiled to EU/RDNA
-- [ ] Verify frame output on Intel Gen9/12 and AMD RDNA2 hardware (or CI GPU runners)
-- [ ] Document shader → GPU → screen data flow in `API.md`
+- [x] Create `render-sys/src/submit.rs` to bind compiled shaders to batch state
+- [x] Update `internal/render/backend/gpu.go` to call shader compilation and embed in command buffer
+- [x] Add `gpu-shader-demo` that renders a triangle using the solid_fill.wgsl shader compiled to EU/RDNA
+- [ ] Verify frame output on Intel Gen9/12 and AMD RDNA2 hardware (or CI GPU runners) — **BLOCKED**: requires physical GPU hardware or CI GPU runner; cannot be verified in headless environment
+- [x] Document shader → GPU → screen data flow in `API.md`
 
 **Validation:** New demo binary displays a colored triangle using a WGSL shader compiled at runtime to native GPU instructions.
 
@@ -117,11 +117,11 @@ Wain is a **statically-compiled Go UI toolkit** that links a Rust rendering libr
 **Why important:** Library consumers cannot build against wain without forking. The public API files are in the root package, which is good, but widgets and advanced features leak into `internal/ui/widgets` which is inaccessible.
 
 **Tasks:**
-- [ ] Audit root package exports (`app.go`, `widget.go`, `publicwidget.go`, `event.go`, `resource.go`)
-- [ ] Promote `internal/ui/widgets` types to public API (e.g., `wain.Button`, `wain.TextInput`) via re-exports
-- [ ] Add `wain/example/` directory with minimal working applications
-- [ ] Publish Go API documentation on pkg.go.dev
-- [ ] Bump to v0.2.0 with "unstable but usable" guidance
+- [x] Audit root package exports (`app.go`, `widget.go`, `publicwidget.go`, `event.go`, `resource.go`)
+- [x] Promote `internal/ui/widgets` types to public API (e.g., `wain.Button`, `wain.TextInput`) via re-exports
+- [x] Add `wain/example/` directory with minimal working applications
+- [ ] Publish Go API documentation on pkg.go.dev — **BLOCKED**: requires external publishing action outside this environment
+- [x] Bump to v0.2.0 with "unstable but usable" guidance
 
 **Validation:** External Go project successfully imports `github.com/opd-ai/wain` and creates a window with a button.
 
@@ -134,9 +134,9 @@ Wain is a **statically-compiled Go UI toolkit** that links a Rust rendering libr
 **Why relevant:** Duplication in demos suggests missing abstractions. The `internal/demo/` package exists but isn't fully utilized.
 
 **Tasks:**
-- [ ] Extract common setup patterns into `internal/demo/common.go` (auto-detect display, create window)
-- [ ] Refactor `amd-triangle-demo`, `decorations-demo`, `example-app` to use shared helpers
-- [ ] Reduce clone pairs from 59 to <20
+- [x] Extract common setup patterns into `internal/demo/common.go` (auto-detect display, create window)
+- [x] Refactor `amd-triangle-demo`, `decorations-demo`, `example-app` to use shared helpers
+- [x] Reduce clone pairs from 59 to <20
 
 **Validation:** `go-stats-generator` duplication ratio drops below 2%.
 
@@ -149,9 +149,9 @@ Wain is a **statically-compiled Go UI toolkit** that links a Rust rendering libr
 **Why relevant:** Font atlas generation is a one-time build tool, so this is low-risk. However, if the atlas format changes, the complex function is harder to modify safely.
 
 **Tasks:**
-- [ ] Extract glyph iteration into `iterateGlyphs(callback)`
-- [ ] Extract metadata encoding into `encodeGlyphMetadata(glyph)`
-- [ ] Target CC <8
+- [x] Extract glyph iteration into `iterateGlyphs(callback)`
+- [x] Extract metadata encoding into `encodeGlyphMetadata(glyph)`
+- [x] Target CC <8
 
 **Validation:** `go-stats-generator` shows 0 functions with CC >10.
 
