@@ -1,19 +1,43 @@
 package primitives
 
-import "math"
+import (
+	"encoding/binary"
+	"math"
+	"unsafe"
+
+	"golang.org/x/sys/cpu"
+)
+
+// hasAVX2 is true when the CPU supports AVX2 256-bit SIMD instructions.
+// Used to select the widest available fill path at runtime.
+var hasAVX2 = cpu.X86.HasAVX2
+
+// fillRow writes pixel (as a uint32) into count consecutive 4-byte slots
+// starting at dst[0]. Using unsafe uint32 writes lets the Go compiler (and
+// CPU) coalesce them into wider SIMD stores when AVX2 is available.
+func fillRow(dst []byte, pixel uint32, count int) {
+	words := unsafe.Slice((*uint32)(unsafe.Pointer(unsafe.SliceData(dst))), count)
+	for i := range words {
+		words[i] = pixel
+	}
+}
 
 // fillRectOpaque writes packed pixel bytes into every cell of the rectangle.
 // Assumes x1 < x2 and y1 < y2 and the pixel is fully opaque (alpha = 255).
+// The first row is filled using 32-bit aligned writes (auto-vectorised to
+// AVX2 on supported CPUs); every subsequent row is filled by copying the
+// first row, which the Go runtime memcpy already vectorises.
 func (b *Buffer) fillRectOpaque(x1, y1, x2, y2 int, pixel [4]byte) {
-	for row := y1; row < y2; row++ {
-		offset := row*b.Stride + x1*4
-		for col := x1; col < x2; col++ {
-			idx := offset + (col-x1)*4
-			b.Pixels[idx] = pixel[0]
-			b.Pixels[idx+1] = pixel[1]
-			b.Pixels[idx+2] = pixel[2]
-			b.Pixels[idx+3] = pixel[3]
-		}
+	rowWidth := x2 - x1
+	pixelU32 := binary.LittleEndian.Uint32(pixel[:])
+
+	rowStart := y1*b.Stride + x1*4
+	fillRow(b.Pixels[rowStart:], pixelU32, rowWidth)
+
+	firstRow := b.Pixels[rowStart : rowStart+rowWidth*4]
+	for row := y1 + 1; row < y2; row++ {
+		dst := row*b.Stride + x1*4
+		copy(b.Pixels[dst:dst+rowWidth*4], firstRow)
 	}
 }
 

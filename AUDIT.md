@@ -74,7 +74,7 @@ and applications targeting embedded Linux, containers, or minimal distributions.
 
 ### HIGH
 
-- [ ] **`cmd/widget-demo` event loops are stubs** — `cmd/widget-demo/main.go:333,366` — Both `runWayland()` and `runX11()` print `⚠ Wayland/X11 event loop not yet implemented` and return immediately without displaying anything. The demo is listed in the README under "Demonstration Binaries". A user following the README would run it and see only console output.
+- [x] **`cmd/widget-demo` event loops are stubs** — `cmd/widget-demo/main.go:333,366` — Both `runWayland()` and `runX11()` print `⚠ Wayland/X11 event loop not yet implemented` and return immediately without displaying anything. The demo is listed in the README under "Demonstration Binaries". A user following the README would run it and see only console output.
   - **Evidence:** `cmd/widget-demo/main.go:329-340` (`runWayland` stub); `cmd/widget-demo/main.go:355-378` (`runX11` stub with simulated interactions only).
   - **Remediation:** Implement `runWayland` and `runX11` using the same `WaylandPipeline`/`X11Pipeline` pattern used by `cmd/gpu-display-demo`. Validate with: `make widget-demo && ./bin/widget-demo` opens a window with visible widgets.
 

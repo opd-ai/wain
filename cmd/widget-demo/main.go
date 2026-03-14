@@ -17,10 +17,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/opd-ai/wain/internal/demo"
 	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/ui/widgets"
+	x11client "github.com/opd-ai/wain/internal/x11/client"
+	"github.com/opd-ai/wain/internal/x11/gc"
+	"github.com/opd-ai/wain/internal/x11/wire"
 )
 
 const (
@@ -325,77 +329,123 @@ func generateScrollItems(count int) []string {
 	return items
 }
 
-// runWayland runs the demo on Wayland.
-//
-// Stub implementation - Wayland event loop integration deferred to future phase.
-// Currently validates widget creation and render pipeline without actual display.
+// runWayland displays the widget demo on a Wayland compositor.
+// It connects to the compositor, creates a surface, renders the initial frame
+// and then presents ~90 frames at ~30 FPS (≈3 seconds) before exiting.
 func runWayland(app *application) error {
-	fmt.Println("      ⚠ Wayland event loop not yet implemented")
-	fmt.Println("      ℹ Window would be displayed on Wayland compositor")
-	fmt.Println("      ℹ Use --x11 flag to run on X11 instead")
-	demo.PrintFeatureList("Demo architecture validated:", []string{
-		"Widget creation",
-		"Event handlers",
-		"Render pipeline",
-	})
+	conn, err := demo.ConnectToWayland()
+	if err != nil {
+		return fmt.Errorf("connect to Wayland: %w", err)
+	}
+	defer conn.Close()
+
+	wlCtx, err := demo.SetupWaylandGlobals(conn)
+	if err != nil {
+		return fmt.Errorf("setup Wayland globals: %w", err)
+	}
+
+	surface, err := wlCtx.Compositor.CreateSurface()
+	if err != nil {
+		return fmt.Errorf("create surface: %w", err)
+	}
+
+	xdgSurface, err := wlCtx.WmBase.GetXdgSurface(surface.ID())
+	if err != nil {
+		return fmt.Errorf("create xdg_surface: %w", err)
+	}
+
+	toplevel, err := xdgSurface.GetToplevel()
+	if err != nil {
+		return fmt.Errorf("create xdg_toplevel: %w", err)
+	}
+	toplevel.SetTitle("wain Widget Demo")
+	if err := surface.Commit(); err != nil {
+		return fmt.Errorf("initial commit: %w", err)
+	}
+
+	fmt.Println("      ✓ Wayland window created and visible")
+
+	const (
+		frames   = 90
+		frameDur = 33 * time.Millisecond // ~30 FPS
+	)
+	for i := 0; i < frames; i++ {
+		if app.needsRedraw || i == 0 {
+			app.render()
+		}
+		if err := demo.AttachAndDisplayBuffer(wlCtx.SHM, surface, app.buffer, windowWidth, windowHeight); err != nil {
+			return fmt.Errorf("frame %d: %w", i, err)
+		}
+		time.Sleep(frameDur)
+	}
+
 	return nil
 }
 
-// simulateClick fires a click event, re-renders, and prints the updated status.
-func simulateClick(app *application, label string, x, y int, button uint32) {
-	fmt.Print(label)
-	app.handleMouseClick(x, y, button)
-	app.render()
-	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
+// gcConn adapts *x11client.Connection to gc.Connection.
+type gcConn struct{ conn *x11client.Connection }
+
+func (a *gcConn) AllocXID() (gc.XID, error) {
+	xid, err := a.conn.AllocXID()
+	return gc.XID(xid), err
 }
 
-// simulateScroll fires a scroll event, re-renders, and prints the updated offset.
-func simulateScroll(app *application, label string, x, y, delta int) {
-	fmt.Print(label)
-	app.handleMouseScroll(x, y, delta)
-	app.render()
-	fmt.Printf("✓ (Offset: %dpx)\n", app.scrollOffset)
-}
+func (a *gcConn) SendRequest(buf []byte) error { return a.conn.SendRequest(buf) }
 
-// runX11 runs the demo on X11.
-//
-// Stub implementation - X11 event loop integration deferred to future phase.
-// Currently validates widget creation, event handlers, and render pipeline.
-// Simulates mouse and keyboard interactions for demonstration purposes.
+// runX11 displays the widget demo on an X11 server.
+// It connects to :0, creates a window, and renders ~90 frames at ~30 FPS
+// (≈3 seconds) before exiting.
 func runX11(app *application) error {
-	fmt.Println("      ⚠ X11 event loop not yet implemented")
-	fmt.Println("      ℹ Window would be displayed on X11 server")
-	demo.PrintFeatureList("Demo architecture validated:", []string{
-		"Widget creation",
-		"Event handlers",
-		"Render pipeline",
-	})
-
-	// Simulate some interactions for demonstration
-	fmt.Println()
-	fmt.Println("Simulating interactions:")
-
-	// Simulate button clicks
-	fmt.Print("  → Mouse move to button... ")
-	app.handleMouseMove(125, 80)
-	fmt.Println("✓")
-
-	simulateClick(app, "  → Click button... ", 125, 80, 1)
-	simulateClick(app, "  → Click button again... ", 125, 80, 1)
-	simulateClick(app, "  → Click reset button... ", 295, 80, 1)
-
-	// Simulate keyboard input
-	fmt.Print("  → Type 'Hello'... ")
-	for _, ch := range "Hello" {
-		app.handleKeyPress(string(ch))
+	conn, err := x11client.Connect("0")
+	if err != nil {
+		return fmt.Errorf("connect to X11: %w", err)
 	}
-	app.render()
-	fmt.Printf("✓ (Status: %s)\n", app.statusLabel)
+	defer conn.Close()
 
-	// Simulate scroll events
-	simulateScroll(app, "  → Scroll down... ", 250, 365, 5)
-	simulateScroll(app, "  → Scroll down more... ", 250, 365, 10)
-	simulateScroll(app, "  → Scroll to top... ", 250, 365, -50)
+	root := conn.RootWindow()
+	wid, err := conn.CreateWindow(
+		root, 100, 100,
+		uint16(windowWidth), uint16(windowHeight),
+		0, wire.WindowClassInputOutput, 0,
+		wire.CWBackPixel|wire.CWEventMask,
+		[]uint32{0x000000, wire.EventMaskExposure | wire.EventMaskKeyPress | wire.EventMaskButtonPress | wire.EventMaskPointerMotion},
+	)
+	if err != nil {
+		return fmt.Errorf("create window: %w", err)
+	}
+	if err := conn.MapWindow(wid); err != nil {
+		return fmt.Errorf("map window: %w", err)
+	}
+
+	adapter := &gcConn{conn: conn}
+	gcID, err := gc.CreateGC(adapter, gc.XID(wid), 0, nil)
+	if err != nil {
+		return fmt.Errorf("create GC: %w", err)
+	}
+	defer gc.FreeGC(adapter, gcID) //nolint:errcheck
+
+	fmt.Println("      ✓ X11 window created and visible")
+
+	const (
+		frames   = 90
+		frameDur = 33 * time.Millisecond // ~30 FPS
+	)
+	for i := 0; i < frames; i++ {
+		if app.needsRedraw || i == 0 {
+			app.render()
+		}
+		if err := gc.PutImage(
+			adapter,
+			gc.XID(wid), gcID,
+			uint16(windowWidth), uint16(windowHeight),
+			0, 0,
+			24, gc.FormatZPixmap,
+			app.buffer.Pixels,
+		); err != nil {
+			return fmt.Errorf("frame %d PutImage: %w", i, err)
+		}
+		time.Sleep(frameDur)
+	}
 
 	return nil
 }
