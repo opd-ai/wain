@@ -176,8 +176,8 @@
 | Toolkit | Static Linking | Zero Deps | Native Look | Cross-Platform | Pure Go |
 |---------|---------------|-----------|-------------|----------------|---------|
 | **Wain** | ✅ Yes (musl) | ✅ Yes | No (custom) | Linux only | Go + Rust |
-| **Fyne** | ✅ Yes | ✅ Yes | No (custom) | Yes | Yes |
-| **Gio** | ✅ Yes | ✅ Yes | No (custom) | Yes | Yes |
+| **Fyne** | ❌ No | ❌ No | No (custom) | Yes | No (CGO) |
+| **Gio** | ❌ No | ❌ No | No (custom) | Yes | No (CGO) |
 | **GTK** | ❌ No | ❌ No | Yes (Linux) | Partial | No (CGO) |
 
 **Wain's differentiation**: Direct display protocol implementation (no intermediary libraries), native GPU command submission (not OpenGL/Vulkan), and statically-linked Rust rendering backend. This enables true zero-dependency binaries without relying on system graphics drivers for software fallback.
