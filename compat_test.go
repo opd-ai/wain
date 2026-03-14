@@ -66,17 +66,17 @@ var (
 
 // App methods.
 var (
-	_ func(*wain.App) error                                                                = (*wain.App).Run
-	_ func(*wain.App)                                                                      = (*wain.App).Quit
-	_ func(*wain.App, io.Reader, string) (*wain.Image, error)                              = (*wain.App).LoadImageFromReader
-	_ func(*wain.App) []*wain.Window                                                       = (*wain.App).Windows
+	_ func(*wain.App) error                                                                            = (*wain.App).Run
+	_ func(*wain.App)                                                                                  = (*wain.App).Quit
+	_ func(*wain.App, io.Reader, string) (*wain.Image, error)                                          = (*wain.App).LoadImageFromReader
+	_ func(*wain.App) []*wain.Window                                                                   = (*wain.App).Windows
 	_ func(*wain.App, float64, float64, time.Duration, wain.EasingFunc, func(float64)) *wain.Animation = (*wain.App).Animate
 )
 
 // Window DnD methods.
 var (
-	_ func(*wain.Window, []string, wain.DragDropHandler)                    = (*wain.Window).SetDropTarget
-	_ func(*wain.Window, []string, wain.DragDataProvider, *wain.Image)      = (*wain.Window).StartDrag
+	_ func(*wain.Window, []string, wain.DragDropHandler)               = (*wain.Window).SetDropTarget
+	_ func(*wain.Window, []string, wain.DragDataProvider, *wain.Image) = (*wain.Window).StartDrag
 )
 
 // Presenter interface — any implementation must satisfy Present + Close.

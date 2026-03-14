@@ -46,13 +46,13 @@ const XDNDVersion = 5
 
 // Atoms holds the interned X11 atoms needed for XDND.
 type Atoms struct {
-	XdndAware    uint32
-	XdndEnter    uint32
-	XdndLeave    uint32
-	XdndPosition uint32
-	XdndStatus   uint32
-	XdndDrop     uint32
-	XdndFinished uint32
+	XdndAware      uint32
+	XdndEnter      uint32
+	XdndLeave      uint32
+	XdndPosition   uint32
+	XdndStatus     uint32
+	XdndDrop       uint32
+	XdndFinished   uint32
 	XdndActionCopy uint32
 }
 

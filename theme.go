@@ -68,8 +68,7 @@ type Theme struct {
 }
 
 // DefaultDark returns the built-in dark theme.
-//
-// This is the default theme inspired by retro pixel-art aesthetics with
+// DefaultDark is the default theme inspired by retro pixel-art aesthetics with
 // modern high-resolution colors. It features a dark blue-gray background
 // with soft white text and bright blue accents.
 //
@@ -94,8 +93,7 @@ func DefaultDark() Theme {
 }
 
 // DefaultLight returns the built-in light theme.
-//
-// This theme provides a clean, bright appearance suitable for well-lit
+// DefaultLight provides a clean, bright appearance suitable for well-lit
 // environments. It features a light gray background with dark text and
 // blue accents.
 //
@@ -120,8 +118,7 @@ func DefaultLight() Theme {
 }
 
 // HighContrast returns a high-contrast theme for accessibility.
-//
-// This theme provides maximum readability with pure black background,
+// HighContrast provides maximum readability with pure black background,
 // pure white text, and bright yellow accents. It meets WCAG AAA contrast
 // requirements and is suitable for users with visual impairments.
 //

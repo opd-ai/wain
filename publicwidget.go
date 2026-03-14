@@ -162,7 +162,7 @@ func (w *BasePublicWidget) Bounds() (width, height int) {
 }
 
 // Position returns the current position of the widget in pixels.
-// This is a convenience method not required by the PublicWidget interface.
+// Position is a convenience method not required by the PublicWidget interface.
 func (w *BasePublicWidget) Position() (x, y int) {
 	return w.x, w.y
 }
@@ -193,7 +193,7 @@ func (w *BasePublicWidget) Children() []PublicWidget {
 }
 
 // SetBounds updates the widget's pixel dimensions and position.
-// This is called by the layout engine and is not typically called by
+// SetBounds is called by the layout engine and is not typically called by
 // application code.
 func (w *BasePublicWidget) SetBounds(x, y, width, height int) {
 	w.x = x
@@ -213,7 +213,7 @@ func (w *BasePublicWidget) IsVisible() bool {
 }
 
 // OnEvent registers a callback to handle events for this widget.
-// The callback should return true if it consumes the event.
+// OnEvent expects a callback that returns true if it consumes the event.
 func (w *BasePublicWidget) OnEvent(handler func(Event) bool) {
 	w.onEvent = handler
 }

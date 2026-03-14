@@ -57,7 +57,7 @@ func EnableAccessibility(appName string) *AccessibilityManager {
 }
 
 // Close releases the D-Bus connection and removes all exported objects.
-// Call this when the application exits.
+// It should be called when the application exits.
 func (am *AccessibilityManager) Close() {
 	if am != nil {
 		am.mgr.Close()
@@ -113,8 +113,8 @@ func (am *AccessibilityManager) SetName(id uint64, name string) {
 }
 
 // AssociateWidget records that widget corresponds to the accessible object id.
-// Call this after registering a widget so that WireFocusManager can emit focus
-// events when the widget gains or loses keyboard focus.
+// It should be called after registering a widget so that WireFocusManager can
+// emit focus events when the widget gains or loses keyboard focus.
 func (am *AccessibilityManager) AssociateWidget(widget Widget, id uint64) {
 	am.mu.Lock()
 	defer am.mu.Unlock()
@@ -123,7 +123,7 @@ func (am *AccessibilityManager) AssociateWidget(widget Widget, id uint64) {
 
 // WireFocusManager installs a focus-change hook on fm so that AT-SPI2
 // focus signals are emitted automatically when keyboard focus changes.
-// Only widgets previously registered with AssociateWidget will trigger signals.
+// Widgets previously registered with AssociateWidget will trigger signals.
 func (am *AccessibilityManager) WireFocusManager(fm *FocusManager) {
 	fm.SetFocusChangeHook(func(w Widget) {
 		am.mu.RLock()

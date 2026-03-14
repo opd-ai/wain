@@ -40,9 +40,9 @@ const (
 )
 
 // Align specifies alignment on the cross axis of a container.
-//
-// For Row containers, cross axis is vertical (controls top/center/bottom alignment).
-// For Column containers, cross axis is horizontal (controls left/center/right alignment).
+// Align controls positioning on the cross axis: for Row containers this is
+// vertical (top/center/bottom), for Column containers this is horizontal
+// (left/center/right).
 type Align int
 
 const (
@@ -87,10 +87,8 @@ type Panel struct {
 }
 
 // NewPanel creates a new Panel with percentage-based dimensions.
-//
-// The size parameter specifies Width and Height as percentages (0-100) of
-// the parent container. Values are automatically clamped to the valid range.
-//
+// NewPanel takes a size parameter specifying Width and Height as percentages (0-100)
+// of the parent container. Values are automatically clamped to the valid range.
 // The panel uses the default theme style initially. Use SetStyle to customize
 // appearance.
 func NewPanel(size Size) *Panel {
@@ -99,8 +97,7 @@ func NewPanel(size Size) *Panel {
 }
 
 // Add appends a child widget to this panel.
-//
-// Children are laid out according to the panel's flow direction (Row or Column).
+// Add lays out children according to the panel's flow direction (Row or Column).
 // Each child's percentage size is relative to this panel's resolved pixel dimensions.
 func (p *Panel) Add(child PublicWidget) {
 	// Unwrap the public widget to get the internal panel.
@@ -121,10 +118,8 @@ func (p *Panel) Add(child PublicWidget) {
 }
 
 // Children returns a slice of this panel's child widgets.
-//
-// The order matches the add order and determines both layout order and z-order
-// for rendering. Modifying the returned slice does not affect the panel's
-// internal state.
+// Children returns widgets in add order, which determines both layout and z-order
+// for rendering. Modifying the returned slice does not affect the panel's state.
 func (p *Panel) Children() []PublicWidget {
 	internalChildren := p.internal.Children()
 	children := make([]PublicWidget, len(internalChildren))
@@ -144,8 +139,7 @@ func (p *Panel) Bounds() (width, height int) {
 }
 
 // HandleEvent processes a user interaction event.
-//
-// Panels do not consume events by default, allowing them to propagate to children.
+// HandleEvent returns false by default, allowing events to propagate to children.
 func (p *Panel) HandleEvent(Event) bool {
 	// Panels are passive containers - they don't handle events directly.
 	// Event handling will be implemented in Phase 9.3 for interactive widgets.
@@ -159,11 +153,8 @@ func (p *Panel) Draw(Canvas) {
 }
 
 // SetFlowDirection sets how this panel arranges its children.
-//
-// FlowRow arranges children horizontally (left to right).
-// FlowColumn arranges children vertically (top to bottom).
-//
-// The default flow direction is FlowColumn.
+// SetFlowDirection accepts FlowRow (horizontal, left to right) or
+// FlowColumn (vertical, top to bottom). The default is FlowColumn.
 func (p *Panel) SetFlowDirection(dir FlowDirection) {
 	p.internal.SetFlowDirection(pctwidget.FlowDirection(dir))
 }
@@ -174,9 +165,7 @@ func (p *Panel) FlowDirection() FlowDirection {
 }
 
 // SetPadding sets the padding (in pixels) around the panel's content area.
-//
-// Padding creates space between the panel's border and its children.
-// This is applied before children are laid out.
+// SetPadding creates space between the panel's border and its children.
 func (p *Panel) SetPadding(pixels int) {
 	if p.styleOverride == nil {
 		p.styleOverride = &StyleOverride{}
@@ -186,9 +175,7 @@ func (p *Panel) SetPadding(pixels int) {
 }
 
 // SetGap sets the spacing (in pixels) between child widgets.
-//
-// Gap is the space inserted between children during layout, both for
-// Row and Column flow directions.
+// SetGap applies to both Row and Column flow directions.
 func (p *Panel) SetGap(pixels int) {
 	if p.styleOverride == nil {
 		p.styleOverride = &StyleOverride{}
@@ -198,11 +185,8 @@ func (p *Panel) SetGap(pixels int) {
 }
 
 // SetAlign sets the cross-axis alignment for children.
-//
-// For Row containers, controls vertical alignment (top/center/bottom/stretch).
-// For Column containers, controls horizontal alignment (left/center/right/stretch).
-//
-// The default alignment is AlignStart.
+// SetAlign controls alignment on the cross axis: vertical for Row (top/center/bottom)
+// or horizontal for Column (left/center/right). Default is AlignStart.
 func (p *Panel) SetAlign(align Align) {
 	p.internal.SetAlign(pctwidget.Align(align))
 }
@@ -213,12 +197,8 @@ func (p *Panel) Align() Align {
 }
 
 // SetPosition manually overrides the auto-layout position and dimensions.
-//
-// After calling SetPosition, this panel will not be repositioned by the
-// auto-layout engine. Use this for absolute positioning when percentage-based
-// layout is insufficient.
-//
-// To return to automatic layout, call ClearPosition.
+// SetPosition disables automatic layout for this panel, using absolute positioning.
+// Call ClearPosition to return to automatic layout.
 func (p *Panel) SetPosition(x, y, width, height int) {
 	p.internal.SetPosition(x, y, width, height)
 }
@@ -230,9 +210,7 @@ func (p *Panel) ClearPosition() {
 }
 
 // SetVisible controls whether this panel is drawn and participates in layout.
-//
-// Hidden panels (visible = false) do not consume space in their parent's layout
-// and are not rendered.
+// SetVisible(false) hides the panel, which then consumes no space and is not rendered.
 func (p *Panel) SetVisible(visible bool) {
 	p.internal.SetVisible(visible)
 }
@@ -258,13 +236,9 @@ func (p *Panel) SetStyle(override StyleOverride) {
 }
 
 // SetTheme applies a theme to this panel and all its children.
-//
-// The theme controls the visual appearance of widgets that do not have
-// a StyleOverride applied. This method recursively propagates the theme
-// to all descendant panels.
-//
-// This method is typically called by the framework when rendering a window.
-// Application code rarely needs to call this directly.
+// SetTheme controls the visual appearance of widgets that do not have
+// a StyleOverride applied. It recursively propagates the theme to all
+// descendant panels.
 func (p *Panel) SetTheme(theme Theme) {
 	p.theme = &theme
 	p.syncStyleToInternal()
@@ -305,9 +279,7 @@ type Row struct {
 }
 
 // NewRow creates a new horizontal container.
-//
-// The row automatically fills 100% width and height of its parent.
-// Add children with custom Size values to control their dimensions.
+// NewRow fills 100% width and height of its parent by default.
 func NewRow() *Row {
 	panel := NewPanel(Size{Width: 100, Height: 100})
 	panel.SetFlowDirection(FlowRow)
@@ -324,9 +296,7 @@ type Column struct {
 }
 
 // NewColumn creates a new vertical container.
-//
-// The column automatically fills 100% width and height of its parent.
-// Add children with custom Size values to control their dimensions.
+// NewColumn fills 100% width and height of its parent by default.
 func NewColumn() *Column {
 	panel := NewPanel(Size{Width: 100, Height: 100})
 	panel.SetFlowDirection(FlowColumn)
@@ -353,9 +323,7 @@ type Stack struct {
 }
 
 // NewStack creates a new layering container.
-//
-// The stack automatically fills 100% width and height of its parent.
-// Children are layered in the order added (first = bottom, last = top).
+// NewStack fills 100% width and height of its parent by default.
 func NewStack() *Stack {
 	panel := NewPanel(Size{Width: 100, Height: 100})
 	// Stack uses a special flow direction that we'll handle in autolayout
@@ -384,13 +352,9 @@ type Grid struct {
 }
 
 // NewGrid creates a new grid container with the specified number of columns.
-//
-// The grid automatically fills 100% width and height of its parent.
-// Children are arranged in cells, left-to-right, top-to-bottom.
-// The number of rows is calculated based on the number of children.
-//
-// The columns parameter must be positive. If columns is less than 1,
-// it defaults to 1.
+// NewGrid fills 100% width and height of its parent by default.
+// Children are arranged left-to-right, top-to-bottom, and rows are computed
+// automatically. If columns is less than 1, it defaults to 1.
 func NewGrid(columns int) *Grid {
 	if columns < 1 {
 		columns = 1
@@ -408,10 +372,8 @@ func (g *Grid) Columns() int {
 }
 
 // SetColumns changes the number of columns in the grid.
-//
-// The layout will be recomputed on the next frame.
-// The columns parameter must be positive. If columns is less than 1,
-// it is set to 1.
+// SetColumns triggers a layout recomputation on the next frame.
+// If columns is less than 1, it is set to 1.
 func (g *Grid) SetColumns(columns int) {
 	if columns < 1 {
 		columns = 1

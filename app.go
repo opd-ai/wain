@@ -312,7 +312,7 @@ type Window struct {
 }
 
 // NewWindow creates a new window with the specified configuration.
-// The app must be running (Run() must be called first) before creating windows.
+// NewWindow requires the app to be running (Run() must be called first).
 func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -351,7 +351,7 @@ func (a *App) NewWindow(cfg WindowConfig) (*Window, error) {
 }
 
 // Windows returns a snapshot of all currently open windows.
-// The returned slice is a copy; mutating it does not affect the app.
+// Windows returns a copy, so mutating the slice does not affect the app.
 func (a *App) Windows() []*Window {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1014,7 +1014,7 @@ func (w *Window) RedrawRegion(x, y, width, height int) {
 }
 
 // RenderFrame renders the current widget tree to the display.
-// This is called automatically by the event loop, but can be called
+// RenderFrame is called automatically by the event loop, but can be called
 // manually to force an immediate render.
 func (w *Window) RenderFrame() error {
 	w.mu.Lock()
@@ -1059,11 +1059,9 @@ func (w *Window) SendCustomEvent(data CustomEventPayload) {
 }
 
 // SetDropTarget registers this window as a drag-and-drop target.
-//
-// mimeTypes lists the MIME types the window is willing to accept (e.g.
-// "text/plain", "text/uri-list"). handler is called with the negotiated
-// MIME type and transferred data when a drop is completed.
-//
+// SetDropTarget accepts mimeTypes listing the MIME types the window is willing
+// to accept (e.g. "text/plain", "text/uri-list"). The handler is called with
+// the negotiated MIME type and transferred data when a drop is completed.
 // Passing nil for handler clears the drop target registration.
 func (w *Window) SetDropTarget(mimeTypes []string, handler DragDropHandler) {
 	w.mu.Lock()
@@ -1226,7 +1224,7 @@ func (w *Window) handleWindowResize(evt *WindowEvent) {
 }
 
 // Run initializes the application and starts the event loop.
-// This method blocks until Quit() is called.
+// Run blocks until Quit() is called.
 func (a *App) Run() error {
 	a.mu.Lock()
 	if a.running {
@@ -1261,8 +1259,7 @@ func (a *App) Quit() {
 }
 
 // Notify schedules a callback to be executed on the UI goroutine.
-//
-// This function provides safe cross-goroutine communication by ensuring
+// Notify provides safe cross-goroutine communication by ensuring
 // that UI updates from background goroutines are executed on the main
 // UI event loop goroutine. Callbacks are queued and executed during the
 // next event loop iteration.
@@ -1278,10 +1275,8 @@ func (a *App) Quit() {
 //
 // The callback will be executed on the UI goroutine, making it safe to
 // call any widget methods or perform UI updates.
-//
-// If the notification channel is full (100 pending callbacks), Notify
-// will block until space is available. This prevents unbounded memory
-// growth while allowing reasonable buffering.
+// Notify blocks if the notification channel is full (100 pending callbacks)
+// until space is available.
 func (a *App) Notify(callback func()) {
 	if callback == nil {
 		return
@@ -1313,8 +1308,7 @@ func (a *App) SetTheme(theme Theme) {
 }
 
 // GetTheme returns the current application-wide theme.
-//
-// The returned theme is a copy and can be safely modified without affecting
+// GetTheme returns a copy that can be safely modified without affecting
 // the application's theme. To apply changes, use SetTheme.
 func (a *App) GetTheme() Theme {
 	a.mu.Lock()
@@ -1323,7 +1317,7 @@ func (a *App) GetTheme() Theme {
 }
 
 // Theme returns the current application-wide theme.
-// This is an alias for GetTheme for convenience.
+// Theme is an alias for GetTheme for convenience.
 func (a *App) Theme() Theme {
 	return a.GetTheme()
 }

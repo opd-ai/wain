@@ -17,7 +17,7 @@ var (
 )
 
 // RenderBridge connects the widget tree to the rendering pipeline.
-// It manages the frame lifecycle:
+// RenderBridge manages the frame lifecycle:
 //  1. Walk the widget tree, collect dirty widgets
 //  2. Emit DisplayList commands for dirty regions
 //  3. Submit to renderer with damage rects
@@ -74,7 +74,7 @@ func (rb *RenderBridge) MarkRegionDirty(x, y, width, height int) {
 }
 
 // Render performs a rendering pass if the bridge is marked dirty.
-// Returns true if a frame was rendered, false if no rendering was needed.
+// Render returns nil if no rendering was needed, or an error if rendering failed.
 func (rb *RenderBridge) Render(rootWidget Widget) error {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
@@ -117,7 +117,7 @@ func (rb *RenderBridge) Render(rootWidget Widget) error {
 }
 
 // Present presents the rendered frame to the display.
-// Returns a file descriptor (DMA-BUF for GPU, or -1 for software).
+// Present returns a file descriptor (DMA-BUF for GPU, or -1 for software).
 func (rb *RenderBridge) Present() (int, error) {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()

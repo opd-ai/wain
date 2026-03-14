@@ -80,7 +80,11 @@ func TestAnimationSpring(t *testing.T) {
 		To:       1,
 		Duration: 100 * time.Millisecond,
 		Easing:   Spring,
-		OnTick:   func(v float64) { if v > peak { peak = v } },
+		OnTick: func(v float64) {
+			if v > peak {
+				peak = v
+			}
+		},
 	}
 	anim := New()
 	anim.Add(a)

@@ -105,9 +105,8 @@ func (rm *ResourceManager) initDefaultFont() error {
 }
 
 // DefaultFont returns the embedded default font.
-//
-// The default font is automatically initialized when the app starts.
-// It supports printable ASCII characters (0x20-0x7E) with SDF rendering
+// DefaultFont returns a font that is automatically initialized when the app starts.
+// The font supports printable ASCII characters (0x20-0x7E) with SDF rendering
 // for high-quality scaling at any size.
 func (rm *ResourceManager) DefaultFont() *Font {
 	rm.mu.RLock()
@@ -168,8 +167,7 @@ func (rm *ResourceManager) LoadImage(path string) (*Image, error) {
 }
 
 // LoadImageFromReader loads an image from an io.Reader.
-//
-// The format is auto-detected based on the magic bytes.
+// LoadImageFromReader auto-detects the format based on the magic bytes.
 // The filename hint helps with format detection but is optional.
 func (rm *ResourceManager) LoadImageFromReader(r io.Reader, filenameHint string) (*Image, error) {
 	// Decode the image (auto-detect format)
@@ -316,8 +314,7 @@ func (a *App) LoadImageFromReader(r io.Reader, filenameHint string) (*Image, err
 }
 
 // DefaultFont returns the embedded default font.
-//
-// The default font supports printable ASCII characters (0x20-0x7E)
+// DefaultFont supports printable ASCII characters (0x20-0x7E)
 // with SDF rendering for high-quality scaling.
 func (a *App) DefaultFont() *Font {
 	if a.resources == nil {

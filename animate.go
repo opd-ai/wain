@@ -14,8 +14,8 @@ import (
 type EasingFunc = animation.EasingFunc
 
 // Animation describes a single running property animation.
-// Use [App.Animate] to schedule an animation, and [Animation.OnComplete] or
-// [Animation.Cancel] to control it.
+// Animation is scheduled via [App.Animate] and can be controlled with
+// [Animation.OnComplete] or [Animation.Cancel].
 type Animation = animation.Animation
 
 // Easing function constants — pass these to [App.Animate].
@@ -33,10 +33,9 @@ var (
 )
 
 // Animate schedules a property animation driven by the app's frame loop.
-//
-// from and to are the start and end values; dur is the animation duration;
-// easing controls the rate of change (pass nil for [AnimateLinear]). onTick is
-// called every frame with the current interpolated value.
+// Animate takes start (from) and end (to) values, duration (dur), an
+// easing function (pass nil for [AnimateLinear]), and an onTick callback
+// that is called every frame with the current interpolated value.
 //
 // The returned [*Animation] can be used to register an [Animation.OnComplete]
 // callback or to [Animation.Cancel] the animation early.
