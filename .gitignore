@@ -52,3 +52,11 @@ internal/render/cgo_flags_generated.go
 *.swp
 *.swo
 *~
+
+# Development loop artifacts
+loop.log
+test-output.txt
+
+# Stale binaries in repo root (should be in bin/)
+/example-app
+/gen-atlas
