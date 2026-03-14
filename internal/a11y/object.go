@@ -5,6 +5,9 @@ import (
 	"sync"
 )
 
+// basePath is the root D-Bus object path prefix for all accessible objects.
+const basePath = "/org/a11y/atspi/accessible"
+
 // AccessibleObject holds the accessibility metadata for a single widget.
 // It is exported over D-Bus via four AT-SPI2 interfaces.
 type AccessibleObject struct {

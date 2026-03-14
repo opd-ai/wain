@@ -290,7 +290,7 @@ func (p *WaylandPipeline) PresentRendered(ctx context.Context) error {
 
 	if err := p.commitToSurface(fb); err != nil {
 		p.releaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("display/wayland: commit to surface: %w", err)
 	}
 
 	return p.pool.MarkDisplaying(fb)

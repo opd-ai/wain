@@ -2,6 +2,7 @@ package wain
 
 import (
 	"log"
+	"sync"
 
 	"github.com/opd-ai/wain/internal/a11y"
 )
@@ -27,7 +28,9 @@ type AccessibleWidget interface {
 // AccessibilityManager wraps the internal a11y.Manager and associates widget
 // accessible IDs with PublicWidget instances for lifecycle management.
 type AccessibilityManager struct {
-	mgr *a11y.Manager
+	mgr       *a11y.Manager
+	mu        sync.RWMutex
+	widgetIDs map[Widget]uint64
 }
 
 // EnableAccessibility attaches AT-SPI2 accessibility to a wain application.
@@ -47,7 +50,10 @@ func EnableAccessibility(appName string) *AccessibilityManager {
 		log.Printf("wain: accessibility disabled: %v", err)
 		return nil
 	}
-	return &AccessibilityManager{mgr: mgr}
+	return &AccessibilityManager{
+		mgr:       mgr,
+		widgetIDs: make(map[Widget]uint64),
+	}
 }
 
 // Close releases the D-Bus connection and removes all exported objects.
@@ -104,4 +110,27 @@ func (am *AccessibilityManager) SetText(id uint64, text string) {
 // SetName updates the accessible name of the object with id.
 func (am *AccessibilityManager) SetName(id uint64, name string) {
 	am.mgr.SetName(id, name)
+}
+
+// AssociateWidget records that widget corresponds to the accessible object id.
+// Call this after registering a widget so that WireFocusManager can emit focus
+// events when the widget gains or loses keyboard focus.
+func (am *AccessibilityManager) AssociateWidget(widget Widget, id uint64) {
+	am.mu.Lock()
+	defer am.mu.Unlock()
+	am.widgetIDs[widget] = id
+}
+
+// WireFocusManager installs a focus-change hook on fm so that AT-SPI2
+// focus signals are emitted automatically when keyboard focus changes.
+// Only widgets previously registered with AssociateWidget will trigger signals.
+func (am *AccessibilityManager) WireFocusManager(fm *FocusManager) {
+	fm.SetFocusChangeHook(func(w Widget) {
+		am.mu.RLock()
+		id, ok := am.widgetIDs[w]
+		am.mu.RUnlock()
+		if ok {
+			am.mgr.SetFocused(id, w != nil)
+		}
+	})
 }

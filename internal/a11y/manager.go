@@ -1,3 +1,6 @@
+//go:build atspi
+// +build atspi
+
 package a11y
 
 import (
@@ -6,9 +9,6 @@ import (
 
 	"github.com/godbus/dbus/v5"
 )
-
-// basePath is the root D-Bus object path prefix for all accessible objects.
-const basePath = "/org/a11y/atspi/accessible"
 
 // atspiRegistryPath is the AT-SPI2 registry bus name and object path.
 const atspiRegistryPath = "org.a11y.atspi.Registry"

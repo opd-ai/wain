@@ -2,6 +2,7 @@ package pctwidget
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/opd-ai/wain/internal/raster/primitives"
 )
@@ -97,7 +98,7 @@ func (w *BaseWidget) Visible() bool { return w.visible }
 func (w *BaseWidget) Resolve(parentWidth, parentHeight int) error {
 	pw, ph, err := w.size.Resolve(parentWidth, parentHeight)
 	if err != nil {
-		return err
+		return fmt.Errorf("pctwidget: resolve size: %w", err)
 	}
 	w.width = pw
 	w.height = ph
@@ -196,7 +197,7 @@ func (p *Panel) drawBorder(buf *primitives.Buffer, s Style) {
 func (p *Panel) drawChildren(buf *primitives.Buffer) error {
 	for _, c := range p.children {
 		if err := c.Draw(buf); err != nil {
-			return err
+			return fmt.Errorf("pctwidget: draw child: %w", err)
 		}
 	}
 	return nil

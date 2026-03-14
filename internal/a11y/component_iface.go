@@ -1,3 +1,6 @@
+//go:build atspi
+// +build atspi
+
 package a11y
 
 import (

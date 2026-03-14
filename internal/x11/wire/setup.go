@@ -73,7 +73,10 @@ func EncodeSetupRequest(w io.Writer, req SetupRequest) error {
 	}
 
 	_, err := w.Write(buf.Bytes())
-	return err
+	if err != nil {
+		return fmt.Errorf("x11/wire: encode setup request: %w", err)
+	}
+	return nil
 }
 
 // SetupStatus represents the status of a setup reply.
@@ -215,10 +218,10 @@ func decodeSetupFailure(r io.Reader, reply *SetupReply) error {
 	}
 
 	if err := readFailureReason(r, reasonLen); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: decode setup failure reason: %w", err)
 	}
 	if err := skipFailureData(r, failDataLen); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: decode setup failure data: %w", err)
 	}
 	return ErrSetupFailed
 }
@@ -384,10 +387,10 @@ func decodeScreen(r io.Reader) (Screen, error) {
 // decodeScreenFields reads basic screen fields.
 func decodeScreenFields(r io.Reader, s *Screen) error {
 	if err := decode5Uint32(r, &s.Root, &s.DefaultColormap, &s.WhitePixel, &s.BlackPixel, &s.CurrentMasks); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: decode screen fields 5uint32: %w", err)
 	}
 	if err := decode6Uint16(r, &s.WidthPixels, &s.HeightPixels, &s.WidthMM, &s.HeightMM, &s.MinMaps, &s.MaxMaps); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: decode screen fields 6uint16: %w", err)
 	}
 	var err error
 	if s.RootVisual, err = DecodeUint32(r); err != nil {
@@ -405,7 +408,7 @@ func decodeValues[T uint8 | uint16 | uint32](r io.Reader, decode func(io.Reader)
 	for _, v := range vs {
 		val, err := decode(r)
 		if err != nil {
-			return err
+			return fmt.Errorf("x11/wire: decode values: %w", err)
 		}
 		*v = val
 	}

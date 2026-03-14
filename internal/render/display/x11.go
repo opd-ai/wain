@@ -320,7 +320,7 @@ func (p *X11Pipeline) PresentRendered(ctx context.Context) error {
 
 	if err := p.presentPixmap(fb); err != nil {
 		p.releaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("display/x11: present pixmap: %w", err)
 	}
 
 	return p.pool.MarkDisplaying(fb)

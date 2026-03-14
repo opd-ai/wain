@@ -494,14 +494,14 @@ func (ta *TextureAtlas) ImagePageCount() int {
 func (ta *TextureAtlas) Destroy() error {
 	if ta.fontAtlas != nil {
 		if err := ta.fontAtlas.Destroy(); err != nil {
-			return err
+			return fmt.Errorf("atlas: destroy font atlas: %w", err)
 		}
 		ta.fontAtlas = nil
 	}
 
 	for _, page := range ta.imagePages {
 		if err := page.Buffer.Destroy(); err != nil {
-			return err
+			return fmt.Errorf("atlas: destroy image page: %w", err)
 		}
 	}
 	ta.imagePages = nil

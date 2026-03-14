@@ -233,7 +233,7 @@ func (p *Pointer) handleEnterEvent(args []wire.Argument) error {
 		surfaceX = d.Int32("pointer: enter surface_x")
 		surfaceY = d.Int32("pointer: enter surface_y")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle enter: %w", err)
 	}
 	p.HandleEnter(serial, surfaceID, surfaceX, surfaceY)
 	return nil
@@ -246,7 +246,7 @@ func (p *Pointer) handleLeaveEvent(args []wire.Argument) error {
 		serial = d.Uint32("pointer: leave serial")
 		surfaceID = d.Uint32("pointer: leave surface")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle leave: %w", err)
 	}
 	p.HandleLeave(serial, surfaceID)
 	return nil
@@ -261,7 +261,7 @@ func (p *Pointer) handleMotionEvent(args []wire.Argument) error {
 		surfaceX = d.Int32("pointer: motion surface_x")
 		surfaceY = d.Int32("pointer: motion surface_y")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle motion: %w", err)
 	}
 	p.HandleMotion(time, surfaceX, surfaceY)
 	return nil
@@ -276,7 +276,7 @@ func (p *Pointer) handleButtonEvent(args []wire.Argument) error {
 		button = d.Uint32("pointer: button code")
 		state = d.Uint32("pointer: button state")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle button: %w", err)
 	}
 	p.HandleButton(serial, time, button, state)
 	return nil
@@ -291,7 +291,7 @@ func (p *Pointer) handleAxisEvent(args []wire.Argument) error {
 		axis = d.Uint32("pointer: axis type")
 		value = d.Int32("pointer: axis value")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle axis: %w", err)
 	}
 	p.HandleAxis(time, axis, value)
 	return nil
@@ -303,7 +303,7 @@ func (p *Pointer) handleAxisSourceEvent(args []wire.Argument) error {
 	if err := parseEvent(args, 1, "pointer: axis_source event", func(d *wire.ArgDecoder) {
 		axisSource = d.Uint32("pointer: axis_source")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle axis source: %w", err)
 	}
 	p.HandleAxisSource(axisSource)
 	return nil
@@ -316,7 +316,7 @@ func (p *Pointer) handleAxisStopEvent(args []wire.Argument) error {
 		time = d.Uint32("pointer: axis_stop time")
 		axis = d.Uint32("pointer: axis_stop axis")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle axis stop: %w", err)
 	}
 	p.HandleAxisStop(time, axis)
 	return nil
@@ -330,7 +330,7 @@ func (p *Pointer) handleAxisDiscreteEvent(args []wire.Argument) error {
 		axis = d.Uint32("pointer: axis_discrete axis")
 		discrete = d.Int32("pointer: axis_discrete discrete")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: pointer handle axis discrete: %w", err)
 	}
 	p.HandleAxisDiscrete(axis, discrete)
 	return nil

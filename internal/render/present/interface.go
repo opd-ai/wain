@@ -3,6 +3,7 @@ package present
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 )
@@ -64,27 +65,27 @@ func RenderAndPresent(
 
 	fb, err := pool.Acquire(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("present: acquire framebuffer: %w", err)
 	}
 
 	if err := presenter.RenderToFramebuffer(dl, fb); err != nil {
 		presenter.ReleaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("present: render to framebuffer: %w", err)
 	}
 
 	if err := presenter.EnsurePlatformBuffer(fb); err != nil {
 		presenter.ReleaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("present: ensure platform buffer: %w", err)
 	}
 
 	if err := presenter.PresentBuffer(fb); err != nil {
 		presenter.ReleaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("present: present buffer: %w", err)
 	}
 
 	if err := pool.MarkDisplaying(fb); err != nil {
 		presenter.ReleaseFramebuffer(fb)
-		return err
+		return fmt.Errorf("present: mark displaying: %w", err)
 	}
 
 	return nil

@@ -166,7 +166,7 @@ func (k *Keyboard) handleKeymapEvent(args []wire.Argument) error {
 		fd = d.Int("keyboard: keymap fd")
 		size = d.Uint32("keyboard: keymap size")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle keymap: %w", err)
 	}
 	k.HandleKeymap(format, uint32(fd), size)
 	return nil
@@ -181,7 +181,7 @@ func (k *Keyboard) handleEnterEvent(args []wire.Argument) error {
 		surfaceID = d.Uint32("keyboard: enter surface")
 		keysArray = d.Bytes("keyboard: enter keys")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle enter: %w", err)
 	}
 	keys := make([]uint32, len(keysArray)/4)
 	for i := range keys {
@@ -200,7 +200,7 @@ func (k *Keyboard) handleLeaveEvent(args []wire.Argument) error {
 		serial = d.Uint32("keyboard: leave serial")
 		surfaceID = d.Uint32("keyboard: leave surface")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle leave: %w", err)
 	}
 	k.HandleLeave(serial, surfaceID)
 	return nil
@@ -215,7 +215,7 @@ func (k *Keyboard) handleKeyEvent(args []wire.Argument) error {
 		key = d.Uint32("keyboard: key code")
 		state = d.Uint32("keyboard: key state")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle key: %w", err)
 	}
 	k.HandleKey(serial, time, key, state)
 	return nil
@@ -231,7 +231,7 @@ func (k *Keyboard) handleModifiersEvent(args []wire.Argument) error {
 		modsLocked = d.Uint32("keyboard: modifiers locked")
 		group = d.Uint32("keyboard: modifiers group")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle modifiers: %w", err)
 	}
 	k.HandleModifiers(serial, modsDepressed, modsLatched, modsLocked, group)
 	return nil
@@ -244,7 +244,7 @@ func (k *Keyboard) handleRepeatInfoEvent(args []wire.Argument) error {
 		rate = d.Int32("keyboard: repeat_info rate")
 		delay = d.Int32("keyboard: repeat_info delay")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: keyboard handle repeat info: %w", err)
 	}
 	k.HandleRepeatInfo(rate, delay)
 	return nil

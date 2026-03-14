@@ -289,19 +289,19 @@ func EncodePadding(w io.Writer, n int) error {
 // This pattern appears in multiple image/graphics requests (PutImage, ShmPutImage, etc.).
 func EncodeDrawableGeometry(w io.Writer, drawable, gc uint32, width, height uint16, xOffset, yOffset int16) error {
 	if err := EncodeUint32(w, drawable); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: encode drawable geometry drawable: %w", err)
 	}
 	if err := EncodeUint32(w, gc); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: encode drawable geometry gc: %w", err)
 	}
 	if err := EncodeUint16(w, width); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: encode drawable geometry width: %w", err)
 	}
 	if err := EncodeUint16(w, height); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: encode drawable geometry height: %w", err)
 	}
 	if err := EncodeInt16(w, xOffset); err != nil {
-		return err
+		return fmt.Errorf("x11/wire: encode drawable geometry x offset: %w", err)
 	}
 	return EncodeInt16(w, yOffset)
 }

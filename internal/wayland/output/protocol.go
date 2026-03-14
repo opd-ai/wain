@@ -173,7 +173,7 @@ func (o *Output) handleGeometry(args []wire.Argument) error {
 
 	geom, err := parseGeometryArgs(args)
 	if err != nil {
-		return err
+		return fmt.Errorf("wayland/output: handle geometry: %w", err)
 	}
 
 	o.geometry = geom
@@ -207,7 +207,7 @@ func (o *Output) handleMode(args []wire.Argument) error {
 	height := d.Int32("output: height")
 	refresh := d.Int32("output: refresh")
 	if err := d.Err(); err != nil {
-		return err
+		return fmt.Errorf("wayland/output: handle mode: %w", err)
 	}
 	o.mode = Mode{
 		Flags:   flags,
@@ -234,7 +234,7 @@ func (o *Output) handleScale(args []wire.Argument) error {
 	}
 	scale, err := wire.ParseArgInt32(args, 0, "output: scale")
 	if err != nil {
-		return err
+		return fmt.Errorf("wayland/output: handle scale: %w", err)
 	}
 	o.scale = scale
 	return nil

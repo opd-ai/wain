@@ -192,7 +192,7 @@ func readPadding(r io.Reader, length uint32) error {
 	if padding > 0 {
 		var pad [3]byte
 		if _, err := io.ReadFull(r, pad[:padding]); err != nil {
-			return err
+			return fmt.Errorf("wayland/wire: read padding: %w", err)
 		}
 	}
 	return nil
@@ -204,7 +204,7 @@ func writePadding(w io.Writer, length uint32) error {
 	if padding > 0 {
 		var pad [3]byte
 		if _, err := w.Write(pad[:padding]); err != nil {
-			return err
+			return fmt.Errorf("wayland/wire: write padding: %w", err)
 		}
 	}
 	return nil
@@ -252,7 +252,7 @@ func EncodeString(w io.Writer, s string) error {
 
 	length := uint32(len(s) + 1)
 	if err := EncodeUint32(w, length); err != nil {
-		return err
+		return fmt.Errorf("wayland/wire: encode string length: %w", err)
 	}
 
 	if _, err := w.Write([]byte(s)); err != nil {
@@ -303,7 +303,7 @@ func DecodeArray(r io.Reader) ([]byte, error) {
 func EncodeArray(w io.Writer, data []byte) error {
 	length := uint32(len(data))
 	if err := EncodeUint32(w, length); err != nil {
-		return err
+		return fmt.Errorf("wayland/wire: encode array length: %w", err)
 	}
 
 	if length > 0 {

@@ -9,14 +9,44 @@ keyboard and pointer events today.  Tab/Shift-Tab focus traversal, Enter/Space a
 and arrow-key navigation are functional and verified by `accessibility_test.go` at the
 repository root.  These tests (Phase 10.9) pass in CI without any additional dependencies.
 
-### AT-SPI2 Screen-Reader Support — **Not Yet Implemented**
+### AT-SPI2 Screen-Reader Support — **Implemented (requires `-tags=atspi`)**
 
-**Wain does not currently implement AT-SPI2 accessibility support.**
+Wain exports AT-SPI2 D-Bus objects through the `internal/a11y` package and the public
+`EnableAccessibility` API in `accessibility.go`.  The implementation exports four
+`org.a11y.atspi.*` interfaces per widget: `Accessible`, `Component`, `Action`, and `Text`.
 
-The `accessibility_test.go` file tests *keyboard event-handling* (which is live), **not**
-AT-SPI2.  No D-Bus objects are exported, no `org.a11y.atspi.*` interfaces exist, and Orca
-cannot yet introspect a Wain application.  The remainder of this document describes the
-technical constraints and the future implementation path for AT-SPI2.
+#### Build Tag
+
+AT-SPI2 support requires the `atspi` build tag to keep the default build free of the
+`github.com/godbus/dbus/v5` import:
+
+```bash
+# With AT-SPI2 / screen-reader support:
+go build -tags=atspi ./...
+go run -tags=atspi ./cmd/widget-demo
+
+# Default build (no D-Bus dependency compiled in):
+go build ./...
+```
+
+Without `-tags=atspi`, `EnableAccessibility` returns `nil` and all accessibility calls
+are no-ops.  The application continues to function normally.
+
+#### Wiring Focus Events
+
+To emit AT-SPI2 focus signals automatically:
+
+```go
+am := wain.EnableAccessibility("my-app")  // requires -tags=atspi
+if am != nil {
+    id := am.RegisterButton("OK", 0, onClickFn)
+    am.AssociateWidget(okButton, id)
+    am.WireFocusManager(dispatcher.FocusManager())
+}
+```
+
+`WireFocusManager` installs a hook on the `FocusManager` so that every focus
+change emits an `org.a11y.atspi.Event.Focus` D-Bus signal.
 
 This document explains the technical constraints, future possibilities, and workarounds for assistive technology integration.
 

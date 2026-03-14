@@ -32,7 +32,7 @@ func (b *GPUBackend) submitBatchesWithScissor(batches []Batch, vertexData []byte
 
 	batchBuffer, err := b.allocateBatchBuffer()
 	if err != nil {
-		return err
+		return fmt.Errorf("submit: allocate batch buffer: %w", err)
 	}
 	defer batchBuffer.Destroy()
 

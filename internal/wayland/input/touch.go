@@ -117,7 +117,7 @@ func (t *Touch) handleDownEvent(args []wire.Argument) error {
 		x = d.Int32("touch: down x")
 		y = d.Int32("touch: down y")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: touch handle down: %w", err)
 	}
 	t.HandleDown(serial, time, surfaceID, id, x, y)
 	return nil
@@ -132,7 +132,7 @@ func (t *Touch) handleUpEvent(args []wire.Argument) error {
 		time = d.Uint32("touch: up time")
 		id = d.Int32("touch: up id")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: touch handle up: %w", err)
 	}
 	t.HandleUp(serial, time, id)
 	return nil
@@ -148,7 +148,7 @@ func (t *Touch) handleMotionEvent(args []wire.Argument) error {
 		x = d.Int32("touch: motion x")
 		y = d.Int32("touch: motion y")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: touch handle motion: %w", err)
 	}
 	t.HandleMotion(time, id, x, y)
 	return nil
@@ -162,7 +162,7 @@ func (t *Touch) handleShapeEvent(args []wire.Argument) error {
 		major = d.Int32("touch: shape major")
 		minor = d.Int32("touch: shape minor")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: touch handle shape: %w", err)
 	}
 	t.HandleShape(id, major, minor)
 	return nil
@@ -175,7 +175,7 @@ func (t *Touch) handleOrientationEvent(args []wire.Argument) error {
 		id = d.Int32("touch: orientation id")
 		orientation = d.Int32("touch: orientation value")
 	}); err != nil {
-		return err
+		return fmt.Errorf("wayland/input: touch handle orientation: %w", err)
 	}
 	t.HandleOrientation(id, orientation)
 	return nil

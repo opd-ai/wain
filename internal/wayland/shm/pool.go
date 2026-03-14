@@ -38,7 +38,7 @@ func (p *Pool) Map() error {
 
 	data, err := MmapFile(p.fd, int(p.size))
 	if err != nil {
-		return err
+		return fmt.Errorf("wayland/shm: map pool: %w", err)
 	}
 
 	p.mapping = data
@@ -52,7 +52,7 @@ func (p *Pool) Unmap() error {
 	}
 
 	if err := MunmapFile(p.mapping); err != nil {
-		return err
+		return fmt.Errorf("wayland/shm: unmap pool: %w", err)
 	}
 
 	p.mapping = nil
@@ -152,7 +152,7 @@ func (p *Pool) Destroy() error {
 
 	// Unmap and close fd.
 	if err := p.Unmap(); err != nil {
-		return err
+		return fmt.Errorf("wayland/shm: destroy pool: unmap: %w", err)
 	}
 
 	if err := syscall.Close(p.fd); err != nil {

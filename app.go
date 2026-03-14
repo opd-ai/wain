@@ -386,29 +386,37 @@ func (w *Window) initialize() error {
 // initWaylandWindow creates a Wayland surface and toplevel.
 func (w *Window) initWaylandWindow() error {
 	if err := w.createWaylandSurface(); err != nil {
-		return err
+		return fmt.Errorf("app: init wayland window: create surface: %w", err)
 	}
 
 	if err := w.configureWaylandToplevel(); err != nil {
-		return err
+		return fmt.Errorf("app: init wayland window: configure toplevel: %w", err)
 	}
 
 	if err := w.waylandSurface.Commit(); err != nil {
 		return fmt.Errorf("failed to commit surface: %w", err)
 	}
 
+	w.initWaylandPresenter()
+	return nil
+}
+
+// initWaylandPresenter selects and initialises the presenter for a Wayland window.
+// Software backend uses SHM; GPU backend uses DMA-BUF when available.
+func (w *Window) initWaylandPresenter() {
 	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
 		w.presenter = display.NewSoftwareWaylandPresenter(w.app.waylandShm, w.waylandSurface, sw)
-	} else if _, ok := w.app.renderer.(*backend.GPUBackend); ok && w.app.waylandDmabuf != nil {
-		pipeline, err := display.NewWaylandPipeline(w.waylandSurface, w.app.waylandDmabuf, w.app.renderer)
-		if err != nil {
-			log.Printf("Warning: GPU Wayland pipeline unavailable: %v", err)
-		} else {
-			w.presenter = display.NewGPUWaylandPresenter(pipeline)
-		}
+		return
 	}
-
-	return nil
+	if _, ok := w.app.renderer.(*backend.GPUBackend); !ok || w.app.waylandDmabuf == nil {
+		return
+	}
+	pipeline, err := display.NewWaylandPipeline(w.waylandSurface, w.app.waylandDmabuf, w.app.renderer)
+	if err != nil {
+		log.Printf("Warning: GPU Wayland pipeline unavailable: %v", err)
+		return
+	}
+	w.presenter = display.NewGPUWaylandPresenter(pipeline)
 }
 
 // createWaylandSurface creates the Wayland surface and toplevel objects.
@@ -450,7 +458,7 @@ func (w *Window) configureWaylandToplevel() error {
 	}
 
 	if err := w.setWaylandSizeLimits(toplevel); err != nil {
-		return err
+		return fmt.Errorf("app: configure wayland toplevel: set size limits: %w", err)
 	}
 
 	if w.fullscreen {
@@ -507,28 +515,32 @@ func (w *Window) initX11Window() error {
 		return fmt.Errorf("failed to map window: %w", err)
 	}
 
+	w.initX11Presenter()
+	return nil
+}
+
+// initX11Presenter selects and initialises the presenter for an X11 window.
+func (w *Window) initX11Presenter() {
 	if sw, ok := w.app.renderer.(*backend.SoftwareBackend); ok {
 		p, err := display.NewSoftwareX11Presenter(w.app.x11Conn, w.x11Window, sw)
-		if err != nil {
-			// Non-fatal: window will open but pixels won't be pushed.
-			if w.app.verbose {
-				log.Printf("Warning: failed to create X11 presenter: %v", err)
-			}
-		} else {
+		if err != nil && w.app.verbose {
+			log.Printf("Warning: failed to create X11 presenter: %v", err)
+		} else if err == nil {
 			w.presenter = p
 		}
-	} else if _, ok := w.app.renderer.(*backend.GPUBackend); ok {
-		p, err := display.NewGPUX11PresenterFromConn(w.app.x11Conn, w.x11Window, w.app.renderer)
-		if err != nil {
-			if w.app.verbose {
-				log.Printf("Warning: GPU X11 pipeline unavailable: %v", err)
-			}
-		} else {
-			w.presenter = p
-		}
+		return
 	}
-
-	return nil
+	if _, ok := w.app.renderer.(*backend.GPUBackend); !ok {
+		return
+	}
+	p, err := display.NewGPUX11PresenterFromConn(w.app.x11Conn, w.x11Window, w.app.renderer)
+	if err != nil {
+		if w.app.verbose {
+			log.Printf("Warning: GPU X11 pipeline unavailable: %v", err)
+		}
+		return
+	}
+	w.presenter = p
 }
 
 // SetTitle sets the window title.
@@ -550,7 +562,7 @@ func (w *Window) SetTitle(title string) error {
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.x11SetTitle(title); err != nil {
-				return err
+				return fmt.Errorf("app: set title: x11: %w", err)
 			}
 		}
 	}
@@ -611,7 +623,7 @@ func (w *Window) SetMinSize(width, height int) error {
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.x11SetWMNormalHints(); err != nil {
-				return err
+				return fmt.Errorf("app: set min size: x11 hints: %w", err)
 			}
 		}
 	}
@@ -639,7 +651,7 @@ func (w *Window) SetMaxSize(width, height int) error {
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.x11SetWMNormalHints(); err != nil {
-				return err
+				return fmt.Errorf("app: set max size: x11 hints: %w", err)
 			}
 		}
 	}
@@ -664,7 +676,7 @@ func (w *Window) SetFullscreen(fullscreen bool) error {
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.x11SetFullscreen(fullscreen); err != nil {
-				return err
+				return fmt.Errorf("app: set fullscreen: x11: %w", err)
 			}
 		}
 	}
@@ -813,7 +825,7 @@ func (w *Window) Close() error {
 	case DisplayServerX11:
 		if w.x11Window != 0 {
 			if err := w.app.x11Conn.DestroyWindow(w.x11Window); err != nil {
-				return err
+				return fmt.Errorf("app: close window: destroy x11 window: %w", err)
 			}
 		}
 	}
@@ -985,7 +997,7 @@ func (w *Window) RenderFrame() error {
 	}
 
 	if err := renderBridge.Render(rootWidget); err != nil {
-		return err
+		return fmt.Errorf("app: render: %w", err)
 	}
 
 	if presenter != nil {
@@ -1045,7 +1057,7 @@ func (w *Window) handleX11Event(eventType x11events.EventType, eventBuf []byte) 
 func (w *Window) handleX11KeyPress(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseKeyPressEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 key press: parse event: %w", err)
 	}
 	evt := translateX11KeyPressEvent(e)
 	w.dispatchEvent(evt)
@@ -1056,7 +1068,7 @@ func (w *Window) handleX11KeyPress(header wire.EventHeader, data []byte) error {
 func (w *Window) handleX11KeyRelease(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseKeyReleaseEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 key release: parse event: %w", err)
 	}
 	evt := translateX11KeyReleaseEvent(e)
 	w.dispatchEvent(evt)
@@ -1067,7 +1079,7 @@ func (w *Window) handleX11KeyRelease(header wire.EventHeader, data []byte) error
 func (w *Window) handleX11ButtonPress(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseButtonPressEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 button press: parse event: %w", err)
 	}
 	evt := translateX11ButtonPressEvent(e)
 	w.dispatchEvent(evt)
@@ -1078,7 +1090,7 @@ func (w *Window) handleX11ButtonPress(header wire.EventHeader, data []byte) erro
 func (w *Window) handleX11ButtonRelease(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseButtonReleaseEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 button release: parse event: %w", err)
 	}
 	evt := translateX11ButtonReleaseEvent(e)
 	if evt != nil {
@@ -1091,7 +1103,7 @@ func (w *Window) handleX11ButtonRelease(header wire.EventHeader, data []byte) er
 func (w *Window) handleX11Motion(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseMotionNotifyEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 motion: parse event: %w", err)
 	}
 	evt := translateX11MotionNotifyEvent(e)
 	w.dispatchEvent(evt)
@@ -1102,7 +1114,7 @@ func (w *Window) handleX11Motion(header wire.EventHeader, data []byte) error {
 func (w *Window) handleX11Configure(header wire.EventHeader, data []byte) error {
 	e, err := x11events.ParseConfigureNotifyEvent(header, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: handle x11 configure: parse event: %w", err)
 	}
 	evt := translateX11ConfigureNotifyEvent(e)
 	w.handleWindowResize(evt)
@@ -1276,22 +1288,22 @@ func (a *App) Dimensions() (width, height int) {
 func (a *App) initialize() error {
 	// Phase 1: Detect and connect to display server
 	if err := a.initDisplayServer(); err != nil {
-		return err
+		return fmt.Errorf("app: initialize: display server: %w", err)
 	}
 
 	// Phase 2: Create window/surface
 	if err := a.initWindow(); err != nil {
-		return err
+		return fmt.Errorf("app: initialize: window: %w", err)
 	}
 
 	// Phase 3: Initialize renderer
 	if err := a.initRenderer(); err != nil {
-		return err
+		return fmt.Errorf("app: initialize: renderer: %w", err)
 	}
 
 	// Phase 4: Render initial frame
 	if err := a.renderInitialFrame(); err != nil {
-		return err
+		return fmt.Errorf("app: initialize: initial frame: %w", err)
 	}
 
 	a.initialized = true
@@ -1398,7 +1410,7 @@ func (a *App) extractX11DisplayNumber(display string) string {
 func (a *App) connectWayland(path string) error {
 	conn, err := client.Connect(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: connect wayland: %w", err)
 	}
 	a.waylandConn = conn
 
@@ -1410,7 +1422,7 @@ func (a *App) connectWayland(path string) error {
 	a.waylandRegistry = registry
 
 	if err := a.bindWaylandGlobals(registry); err != nil {
-		return err
+		return fmt.Errorf("app: connect wayland: bind globals: %w", err)
 	}
 
 	return nil
@@ -1419,10 +1431,10 @@ func (a *App) connectWayland(path string) error {
 // bindWaylandGlobals binds required Wayland global objects.
 func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 	if err := a.bindCompositor(registry); err != nil {
-		return err
+		return fmt.Errorf("app: bind wayland globals: compositor: %w", err)
 	}
 	if err := a.bindShellProtocols(registry); err != nil {
-		return err
+		return fmt.Errorf("app: bind wayland globals: shell protocols: %w", err)
 	}
 	// Clipboard support — optional, compositor may not expose it.
 	if err := a.bindDataDeviceManager(registry); err != nil && a.verbose {
@@ -1433,7 +1445,7 @@ func (a *App) bindWaylandGlobals(registry *client.Registry) error {
 		log.Printf("Warning: DMA-BUF unavailable (GPU path disabled): %v", err)
 	}
 	if err := a.bindInputDevices(registry); err != nil {
-		return err
+		return fmt.Errorf("app: bind wayland globals: input devices: %w", err)
 	}
 	return nil
 }
@@ -1460,7 +1472,7 @@ func (a *App) bindDataDeviceManager(registry *client.Registry) error {
 		"wl_data_device_manager not advertised by compositor",
 		"failed to bind wl_data_device_manager")
 	if err != nil {
-		return err
+		return fmt.Errorf("app: bind data device manager: %w", err)
 	}
 	mgr := datadevice.NewManager(a.waylandConn, ddmID)
 	a.waylandConn.RegisterObject(mgr)
@@ -1503,7 +1515,7 @@ func (a *App) bindCompositor(registry *client.Registry) error {
 		"wl_shm not found",
 		"failed to bind shm")
 	if err != nil {
-		return err
+		return fmt.Errorf("app: bind compositor: shm: %w", err)
 	}
 	shmObj := shm.NewSHM(a.waylandConn, shmID)
 	a.waylandConn.RegisterObject(shmObj)
@@ -1711,7 +1723,7 @@ func (a *App) handleWaylandPointerLeave(surfaceID uint32) {
 func (a *App) connectX11(display string) error {
 	conn, err := x11client.Connect(display)
 	if err != nil {
-		return err
+		return fmt.Errorf("app: connect x11: %w", err)
 	}
 	a.x11Conn = conn
 	return nil
@@ -1879,12 +1891,12 @@ func (a *App) eventLoop() error {
 
 		// Process events
 		if err := a.processEvents(); err != nil {
-			return err
+			return fmt.Errorf("app: run loop: process events: %w", err)
 		}
 
 		// Render frames for all windows
 		if err := a.renderFrames(); err != nil {
-			return err
+			return fmt.Errorf("app: run loop: render frames: %w", err)
 		}
 	}
 	return nil
@@ -1944,7 +1956,7 @@ func (a *App) dispatchX11Event(eventBuf []byte) error {
 
 	for _, win := range windows {
 		if err := win.handleX11Event(eventType, eventBuf); err != nil {
-			return err
+			return fmt.Errorf("app: dispatch x11 event: %w", err)
 		}
 	}
 

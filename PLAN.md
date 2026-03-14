@@ -239,7 +239,7 @@ project goals.
 
 ---
 
-### Step 5: Wrap Errors with Context in Library Code (174 violations)
+### ~~Step 5: Wrap Errors with Context in Library Code (174 violations)~~ ✅ DONE
 
 > **Root cause**: `go-stats-generator` reports 174 `bare_error_return` violations in library
 > packages — errors propagated with no `fmt.Errorf("context: %w", err)` wrapping. This makes
@@ -282,7 +282,7 @@ project goals.
 
 ---
 
-### Step 6: Implement AT-SPI2 Screen-Reader Support
+### ~~Step 6: Implement AT-SPI2 Screen-Reader Support~~ ✅ DONE
 
 > **Root cause**: `ACCESSIBILITY.md` explicitly documents AT-SPI2 as "not yet implemented."
 > The `internal/a11y/` package has interface stubs (76 `unused_receiver` violations) but no D-Bus

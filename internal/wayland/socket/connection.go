@@ -174,14 +174,20 @@ func parseFDs(oob []byte) ([]int, error) {
 // This is a convenience wrapper around SendMsg.
 func (c *Conn) Send(data []byte) error {
 	_, err := c.SendMsg(data, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("wayland/socket: send: %w", err)
+	}
+	return nil
 }
 
 // SendWithFDs sends data with file descriptors.
 // This is a convenience wrapper around SendMsg.
 func (c *Conn) SendWithFDs(data []byte, fds []int) error {
 	_, err := c.SendMsg(data, fds)
-	return err
+	if err != nil {
+		return fmt.Errorf("wayland/socket: send with fds: %w", err)
+	}
+	return nil
 }
 
 // SendFD sends a single file descriptor alongside a data message.
@@ -220,7 +226,10 @@ func (c *Conn) Close() error {
 			err = ferr
 		}
 	}
-	return err
+	if err != nil {
+		return fmt.Errorf("wayland/socket: close: %w", err)
+	}
+	return nil
 }
 
 // Fd returns the underlying file descriptor.

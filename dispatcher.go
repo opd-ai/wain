@@ -247,12 +247,34 @@ type FocusManager struct {
 
 	// Currently focused widget index
 	focusedIdx int
+
+	// onFocusChange is an optional hook called whenever focus moves.
+	// The Widget parameter is the newly focused widget (nil when focus is cleared).
+	onFocusChange func(Widget)
 }
 
 // NewFocusManager creates a new focus manager.
 func NewFocusManager() *FocusManager {
 	return &FocusManager{
 		focusedIdx: -1,
+	}
+}
+
+// SetFocusChangeHook installs an optional callback invoked whenever focus moves
+// to a new widget. This is used by the accessibility layer to emit AT-SPI2
+// focus signals without creating a direct dependency on the a11y package.
+// Passing nil removes any existing hook.
+func (fm *FocusManager) SetFocusChangeHook(hook func(Widget)) {
+	fm.mu.Lock()
+	defer fm.mu.Unlock()
+	fm.onFocusChange = hook
+}
+
+// notifyFocusChange calls the installed hook (if any) with the focused widget.
+// Must be called with fm.mu held.
+func (fm *FocusManager) notifyFocusChange(w Widget) {
+	if fm.onFocusChange != nil {
+		fm.onFocusChange(w)
 	}
 }
 
@@ -273,6 +295,7 @@ func (fm *FocusManager) Focus(w Widget) {
 		if widget == w {
 			fm.focusedIdx = i
 			widget.SetFocused(true)
+			fm.notifyFocusChange(widget)
 			return
 		}
 	}
@@ -295,6 +318,7 @@ func (fm *FocusManager) FocusNext() {
 	// Move to next
 	fm.focusedIdx = (fm.focusedIdx + 1) % len(fm.chain)
 	fm.chain[fm.focusedIdx].SetFocused(true)
+	fm.notifyFocusChange(fm.chain[fm.focusedIdx])
 }
 
 // FocusPrev moves focus to the previous widget in the chain.
@@ -317,6 +341,7 @@ func (fm *FocusManager) FocusPrev() {
 		fm.focusedIdx = len(fm.chain) - 1
 	}
 	fm.chain[fm.focusedIdx].SetFocused(true)
+	fm.notifyFocusChange(fm.chain[fm.focusedIdx])
 }
 
 // Focused returns the currently focused widget.
@@ -339,4 +364,5 @@ func (fm *FocusManager) ClearFocus() {
 		fm.chain[fm.focusedIdx].SetFocused(false)
 	}
 	fm.focusedIdx = -1
+	fm.notifyFocusChange(nil)
 }

@@ -2,6 +2,8 @@
 package decorations
 
 import (
+	"fmt"
+
 	"github.com/opd-ai/wain/internal/raster/displaylist"
 	"github.com/opd-ai/wain/internal/raster/primitives"
 	"github.com/opd-ai/wain/internal/raster/text"
@@ -155,12 +157,12 @@ func (w *WindowFrame) Draw(buf *primitives.Buffer, x, y int) error {
 
 	// Draw resize handles
 	if err := w.resizeHandles.Draw(buf, x, y); err != nil {
-		return err
+		return fmt.Errorf("decorations: draw resize handles: %w", err)
 	}
 
 	// Draw title bar (offset by handle width)
 	if err := w.titleBar.Draw(buf, x+handleWidth, y+handleWidth); err != nil {
-		return err
+		return fmt.Errorf("decorations: draw title bar: %w", err)
 	}
 
 	return nil
