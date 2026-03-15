@@ -49,11 +49,13 @@ func TestGPUPresent(t *testing.T) {
 	t.Logf("GPU: %s", gen)
 
 	// Initialize GPU backend.
-	gpuBackend, err := backend.NewGPUBackend(drmRenderNode)
+	cfg := backend.DefaultConfig()
+	cfg.DRMPath = drmRenderNode
+	gpuBackend, err := backend.New(cfg)
 	if err != nil {
 		t.Skipf("Skipping GPU present test: GPU backend unavailable: %v", err)
 	}
-	defer gpuBackend.Close()
+	defer gpuBackend.Destroy()
 
 	// Open X11 connection.
 	displayNum := extractDisplayNum(x11Display)
