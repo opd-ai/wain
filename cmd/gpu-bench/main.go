@@ -91,7 +91,7 @@ func runGPUBench(frames int, maxMs float64) (GPUBenchResult, error) {
 		// on machines where the render node exists but is inaccessible.
 		return GPUBenchResult{Backend: "none", Pass: true}, nil
 	}
-	defer b.Destroy()
+	defer func() { _ = b.Destroy() }()
 
 	dl := buildScene()
 	timings := make([]float64, frames)

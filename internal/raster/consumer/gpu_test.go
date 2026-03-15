@@ -73,7 +73,7 @@ func TestGPUConsumerRender(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	// Create a simple display list with a filled rectangle
 	dl := displaylist.New()
@@ -95,7 +95,7 @@ func TestGPUConsumerRenderNilDisplayList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	err = consumer.Render(nil, nil)
 	if err == nil {
@@ -110,7 +110,7 @@ func TestGPUConsumerRenderMultipleCommands(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	// Create display list with various command types
 	dl := displaylist.New()
@@ -133,7 +133,7 @@ func TestGPUConsumerRenderWithDamage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	dl := displaylist.New()
 	dl.AddFillRect(50, 50, 100, 100, primitives.Color{R: 255, G: 0, B: 0, A: 255})
@@ -160,7 +160,7 @@ func TestGPUConsumerPresent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	// Render something first
 	dl := displaylist.New()
@@ -196,7 +196,7 @@ func TestGPUConsumerDimensions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	w, h := consumer.Dimensions()
 	if w != width || h != height {
@@ -211,18 +211,12 @@ func TestGPUConsumerEmptyDisplayList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	dl := displaylist.New()
 	if err := consumer.Render(dl, nil); err != nil {
 		t.Errorf("Render with empty display list failed: %v", err)
 	}
-}
-
-// gpuAvailable checks if a GPU device is available for testing.
-func gpuAvailable() bool {
-	_, err := os.Stat("/dev/dri/renderD128")
-	return err == nil
 }
 
 // fdMockGPURenderer is a test GPURenderer that returns a file-backed fd from Present.
@@ -271,7 +265,7 @@ func TestGPUConsumerRenderWithBufferInvalidFd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	dl := displaylist.New()
 	buf, err := primitives.NewBuffer(4, 4)
@@ -301,7 +295,7 @@ func TestGPUConsumerCopyToBuffer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	dl := displaylist.New()
 	buf, err := primitives.NewBuffer(width, height)

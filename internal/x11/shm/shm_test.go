@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"syscall"
 	"testing"
 	"unsafe"
 
@@ -833,7 +832,7 @@ func TestProtocolEncodingHelpers(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Test request header encoding
-	wire.EncodeRequestHeader(&buf, 130, 0, 10)
+	_ = wire.EncodeRequestHeader(&buf, 130, 0, 10)
 	if buf.Len() != 4 {
 		t.Errorf("request header length = %d, want 4", buf.Len())
 	}
@@ -846,7 +845,7 @@ func TestProtocolEncodingHelpers(t *testing.T) {
 
 	// Test uint32 encoding
 	buf.Reset()
-	wire.EncodeUint32(&buf, 0x12345678)
+	_ = wire.EncodeUint32(&buf, 0x12345678)
 	if buf.Len() != 4 {
 		t.Errorf("uint32 encoding length = %d, want 4", buf.Len())
 	}
@@ -867,7 +866,7 @@ func TestShmAttachPointerConversion(t *testing.T) {
 	// conversion pattern doesn't cause runtime issues with go vet.
 
 	// Verify the function signature is correct
-	var _ func(uintptr) (unsafe.Pointer, syscall.Errno) = shmAttach
+	var _ = shmAttach
 
 	// Note: Calling shmAttach with an invalid ID will return an error from
 	// the syscall, which is expected behavior. The important thing is that

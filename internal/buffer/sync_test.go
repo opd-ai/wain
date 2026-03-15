@@ -72,7 +72,7 @@ func TestSynchronizer_UnregisterBuffer(t *testing.T) {
 	sync := NewSynchronizer(ring)
 
 	// Register and then unregister
-	sync.RegisterBuffer(100, 0)
+	_ = sync.RegisterBuffer(100, 0)
 	stats := sync.Stats()
 	if stats["registered_count"] != 1 {
 		t.Errorf("registered_count = %d, want 1", stats["registered_count"])
@@ -161,7 +161,7 @@ func TestSynchronizer_OnReleaseEvent_InvalidState(t *testing.T) {
 
 	// Register external buffer ID
 	externalID := uint32(12345)
-	sync.RegisterBuffer(externalID, slot.Index)
+	_ = sync.RegisterBuffer(externalID, slot.Index)
 
 	// Try to release while still in rendering state (should fail)
 	err = sync.OnReleaseEvent(externalID)
@@ -181,11 +181,11 @@ func TestSynchronizer_Reset(t *testing.T) {
 
 	// Acquire slots and register buffers
 	slot1, _ := sync.AcquireForWriting(ctx)
-	sync.RegisterBuffer(100, slot1.Index)
-	sync.MarkDisplaying(slot1.Index)
+	_ = sync.RegisterBuffer(100, slot1.Index)
+	_ = sync.MarkDisplaying(slot1.Index)
 
 	slot2, _ := sync.AcquireForWriting(ctx)
-	sync.RegisterBuffer(200, slot2.Index)
+	_ = sync.RegisterBuffer(200, slot2.Index)
 
 	stats := sync.Stats()
 	if stats["registered_count"] != 2 {
@@ -227,17 +227,17 @@ func TestSynchronizer_FullCycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireForWriting() frame 1 failed: %v", err)
 	}
-	sync.RegisterBuffer(wlBufferID1, slot1.Index)
-	sync.MarkDisplaying(slot1.Index)
-	sync.OnReleaseEvent(wlBufferID1)
+	_ = sync.RegisterBuffer(wlBufferID1, slot1.Index)
+	_ = sync.MarkDisplaying(slot1.Index)
+	_ = sync.OnReleaseEvent(wlBufferID1)
 
 	// Frame 2: acquire, register, display (still showing)
 	slot2, err := sync.AcquireForWriting(ctx)
 	if err != nil {
 		t.Fatalf("AcquireForWriting() frame 2 failed: %v", err)
 	}
-	sync.RegisterBuffer(wlBufferID2, slot2.Index)
-	sync.MarkDisplaying(slot2.Index)
+	_ = sync.RegisterBuffer(wlBufferID2, slot2.Index)
+	_ = sync.MarkDisplaying(slot2.Index)
 
 	// Frame 3: should reacquire slot1 (it was released)
 	slot3, err := sync.AcquireForWriting(ctx)
@@ -251,8 +251,8 @@ func TestSynchronizer_FullCycle(t *testing.T) {
 	// Unregister old buffer from slot1, register new buffer
 	sync.UnregisterBuffer(wlBufferID1)
 	newBufferID := uint32(1003)
-	sync.RegisterBuffer(newBufferID, slot3.Index)
-	sync.MarkDisplaying(slot3.Index)
+	_ = sync.RegisterBuffer(newBufferID, slot3.Index)
+	_ = sync.MarkDisplaying(slot3.Index)
 
 	// Verify state
 	stats := sync.Stats()

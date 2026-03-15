@@ -157,14 +157,14 @@ func CreateGC(conn Connection, drawable XID, mask uint32, attrs []uint32) (XID, 
 	msgLen := uint16(4 + len(attrs))
 
 	// Encode request
-	wire.EncodeRequestHeader(&buf, OpcodeCreateGC, 0, msgLen)
-	wire.EncodeUint32(&buf, uint32(gc))
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint32(&buf, mask)
+	_ = wire.EncodeRequestHeader(&buf, OpcodeCreateGC, 0, msgLen)
+	_ = wire.EncodeUint32(&buf, uint32(gc))
+	_ = wire.EncodeUint32(&buf, uint32(drawable))
+	_ = wire.EncodeUint32(&buf, mask)
 
 	// Encode attribute values
 	for _, attr := range attrs {
-		wire.EncodeUint32(&buf, attr)
+		_ = wire.EncodeUint32(&buf, attr)
 	}
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
@@ -179,8 +179,8 @@ func FreeGC(conn Connection, gc XID) error {
 	var buf bytes.Buffer
 
 	// FreeGC request is 8 bytes total (header + GC ID)
-	wire.EncodeRequestHeader(&buf, OpcodeFreeGC, 0, 2)
-	wire.EncodeUint32(&buf, uint32(gc))
+	_ = wire.EncodeRequestHeader(&buf, OpcodeFreeGC, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(gc))
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("gc: FreeGC failed: %w", err)
@@ -199,11 +199,11 @@ func CreatePixmap(conn Connection, drawable XID, width, height uint16, depth uin
 	var buf bytes.Buffer
 
 	// CreatePixmap request: header(4) + depth(1) + pixmap(4) + drawable(4) + width(2) + height(2)
-	wire.EncodeRequestHeader(&buf, OpcodeCreatePixmap, depth, 4)
-	wire.EncodeUint32(&buf, uint32(pixmap))
-	wire.EncodeUint32(&buf, uint32(drawable))
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
+	_ = wire.EncodeRequestHeader(&buf, OpcodeCreatePixmap, depth, 4)
+	_ = wire.EncodeUint32(&buf, uint32(pixmap))
+	_ = wire.EncodeUint32(&buf, uint32(drawable))
+	_ = wire.EncodeUint16(&buf, width)
+	_ = wire.EncodeUint16(&buf, height)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return 0, fmt.Errorf("gc: CreatePixmap failed: %w", err)
@@ -217,8 +217,8 @@ func FreePixmap(conn Connection, pixmap XID) error {
 	var buf bytes.Buffer
 
 	// FreePixmap request is 8 bytes total
-	wire.EncodeRequestHeader(&buf, OpcodeFreePixmap, 0, 2)
-	wire.EncodeUint32(&buf, uint32(pixmap))
+	_ = wire.EncodeRequestHeader(&buf, OpcodeFreePixmap, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(pixmap))
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("gc: FreePixmap failed: %w", err)
@@ -250,23 +250,23 @@ func PutImage(conn Connection, drawable, gc XID, width, height uint16, xOffset, 
 	msgLen := uint16(6 + (totalDataLen / 4))
 
 	// Encode request header (format goes in data byte)
-	wire.EncodeRequestHeader(&buf, OpcodePutImage, format, msgLen)
+	_ = wire.EncodeRequestHeader(&buf, OpcodePutImage, format, msgLen)
 
 	// Encode parameters
-	wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, xOffset, yOffset)
+	_ = wire.EncodeDrawableGeometry(&buf, uint32(drawable), uint32(gc), width, height, xOffset, yOffset)
 
 	// leftPad (0 for ZPixmap) and depth
 	buf.WriteByte(0)
 	buf.WriteByte(depth)
 
 	// Padding to align image data
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodePadding(&buf, 2)
 
 	// Write image data
 	buf.Write(data)
 
 	// Add padding to 4-byte boundary
-	wire.EncodePadding(&buf, padLen)
+	_ = wire.EncodePadding(&buf, padLen)
 
 	if err := conn.SendRequest(buf.Bytes()); err != nil {
 		return fmt.Errorf("gc: PutImage failed: %w", err)

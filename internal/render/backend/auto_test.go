@@ -122,7 +122,7 @@ func TestNewRendererForceSoftware(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRenderer with ForceSoftware failed: %v", err)
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	if backendType != BackendSoftware {
 		t.Errorf("NewRenderer with ForceSoftware returned %v, want BackendSoftware", backendType)

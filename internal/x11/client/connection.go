@@ -207,23 +207,23 @@ func (c *Connection) CreateWindow(parent XID, x, y int16, width, height, borderW
 	msgLen := uint16(8 + len(attrs))
 
 	// Encode request header
-	wire.EncodeRequestHeader(&buf, wire.OpcodeCreateWindow, c.rootDepth, msgLen)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeCreateWindow, c.rootDepth, msgLen)
 
 	// Encode arguments
-	wire.EncodeUint32(&buf, uint32(wid))
-	wire.EncodeUint32(&buf, uint32(parent))
-	wire.EncodeInt16(&buf, x)
-	wire.EncodeInt16(&buf, y)
-	wire.EncodeUint16(&buf, width)
-	wire.EncodeUint16(&buf, height)
-	wire.EncodeUint16(&buf, borderWidth)
-	wire.EncodeUint16(&buf, class)
-	wire.EncodeUint32(&buf, visual)
-	wire.EncodeUint32(&buf, mask)
+	_ = wire.EncodeUint32(&buf, uint32(wid))
+	_ = wire.EncodeUint32(&buf, uint32(parent))
+	_ = wire.EncodeInt16(&buf, x)
+	_ = wire.EncodeInt16(&buf, y)
+	_ = wire.EncodeUint16(&buf, width)
+	_ = wire.EncodeUint16(&buf, height)
+	_ = wire.EncodeUint16(&buf, borderWidth)
+	_ = wire.EncodeUint16(&buf, class)
+	_ = wire.EncodeUint32(&buf, visual)
+	_ = wire.EncodeUint32(&buf, mask)
 
 	// Encode attribute values
 	for _, attr := range attrs {
-		wire.EncodeUint32(&buf, attr)
+		_ = wire.EncodeUint32(&buf, attr)
 	}
 
 	if err := c.sendRequest(buf.Bytes()); err != nil {
@@ -238,8 +238,8 @@ func (c *Connection) MapWindow(window XID) error {
 	var buf bytes.Buffer
 
 	// MapWindow request is 8 bytes total (header + window ID)
-	wire.EncodeRequestHeader(&buf, wire.OpcodeMapWindow, 0, 2)
-	wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeMapWindow, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(window))
 
 	return c.sendRequest(buf.Bytes())
 }
@@ -249,8 +249,8 @@ func (c *Connection) UnmapWindow(window XID) error {
 	var buf bytes.Buffer
 
 	// UnmapWindow request is 8 bytes total
-	wire.EncodeRequestHeader(&buf, wire.OpcodeUnmapWindow, 0, 2)
-	wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeUnmapWindow, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(window))
 
 	return c.sendRequest(buf.Bytes())
 }
@@ -260,8 +260,8 @@ func (c *Connection) DestroyWindow(window XID) error {
 	var buf bytes.Buffer
 
 	// DestroyWindow request is 8 bytes total
-	wire.EncodeRequestHeader(&buf, wire.OpcodeDestroyWindow, 0, 2)
-	wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeDestroyWindow, 0, 2)
+	_ = wire.EncodeUint32(&buf, uint32(window))
 
 	return c.sendRequest(buf.Bytes())
 }
@@ -294,14 +294,14 @@ func (c *Connection) ConfigureWindow(window XID, mask ConfigureWindowMask, value
 	// Calculate message length: header(4) + window(4) + mask(2) + pad(2) + values(4*count)
 	msgLen := uint16(3 + len(values))
 
-	wire.EncodeRequestHeader(&buf, wire.OpcodeConfigureWindow, 0, msgLen)
-	wire.EncodeUint32(&buf, uint32(window))
-	wire.EncodeUint16(&buf, uint16(mask))
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeConfigureWindow, 0, msgLen)
+	_ = wire.EncodeUint32(&buf, uint32(window))
+	_ = wire.EncodeUint16(&buf, uint16(mask))
+	_ = wire.EncodePadding(&buf, 2)
 
 	// Encode values
 	for _, v := range values {
-		wire.EncodeUint32(&buf, v)
+		_ = wire.EncodeUint32(&buf, v)
 	}
 
 	return c.sendRequest(buf.Bytes())
@@ -321,11 +321,11 @@ func (c *Connection) InternAtom(name string, onlyIfExists bool) (uint32, error) 
 		existsByte = 1
 	}
 
-	wire.EncodeRequestHeader(&buf, wire.OpcodeInternAtom, existsByte, msgLen)
-	wire.EncodeUint16(&buf, uint16(nameLen))
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeInternAtom, existsByte, msgLen)
+	_ = wire.EncodeUint16(&buf, uint16(nameLen))
+	_ = wire.EncodePadding(&buf, 2)
 	buf.WriteString(name)
-	wire.EncodePadding(&buf, namePad)
+	_ = wire.EncodePadding(&buf, namePad)
 
 	reply, err := c.SendRequestAndReply(buf.Bytes())
 	if err != nil {
@@ -359,15 +359,15 @@ func (c *Connection) ChangeProperty(window, property, typ uint32, format, mode u
 		dataItems = uint32(len(data))
 	}
 
-	wire.EncodeRequestHeader(&buf, wire.OpcodeChangeProperty, mode, msgLen)
-	wire.EncodeUint32(&buf, window)
-	wire.EncodeUint32(&buf, property)
-	wire.EncodeUint32(&buf, typ)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeChangeProperty, mode, msgLen)
+	_ = wire.EncodeUint32(&buf, window)
+	_ = wire.EncodeUint32(&buf, property)
+	_ = wire.EncodeUint32(&buf, typ)
 	buf.WriteByte(format)
-	wire.EncodePadding(&buf, 3)
-	wire.EncodeUint32(&buf, dataItems)
+	_ = wire.EncodePadding(&buf, 3)
+	_ = wire.EncodeUint32(&buf, dataItems)
 	buf.Write(data)
-	wire.EncodePadding(&buf, dataPad)
+	_ = wire.EncodePadding(&buf, dataPad)
 
 	return c.sendRequest(buf.Bytes())
 }
@@ -387,9 +387,9 @@ func (c *Connection) SendEvent(destination uint32, propagate bool, eventMask uin
 	}
 
 	// Total: header(4) + dest(4) + mask(4) + event(32) = 44 bytes = 11 units
-	wire.EncodeRequestHeader(&buf, wire.OpcodeSendEvent, propagateByte, 11)
-	wire.EncodeUint32(&buf, destination)
-	wire.EncodeUint32(&buf, eventMask)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeSendEvent, propagateByte, 11)
+	_ = wire.EncodeUint32(&buf, destination)
+	_ = wire.EncodeUint32(&buf, eventMask)
 	buf.Write(event)
 
 	return c.sendRequest(buf.Bytes())
@@ -451,11 +451,11 @@ func (c *Connection) ExtensionOpcode(name string) (uint8, error) {
 	msgLen := uint16(2 + (nameLen+namePad)/4)
 
 	// Encode QueryExtension request
-	wire.EncodeRequestHeader(&buf, wire.OpcodeQueryExtension, 0, msgLen)
-	wire.EncodeUint16(&buf, uint16(nameLen))
-	wire.EncodePadding(&buf, 2)
+	_ = wire.EncodeRequestHeader(&buf, wire.OpcodeQueryExtension, 0, msgLen)
+	_ = wire.EncodeUint16(&buf, uint16(nameLen))
+	_ = wire.EncodePadding(&buf, 2)
 	buf.WriteString(name)
-	wire.EncodePadding(&buf, namePad)
+	_ = wire.EncodePadding(&buf, namePad)
 
 	reply, err := c.SendRequestAndReply(buf.Bytes())
 	if err != nil {

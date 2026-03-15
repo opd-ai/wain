@@ -135,7 +135,7 @@ func runWaylandDemo() error {
 	if err != nil {
 		return err
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	pipeline, err := createWaylandPipeline(surface, dmabufObj, renderer)
 	if err != nil {
@@ -251,7 +251,7 @@ func runX11Demo() error {
 	if err != nil {
 		return err
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	pipeline, err := createX11Pipeline(conn, window, dri3Ext, presentExt, renderer)
 	if err != nil {
@@ -284,7 +284,7 @@ func queryX11Extensions(conn *x11client.Connection) (*dri3.Extension, *present.E
 
 	presentExt, err := present.QueryExtension(newPresentAdapter(conn))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Present extension not available: %w", err)
+		return nil, nil, fmt.Errorf("present extension not available: %w", err)
 	}
 
 	return dri3Ext, presentExt, nil

@@ -131,13 +131,13 @@ func TestRing_AcquireTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireForWriting() failed: %v", err)
 	}
-	ring.MarkDisplaying(slot1.Index)
+	_ = ring.MarkDisplaying(slot1.Index)
 
 	slot2, err := ring.AcquireForWriting(ctx)
 	if err != nil {
 		t.Fatalf("second AcquireForWriting() failed: %v", err)
 	}
-	ring.MarkDisplaying(slot2.Index)
+	_ = ring.MarkDisplaying(slot2.Index)
 
 	// Try to acquire with timeout (should fail)
 	ctxTimeout, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
@@ -163,7 +163,7 @@ func TestRing_WaitRelease(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireForWriting() failed: %v", err)
 	}
-	ring.MarkDisplaying(slot.Index)
+	_ = ring.MarkDisplaying(slot.Index)
 
 	// Start a goroutine that waits for release
 	done := make(chan error, 1)
@@ -203,7 +203,7 @@ func TestRing_WaitReleaseTimeout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AcquireForWriting() failed: %v", err)
 	}
-	ring.MarkDisplaying(slot.Index)
+	_ = ring.MarkDisplaying(slot.Index)
 
 	// Wait with short timeout (should fail)
 	ctxTimeout, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
@@ -248,8 +248,8 @@ func TestRing_ConcurrentAcquire(t *testing.T) {
 				// Simulate work
 				time.Sleep(time.Microsecond)
 
-				ring.MarkDisplaying(slot.Index)
-				ring.MarkReleased(slot.Index)
+				_ = ring.MarkDisplaying(slot.Index)
+				_ = ring.MarkReleased(slot.Index)
 			}
 		}()
 	}
@@ -293,7 +293,7 @@ func TestRing_InvalidStateTransitions(t *testing.T) {
 	}
 
 	// Mark as displaying
-	ring.MarkDisplaying(slot.Index)
+	_ = ring.MarkDisplaying(slot.Index)
 
 	// Try to mark as displaying again
 	err = ring.MarkDisplaying(slot.Index)
@@ -312,7 +312,7 @@ func TestRing_Reset(t *testing.T) {
 
 	// Acquire and mark slots in various states
 	slot1, _ := ring.AcquireForWriting(ctx)
-	ring.MarkDisplaying(slot1.Index)
+	_ = ring.MarkDisplaying(slot1.Index)
 
 	slot2, _ := ring.AcquireForWriting(ctx)
 	// Leave slot2 in rendering state
@@ -421,14 +421,14 @@ func TestRing_Stats(t *testing.T) {
 	}
 
 	// Mark displaying
-	ring.MarkDisplaying(slot1.Index)
+	_ = ring.MarkDisplaying(slot1.Index)
 	stats = ring.Stats()
 	if stats["displaying"] != 1 || stats["available"] != 3 {
 		t.Errorf("after displaying: stats = %v, want {displaying:1 available:3}", stats)
 	}
 
 	// Mark released
-	ring.MarkReleased(slot1.Index)
+	_ = ring.MarkReleased(slot1.Index)
 	stats = ring.Stats()
 	if stats["released"] != 1 || stats["available"] != 3 {
 		t.Errorf("after released: stats = %v, want {released:1 available:3}", stats)
@@ -449,8 +449,8 @@ func BenchmarkRing_AcquireRelease(b *testing.B) {
 		if err != nil {
 			b.Fatalf("AcquireForWriting() failed: %v", err)
 		}
-		ring.MarkDisplaying(slot.Index)
-		ring.MarkReleased(slot.Index)
+		_ = ring.MarkDisplaying(slot.Index)
+		_ = ring.MarkReleased(slot.Index)
 	}
 }
 
@@ -469,8 +469,8 @@ func BenchmarkRing_ConcurrentAcquireRelease(b *testing.B) {
 			if err != nil {
 				b.Fatalf("AcquireForWriting() failed: %v", err)
 			}
-			ring.MarkDisplaying(slot.Index)
-			ring.MarkReleased(slot.Index)
+			_ = ring.MarkDisplaying(slot.Index)
+			_ = ring.MarkReleased(slot.Index)
 		}
 	})
 }

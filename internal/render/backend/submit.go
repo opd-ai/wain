@@ -10,13 +10,6 @@ import (
 	"github.com/opd-ai/wain/internal/render"
 )
 
-// submitBatches builds and submits a GPU batch buffer for all batches.
-//
-// Phase 5.1 complete implementation with full 3D pipeline state and draw calls.
-func (b *GPUBackend) submitBatches(batches []Batch, vertexData []byte) error {
-	return b.submitBatchesWithScissor(batches, vertexData, nil)
-}
-
 // submitBatchesWithScissor builds and submits a GPU batch buffer with optional scissor rects.
 //
 // Phase 5.4 implementation: damage tracking with scissor clipping.
@@ -35,7 +28,7 @@ func (b *GPUBackend) submitBatchesWithScissor(batches []Batch, vertexData []byte
 	if err != nil {
 		return fmt.Errorf("submit: allocate batch buffer: %w", err)
 	}
-	defer batchBuffer.Destroy()
+	defer func() { _ = batchBuffer.Destroy() }()
 
 	batchData, relocs := b.buildBatchBuffer(batches, 0, len(vertexData)/20, scissorRects)
 
@@ -120,7 +113,7 @@ func (b *GPUBackend) writeBufferData(buffer *render.BufferHandle, data []byte, b
 	if err != nil {
 		return fmt.Errorf("mmap %s buffer: %w", bufferType, err)
 	}
-	defer syscall.Munmap(mem)
+	defer func() { _ = syscall.Munmap(mem) }()
 
 	copy(mem, data)
 	return nil

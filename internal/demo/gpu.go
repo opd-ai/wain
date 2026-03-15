@@ -59,7 +59,7 @@ func AllocateBuffer(allocator *render.Allocator, width, height, bpp uint32) (*re
 	if err != nil {
 		return nil, nil, fmt.Errorf("allocate buffer: %w", err)
 	}
-	return buffer, func() { buffer.Destroy() }, nil
+	return buffer, func() { _ = buffer.Destroy() }, nil
 }
 
 // It displays a simple progress message with the given step number.

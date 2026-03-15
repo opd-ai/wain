@@ -88,9 +88,21 @@ func FuzzDecodeUint8(f *testing.F) {
 			return
 		}
 
-		// Verify we got a valid uint8
-		if value > 255 {
-			t.Errorf("decoded value %d exceeds uint8 max", value)
+		// Roundtrip: encode the decoded value and decode again
+		var buf bytes.Buffer
+		if err := wire.EncodeUint8(&buf, value); err != nil {
+			t.Errorf("failed to encode decoded value %d: %v", value, err)
+			return
+		}
+
+		decoded, err := wire.DecodeUint8(&buf)
+		if err != nil {
+			t.Errorf("failed to decode encoded value %d: %v", value, err)
+			return
+		}
+
+		if decoded != value {
+			t.Errorf("roundtrip mismatch: original %d, roundtrip %d", value, decoded)
 		}
 	})
 }

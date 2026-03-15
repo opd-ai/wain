@@ -142,13 +142,13 @@ func (p *Panel) Add(child PublicWidget) {
 	case *Panel:
 		p.internal.Add(c.internal)
 	case *Row:
-		p.internal.Add(c.Panel.internal)
+		p.internal.Add(c.internal)
 	case *Column:
-		p.internal.Add(c.Panel.internal)
+		p.internal.Add(c.internal)
 	case *Stack:
-		p.internal.Add(c.Panel.internal)
+		p.internal.Add(c.internal)
 	case *Grid:
-		p.internal.Add(c.Panel.internal)
+		p.internal.Add(c.internal)
 	}
 }
 

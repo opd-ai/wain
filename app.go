@@ -122,7 +122,6 @@ type App struct {
 
 	// X11-specific objects
 	x11Window       x11client.XID
-	x11GC           x11client.XID
 	x11SelectionMgr *selection.Manager
 
 	// Wayland clipboard objects
@@ -287,7 +286,6 @@ type Window struct {
 
 	// Platform-specific objects (X11)
 	x11Window x11client.XID
-	x11GC     x11client.XID
 
 	// Event handlers
 	onResize      func(width, height int)
@@ -1417,11 +1415,11 @@ func (a *App) tryWaylandConnection() error {
 
 	waylandPath := fmt.Sprintf("%s/%s", xdgRuntimeDir, waylandDisplay)
 	if _, err := os.Stat(waylandPath); err != nil {
-		return fmt.Errorf("Wayland socket not found at %s: %w", waylandPath, err)
+		return fmt.Errorf("wayland socket not found at %s: %w", waylandPath, err)
 	}
 
 	if err := a.connectWayland(waylandPath); err != nil {
-		return fmt.Errorf("Wayland connection to %s failed: %w", waylandPath, err)
+		return fmt.Errorf("wayland connection to %s failed: %w", waylandPath, err)
 	}
 
 	a.displayServer = DisplayServerWayland
@@ -2210,7 +2208,7 @@ func (a *App) cleanup() {
 	}
 
 	if a.renderer != nil {
-		a.renderer.Destroy()
+		_ = a.renderer.Destroy()
 		a.renderer = nil
 	}
 

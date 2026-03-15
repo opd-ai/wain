@@ -39,9 +39,9 @@ func QueryExtensionVersion(conn Connection, extensionName string, queryVersionOp
 
 	// Build QueryVersion request
 	var buf bytes.Buffer
-	EncodeRequestHeader(&buf, baseOpcode+queryVersionOpcode, 0, 3)
-	EncodeUint32(&buf, clientMajor)
-	EncodeUint32(&buf, clientMinor)
+	_ = EncodeRequestHeader(&buf, baseOpcode+queryVersionOpcode, 0, 3)
+	_ = EncodeUint32(&buf, clientMajor)
+	_ = EncodeUint32(&buf, clientMinor)
 
 	// Send request and get reply
 	reply, err := conn.SendRequestAndReply(buf.Bytes())

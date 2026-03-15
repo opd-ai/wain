@@ -298,9 +298,15 @@ func (t *TitleBar) Draw(buf *primitives.Buffer, x, y int) error {
 	minX, maxX, closeX := t.buttonPositions()
 	spacing := t.theme.ButtonSpacing
 
-	t.minBtn.Draw(buf, x+minX, y+spacing)
-	t.maxBtn.Draw(buf, x+maxX, y+spacing)
-	t.closeBtn.Draw(buf, x+closeX, y+spacing)
+	if err := t.minBtn.Draw(buf, x+minX, y+spacing); err != nil {
+		return err
+	}
+	if err := t.maxBtn.Draw(buf, x+maxX, y+spacing); err != nil {
+		return err
+	}
+	if err := t.closeBtn.Draw(buf, x+closeX, y+spacing); err != nil {
+		return err
+	}
 
 	return nil
 }

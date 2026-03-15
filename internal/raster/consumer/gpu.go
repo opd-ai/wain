@@ -127,7 +127,7 @@ func (gc *GPUConsumer) copyToBuffer(buf *primitives.Buffer) error {
 	if err != nil {
 		return fmt.Errorf("readback: mmap render target: %w", err)
 	}
-	defer syscall.Munmap(mem)
+	defer func() { _ = syscall.Munmap(mem) }()
 
 	if len(buf.Pixels) < size {
 		buf.Pixels = make([]byte, size)

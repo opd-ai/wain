@@ -195,9 +195,9 @@ func (app *application) render() {
 		primitives.Color{R: 50, G: 50, B: 50, A: 255})
 
 	// Buttons row
-	app.clickButton.Draw(app.buffer, 50, 60)
-	app.resetButton.Draw(app.buffer, 220, 60)
-	app.quitButton.Draw(app.buffer, 390, 60)
+	_ = app.clickButton.Draw(app.buffer, 50, 60)
+	_ = app.resetButton.Draw(app.buffer, 220, 60)
+	_ = app.quitButton.Draw(app.buffer, 390, 60)
 
 	// Status label
 	statusText := fmt.Sprintf("Status: %s", app.statusLabel)
@@ -207,12 +207,12 @@ func (app *application) render() {
 	// Text input
 	renderText(app.buffer, "Text Input:", 50, 160,
 		primitives.Color{R: 70, G: 70, B: 70, A: 255})
-	app.textInput.Draw(app.buffer, 50, 185)
+	_ = app.textInput.Draw(app.buffer, 50, 185)
 
 	// Scroll container
 	renderText(app.buffer, "Scrollable List:", 50, 240,
 		primitives.Color{R: 70, G: 70, B: 70, A: 255})
-	app.scrollList.Draw(app.buffer, 50, 265)
+	_ = app.scrollList.Draw(app.buffer, 50, 265)
 
 	// Scroll position indicator
 	scrollText := fmt.Sprintf("Scroll: %dpx / %dpx", app.scrollOffset, 1800)
@@ -225,91 +225,6 @@ func (app *application) render() {
 		primitives.Color{R: 120, G: 120, B: 120, A: 255})
 
 	app.needsRedraw = false
-}
-
-// handleMouseMove processes mouse movement events.
-func (app *application) handleMouseMove(x, y int) {
-	app.lastMouseX = x
-	app.lastMouseY = y
-
-	// Check hover states for buttons
-	inButton1 := pointInRect(x, y, 50, 60, 150, 40)
-	inButton2 := pointInRect(x, y, 220, 60, 150, 40)
-	inButton3 := pointInRect(x, y, 390, 60, 150, 40)
-
-	if inButton1 {
-		app.clickButton.HandlePointerEnter()
-	} else {
-		app.clickButton.HandlePointerLeave()
-	}
-
-	if inButton2 {
-		app.resetButton.HandlePointerEnter()
-	} else {
-		app.resetButton.HandlePointerLeave()
-	}
-
-	if inButton3 {
-		app.quitButton.HandlePointerEnter()
-	} else {
-		app.quitButton.HandlePointerLeave()
-	}
-
-	app.needsRedraw = true
-}
-
-// handleMouseClick processes mouse click events.
-func (app *application) handleMouseClick(x, y int, button uint32) {
-	// Check which button was clicked
-	if pointInRect(x, y, 50, 60, 150, 40) {
-		app.clickButton.HandlePointerDown(button)
-		app.clickButton.HandlePointerUp(button)
-	} else if pointInRect(x, y, 220, 60, 150, 40) {
-		app.resetButton.HandlePointerDown(button)
-		app.resetButton.HandlePointerUp(button)
-	} else if pointInRect(x, y, 390, 60, 150, 40) {
-		app.quitButton.HandlePointerDown(button)
-		app.quitButton.HandlePointerUp(button)
-	}
-
-	app.needsRedraw = true
-}
-
-// handleMouseScroll processes mouse wheel scroll events.
-func (app *application) handleMouseScroll(x, y, delta int) {
-	// Check if scroll is over the scroll container area
-	if pointInRect(x, y, 50, 265, 400, 200) {
-		app.scrollOffset += delta * 20
-		app.scrollList.SetScrollOffset(app.scrollOffset)
-		app.scrollOffset = app.scrollList.ScrollOffset() // Get clamped value
-		app.statusLabel = fmt.Sprintf("Scrolled to %dpx", app.scrollOffset)
-		app.needsRedraw = true
-	}
-}
-
-// handleKeyPress processes keyboard events.
-func (app *application) handleKeyPress(key string) {
-	if key == "Escape" {
-		app.running = false
-		app.statusLabel = "Quit via Escape key"
-		app.needsRedraw = true
-		return
-	}
-
-	// Update text input
-	if key == "BackSpace" && len(app.inputText) > 0 {
-		app.inputText = app.inputText[:len(app.inputText)-1]
-	} else if len(key) == 1 && len(app.inputText) < 50 {
-		app.inputText += key
-	}
-
-	app.statusLabel = fmt.Sprintf("Input: %s", app.inputText)
-	app.needsRedraw = true
-}
-
-// pointInRect checks if a point is inside a rectangle.
-func pointInRect(px, py, rx, ry, rw, rh int) bool {
-	return px >= rx && px < rx+rw && py >= ry && py < ry+rh
 }
 
 // renderText is a simple text rendering helper.

@@ -143,7 +143,7 @@ func (ta *TextureAtlas) UploadFontAtlas(sdfData []uint8, width, height int) erro
 	if err != nil {
 		return fmt.Errorf("atlas: failed to mmap font atlas buffer: %w", err)
 	}
-	defer buf.Munmap(data)
+	defer func() { _ = buf.Munmap(data) }()
 
 	// Copy SDF data to mapped GPU memory
 	if len(sdfData) > len(data) {
@@ -378,7 +378,7 @@ func (ta *TextureAtlas) UploadImageData(imageID int, pixels []uint8, width, heig
 	if err != nil {
 		return fmt.Errorf("atlas: failed to mmap image page buffer: %w", err)
 	}
-	defer page.Buffer.Munmap(data)
+	defer func() { _ = page.Buffer.Munmap(data) }()
 
 	// Calculate destination offset and copy pixels row by row
 	pageStride := page.Width * 4 // 4 bytes per pixel (RGBA)
@@ -414,7 +414,7 @@ func (ta *TextureAtlas) evictLRURegions(neededWidth, neededHeight int) bool {
 	evictCount := max(1, len(sortedIDs)/4)
 
 	for i := 0; i < evictCount && i < len(sortedIDs); i++ {
-		ta.FreeImageRegion(sortedIDs[i])
+		_ = ta.FreeImageRegion(sortedIDs[i])
 	}
 
 	return true

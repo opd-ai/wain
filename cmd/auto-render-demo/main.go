@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create renderer: %v", err)
 	}
-	defer renderer.Destroy()
+	defer func() { _ = renderer.Destroy() }()
 
 	log.Printf("Using backend: %s", backendType)
 

@@ -192,7 +192,7 @@ func BenchmarkGetGlyph(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		atlas.GetGlyph('A')
+		_, _ = atlas.GetGlyph('A')
 	}
 }
 

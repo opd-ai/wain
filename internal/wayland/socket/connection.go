@@ -144,6 +144,14 @@ func (c *Conn) RecvMsg(data []byte, maxFDs int) (n int, fds []int, err error) {
 		if err != nil {
 			return n, nil, err
 		}
+
+		// Enforce caller's FD limit: close any extras.
+		if len(fds) > maxFDs {
+			for _, fd := range fds[maxFDs:] {
+				syscall.Close(fd)
+			}
+			fds = fds[:maxFDs]
+		}
 	}
 
 	return n, fds, nil

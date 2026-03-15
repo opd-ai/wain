@@ -6,40 +6,41 @@ import (
 )
 
 // basePath is the root D-Bus object path prefix for all accessible objects.
-const basePath = "/org/a11y/atspi/accessible"
+// Used by atspi build-tagged code in accessible_iface.go and manager.go.
+const basePath = "/org/a11y/atspi/accessible" //nolint:unused // used with -tags=atspi
 
 // AccessibleObject holds the accessibility metadata for a single widget.
 // It is exported over D-Bus via four AT-SPI2 interfaces.
 type AccessibleObject struct {
 	mu sync.RWMutex
 
-	id          uint64
-	parentID    uint64
-	childIDs    []uint64
-	role        Role
+	id          uint64         //nolint:unused // used with -tags=atspi
+	parentID    uint64         //nolint:unused // used with -tags=atspi
+	childIDs    []uint64       //nolint:unused // used with -tags=atspi
+	role        Role           //nolint:unused // used with -tags=atspi
 	name        string
-	description string
+	description string         //nolint:unused // used with -tags=atspi
 	x, y        int32
 	width       int32
 	height      int32
 	focused     bool
-	enabled     bool
+	enabled     bool           //nolint:unused // used with -tags=atspi
 	text        string
-	caretOffset int32
-	actions     []objectAction
-	manager     *Manager
+	caretOffset int32          //nolint:unused // used with -tags=atspi
+	actions     []objectAction //nolint:unused // used with -tags=atspi
+	manager     *Manager       //nolint:unused // used with -tags=atspi
 }
 
 // objectAction represents one activatable action exposed via the Action interface.
-type objectAction struct {
-	name        string
-	description string
-	keyBinding  string
-	do          func() bool
+type objectAction struct { //nolint:unused // used with -tags=atspi
+	name        string       //nolint:unused // used with -tags=atspi
+	description string       //nolint:unused // used with -tags=atspi
+	keyBinding  string       //nolint:unused // used with -tags=atspi
+	do          func() bool  //nolint:unused // used with -tags=atspi
 }
 
 // objectPath returns the D-Bus object path for this accessible object.
-func (o *AccessibleObject) objectPath() string {
+func (o *AccessibleObject) objectPath() string { //nolint:unused // used with -tags=atspi
 	return fmt.Sprintf("%s/%d", basePath, o.id)
 }
 
@@ -72,39 +73,39 @@ func (o *AccessibleObject) SetName(name string) {
 }
 
 // addChild registers a child object ID in the ordered child list.
-func (o *AccessibleObject) addChild(childID uint64) {
+func (o *AccessibleObject) addChild(childID uint64) { //nolint:unused // used with -tags=atspi
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	o.childIDs = append(o.childIDs, childID)
 }
 
 // states builds the current StateSet for this object.
-func (o *AccessibleObject) states() StateSet {
+func (o *AccessibleObject) states() StateSet { //nolint:unused // used with -tags=atspi
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	return defaultStates(o.focused, o.enabled)
 }
 
 // snapshot holds an immutable snapshot of object fields for D-Bus methods.
-type snapshot struct {
-	id          uint64
-	parentID    uint64
-	childIDs    []uint64
-	role        Role
-	name        string
-	description string
-	x, y        int32
-	width       int32
-	height      int32
-	focused     bool
-	enabled     bool
-	text        string
-	caretOffset int32
-	actions     []objectAction
+type snapshot struct { //nolint:unused // used with -tags=atspi
+	id          uint64         //nolint:unused // used with -tags=atspi
+	parentID    uint64         //nolint:unused // used with -tags=atspi
+	childIDs    []uint64       //nolint:unused // used with -tags=atspi
+	role        Role           //nolint:unused // used with -tags=atspi
+	name        string         //nolint:unused // used with -tags=atspi
+	description string         //nolint:unused // used with -tags=atspi
+	x, y        int32          //nolint:unused // used with -tags=atspi
+	width       int32          //nolint:unused // used with -tags=atspi
+	height      int32          //nolint:unused // used with -tags=atspi
+	focused     bool           //nolint:unused // used with -tags=atspi
+	enabled     bool           //nolint:unused // used with -tags=atspi
+	text        string         //nolint:unused // used with -tags=atspi
+	caretOffset int32          //nolint:unused // used with -tags=atspi
+	actions     []objectAction //nolint:unused // used with -tags=atspi
 }
 
 // snap returns an immutable copy of the object's current state.
-func (o *AccessibleObject) snap() snapshot {
+func (o *AccessibleObject) snap() snapshot { //nolint:unused // used with -tags=atspi
 	o.mu.RLock()
 	defer o.mu.RUnlock()
 	ids := make([]uint64, len(o.childIDs))

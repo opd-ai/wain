@@ -33,7 +33,7 @@ func runPerfTests() error {
 	if err != nil {
 		return err
 	}
-	defer b.Destroy()
+	defer func() { _ = b.Destroy() }()
 
 	runScenarioBenchmarks(b)
 	printMemoryStatistics()
@@ -86,7 +86,7 @@ func benchmarkScenario(b *backend.GPUBackend, name string, commands, rects, text
 	dl := createWorkload(rects, texts, shadows)
 
 	// Warm up (first frame may allocate)
-	b.Render(dl)
+	_ = b.Render(dl)
 
 	// Reset stats and render test frames
 	b.ResetFrameStats()

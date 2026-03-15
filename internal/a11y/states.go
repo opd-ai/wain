@@ -5,15 +5,17 @@ package a11y
 // to a state index. Values match the AtspiStateType enumeration.
 type StateIndex uint
 
+// State constants match the AtspiStateType enumeration.
+// Used by atspi build-tagged code in object.go and manager.go.
 const (
-	stateActive    StateIndex = 0
-	stateEnabled   StateIndex = 11
-	stateFocusable StateIndex = 12
-	stateFocused   StateIndex = 13
-	stateEditable  StateIndex = 10
-	stateVisible   StateIndex = 27
-	stateShowing   StateIndex = 26
-	stateSensitive StateIndex = 28
+	stateActive    StateIndex = 0  //nolint:unused // used with -tags=atspi
+	stateEnabled   StateIndex = 11 //nolint:unused // used with -tags=atspi
+	stateFocusable StateIndex = 12 //nolint:unused // used with -tags=atspi
+	stateFocused   StateIndex = 13 //nolint:unused // used with -tags=atspi
+	stateEditable  StateIndex = 10 //nolint:unused // used with -tags=atspi
+	stateVisible   StateIndex = 27 //nolint:unused // used with -tags=atspi
+	stateShowing   StateIndex = 26 //nolint:unused // used with -tags=atspi
+	stateSensitive StateIndex = 28 //nolint:unused // used with -tags=atspi
 )
 
 // StateSet encodes AT-SPI2 widget states as a pair of uint32 bitfields.
@@ -52,7 +54,7 @@ func (s StateSet) Uint32s() []uint32 {
 }
 
 // defaultStates returns the base StateSet applied to all visible widgets.
-func defaultStates(focused, enabled bool) StateSet {
+func defaultStates(focused, enabled bool) StateSet { //nolint:unused // used with -tags=atspi
 	var ss StateSet
 	ss.Set(stateVisible)
 	ss.Set(stateShowing)

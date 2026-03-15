@@ -49,14 +49,14 @@ func EncodeSetupRequest(w io.Writer, req SetupRequest) error {
 	buf.WriteByte(req.ByteOrder)
 	buf.WriteByte(0) // Padding
 
-	binary.Write(&buf, binary.LittleEndian, req.ProtocolMajorVersion)
-	binary.Write(&buf, binary.LittleEndian, req.ProtocolMinorVersion)
+	_ = binary.Write(&buf, binary.LittleEndian, req.ProtocolMajorVersion)
+	_ = binary.Write(&buf, binary.LittleEndian, req.ProtocolMinorVersion)
 
 	authNameLen := uint16(len(req.AuthName))
 	authDataLen := uint16(len(req.AuthData))
 
-	binary.Write(&buf, binary.LittleEndian, authNameLen)
-	binary.Write(&buf, binary.LittleEndian, authDataLen)
+	_ = binary.Write(&buf, binary.LittleEndian, authNameLen)
+	_ = binary.Write(&buf, binary.LittleEndian, authDataLen)
 	buf.WriteByte(0) // Padding
 	buf.WriteByte(0) // Padding
 

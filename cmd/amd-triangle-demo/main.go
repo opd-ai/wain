@@ -126,7 +126,7 @@ func createGPUBuffer(ctx *demoContext) (*render.BufferHandle, func(), error) {
 	fmt.Println("       ✓ All 7 UI shaders compile to RDNA ISA")
 	fmt.Println("       ✓ Command submission infrastructure exists")
 
-	cleanup := func() { buffer.Destroy() }
+	cleanup := func() { _ = buffer.Destroy() }
 	return buffer, cleanup, nil
 }
 

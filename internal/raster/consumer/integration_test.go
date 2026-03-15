@@ -143,7 +143,7 @@ func TestGPUConsumerIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGPUConsumer failed: %v", err)
 	}
-	defer consumer.Destroy()
+	defer func() { _ = consumer.Destroy() }()
 
 	atlas, err := text.NewAtlas()
 	if err != nil {

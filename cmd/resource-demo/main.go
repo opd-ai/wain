@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -70,7 +69,7 @@ func main() {
 	fmt.Println("Window will remain open for 2 seconds...")
 
 	// Keep window open briefly
-	win.SetTitle("Resource Demo - Success")
+	_ = win.SetTitle("Resource Demo - Success")
 
 	// Note: In a real app, you'd call app.Run() here to start the event loop.
 	// For this demo, we're just testing the resource loading APIs.
@@ -113,9 +112,4 @@ func saveImage(img image.Image, path string) error {
 	return png.Encode(f, img)
 }
 
-// encodeImageToPNG encodes an image to PNG format in memory.
-func encodeImageToPNG(img image.Image) *bytes.Buffer {
-	var buf bytes.Buffer
-	png.Encode(&buf, img)
-	return &buf
-}
+

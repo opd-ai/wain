@@ -84,7 +84,7 @@ func TestBatchConstruction(t *testing.T) {
 	if err != nil {
 		t.Skipf("GPU hardware required: failed to allocate buffer: %v", err)
 	}
-	defer batchBuf.Destroy()
+	defer func() { _ = batchBuf.Destroy() }()
 
 	// Construct minimal valid batch for detected GPU
 	batch := buildMinimalBatch(gen)
@@ -186,7 +186,7 @@ func TestBatchSubmission(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to allocate batch buffer: %v", err)
 	}
-	defer batchBuf.Destroy()
+	defer func() { _ = batchBuf.Destroy() }()
 
 	// Build minimal batch for detected GPU
 	batch := buildMinimalBatch(gen)
@@ -248,7 +248,7 @@ func TestBatchSubmissionWithRenderTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to allocate render target: %v", err)
 	}
-	defer renderTarget.Destroy()
+	defer func() { _ = renderTarget.Destroy() }()
 
 	// Allocate batch buffer
 	const batchSize = 8 * 1024
@@ -256,7 +256,7 @@ func TestBatchSubmissionWithRenderTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to allocate batch buffer: %v", err)
 	}
-	defer batchBuf.Destroy()
+	defer func() { _ = batchBuf.Destroy() }()
 
 	// Build batch referencing render target (GPU-specific)
 	batch := buildBatchWithRenderTarget(gen, renderTarget.GemHandle())
@@ -348,7 +348,7 @@ func TestBatchSubmissionMultipleContexts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to allocate batch buffer: %v", err)
 	}
-	defer batchBuf.Destroy()
+	defer func() { _ = batchBuf.Destroy() }()
 
 	// Build GPU-specific batch
 	batch := buildMinimalBatch(gen)
@@ -424,7 +424,7 @@ func TestBufferExportDmabuf(t *testing.T) {
 	if err != nil {
 		t.Skipf("GPU hardware required: failed to allocate buffer: %v", err)
 	}
-	defer buf.Destroy()
+	defer func() { _ = buf.Destroy() }()
 
 	// Export DMA-BUF fd
 	fd, err := allocator.ExportDmabuf(buf)
