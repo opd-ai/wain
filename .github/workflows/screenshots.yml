@@ -1,0 +1,44 @@
+name: Screenshots
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-screenshots:
+    name: Generate demo screenshots
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Generate screenshots
+        run: go run ./cmd/gen-screenshots -o screenshots
+
+      - name: Post screenshot summary
+        if: always()
+        run: |
+          echo "## Demo Screenshots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for f in screenshots/*.png; do
+            name=$(basename "$f" .png)
+            echo "- **${name}** ($(stat -c%s "$f") bytes)" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-screenshots
+          path: screenshots/
+          retention-days: 30

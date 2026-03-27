@@ -24,6 +24,9 @@ target
 # Go build output
 bin/
 
+# Generated screenshots (CI artifact, not committed)
+screenshots/
+
 # Analysis tool outputs (go-stats-generator, gosec, staticcheck)
 *-baseline.json
 *-post.json

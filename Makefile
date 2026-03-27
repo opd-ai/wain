@@ -10,6 +10,7 @@
 #   make x11-demo     – build the X11 demonstration binary
 #   make widget-demo  – build the interactive widget demonstration binary
 #   make gen-atlas    – build the SDF font atlas generator tool
+#   make screenshots  – generate demo screenshots (pure Go, no CGO)
 #   make test         – run both Rust and Go test suites
 #   make test-visual  – run visual regression tests for rendering primitives
 #   make coverage     – run Go tests with coverage reporting
@@ -62,7 +63,7 @@ GO_PKG       := github.com/opd-ai/wain/cmd/wain
 GEN_ATLAS_BIN := bin/gen-atlas
 GEN_ATLAS_PKG := github.com/opd-ai/wain/cmd/gen-atlas
 
-.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo gpu-ui-demo stats wain-demo event-demo example-app bench
+.PHONY: all build rust go test test-rust test-go test-visual coverage coverage-html clean check-static check-deps gen-atlas screenshots wayland-demo x11-demo x11-dmabuf-demo widget-demo gpu-triangle-demo gpu-shader-demo double-buffer-demo dmabuf-demo gpu-ui-demo stats wain-demo event-demo example-app bench
 
 all: build
 
@@ -454,6 +455,11 @@ stats:
 			echo "  internal/$$pkg: ~$${TOTAL} LOC"; \
 		fi; \
 	done
+
+## ── Screenshots ──────────────────────────────────────────────────────────────
+
+screenshots:
+	CGO_ENABLED=0 go run ./cmd/gen-screenshots -o screenshots
 
 ## ── Cleanup ──────────────────────────────────────────────────────────────────
 
