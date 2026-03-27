@@ -111,5 +111,3 @@ func saveImage(img image.Image, path string) error {
 
 	return png.Encode(f, img)
 }
-
-

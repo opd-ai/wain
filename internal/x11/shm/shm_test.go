@@ -866,7 +866,7 @@ func TestShmAttachPointerConversion(t *testing.T) {
 	// conversion pattern doesn't cause runtime issues with go vet.
 
 	// Verify the function signature is correct
-	var _ = shmAttach
+	_ = shmAttach
 
 	// Note: Calling shmAttach with an invalid ID will return an error from
 	// the syscall, which is expected behavior. The important thing is that

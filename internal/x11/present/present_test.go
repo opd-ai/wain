@@ -517,7 +517,7 @@ func makeIdleNotifyEvent(pixmap XID) []byte {
 	_ = binary.Write(buf, binary.LittleEndian, uint32(0))        // serial
 	_ = binary.Write(buf, binary.LittleEndian, uint32(pixmap))   // pixmap
 	_ = binary.Write(buf, binary.LittleEndian, uint32(0))        // idle_fence
-	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0})                // pad
+	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0})                    // pad
 
 	return buf.Bytes()
 }

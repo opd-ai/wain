@@ -14,17 +14,17 @@ const basePath = "/org/a11y/atspi/accessible" //nolint:unused // used with -tags
 type AccessibleObject struct {
 	mu sync.RWMutex
 
-	id          uint64         //nolint:unused // used with -tags=atspi
-	parentID    uint64         //nolint:unused // used with -tags=atspi
-	childIDs    []uint64       //nolint:unused // used with -tags=atspi
-	role        Role           //nolint:unused // used with -tags=atspi
+	id          uint64   //nolint:unused // used with -tags=atspi
+	parentID    uint64   //nolint:unused // used with -tags=atspi
+	childIDs    []uint64 //nolint:unused // used with -tags=atspi
+	role        Role     //nolint:unused // used with -tags=atspi
 	name        string
-	description string         //nolint:unused // used with -tags=atspi
+	description string //nolint:unused // used with -tags=atspi
 	x, y        int32
 	width       int32
 	height      int32
 	focused     bool
-	enabled     bool           //nolint:unused // used with -tags=atspi
+	enabled     bool //nolint:unused // used with -tags=atspi
 	text        string
 	caretOffset int32          //nolint:unused // used with -tags=atspi
 	actions     []objectAction //nolint:unused // used with -tags=atspi
@@ -33,10 +33,10 @@ type AccessibleObject struct {
 
 // objectAction represents one activatable action exposed via the Action interface.
 type objectAction struct { //nolint:unused // used with -tags=atspi
-	name        string       //nolint:unused // used with -tags=atspi
-	description string       //nolint:unused // used with -tags=atspi
-	keyBinding  string       //nolint:unused // used with -tags=atspi
-	do          func() bool  //nolint:unused // used with -tags=atspi
+	name        string      //nolint:unused // used with -tags=atspi
+	description string      //nolint:unused // used with -tags=atspi
+	keyBinding  string      //nolint:unused // used with -tags=atspi
+	do          func() bool //nolint:unused // used with -tags=atspi
 }
 
 // objectPath returns the D-Bus object path for this accessible object.

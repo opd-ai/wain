@@ -186,11 +186,11 @@ func (a *x11SelectionAdapter) GetProperty(window, property, typ, offset, length 
 	// GetProperty request: window(4) + property(4) + type(4) + longOffset(4) + longLength(4) = 20 bytes
 	buf := new(bytes.Buffer)
 	_ = x11wire.EncodeRequestHeader(buf, x11wire.OpcodeGetProperty, deleteByte, 6) // 6 × 4 = 24 bytes
-	binary.Write(buf, binary.LittleEndian, window)                             //nolint:errcheck
-	binary.Write(buf, binary.LittleEndian, property)                           //nolint:errcheck
-	binary.Write(buf, binary.LittleEndian, typ)                                //nolint:errcheck
-	binary.Write(buf, binary.LittleEndian, offset)                             //nolint:errcheck
-	binary.Write(buf, binary.LittleEndian, length)                             //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, window)                                 //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, property)                               //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, typ)                                    //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, offset)                                 //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, length)                                 //nolint:errcheck
 
 	reply, err := a.conn.SendRequestAndReply(buf.Bytes())
 	if err != nil {
