@@ -33,7 +33,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           for f in screenshots/*.png; do
             name=$(basename "$f" .png)
-            echo "- **${name}** ($(stat -c%s "$f") bytes)" >> $GITHUB_STEP_SUMMARY
+            size=$(wc -c < "$f")
+            echo "- **${name}** (${size} bytes)" >> $GITHUB_STEP_SUMMARY
           done
 
       - name: Upload screenshots
