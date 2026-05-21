@@ -2,6 +2,7 @@ package shm
 
 import (
 	"fmt"
+	"math"
 	"syscall"
 
 	"github.com/opd-ai/wain/internal/wayland/wire"
@@ -65,7 +66,7 @@ func (p *Pool) CreateBuffer(offset, width, height, stride int32, format uint32) 
 		return nil, err
 	}
 
-	bufferSize := int32(height) * stride
+	bufferSize := int64(height) * int64(stride)
 	bufferID := p.conn.AllocID()
 
 	args := []wire.Argument{
@@ -83,7 +84,7 @@ func (p *Pool) CreateBuffer(offset, width, height, stride int32, format uint32) 
 
 	var pixels []byte
 	if p.mapping != nil {
-		pixels = p.mapping[offset : offset+bufferSize]
+		pixels = p.mapping[offset : offset+int32(bufferSize)]
 	}
 
 	buffer := NewBuffer(p.conn, bufferID, p, offset, width, height, stride, format, pixels)
@@ -104,8 +105,8 @@ func (p *Pool) validateBufferParams(offset, width, height, stride int32) error {
 	if offset < 0 || offset >= p.size {
 		return fmt.Errorf("invalid offset: %d (pool size: %d)", offset, p.size)
 	}
-	bufferSize := int32(height) * stride
-	if offset+bufferSize > p.size {
+	bufferSize := int64(height) * int64(stride)
+	if bufferSize > math.MaxInt32 || offset+int32(bufferSize) > p.size {
 		return fmt.Errorf("buffer extends beyond pool (offset %d + size %d > pool size %d)", offset, bufferSize, p.size)
 	}
 	return nil

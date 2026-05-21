@@ -166,6 +166,11 @@ func (a *x11SelectionAdapter) SendRequestAndReply(opcode uint8, data []byte) ([]
 	return a.conn.SendRequestAndReply(buf)
 }
 
+// SendEvent sends a synthetic SelectionNotify event to the destination window.
+func (a *x11SelectionAdapter) SendEvent(destination uint32, propagate bool, eventMask uint32, event []byte) error {
+	return a.conn.SendEvent(destination, propagate, eventMask, event)
+}
+
 // InternAtom delegates to the underlying connection.
 func (a *x11SelectionAdapter) InternAtom(name string, onlyIfExists bool) (uint32, error) {
 	return a.conn.InternAtom(name, onlyIfExists)

@@ -9,8 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/jpeg"
-	"image/png"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"os"
 	"sync"
@@ -116,18 +116,22 @@ func (rm *ResourceManager) DefaultFont() *Font {
 
 // LoadFont loads a font from the specified path at the given size.
 //
-// Currently, this function returns the default embedded font with the
-// requested size. Custom font loading from TTF files will be implemented
-// in a future phase.
+// NOTE: Custom font loading from TTF files is not yet implemented.
+// When path is non-empty, this function returns ErrInvalidFontData.
+// Pass an empty string to load the default embedded font.
 //
 // Example:
 //
-//	font := app.LoadFont("path/to/font.ttf", 16.0)
+//	font := app.LoadFont("", 16.0)
 func (rm *ResourceManager) LoadFont(path string, size float64) (*Font, error) {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
-	// For now, return a copy of the default font with the requested size.
+	if path != "" {
+		return nil, fmt.Errorf("custom font loading from TTF not yet implemented; path ignored: %w", ErrInvalidFontData)
+	}
+
+	// Return a copy of the default font with the requested size.
 	// Future implementation will parse TTF files and generate SDF atlases.
 	if rm.defaultFont == nil {
 		return nil, ErrInvalidFontData
@@ -254,18 +258,15 @@ func imageToRGBA(img image.Image) []byte {
 	return rgba
 }
 
-// init registers image decoders.
-func init() {
-	// Ensure PNG and JPEG decoders are registered
-	image.RegisterFormat("png", "\x89PNG\r\n\x1a\n", png.Decode, png.DecodeConfig)
-	image.RegisterFormat("jpeg", "\xff\xd8", jpeg.Decode, jpeg.DecodeConfig)
-}
-
 // LoadFont loads a font from the specified path at the given size.
+//
+// NOTE: Custom font loading from TTF files is not yet implemented.
+// When path is non-empty, this function returns ErrInvalidFontData.
+// Pass an empty string to load the default embedded font.
 //
 // Example:
 //
-//	font := app.LoadFont("path/to/font.ttf", 16.0)
+//	font := app.LoadFont("", 16.0)
 func (a *App) LoadFont(path string, size float64) (*Font, error) {
 	if a.resources == nil {
 		return nil, ErrNotRunning

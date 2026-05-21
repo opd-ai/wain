@@ -62,6 +62,10 @@ func (m *mockX11SelectionConn) DeleteProperty(window, property uint32) error {
 	return nil
 }
 
+func (m *mockX11SelectionConn) SendEvent(destination uint32, propagate bool, eventMask uint32, event []byte) error {
+	return nil
+}
+
 // --- Wayland mock ---
 
 type mockWaylandClipboardConn struct {

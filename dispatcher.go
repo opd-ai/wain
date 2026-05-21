@@ -271,10 +271,10 @@ func (fm *FocusManager) SetFocusChangeHook(hook func(Widget)) {
 }
 
 // notifyFocusChange calls the installed hook (if any) with the focused widget.
-// Must be called with fm.mu held.
-func (fm *FocusManager) notifyFocusChange(w Widget) {
-	if fm.onFocusChange != nil {
-		fm.onFocusChange(w)
+// Must be called without fm.mu held.
+func (fm *FocusManager) notifyFocusChange(hook func(Widget), w Widget) {
+	if hook != nil {
+		hook(w)
 	}
 }
 
@@ -289,24 +289,26 @@ func (fm *FocusManager) SetChain(widgets []Widget) {
 // Focus sets focus to a specific widget.
 func (fm *FocusManager) Focus(w Widget) {
 	fm.mu.Lock()
-	defer fm.mu.Unlock()
-
+	var hook func(Widget)
+	var focused Widget
 	for i, widget := range fm.chain {
 		if widget == w {
 			fm.focusedIdx = i
 			widget.SetFocused(true)
-			fm.notifyFocusChange(widget)
-			return
+			hook = fm.onFocusChange
+			focused = widget
+			break
 		}
 	}
+	fm.mu.Unlock()
+	fm.notifyFocusChange(hook, focused)
 }
 
 // FocusNext moves focus to the next widget in the chain.
 func (fm *FocusManager) FocusNext() {
 	fm.mu.Lock()
-	defer fm.mu.Unlock()
-
 	if len(fm.chain) == 0 {
+		fm.mu.Unlock()
 		return
 	}
 
@@ -318,15 +320,17 @@ func (fm *FocusManager) FocusNext() {
 	// Move to next
 	fm.focusedIdx = (fm.focusedIdx + 1) % len(fm.chain)
 	fm.chain[fm.focusedIdx].SetFocused(true)
-	fm.notifyFocusChange(fm.chain[fm.focusedIdx])
+	hook := fm.onFocusChange
+	focused := fm.chain[fm.focusedIdx]
+	fm.mu.Unlock()
+	fm.notifyFocusChange(hook, focused)
 }
 
 // FocusPrev moves focus to the previous widget in the chain.
 func (fm *FocusManager) FocusPrev() {
 	fm.mu.Lock()
-	defer fm.mu.Unlock()
-
 	if len(fm.chain) == 0 {
+		fm.mu.Unlock()
 		return
 	}
 
@@ -341,7 +345,10 @@ func (fm *FocusManager) FocusPrev() {
 		fm.focusedIdx = len(fm.chain) - 1
 	}
 	fm.chain[fm.focusedIdx].SetFocused(true)
-	fm.notifyFocusChange(fm.chain[fm.focusedIdx])
+	hook := fm.onFocusChange
+	focused := fm.chain[fm.focusedIdx]
+	fm.mu.Unlock()
+	fm.notifyFocusChange(hook, focused)
 }
 
 // Focused returns the currently focused widget.
@@ -358,11 +365,11 @@ func (fm *FocusManager) Focused() Widget {
 // ClearFocus removes focus from all widgets.
 func (fm *FocusManager) ClearFocus() {
 	fm.mu.Lock()
-	defer fm.mu.Unlock()
-
 	if fm.focusedIdx >= 0 && fm.focusedIdx < len(fm.chain) {
 		fm.chain[fm.focusedIdx].SetFocused(false)
 	}
 	fm.focusedIdx = -1
-	fm.notifyFocusChange(nil)
+	hook := fm.onFocusChange
+	fm.mu.Unlock()
+	fm.notifyFocusChange(hook, nil)
 }

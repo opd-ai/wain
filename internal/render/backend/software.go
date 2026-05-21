@@ -75,34 +75,16 @@ func (sb *SoftwareBackend) RenderWithDamage(dl *displaylist.DisplayList, damage 
 		return sb.consumer.Render(dl, sb.buffer)
 	}
 
-	// Filter commands to those intersecting damage regions
+	// Filter commands to those intersecting damage regions and render each one.
+	// This replaces the previous default: branch that fell back to rendering the
+	// entire display list whenever a text, gradient, shadow, or image command was
+	// present.
 	commands := displaylist.FilterCommandsByDamage(dl.Commands(), damage)
 	if len(commands) == 0 {
 		return nil // No commands intersect damage regions
 	}
 
-	// Create a temporary display list with filtered commands
-	// and render it to the buffer
-	for _, cmd := range commands {
-		// Manually reconstruct the display list by examining command types
-		switch cmd.Type {
-		case displaylist.CmdFillRect:
-			data := cmd.Data.(displaylist.FillRectData)
-			sb.buffer.FillRect(data.X, data.Y, data.Width, data.Height, data.Color)
-		case displaylist.CmdFillRoundedRect:
-			data := cmd.Data.(displaylist.FillRoundedRectData)
-			sb.buffer.FillRoundedRect(data.X, data.Y, data.Width, data.Height, float64(data.Radius), data.Color)
-		case displaylist.CmdDrawLine:
-			data := cmd.Data.(displaylist.DrawLineData)
-			sb.buffer.DrawLine(data.X0, data.Y0, data.X1, data.Y1, float64(data.Width), data.Color)
-		default:
-			// Other command types would need more complex filtering
-			// For now, just render the full display list
-			return sb.consumer.Render(dl, sb.buffer)
-		}
-	}
-
-	return nil
+	return sb.consumer.RenderCommands(commands, sb.buffer)
 }
 
 // Present returns -1 and an error since software rendering does not export DMA-BUF.
