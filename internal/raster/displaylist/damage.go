@@ -1,5 +1,7 @@
 package displaylist
 
+import "unicode/utf8"
+
 // Rect represents a rectangular region.
 type Rect struct {
 	X, Y          int
@@ -137,22 +139,6 @@ func mergeRects(a, b Rect) Rect {
 	}
 }
 
-// min returns the minimum of two integers.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// max returns the maximum of two integers.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // ComputeDamageForCommand computes the damage rect for a single command.
 func ComputeDamageForCommand(cmd DrawCommand) Rect {
 	switch cmd.Type {
@@ -195,7 +181,7 @@ func damageDrawLine(data DrawLineData) Rect {
 }
 
 func damageDrawText(data DrawTextData) Rect {
-	width := len(data.Text) * data.FontSize / 2
+	width := utf8.RuneCountInString(data.Text) * data.FontSize / 2
 	height := data.FontSize + data.FontSize/4
 	return Rect{X: data.X, Y: data.Y - height, Width: width, Height: height}
 }

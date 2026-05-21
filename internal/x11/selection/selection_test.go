@@ -9,10 +9,11 @@ import (
 
 // mockConn is a mock X11 connection for testing.
 type mockConn struct {
-	nextXID    uint32
-	requests   []mockRequest
-	atoms      map[string]uint32
-	properties map[propertyKey]propertyValue
+	nextXID              uint32
+	requests             []mockRequest
+	atoms                map[string]uint32
+	properties           map[propertyKey]propertyValue
+	convertSelectionSent chan struct{}
 }
 
 type mockRequest struct {
@@ -41,7 +42,8 @@ func newMockConn() *mockConn {
 			"TEXT":            102,
 			"_WAIN_SELECTION": 103,
 		},
-		properties: make(map[propertyKey]propertyValue),
+		properties:           make(map[propertyKey]propertyValue),
+		convertSelectionSent: make(chan struct{}, 1),
 	}
 }
 
@@ -53,6 +55,12 @@ func (m *mockConn) AllocXID() uint32 {
 
 func (m *mockConn) SendRequest(opcode uint8, data []byte) error {
 	m.requests = append(m.requests, mockRequest{opcode: opcode, data: data})
+	if opcode == 24 {
+		select {
+		case m.convertSelectionSent <- struct{}{}:
+		default:
+		}
+	}
 	return nil
 }
 
@@ -94,6 +102,11 @@ func (m *mockConn) ChangeProperty(window, property, typ uint32, format, mode uin
 func (m *mockConn) DeleteProperty(window, property uint32) error {
 	key := propertyKey{window: window, property: property}
 	delete(m.properties, key)
+	return nil
+}
+
+func (m *mockConn) SendEvent(destination uint32, propagate bool, eventMask uint32, event []byte) error {
+	m.requests = append(m.requests, mockRequest{opcode: 25, data: event})
 	return nil
 }
 
@@ -241,6 +254,11 @@ func TestHandleSelectionRequestTargets(t *testing.T) {
 		t.Fatalf("NewManager failed: %v", err)
 	}
 
+	// Must own the selection before TARGETS can be served.
+	if err := mgr.SetClipboard("hello"); err != nil {
+		t.Fatalf("SetClipboard failed: %v", err)
+	}
+
 	requestor := uint32(600)
 	property := uint32(200)
 	timestamp := uint32(time.Now().Unix())
@@ -260,6 +278,30 @@ func TestHandleSelectionRequestTargets(t *testing.T) {
 	// Should contain at least UTF8_STRING and TEXT atoms
 	if len(prop.data) < 8 {
 		t.Errorf("Expected at least 2 atoms (8 bytes), got %d bytes", len(prop.data))
+	}
+}
+
+func TestHandleSelectionRequestTargetsWithoutOwnership(t *testing.T) {
+	conn := newMockConn()
+	mgr, err := NewManager(conn, 500)
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	requestor := uint32(600)
+	property := uint32(200)
+	timestamp := uint32(time.Now().Unix())
+
+	// Without owning any selection, TARGETS should be refused (property=None notify sent).
+	err = mgr.HandleSelectionRequest(requestor, mgr.clipboardAtom, mgr.targetsAtom, property, timestamp)
+	if err != nil {
+		t.Fatalf("HandleSelectionRequest failed: %v", err)
+	}
+
+	// Property should NOT be set because we don't own the selection.
+	key := propertyKey{window: requestor, property: property}
+	if _, ok := conn.properties[key]; ok {
+		t.Error("Expected property NOT to be set when selection is not owned")
 	}
 }
 
@@ -306,15 +348,25 @@ func TestGetClipboard(t *testing.T) {
 	}
 
 	// Set up mock property data
-	propertyAtom := conn.atoms["_WAIN_SELECTION"]
+	propertyAtom, _ := conn.InternAtom("_WAIN_SELECTION", false)
 	key := propertyKey{window: 500, property: propertyAtom}
 	conn.properties[key] = propertyValue{
 		data: []byte("Retrieved data"),
 		typ:  100,
 	}
 
-	// This will send ConvertSelection and then read the property
+	// Simulate the selection owner delivering a SelectionNotify event after the
+	// ConvertSelection request is sent. We do this in a goroutine so that it
+	// signals the manager while GetClipboard is blocking on the channel.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		<-conn.convertSelectionSent
+		mgr.HandleSelectionNotify(propertyAtom)
+	}()
+
 	text, err := mgr.GetClipboard()
+	<-done
 	if err != nil {
 		t.Fatalf("GetClipboard failed: %v", err)
 	}

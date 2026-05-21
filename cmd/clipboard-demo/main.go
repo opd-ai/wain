@@ -159,3 +159,8 @@ func (m *mockX11Conn) ChangeProperty(window, property, typ uint32, format, mode 
 func (m *mockX11Conn) DeleteProperty(window, property uint32) error {
 	return nil
 }
+
+// SendEvent sends a synthetic event to a window (no-op for mock).
+func (m *mockX11Conn) SendEvent(destination uint32, propagate bool, eventMask uint32, event []byte) error {
+	return nil
+}

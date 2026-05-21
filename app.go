@@ -147,7 +147,8 @@ type App struct {
 	resources *ResourceManager
 
 	// Animation
-	animator *animation.Animator
+	animator  *animation.Animator
+	lastFrame time.Time
 
 	// Theming
 	theme Theme
@@ -1906,12 +1907,12 @@ func (a *App) initRenderer() error {
 	}
 
 	cfg := backend.AutoConfig{
-		DRMPath:          "/dev/dri/renderD128",
+		DRMPath:          a.drmPath,
 		Width:            a.width,
 		Height:           a.height,
 		VertexBufferSize: 1024 * 1024,
 		Atlas:            atlas,
-		ForceSoftware:    false,
+		ForceSoftware:    a.forceSW,
 		Verbose:          a.verbose,
 	}
 
@@ -1952,6 +1953,7 @@ func (a *App) renderInitialFrame() error {
 
 // eventLoop runs the main event loop.
 func (a *App) eventLoop() error {
+	a.lastFrame = time.Now()
 	for {
 		a.mu.Lock()
 		if a.shouldQuit {
@@ -2022,13 +2024,50 @@ func (a *App) processX11Events() error {
 
 // dispatchX11Event parses and dispatches a single X11 event.
 func (a *App) dispatchX11Event(eventBuf []byte) error {
+	if len(eventBuf) < 32 {
+		return nil // too short to be a valid event
+	}
 	eventType := x11events.EventType(eventBuf[0] & 0x7F)
+
+	// SelectionNotify (type 31) is handled by the selection manager.
+	// property is at bytes 20-23 of the event.
+	if eventType == x11events.EventTypeSelectionNotify {
+		if a.x11SelectionMgr != nil {
+			property := binary.LittleEndian.Uint32(eventBuf[20:24])
+			a.x11SelectionMgr.HandleSelectionNotify(property)
+		}
+		return nil
+	}
 
 	a.mu.Lock()
 	windows := a.windows
 	a.mu.Unlock()
 
+	// Extract the target window XID from the event buffer.
+	// For most input events (KeyPress, ButtonPress, MotionNotify, etc.) the
+	// "event" window is at bytes 12-15. For Expose and ConfigureNotify the
+	// "window" field is at bytes 4-7. Fall back to broadcasting for any event
+	// type that does not fit these layouts.
+	var targetXID uint32
+	switch eventType {
+	case x11events.EventTypeKeyPress, x11events.EventTypeKeyRelease,
+		x11events.EventTypeButtonPress, x11events.EventTypeButtonRelease,
+		x11events.EventTypeMotionNotify,
+		x11events.EventTypeEnterNotify, x11events.EventTypeLeaveNotify:
+		targetXID = binary.LittleEndian.Uint32(eventBuf[12:16])
+	case x11events.EventTypeExpose,
+		x11events.EventTypeConfigureNotify, x11events.EventTypeConfigureRequest,
+		x11events.EventTypeCreateNotify, x11events.EventTypeDestroyNotify,
+		x11events.EventTypeMapNotify, x11events.EventTypeUnmapNotify,
+		x11events.EventTypeReparentNotify, x11events.EventTypeGravityNotify:
+		targetXID = binary.LittleEndian.Uint32(eventBuf[4:8])
+	}
+
 	for _, win := range windows {
+		// If we identified a target window, skip windows that don't match.
+		if targetXID != 0 && uint32(win.x11Window) != targetXID {
+			continue
+		}
 		if err := win.handleX11Event(eventType, eventBuf); err != nil {
 			return fmt.Errorf("app: dispatch x11 event: %w", err)
 		}
@@ -2183,9 +2222,15 @@ func (a *App) renderFrames() error {
 	windows := a.windows
 	a.mu.Unlock()
 
-	// Advance all running animations by a fixed 16 ms frame budget.
-	// Future work: measure actual elapsed time per frame.
-	a.animator.Tick(16 * 1e6) // 16 ms in nanoseconds as time.Duration
+	// Advance all running animations by the real elapsed time since the last frame.
+	// Clamp to 100 ms to avoid large catchup advances after pauses (e.g., tab switch).
+	now := time.Now()
+	dt := now.Sub(a.lastFrame)
+	if dt > 100*time.Millisecond {
+		dt = 100 * time.Millisecond
+	}
+	a.animator.Tick(dt)
+	a.lastFrame = now
 
 	for _, win := range windows {
 		if err := win.RenderFrame(); err != nil {

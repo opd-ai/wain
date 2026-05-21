@@ -46,6 +46,21 @@ func (sc *SoftwareConsumer) Render(dl *displaylist.DisplayList, buf *primitives.
 	return nil
 }
 
+// RenderCommands executes a pre-filtered slice of draw commands using software
+// rasterization. This is used by damage-tracked rendering to avoid re-rendering
+// the full display list when only a subset of commands intersect the dirty region.
+func (sc *SoftwareConsumer) RenderCommands(commands []displaylist.DrawCommand, buf *primitives.Buffer) error {
+	if buf == nil {
+		return fmt.Errorf("consumer: nil buffer")
+	}
+	for _, cmd := range commands {
+		if err := sc.renderCommand(cmd, buf); err != nil {
+			return fmt.Errorf("consumer: render command %v: %w", cmd.Type, err)
+		}
+	}
+	return nil
+}
+
 // renderCommand executes a single draw command.
 func (sc *SoftwareConsumer) renderCommand(cmd displaylist.DrawCommand, buf *primitives.Buffer) error {
 	switch cmd.Type {
