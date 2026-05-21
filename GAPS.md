@@ -46,8 +46,8 @@
 ## Animation Speed Is Decoupled from Actual Elapsed Time
 
 - **Stated Goal**: `App.Animate` GoDoc states: "Animate schedules a property animation driven by the app's frame loop." The `animation.Animator` is designed to accept a `time.Duration` delta and the code comment at `app.go:2187` acknowledges that measuring real elapsed time is "Future work".
-- **Current State**: `renderFrames()` calls `a.animator.Tick(16 * 1e6)` — always 16ms — independent of when the previous frame actually completed. This means animations play at 1× speed only on a display running at exactly 62.5 Hz. At 60 Hz they play at 94% speed; at 30 Hz they play at 47% speed; at 120 Hz they play at 200% speed and complete in half the specified duration.
-- **Impact**: Animation durations passed to `App.Animate` are meaningless on any real display. A 300ms fade-in completes in 150ms on a 120 Hz screen and in 600ms on a 30 Hz screen.
+- **Current State**: `renderFrames()` calls `a.animator.Tick(16 * 1e6)` — always 16ms — independent of when the previous frame actually completed. This means animations play at 1× speed only on a display running at exactly 62.5 Hz. At 60 Hz they play at about 96% speed; at 30 Hz they play at about 48% speed; at 120 Hz they play at about 192% speed.
+- **Impact**: Animation durations passed to `App.Animate` are meaningless on any real display. A 300ms fade-in completes in about 156ms on a 120 Hz screen and in about 625ms on a 30 Hz screen.
 - **Closing the Gap**: Track the real frame start time (`lastFrame time.Time`) and pass the actual delta to `Tick`. Add a delta clamp (e.g., 100ms) to avoid runaway catch-up after tab switches or long pauses.
 
 ---
