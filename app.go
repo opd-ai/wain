@@ -2030,10 +2030,10 @@ func (a *App) dispatchX11Event(eventBuf []byte) error {
 	eventType := x11events.EventType(eventBuf[0] & 0x7F)
 
 	// SelectionNotify (type 31) is handled by the selection manager.
-	// property is at bytes 24-27 of the event.
+	// property is at bytes 20-23 of the event.
 	if eventType == x11events.EventTypeSelectionNotify {
 		if a.x11SelectionMgr != nil {
-			property := binary.LittleEndian.Uint32(eventBuf[24:28])
+			property := binary.LittleEndian.Uint32(eventBuf[20:24])
 			a.x11SelectionMgr.HandleSelectionNotify(property)
 		}
 		return nil

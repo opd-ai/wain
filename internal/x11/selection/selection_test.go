@@ -9,10 +9,11 @@ import (
 
 // mockConn is a mock X11 connection for testing.
 type mockConn struct {
-	nextXID    uint32
-	requests   []mockRequest
-	atoms      map[string]uint32
-	properties map[propertyKey]propertyValue
+	nextXID              uint32
+	requests             []mockRequest
+	atoms                map[string]uint32
+	properties           map[propertyKey]propertyValue
+	convertSelectionSent chan struct{}
 }
 
 type mockRequest struct {
@@ -41,7 +42,8 @@ func newMockConn() *mockConn {
 			"TEXT":            102,
 			"_WAIN_SELECTION": 103,
 		},
-		properties: make(map[propertyKey]propertyValue),
+		properties:           make(map[propertyKey]propertyValue),
+		convertSelectionSent: make(chan struct{}, 1),
 	}
 }
 
@@ -53,6 +55,12 @@ func (m *mockConn) AllocXID() uint32 {
 
 func (m *mockConn) SendRequest(opcode uint8, data []byte) error {
 	m.requests = append(m.requests, mockRequest{opcode: opcode, data: data})
+	if opcode == 24 {
+		select {
+		case m.convertSelectionSent <- struct{}{}:
+		default:
+		}
+	}
 	return nil
 }
 
@@ -353,8 +361,7 @@ func TestGetClipboard(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		// Small delay to let GetClipboard send ConvertSelection first.
-		time.Sleep(10 * time.Millisecond)
+		<-conn.convertSelectionSent
 		mgr.HandleSelectionNotify(propertyAtom)
 	}()
 

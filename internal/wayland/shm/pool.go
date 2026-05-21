@@ -84,7 +84,12 @@ func (p *Pool) CreateBuffer(offset, width, height, stride int32, format uint32) 
 
 	var pixels []byte
 	if p.mapping != nil {
-		pixels = p.mapping[offset : offset+int32(bufferSize)]
+		start := int64(offset)
+		end := start + bufferSize
+		if end > int64(len(p.mapping)) {
+			return nil, fmt.Errorf("buffer extends beyond mapping (offset %d + size %d > mapping size %d)", offset, bufferSize, len(p.mapping))
+		}
+		pixels = p.mapping[int(start):int(end)]
 	}
 
 	buffer := NewBuffer(p.conn, bufferID, p, offset, width, height, stride, format, pixels)
@@ -106,7 +111,8 @@ func (p *Pool) validateBufferParams(offset, width, height, stride int32) error {
 		return fmt.Errorf("invalid offset: %d (pool size: %d)", offset, p.size)
 	}
 	bufferSize := int64(height) * int64(stride)
-	if bufferSize > math.MaxInt32 || offset+int32(bufferSize) > p.size {
+	end := int64(offset) + bufferSize
+	if bufferSize > math.MaxInt32 || end > int64(p.size) {
 		return fmt.Errorf("buffer extends beyond pool (offset %d + size %d > pool size %d)", offset, bufferSize, p.size)
 	}
 	return nil
