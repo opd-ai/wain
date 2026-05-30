@@ -1,60 +1,152 @@
-# Implementation Gaps — 2026-05-21
+# Implementation Gaps — 2026-05-30
 
-## AppConfig.DRMPath and AppConfig.ForceSoftware Have No Effect
+Gaps between what the Wain README/docs claim and what the code actually does.
+Each gap references the confirmed findings in `AUDIT.md`.
 
-- **Stated Goal**: The README and `AppConfig` GoDoc promise that `DRMPath` selects the DRM device for GPU detection and `ForceSoftware` forces software rendering.
-- **Current State**: `initRenderer()` (`app.go:1909,1914`) hard-codes `DRMPath: "/dev/dri/renderD128"` and `ForceSoftware: false` in the `backend.AutoConfig` struct. The fields `a.drmPath` and `a.forceSW`, which are correctly populated from `AppConfig` in `NewAppWithConfig`, are never referenced inside `initRenderer`. Any application passing a custom DRM device path or requesting software rendering via `AppConfig` silently receives the wrong backend.
-- **Impact**: The documented GPU selection and software-override API is broken. Applications on systems with the DRM device at a non-default path (`/dev/dri/card0`, `/dev/dri/renderD129`) will fail to detect the GPU. `ForceSoftware: true`, a critical option for testing and headless environments, has no effect.
-- **Closing the Gap**: In `initRenderer()`, replace the two hard-coded literals with `a.drmPath` and `a.forceSW`:
-  ```go
-  cfg := backend.AutoConfig{
-      DRMPath:       a.drmPath,   // was: "/dev/dri/renderD128"
-      ForceSoftware: a.forceSW,   // was: false
-      ...
-  }
-  ```
+## Widget system renders nothing through the public API
 
----
+- **Stated Goal**: README "Features" → "Widget System — Button, Label,
+  TextInput, ScrollView, ImageWidget, Spacer" and the Usage examples build a
+  layout with `col.Add(label)`, `col.Add(btn)`, then `win.SetLayout(col)`.
+- **Current State**: `RenderBridge.walkWidget` (`render.go:149`) only emits draw
+  commands for widgets implementing `DisplayListEmitter`. No production widget
+  implements `EmitDisplayList` — it exists only on a test mock
+  (`render_test.go:65`). The `displayListCanvas` bridge that would translate the
+  public `Draw(Canvas)` API into the display list (`publicwidget.go:262`) is
+  never invoked. Additionally `Panel.Add` (`layout.go:137`) silently discards
+  any non-container child such as a `Button` or `Label`.
+- **Impact**: The headline "minimal application" from the README produces a
+  blank window: widgets are added and laid out but never drawn. This is the
+  toolkit's central promise and it is non-functional through the documented API.
+- **Closing the Gap**: Implement `EmitDisplayList` on the layout/widget adapters
+  (or have `walkWidget` call `Draw` via `newDisplayListCanvas`), and make
+  `Panel.Add` accept all `PublicWidget` types. Add a display-list regression
+  test asserting `SetLayout` of a button/label tree emits non-empty commands.
+  (See AUDIT CRIT-2, HIGH-13.)
 
-## App.LoadFont Does Not Load Fonts
+## Wayland protocol implementation cannot decode events or receive fds
 
-- **Stated Goal**: The README feature list states "Widget System — Button, Label, TextInput, ScrollView, ImageWidget, Spacer with percentage-based sizing". `App.LoadFont` and `ResourceManager.LoadFont` are documented as: "loads a font from the specified path at the given size."
-- **Current State**: `ResourceManager.LoadFont` (`resource.go`) ignores the `path` argument entirely. It returns a `*Font` struct that shares the embedded default atlas regardless of what path was provided. The method returns no error and gives no indication that the path was not used. The GoDoc comment even adds: "Custom font loading from TTF files will be implemented in a future phase." — but this is buried in the implementation file, not the public API comment.
-- **Impact**: Applications that load custom fonts for brand typography or accessibility reasons (e.g., larger default sizes, dyslexia-friendly fonts) silently receive the embedded 14pt monospace fallback. There is no way to tell that the font wasn't loaded.
-- **Closing the Gap**: Either (a) return a descriptive `fmt.Errorf("LoadFont: custom TTF loading not yet implemented")` error so callers know they must use `DefaultFont()`, or (b) implement TTF parsing using `golang.org/x/image/font/sfnt` and SDF atlas generation. At minimum the GoDoc of the public `App.LoadFont` method must state that the path is currently ignored.
+- **Stated Goal**: README → "Wain implements Wayland and X11 display protocols
+  directly" and "Wayland Protocol — compositor connection, `wl_shm`,
+  `xdg_shell`, input, clipboard, DMA-BUF, and output handling".
+- **Current State**: `Connection.ReadMessage` reads the event payload but
+  returns a message with `Args == nil` (`internal/wayland/client/connection.go:288-292`),
+  so every argument-bearing event reaches its handler empty. Incoming file
+  descriptors are received with `RecvMsg(buf, 0)` and immediately closed by the
+  socket layer (`socket/connection.go:149-153`), so keymap/DMA-BUF/data-offer
+  fds never arrive. `Display`, `Registry`, and `Callback` implement no
+  `HandleEvent`, so global discovery and roundtrips are dropped, and fd request
+  args are encoded with the wrong dynamic type (`int32` vs the required `int`),
+  breaking `wl_shm.create_pool`, `wl_data_offer.receive`, and dmabuf plane adds.
+- **Impact**: The documented Wayland backend cannot process input, configure
+  events, buffer releases, clipboard, or keymaps. Because there is no live
+  compositor in CI, tests do not exercise these paths, so the gap is invisible
+  to the test suite.
+- **Closing the Gap**: Decode payloads per event signature into `msg.Args`;
+  receive and retain ancillary fds; implement `HandleEvent` on display/registry/
+  callback; pass `int` fd args. Add integration tests that replay captured
+  compositor byte streams. (See AUDIT CRIT-3, CRIT-4, HIGH-1, HIGH-2, HIGH-3.)
 
----
+## Wayland window creation deadlocks
 
-## Damage-Tracked Rendering Falls Back to Full Re-Render for All Non-Primitive Commands
+- **Stated Goal**: README → "Display Server Auto-Detection — connects to Wayland
+  when available" and the Usage example calls `app.NewWindow(...)`.
+- **Current State**: `App.NewWindow` holds `a.mu` (`app.go:322`) across
+  `win.initialize()`, and `createWaylandSurface` re-locks the same non-reentrant
+  `sync.Mutex` (`app.go:456`), self-deadlocking on every Wayland window
+  creation.
+- **Impact**: On a Wayland session the first `NewWindow` hangs forever; no window
+  ever appears.
+- **Closing the Gap**: Do not hold `a.mu` during platform initialization; lock
+  only to mutate shared app maps/slices. (See AUDIT CRIT-1.)
 
-- **Stated Goal**: The `RenderBridge` GoDoc describes "Emit DisplayList commands for dirty regions" and "Submit to renderer with damage rects". The README describes "Software Rasterizer — rectangles, rounded rectangles, anti-aliased lines, Bézier curves, gradients, shadows, and SDF text."
-- **Current State**: `SoftwareBackend.RenderWithDamage` (`internal/render/backend/software.go:100`) attempts to render only commands that intersect the damage rectangle. However, the `default:` branch of its command-type switch calls `sb.consumer.Render(dl, sb.buffer)`, which renders the **full original display list**. Since text (`CmdDrawText`), gradients (`CmdLinearGradient`, `CmdRadialGradient`), shadows (`CmdBoxShadow`), and images (`CmdDrawImage`) all fall into `default:`, every real UI frame triggers a full re-render. The damage optimization only applies to pure-rectangle UIs.
-- **Impact**: The CPU saving promised by incremental rendering is never realized. On complex UIs the software renderer may consume more CPU than necessary. The damage rect mechanism in `RenderBridge.MarkRegionDirty` is built but ineffective.
-- **Closing the Gap**: Implement per-command rendering in the `default:` branch (or extend the switch to cover all `displaylist.Cmd*` types) rather than falling back to full list rendering. The `consumer` package already handles each command type individually — the fallback path should dispatch through it for the filtered command list only.
+## Keyboard input and focus navigation do not work
 
----
+- **Stated Goal**: README → "Widget System … TextInput" and "Pointer, keyboard,
+  touch input"; `TextInput` is documented as an editable text field and Tab is a
+  recognized navigation key.
+- **Current State**: `TextInput.HandleEvent` inserts `string(e.Rune())`
+  (`concretewidgets.go:463`) but the key translators never populate a rune. On
+  X11, raw hardware keycodes are stored as `KeyEvent.Key` (`event.go:333`) while
+  the dispatcher compares against logical constants like `KeyTab`, so Tab focus
+  navigation and key-constant handling fail. X11 middle/right mouse buttons are
+  also swapped (`event.go:357`).
+- **Impact**: Users cannot type into text inputs, cannot Tab between widgets on
+  X11, and middle/right clicks are misreported.
+- **Closing the Gap**: Translate keycodes→keysyms/runes/modifiers in the
+  Wayland/X11 translators; insert real text in `TextInput`; fix the X11 button
+  map to `1→Left, 2→Middle, 3→Right`. (See AUDIT HIGH-11, HIGH-12, MED-1.)
 
-## X11 Drag-and-Drop Source Is Silently Unimplemented
+## Frame synchronization can stall (lost wakeups)
 
-- **Stated Goal**: The README states "X11 Protocol — server connection, windows, DRI3, Present, MIT-SHM, clipboard, drag-and-drop, and HiDPI detection". The `Window.StartDrag` API is a public exported method.
-- **Current State**: For Wayland, `startDragForWindow` correctly creates a `wl_data_source` and calls `wl_data_device.start_drag`. For X11, the function does nothing beyond storing `w.dragDataProvider`. A comment says "Registration of w.dragDataProvider above is sufficient for the event loop to respond to XdndStatus/XdndDrop messages" — but the X11 event loop in `dispatchX11Event` has no code to handle `XdndStatus`, `XdndDrop`, or `XdndFinished` ClientMessages, and no XdndEnter/XdndPosition messages are ever sent. The `internal/x11/dnd` package is fully implemented with all required message builders but is unused by the main event loop.
-- **Impact**: Any application calling `window.StartDrag(...)` on an X11 display gets a no-op. No drag cursor appears, no drop is possible, no error is returned.
-- **Closing the Gap**: Wire `dnd.Manager` into the X11 path in `startDragForWindow`: call `SendEnter`, then drive `SendPosition` from the pointer motion handler, and handle `XdndStatus`/`XdndDrop`/`XdndFinished` in `dispatchX11Event`.
+- **Stated Goal**: README → "Double/Triple Buffering — frame synchronization
+  with compositor (`internal/buffer/`)".
+- **Current State**: In `internal/buffer/ring.go`, the acquire predicate (slot
+  state) is mutated under `slot.mu`, but `MarkReleased` and the context-cancel
+  callback broadcast `r.cond` without holding `r.mu` (`ring.go:169,237-241`).
+  This violates `sync.Cond` discipline and allows a release/cancel signal to be
+  lost if it races with a waiter about to call `Wait()`.
+- **Impact**: A renderer waiting for a free buffer can block until an unrelated
+  later release, causing intermittent frame stalls; a cancelled acquire can hang
+  despite the cancelled context.
+- **Closing the Gap**: Mutate slot state and broadcast under the same `r.mu` the
+  waiters hold. Add high-iteration `-race` concurrency tests. (See AUDIT HIGH-7,
+  HIGH-8.)
 
----
+## Accessibility focus events are never delivered
 
-## Animation Speed Is Decoupled from Actual Elapsed Time
+- **Stated Goal**: README → "AT-SPI2 Accessibility — D-Bus screen reader
+  integration with Accessible, Component, Action, and Text interfaces".
+- **Current State**: `emitFocusEvent` emits a signal named
+  `org.a11y.atspi.Event.Focus:Focus` (`internal/a11y/manager.go:197`); the `:`
+  makes the D-Bus member name invalid, so `Emit` fails and the error is
+  discarded. Separately, `Text.GetText` panics on out-of-range start offsets
+  (`text_iface.go:15-26`).
+- **Impact**: Screen readers are not notified of focus changes, and a malicious
+  or buggy AT-SPI client can crash the application by requesting a bad text
+  range — undermining the accessibility guarantee.
+- **Closing the Gap**: Use a valid signal interface/member and propagate the
+  error; clamp `GetText` offsets independently. (See AUDIT MED-9, HIGH-9.)
 
-- **Stated Goal**: `App.Animate` GoDoc states: "Animate schedules a property animation driven by the app's frame loop." The `animation.Animator` is designed to accept a `time.Duration` delta and the code comment at `app.go:2187` acknowledges that measuring real elapsed time is "Future work".
-- **Current State**: `renderFrames()` calls `a.animator.Tick(16 * 1e6)` — always 16ms — independent of when the previous frame actually completed. This means animations play at 1× speed only on a display running at exactly 62.5 Hz. At 60 Hz they play at about 96% speed; at 30 Hz they play at about 48% speed; at 120 Hz they play at about 192% speed.
-- **Impact**: Animation durations passed to `App.Animate` are meaningless on any real display. A 300ms fade-in completes in about 156ms on a 120 Hz screen and in about 625ms on a 30 Hz screen.
-- **Closing the Gap**: Track the real frame start time (`lastFrame time.Time`) and pass the actual delta to `Tick`. Add a delta clamp (e.g., 100ms) to avoid runaway catch-up after tab switches or long pauses.
+## Clipboard cannot transfer large content
 
----
+- **Stated Goal**: README → "Clipboard — read/write clipboard on both Wayland
+  and X11".
+- **Current State**: The X11 `getSelection` reads at most ~256 KB and ignores
+  `bytesAfter`, with no ICCCM `INCR` support
+  (`internal/x11/selection/manager.go:193`); larger pastes are silently
+  truncated. The Wayland clipboard source goroutine can also leak if
+  `SetSelection` fails (`clipboard.go:80`).
+- **Impact**: Pasting large text/data from other applications loses content
+  beyond 256 KB and provides no error indication.
+- **Closing the Gap**: Loop `GetProperty` until `bytesAfter == 0` and implement
+  INCR; start the Wayland source only after a successful `SetSelection`.
+  (See AUDIT LOW-1, MED-15.)
 
-## X11 Clipboard Read Is Unreliable (time.Sleep Polling)
+## Layout sizing does not exactly fill containers
 
-- **Stated Goal**: The README states "Clipboard — read/write clipboard on both Wayland and X11". `GetClipboard()` is a public API.
-- **Current State**: `selection.Manager.getSelection()` sends `ConvertSelection`, sleeps 50ms, then reads the property. The X11 selection protocol requires waiting for a `SelectionNotify` event before reading the property. On a loaded system, 50ms is insufficient. On a fast system, `GetProperty` may execute before the selection owner has written the data.
-- **Impact**: `GetClipboard()` on X11 returns an empty string intermittently. It is unreliable for any production use. The behavior worsens with remote X11 sessions where latency is higher.
-- **Closing the Gap**: Register a pending-read waiter in `Manager` when `ConvertSelection` is issued. Signal the waiter from the main event loop when `SelectionNotify` arrives for the matching window and property. Block `getSelection` on that signal rather than sleeping.
+- **Stated Goal**: README → "Layout Containers — Row, Column, Stack, Grid, and
+  Panel with flexbox-style alignment, padding, and gap".
+- **Current State**: `distributeFlex` (`internal/ui/layout/flex.go:253-258`)
+  truncates each flex share independently, dropping leftover pixels on grow and
+  rounding small shrink deficits to zero — so children can overflow or
+  underfill the container by a few pixels.
+- **Impact**: Pixel-imperfect layouts; flex children can overflow their parent.
+- **Closing the Gap**: Use largest-remainder distribution so child sizes sum
+  exactly to the available axis length. (See AUDIT MED-5.)
+
+## "Fully static, zero-dependency binary" is unverified in this environment
+
+- **Stated Goal**: README → "Fully Static Binaries … output binaries have zero
+  runtime dependencies" and "run on any Linux distribution".
+- **Current State**: Building the toolkit requires the Rust `librender_sys.a`
+  plus musl toolchain (`make build`); without it, 16 Go packages (including the
+  root `wain` package) do not link. The pure-Go test suite passes, but no
+  end-to-end static binary could be produced or run in this sandbox, and CI
+  (per the README badge/workflow) exercises only the pure-Go portions.
+- **Impact**: The flagship static-linking claim is plausible but not validated
+  by the automated tests available here; regressions in the CGO/static-link path
+  would not be caught by `go test ./...` alone.
+- **Closing the Gap**: This is a verification gap rather than a code defect — add
+  a CI job that runs `make build` + `make check-static` on a runner with the
+  Rust/musl toolchain so the static-linkage guarantee is continuously asserted.
